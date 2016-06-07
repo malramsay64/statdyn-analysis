@@ -1,0 +1,16 @@
+#!/bin/sh
+
+#PBS -N Trimer_equil
+#PBS -l nodes=1:ppn=24
+#PBS -l walltime=24:00:00
+#PBS -l cput=576:00:00
+#PBS -P RDS-FSC-CrysGrowth-RW
+#PBS -q gpu
+#PBS -o output.dat
+#PBS -j oe
+
+#cd $HOME/project/Trimer-Hoomd
+
+cd $PBS_O_WORKDIR
+
+hoomd ~/MD-Molecules-Hoomd/Trimer-equil.hoomd
