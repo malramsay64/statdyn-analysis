@@ -30,6 +30,9 @@ def equilFromCrys(inputXML="mol.xml",\
     if init.is_initialized():
         init.reset()
 
+    # Fix for an issue where the pressure equilibrates to a value larger than the desired pressure
+    press /= 2.2
+
     # Initialise simulation parameters
     # context.initialize()
     system = init.read_xml(filename=inputXML)
@@ -104,6 +107,9 @@ def equilFromFile(inputXml=None,\
     # Ensure there is no configuration already initialised
     if init.is_initialized():
         init.reset()
+
+    # Fix for an issue where the pressure equilibrates to double the desired pressure
+    press /= 2.2
 
     # Initialise simulation parameters
     basename = os.path.splitext(outfile)[0]
