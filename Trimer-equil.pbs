@@ -13,4 +13,4 @@
 
 cd $PBS_O_WORKDIR
 
-hoomd ~/MD-Molecules-Hoomd/Trimer-equil.hoomd
+hoomd ~/MD-Molecules-Hoomd/Trimer-equil.hoomd > outfile.log
