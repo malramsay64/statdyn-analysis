@@ -1,0 +1,38 @@
+#!/usr/bin/env python
+""" Calculate the dynamic properties for the Trimer molecule
+for a series of temperatures"""
+
+import os.path
+from hoomd_script import *
+import dynamics
+
+PRESS = 13.5
+# Holds tuples of the temperature and number of steps
+# to iterate through
+STEPS = 10000000
+TEMPERATURES = [(5.00, 1*STEPS),\
+                (4.00, 1*STEPS),\
+                (3.50, 1*STEPS),\
+                (3.00, 1*STEPS),\
+                (2.50, 2*STEPS),\
+                (2.00, 2*STEPS),\
+                (1.80, 4*STEPS),\
+                (1.60, 4*STEPS),\
+                (1.50, 8*STEPS),\
+                (1.40, 8*STEPS),\
+                (1.35, 16*STEPS),\
+                (1.30, 16*STEPS),\
+                (1.25, 32*STEPS),\
+                (1.20, 32*STEPS),\
+                (1.15, 64*STEPS),\
+                (1.10, 128*STEPS),\
+                (1.05, 256*STEPS),\
+               ]
+
+if __name__ == "__main__":
+    context.initialize()
+
+    for temp, steps in TEMPERATURES:
+        input_xml = "Trimer-{press:.2f}-{temp:.2f}.xml"\
+                .format(press=PRESS, temp=temp)
+        dynamics.compute_dynamics(input_xml, temp, PRESS, steps)
