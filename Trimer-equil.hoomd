@@ -1,37 +1,40 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
+""" Equilibrate Trimer molecule at a series of temperatures
+using Hoomd """
+
 #
 # Malcolm Ramsay 2016-03-09
 #
 
 # Runs a simulation of trimers
 
-from hoomd_script import *
 import os.path
+from hoomd_script import *
 import equil
 
 
-press = 13.5
+PRESS = 13.5
 # Holds tuples of the temperature and number of steps
 # to iterate through
-steps = 100000
-temperatures = [ (5.00, 1*steps),\
-                 (4.00, 1*steps),\
-                 (3.50, 1*steps),\
-                 (3.00, 1*steps),\
-                 (2.50, 2*steps),\
-                 (2.00, 2*steps),\
-                 (1.80, 4*steps),\
-                 (1.60, 4*steps),\
-                 (1.50, 8*steps),\
-                 (1.40, 8*steps),\
-                 (1.35, 16*steps),\
-                 (1.30, 16*steps),\
-                 (1.25, 32*steps),\
-                 (1.20, 32*steps),\
-                 (1.15, 64*steps),\
-                 (1.10, 128*steps),\
-                 (1.05, 256*steps),\
-                 ]
+STEPS = 100000
+TEMPERATURES = [(5.00, 1*STEPS),\
+                (4.00, 1*STEPS),\
+                (3.50, 1*STEPS),\
+                (3.00, 1*STEPS),\
+                (2.50, 2*STEPS),\
+                (2.00, 2*STEPS),\
+                (1.80, 4*STEPS),\
+                (1.60, 4*STEPS),\
+                (1.50, 8*STEPS),\
+                (1.40, 8*STEPS),\
+                (1.35, 16*STEPS),\
+                (1.30, 16*STEPS),\
+                (1.25, 32*STEPS),\
+                (1.20, 32*STEPS),\
+                (1.15, 64*STEPS),\
+                (1.10, 128*STEPS),\
+                (1.05, 256*STEPS),\
+               ]
 
 
 
@@ -40,14 +43,24 @@ if __name__ == "__main__":
     context.initialize()
 
     if not os.path.isfile("Trimer-crys.xml"):
-        equil.equilFromCrys(temp=0.1, press=press, outfile="Trimer-crys.xml")
-    for temp, steps in temperatures:
+        equil.equil_from_crys(temp=0.1, press=PRESS, outfile="Trimer-crys.xml")
+    prev_t = 5.00
+    for temp, steps in TEMPERATURES:
         if temp == 5.00:
-            inputXml = "Trimer-crys.xml"
+            input_xml = "Trimer-crys.xml"
         else:
-            inputXml = "Trimer-{press:.2f}-{temp:.2f}.xml".format(press=press, temp=prev_t)
+            input_xml = "Trimer-{press:.2f}-{temp:.2f}.xml"\
+                    .format(press=PRESS, temp=prev_t)
         prev_t = temp
-        outfile = "Trimer-{press:.2f}-{temp:.2f}.xml".format(press=press, temp=temp)
+        outfile = "Trimer-{press:.2f}-{temp:.2f}.xml"\
+                .format(press=PRESS, temp=temp)
+
         if not os.path.isfile(outfile):
-            equil.equilFromFile(inputXml=inputXml, outfile=outfile, temp=temp, press=press, steps=steps, maxIters=1)
+            equil.equil_from_file(input_xml=input_xml, \
+                                outfile=outfile, \
+                                temp=temp, \
+                                press=PRESS, \
+                                steps=steps, \
+                                max_iters=1\
+                               )
 
