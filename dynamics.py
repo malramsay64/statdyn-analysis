@@ -36,7 +36,7 @@ class TimeDep(object):
         curr = unwrap(snapshot, self.rigid)
         return np.power(curr - self.pos_init, 2).sum(axis=1)
 
-    def __calc_mean_disp(self, displacement_sq):
+    def _calc_mean_disp(self, displacement_sq):
         """ Calculates the mean displacement for all bodies in the
         system.
         param: displacement_sq The squared displacement of all the particles
@@ -49,9 +49,9 @@ class TimeDep(object):
         system.
         param: snapshot The configuration used to calculate the displacement
         """
-        return self.__calc_mean_disp(self.get_displacement_sq(snapshot))
+        return self._calc_mean_disp(self.get_displacement_sq(snapshot))
 
-    def __calc_msd(self, displacement_sq):
+    def _calc_msd(self, displacement_sq):
         """ Calculate the mean squared displacement of particles
         param: displacement_sq The squared displacements of the particles
         """
@@ -61,9 +61,9 @@ class TimeDep(object):
         """ Return the mean squared displacement of particles
         param: snapshot The snapshot the particles have moved to
         """
-        return self.__calc_msd(self.get_displacement_sq(snapshot))
+        return self._calc_msd(self.get_displacement_sq(snapshot))
 
-    def __calc_mfd(self, displacement_sq):
+    def _calc_mfd(self, displacement_sq):
         """ Calculate the mean squared displacement of particles
         param: displacement_sq The squared displacements of the particles
         """
@@ -73,21 +73,21 @@ class TimeDep(object):
         """ Return the mean fouth (quartic) displacement of particles
         param: snapshot The snapshot the particles have moved to
         """
-        return self.__calc_mfd(self.get_displacement_sq(snapshot))
+        return self._calc_mfd(self.get_displacement_sq(snapshot))
 
-    def __calc_alpha(self, displacement_sq):
+    def _calc_alpha(self, displacement_sq):
         """ Calculate the non-gaussian parameter
         param: snapshot The configuration the particles have moved to
         """
-        msd = self.__calc_msd(displacement_sq)
-        mfd = self.__calc_mfd(displacement_sq)
+        msd = self._calc_msd(displacement_sq)
+        mfd = self._calc_mfd(displacement_sq)
         return mfd/(2.*(msd*msd))
 
     def get_alpha(self, snapshot):
         """ Return the non-gaussian parameter
         param: snapshot The configuration the particles have moved to
         """
-        return self.__calc_alpha(self.get_displacement_sq(snapshot))
+        return self._calc_alpha(self.get_displacement_sq(snapshot))
 
 
 class TimeDep2dRigid(TimeDep):
@@ -123,7 +123,7 @@ class TimeDep2dRigid(TimeDep):
         return rot
 
 
-    def __calc_decoupling(self, snapshot, delta_disp, delta_rot):
+    def _calc_decoupling(self, snapshot, delta_disp, delta_rot):
         """ Calculates the coupling strength parameter of the translational and
         rotational motion as described by [[|Farone and Chen]].
         :param snapshot The snapshot with which to take the distances and
@@ -176,7 +176,7 @@ class TimeDep2dRigid(TimeDep):
         :param dtheta The size of the binning for the rotational motion. This
         is set to 0.005 by default.
         """
-        return self.__calc_decoupling(snapshot, \
+        return self._calc_decoupling(snapshot, \
                                       delta_disp,\
                                       delta_rot \
                                      )
@@ -194,10 +194,10 @@ class TimeDep2dRigid(TimeDep):
         the data is ouput to stdout.
         """
         disp_sq = self.get_displacement_sq(snapshot)
-        msd = self._TimeDep__calc_msd(disp_sq)
-        mfd = self._TimeDep__calc_mfd(disp_sq)
-        alpha = self._TimeDep__calc_alpha(disp_sq)
-        disp = self._TimeDep__calc_mean_disp(disp_sq)
+        msd = self._calc_msd(disp_sq)
+        mfd = self._calc_mfd(disp_sq)
+        alpha = self._calc_alpha(disp_sq)
+        disp = self._calc_mean_disp(disp_sq)
         rot = self.get_rot(snapshot)
         time = self.get_time_diff(timestep)
         decoupling = self.get_decoupling(snapshot)
