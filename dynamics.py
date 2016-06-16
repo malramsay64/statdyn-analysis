@@ -11,77 +11,10 @@ import stepSize
 class TimeDep(object):
     """ Class to compute the time dependent characteristics of individual
     particles in a hoomd simulation."""
+    rigid = False
     def __init__(self, system):
-        self.t_init = system.take_snapshot()
-        self.pos_init = unwrap(self.t_init, False)
-        self.timestep = system.get_metadata()['timestep']
-        self.box_dim = np.array([self.t_init.box.Lx,\
-                                 self.t_init.box.Ly,\
-                                 self.t_init.box.Lz \
-                                ])
-
-    def get_time_diff(self, timestep):
-        """ Returns the difference in time between the currrent timestep and the
-        initial timestep.
-        param: timestep The timestep the difference is to be calculated at
-        """
-        return timestep - self.timestep
-
-    def get_msd(self, snapshot):
-        """ Calculate the mean squared displacement of particles
-        param: snapshot The snapshot the particles have moved to
-        """
-        snapshot = snapshot
-        msd = np.empty(len(self.t_init.particles.position))
-        sys_box_dim = np.array([snapshot.box.Lx,\
-                                snapshot.box.Ly,\
-                                snapshot.box.Lz\
-                               ])
-        for i in range(len(self.t_init.particles.position)):
-            msd[i] = sum(np.power(\
-                ((self.t_init.particles.image[i]*self.box_dim \
-                + self.t_init.particles.position[i]) \
-                - (snapshot.particles.image[i]*sys_box_dim \
-                + snapshot.particles.position[i]))\
-                .astype(np.float65), 2))
-        return np.mean(msd, dtype=np.float64)
-
-    def get_mfd(self, snapshot):
-        """ Calculate the mean fouth (quartic) displacement of particles
-        param: snapshot The snapshot the particles have moved to
-        """
-        snapshot = snapshot
-        mfd = np.empty(len(self.t_init.particles.position))
-        sys_box_dim = np.array([snapshot.box.Lx,\
-                                snapshot.box.Ly,\
-                                snapshot.box.Lz
-                               ])
-        for i in range(len(self.t_init.particles.position)):
-            mfd[i] = sum(np.power(\
-                ((self.t_init.particles.image[i]*self.box_dim \
-                + self.t_init.particles.position[i]) \
-                - (snapshot.particles.image[i]*sys_box_dim\
-                + snapshot.particles.position[i])) \
-                .astype(np.float64), 4))
-        return np.mean(mfd, dtype=np.float64)
-
-    def get_alpha(self, snapshot):
-        """ Calculate the non-gaussian parameter
-        param: snapshot The configuration the particles have moved to
-        """
-        msd = self.get_msd(snapshot)
-        mfd = self.get_mfd(snapshot)
-        return mfd/(2.*(msd*msd))
-
-
-class TimeDep2dRigid(object):
-    """ Class to compute the time dependent characteristics of rigid bodies
-    in a hoomd simulation.
-    param: system The initial system configuration
-    """
-    def __init__(self, system):
-        self.t_init = system.take_snapshot(rigid_bodies=True)
-        self.pos_init = unwrap(self.t_init, True)
+        self.t_init = system.take_snapshot(rigid_bodies=self.rigid)
+        self.pos_init = unwrap(self.t_init, self.rigid)
         self.timestep = system.get_metadata()['timestep']
 
     def get_time_diff(self, timestep):
@@ -100,8 +33,72 @@ class TimeDep2dRigid(object):
 
         return: Array of the squared displacements
         """
-        curr = unwrap(snapshot, rigid=True)
+        curr = unwrap(snapshot, self.rigid)
         return np.power(curr - self.pos_init, 2).sum(axis=1)
+
+    def __calc_mean_disp(self, displacement_sq):
+        """ Calculates the mean displacement for all bodies in the
+        system.
+        param: displacement_sq The squared displacement of all the particles
+        used to calculate the mean displacement
+        """
+        return np.mean(np.sqrt(displacement_sq))
+
+    def get_mean_disp(self, snapshot):
+        """ Calculates the mean displacement for all rigid bodies in the
+        system.
+        param: snapshot The configuration used to calculate the displacement
+        """
+        return self.__calc_mean_disp(self.get_displacement_sq(snapshot))
+
+    def __calc_msd(self, displacement_sq):
+        """ Calculate the mean squared displacement of particles
+        param: displacement_sq The squared displacements of the particles
+        """
+        return np.mean(displacement_sq)
+
+    def get_msd(self, snapshot):
+        """ Return the mean squared displacement of particles
+        param: snapshot The snapshot the particles have moved to
+        """
+        return self.__calc_msd(self.get_displacement_sq(snapshot))
+
+    def __calc_mfd(self, displacement_sq):
+        """ Calculate the mean squared displacement of particles
+        param: displacement_sq The squared displacements of the particles
+        """
+        return np.mean(np.power(displacement_sq, 2))
+
+    def get_mfd(self, snapshot):
+        """ Return the mean fouth (quartic) displacement of particles
+        param: snapshot The snapshot the particles have moved to
+        """
+        return self.__calc_mfd(self.get_displacement_sq(snapshot))
+
+    def __calc_alpha(self, displacement_sq):
+        """ Calculate the non-gaussian parameter
+        param: snapshot The configuration the particles have moved to
+        """
+        msd = self.__calc_msd(displacement_sq)
+        mfd = self.__calc_mfd(displacement_sq)
+        return mfd/(2.*(msd*msd))
+
+    def get_alpha(self, snapshot):
+        """ Return the non-gaussian parameter
+        param: snapshot The configuration the particles have moved to
+        """
+        return self.__calc_alpha(self.get_displacement_sq(snapshot))
+
+
+class TimeDep2dRigid(TimeDep):
+    """ Class to compute the time dependent characteristics of rigid bodies
+    in a hoomd simulation.
+    param: system The initial system configuration
+    """
+    rigid = True
+    def __init__(self, system):
+        super().__init__(system)
+
 
     def get_rot(self, snapshot):
         """ Calculate the mean rotation of rigid bodies in the system
@@ -125,45 +122,14 @@ class TimeDep2dRigid(object):
                 rot[i] = 2*math.pi - rot[i]
         return rot
 
-    def get_msd(self, snapshot):
-        """ Calculates the mean squared displacement for all rigid bodies in the
-        system.
-        param: snapshot The configuration used to calculate the displacement
-        """
-        return np.mean(self.get_displacement_sq(snapshot))
 
-    def get_mfd(self, snapshot):
-        """ Calculates the mean fourth (quartic) displacement for all rigid
-        bodies in the system.
-        param: snapshot The configuration used to calculate the displacement
-        """
-        return np.mean(np.power(self.get_displacement_sq(snapshot), 2))
-
-    def get_mean_disp(self, snapshot):
-        """ Calculates the mean displacement for all rigid bodies in the
-        system.
-        param: snapshot The configuration used to calculate the displacement
-        """
-        return np.mean(np.sqrt(self.get_displacement_sq(snapshot)))
-
-    def get_alpha(self, snapshot):
-        """ Calculate the non-gaussian parameter
-        param: snapshot The configuration the particles have moved to
-        """
-        disp_sq = self.get_displacement_sq(snapshot)
-        msd = np.mean(disp_sq)
-        mfd = np.mean(np.power(disp_sq), 2)
-        return mfd/(2*msd*msd) - 1
-
-    def get_decoupling(self, snapshot, delta_disp=0.005, delta_rot=0.005):
+    def __calc_decoupling(self, snapshot, delta_disp, delta_rot):
         """ Calculates the coupling strength parameter of the translational and
         rotational motion as described by [[|Farone and Chen]].
         :param snapshot The snapshot with which to take the distances and
         rotations from the initial.
-        :param dr The size on the binning for the translational motion. This is
-        set to 0.005 by default.
-        :param dtheta The size of the binning for the rotational motion. This
-        is set to 0.005 by default.
+        :param dr The size on the binning for the translational motion.
+        :param dtheta The size of the binning for the rotational motion.
         """
         # Calculate and bin displacements
         disp = np.sqrt(self.get_displacement_sq(snapshot))
@@ -184,7 +150,6 @@ class TimeDep2dRigid(object):
         for i, j in zip(rot, disp):
             prob[i][j] += 1
 
-
         prob = np.asmatrix(prob)
         # Calculate tranlational and rotational probabilities
         p_trans = (prob.transpose() * rot_array.transpose())
@@ -201,6 +166,21 @@ class TimeDep2dRigid(object):
         decoupling /= ((prob*disp_array.transpose()) * rot_array).sum()
         return decoupling.sum()
 
+    def get_decoupling(self, snapshot, delta_disp=0.005, delta_rot=0.005):
+        """ Returns the coupling strength parameter of the translational and
+        rotational motion as described by [[|Farone and Chen]].
+        :param snapshot The snapshot with which to take the distances and
+        rotations from the initial.
+        :param dr The size on the binning for the translational motion. This is
+        set to 0.005 by default.
+        :param dtheta The size of the binning for the rotational motion. This
+        is set to 0.005 by default.
+        """
+        return self.__calc_decoupling(snapshot, \
+                                      delta_disp,\
+                                      delta_rot \
+                                     )
+
     def print_all(self, snapshot, timestep, outfile=None):
         """ Function to print all the calculated dynamic quantities to either
         stdout or a function. This function only calculates the distances and
@@ -214,11 +194,11 @@ class TimeDep2dRigid(object):
         the data is ouput to stdout.
         """
         disp_sq = self.get_displacement_sq(snapshot)
-        msd = np.mean(disp_sq)
-        mfd = np.mean(np.power(disp_sq, 2))
-        alpha = mfd/(2*msd**2) - 1
+        msd = self.__calc_msd(disp_sq)
+        mfd = self.__calc_mfd(disp_sq)
+        alpha = self.__calc_alpha(disp_sq)
+        disp = self.__calc_mean_disp(disp_sq)
         rot = self.get_rot(snapshot)
-        disp = np.mean(np.sqrt(disp_sq))
         time = self.get_time_diff(timestep)
         decoupling = self.get_decoupling(snapshot)
         if outfile:
