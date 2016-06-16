@@ -194,10 +194,10 @@ class TimeDep2dRigid(TimeDep):
         the data is ouput to stdout.
         """
         disp_sq = self.get_displacement_sq(snapshot)
-        msd = self.__calc_msd(disp_sq)
-        mfd = self.__calc_mfd(disp_sq)
-        alpha = self.__calc_alpha(disp_sq)
-        disp = self.__calc_mean_disp(disp_sq)
+        msd = self._TimeDep__calc_msd(disp_sq)
+        mfd = self._TimeDep__calc_mfd(disp_sq)
+        alpha = self._TimeDep__calc_alpha(disp_sq)
+        disp = self._TimeDep__calc_mean_disp(disp_sq)
         rot = self.get_rot(snapshot)
         time = self.get_time_diff(timestep)
         decoupling = self.get_decoupling(snapshot)
@@ -318,8 +318,8 @@ def compute_dynamics(input_xml,
         timestep = step_iter.next()
         run_upto(timestep)
         dyn.print_all(system.take_snapshot(rigid_bodies=True), \
-                      timestep,
-                      basename+"-dyn.dat"
+                      timestep, \
+                      outfile=basename+"-dyn.dat" \
                      )
         thermo.query('pressure')
 
