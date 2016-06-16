@@ -13,10 +13,11 @@ class TimeDep(object):
     particles in a hoomd simulation."""
     def __init__(self, system):
         self.t_init = system.take_snapshot()
+        self.pos_init = unwrap(self.t_init, False)
         self.timestep = system.get_metadata()['timestep']
         self.box_dim = np.array([self.t_init.box.Lx,\
                                  self.t_init.box.Ly,\
-                                 self.t_init.box.Lz
+                                 self.t_init.box.Lz \
                                 ])
 
     def get_time_diff(self, timestep):
@@ -80,11 +81,8 @@ class TimeDep2dRigid(object):
     """
     def __init__(self, system):
         self.t_init = system.take_snapshot(rigid_bodies=True)
+        self.pos_init = unwrap(self.t_init, True)
         self.timestep = system.get_metadata()['timestep']
-        self.box_dim = np.array([self.t_init.box.Lx, \
-                                 self.t_init.box.Ly, \
-                                 self.t_init.box.Lz  \
-                                ])
 
     def get_time_diff(self, timestep):
         """ Returns the difference in time between the currrent timestep and the
@@ -102,19 +100,8 @@ class TimeDep2dRigid(object):
 
         return: Array of the squared displacements
         """
-        disp = np.empty(len(self.t_init.bodies.com))
-        sys_box_dim = np.array([snapshot.box.Lx, \
-                                snapshot.box.Ly, \
-                                snapshot.box.Lz  \
-                               ])
-        for i in range(len(self.t_init.bodies.com)):
-            disp[i] = sum(np.power(\
-              ((scalar3_to_array(self.t_init.bodies.com[i]) \
-              + scalar3_to_array(self.t_init.bodies.body_image[i])*self.box_dim)\
-              - scalar3_to_array(snapshot.bodies.com[i]) \
-              + scalar3_to_array(snapshot.bodies.body_image[i]) * sys_box_dim)\
-              .astype(np.float64), 2))
-            return disp
+        curr = unwrap(snapshot, rigid=True)
+        return np.power(curr - self.pos_init, 2).sum(axis=1)
 
     def get_rot(self, snapshot):
         """ Calculate the mean rotation of rigid bodies in the system
@@ -180,30 +167,39 @@ class TimeDep2dRigid(object):
         """
         # Calculate and bin displacements
         disp = np.sqrt(self.get_displacement_sq(snapshot))
-        disp = np.floor(disp/delta_disp)
-        disp_max = np.max(disp)
-        disp_array = np.power(np.arrange(delta_disp, delta_disp*disp_max, delta_disp), 2)
+        disp = np.floor(disp/delta_disp).astype(int)
+        # adding 1 to account for 0 value
+        disp_max = np.max(disp+1)
+        disp_array = np.asmatrix(np.power(\
+                np.arange(1, disp_max+1)*delta_disp, 2))
         # Calculate and bin rotaitons
         rot = self.get_rotations(snapshot)
-        rot = np.floor(np.abs(rot)/delta_rot)
-        rot_max = np.max(rot)
-        rot_array = np.sin(np.arrange(delta_rot, delta_rot*rot_max, delta_rot))
+        rot = np.floor(np.abs(rot)/delta_rot).astype(int)
+        # adding 1 to account for 0 value
+        rot_max = np.max(rot+1)
+        rot_array = np.asmatrix(np.sin(\
+                np.arange(1, rot_max+1)*delta_rot))
         # Use binned values to create a probability matrix
         prob = np.zeros((rot_max, disp_max))
-        for i, j in zip(rot, prob):
+        for i, j in zip(rot, disp):
             prob[i][j] += 1
 
+
+        prob = np.asmatrix(prob)
         # Calculate tranlational and rotational probabilities
-        p_trans = (prob * rot_array).sum(axis=1)*delta_rot
-        p_rot = (prob.transpose()*np.power(disp_array, 2)).sum(axis=1)*delta_disp
+        p_trans = (prob.transpose() * rot_array.transpose())
+        p_trans *= delta_rot
+        p_rot = (prob * disp_array.transpose())
+        p_rot *= delta_disp
 
         # Calculate the squared difference between the combined and individual
         # probabilities and then integrate over the differences to find the
         # coupling strength
-        diff2 = np.power(prob - p_trans.transpose * p_rot, 2)
-        coupling = ((diff2*np.power(rot_array, 2)).transpose() \
-                * np.power(disp_array, 2))
-        coupling /= ((prob*rot_array).transpose() * disp_array)
+        diff2 = np.power(prob - p_rot * p_trans.transpose(), 2)
+        decoupling = (diff2 * np.power(disp_array, 2).transpose()) \
+                * np.power(rot_array, 2).sum()
+        decoupling /= ((prob*disp_array.transpose()) * rot_array).sum()
+        return decoupling.sum()
 
     def print_all(self, snapshot, timestep, outfile=None):
         """ Function to print all the calculated dynamic quantities to either
@@ -224,21 +220,19 @@ class TimeDep2dRigid(object):
         rot = self.get_rot(snapshot)
         disp = np.mean(np.sqrt(disp_sq))
         time = self.get_time_diff(timestep)
+        decoupling = self.get_decoupling(snapshot)
         if outfile:
-            write_file = open(outfile, 'a')
-            write_file.write(\
-                    str(time)+" "+str(rot)+" "+str(disp)+" "+str(msd)+" "\
-                    +str(mfd)+" "+str(alpha)+"\n")
+            print(time, rot, disp, msd, mfd, alpha, decoupling, \
+                    file=open(outfile, 'a'))
         else:
-            print(time, rot, disp, msd, mfd, alpha)
+            print(time, rot, disp, msd, mfd, alpha, decoupling)
 
     def print_heading(self, outfile):
         """ Write heading values to outfile which match up with the values given
         by print_all().
         """
-        write_file = open(outfile, 'w')
-        write_file.write("time rotation displacement msd mfd alpha\n")
-
+        print("time", "rotation", "displacement", "msd", "mfd",\
+                "alpha", "coupling", file=open(outfile, 'w'))
 
 def quat_to_2d(quat):
     """ Convert the quaternion representation of angle to a two dimensional
@@ -260,12 +254,31 @@ def scalar4_to_array(scalar):
     """
     return np.array([scalar.x, scalar.y, scalar.z, scalar.w])
 
+def unwrap(snapshot, rigid):
+    """ Function to unwrap the periodic distances in the snapshots to
+    discreete distances that are easy to use for computing distance.
+    param: snapshot Snapshot containing the data to unwrap
+    param: rigid Boolean value indicating whether we are unwrapping rigid
+    body centers of mass or particle positions.
+    """
+    box_dim = np.array([snapshot.box.Lx,\
+                        snapshot.box.Ly,\
+                        snapshot.box.Lz \
+                       ])
+    if rigid:
+        pos = np.array([scalar3_to_array(i) for i in snapshot.bodies.com])
+        image = np.array([scalar3_to_array(i) \
+                for i in snapshot.bodies.body_image])
+    else:
+        pos = np.array(snapshot.particles.position)
+        image = np.array(snapshot.particles.image)
+    return pos + image*box_dim
+
 
 def compute_dynamics(input_xml,
                      temp,
                      press,
                      steps,
-                     potentials=None,
                      rigid=True):
     """ Run a hoomd simulation calculating the dynamic quantites on a power
     law scale such that both short timescale and long timescale events are
@@ -274,8 +287,6 @@ def compute_dynamics(input_xml,
     for the simulation
     param: temp The target temperature at which to run the simulation
     param: press The target pressure at which to run the simulation
-    param: potentials An alternate interaction potential for the simulation.
-    If none the default interaction potential is used.
     param: rigid Boolean value indicating whether to integrate using rigid
     bodes.
     """
@@ -291,11 +302,10 @@ def compute_dynamics(input_xml,
     system = init.read_xml(filename=input_xml, time_step=0)
     update.enforce2d()
 
-    if not potentials:
-        potentials = pair.lj(r_cut=2.5)
-        potentials.pair_coeff.set('1', '1', epsilon=1, sigma=2)
-        potentials.pair_coeff.set('2', '2', epsilon=1, sigma=0.637556*2)
-        potentials.pair_coeff.set('1', '2', epsilon=1, sigma=1.637556)
+    potentials = pair.lj(r_cut=2.5)
+    potentials.pair_coeff.set('1', '1', epsilon=1, sigma=2)
+    potentials.pair_coeff.set('2', '2', epsilon=1, sigma=0.637556*2)
+    potentials.pair_coeff.set('1', '2', epsilon=1, sigma=1.637556)
 
     # Create particle groups
     gall = group.all()
@@ -321,7 +331,7 @@ def compute_dynamics(input_xml,
         dyn.print_heading(basename+"-dyn.dat")
 
     timestep = 0
-    step_iter = stepSize.powerSteps()
+    step_iter = stepSize.PowerSteps()
 
 
     while timestep < steps:
@@ -331,5 +341,6 @@ def compute_dynamics(input_xml,
                       timestep,
                       basename+"-dyn.dat"
                      )
+        thermo.query('pressure')
 
 
