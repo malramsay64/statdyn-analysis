@@ -81,7 +81,7 @@ class TimeDep(object):
         """
         msd = self._calc_msd(displacement_sq)
         mfd = self._calc_mfd(displacement_sq)
-        return mfd/(2.*(msd*msd))
+        return mfd/(2.*(msd*msd)) - 1
 
     def get_alpha(self, snapshot):
         """ Return the non-gaussian parameter
@@ -150,7 +150,12 @@ class TimeDep2dRigid(TimeDep):
         for i, j in zip(rot, disp):
             prob[i][j] += 1
 
-        prob = np.asmatrix(prob)
+        prob = normalise_probability(np.asmatrix(prob), \
+                                     rot_array, disp_array, \
+                                     delta_rot, delta_disp
+                                    )
+
+
         # Calculate tranlational and rotational probabilities
         p_trans = (prob.transpose() * rot_array.transpose())
         p_trans *= delta_rot
@@ -161,8 +166,8 @@ class TimeDep2dRigid(TimeDep):
         # probabilities and then integrate over the differences to find the
         # coupling strength
         diff2 = np.power(prob - p_rot * p_trans.transpose(), 2)
-        decoupling = (diff2 * np.power(disp_array, 2).transpose()) \
-                * np.power(rot_array, 2).sum()
+        decoupling = ((diff2 * np.power(disp_array, 2).transpose()) \
+                * np.power(rot_array, 2)).sum()
         decoupling /= ((prob*disp_array.transpose()) * rot_array).sum()
         return decoupling.sum()
 
@@ -254,6 +259,23 @@ def unwrap(snapshot, rigid):
         image = np.array(snapshot.particles.image)
     return pos + image*box_dim
 
+def normalise_probability(prob_matrix, rot_matrix, disp_matrix, \
+        delta_rot=0.005, delta_disp=0.005):
+    """ Function to normalise the probabilty matrix of the decoupling parameter
+    to integrate to a value of 1.
+    param: prob_matrix The numpy matrix to be normalised
+    param: rot_matrix The numpy matrix of theta values these include any
+    transformations that are involved in the integration
+    param: disp_matrix The numpy matrix of displacement values with any
+    transformations already applied.
+    param: delta_disp The distance between displacements (i.e. the binning)
+    param: delta_rot The distance between rotations (i.e. the binning)
+
+    The components are normalised through the use of matrix multiplication
+    """
+    factor = ((rot_matrix * prob_matrix) * disp_matrix.transpose()) * \
+            delta_disp * delta_rot
+    return prob_matrix/factor
 
 def compute_dynamics(input_xml,
                      temp,
