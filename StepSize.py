@@ -11,8 +11,6 @@ class PowerSteps(object):
     become larger. In the case when there num_linear is greater than the number
     of steps between powers every step is returned.
     :param pow_jump The jumps in power
-    :param start The integer value to start the sequence on. This offset is 
-    added to every returned value.
 
     Given num_linear = 9 and pow_jump = 1 this will produce the series
     1 2 3 4 5 6 7 8 9 10 20 30 40 50 60 70 80 90 100 200 300 ...

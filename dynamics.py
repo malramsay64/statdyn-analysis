@@ -6,7 +6,7 @@ import os
 import math
 import numpy as np
 from hoomd_script import init, update, pair, integrate, analyze, group, run_upto
-import stepSize
+import StepSize
 
 class TimeDep(object):
     """ Class to compute the time dependent characteristics of individual
@@ -330,7 +330,7 @@ def compute_dynamics(input_xml,
     # Initialise dynamics quantities
     dyn = TimeDep2dRigid(system)
     dyn.print_heading(basename+"-dyn.dat")
-    new_step = stepSize.PowerSteps()
+    new_step = StepSize.PowerSteps()
     struct = [(new_step.next(), new_step, dyn)]
     timestep = 0
 
@@ -349,7 +349,7 @@ def compute_dynamics(input_xml,
         # Add new key frame when a run reaches 10000 steps
         if timestep % 100000 == 0 and \
                 len([s for s in struct if s[0] == timestep+1]) == 0:
-            new_step = stepSize.PowerSteps(start=timestep)
+            new_step = StepSize.PowerSteps(start=timestep)
             struct.append((new_step.next(), new_step, TimeDep2dRigid(system)))
     thermo.query('pressure')
 
