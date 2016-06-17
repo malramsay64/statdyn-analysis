@@ -2,8 +2,7 @@
 """ Calculate the dynamic properties for the Trimer molecule
 for a series of temperatures"""
 
-import os.path
-from hoomd_script import *
+from hoomd_script import context
 import dynamics
 
 PRESS = 13.5

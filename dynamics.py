@@ -306,21 +306,29 @@ def compute_dynamics(input_xml,
                          period=1000)
 
     # Initialise dynamics quantities
-    if rigid:
-        dyn = TimeDep2dRigid(system)
-        dyn.print_heading(basename+"-dyn.dat")
-
+    dyn = TimeDep2dRigid(system)
+    dyn.print_heading(basename+"-dyn.dat")
+    new_step = stepSize.PowerSteps()
+    struct = [(new_step.next(), new_step, dyn)]
     timestep = 0
-    step_iter = stepSize.PowerSteps()
-
 
     while timestep < steps:
-        timestep = step_iter.next()
+        index_min = struct.index(min(struct))
+        next_step, step_iter, dyn = struct[index_min]
+        timestep = next_step
+        print(timestep, file=open("timesteps.dat", 'a'))
         run_upto(timestep)
         dyn.print_all(system.take_snapshot(rigid_bodies=True), \
                       timestep, \
                       outfile=basename+"-dyn.dat" \
                      )
-        thermo.query('pressure')
+
+        struct[index_min] = (step_iter.next(), step_iter, dyn)
+        # Add new key frame when a run reaches 10000 steps
+        if timestep % 100000 == 0 and \
+                len([s for s in struct if s[0] == timestep+1]) == 0:
+            new_step = stepSize.PowerSteps(start=timestep)
+            struct.append((new_step.next(), new_step, TimeDep2dRigid(system)))
+    thermo.query('pressure')
 
 
