@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 """ A series of functions to equilibrate hoomd MD simulations"""
 #
 # Malcolm Ramsay 2016-03-09
@@ -7,30 +7,21 @@
 # Hoomd helper functions
 
 import os.path
-from hoomd_script import analyze,  \
-                         run,      \
-                         init,     \
-                         pair,     \
-                         update,   \
-                         group,    \
-                         integrate,\
-                         dump
+from hoomd_script import *
 
 def equil_from_crys(input_xml="mol.xml",\
                   outfile=None,\
                   steps=100000,\
-                  rigid=True,\
                   potentials=None,\
                   temp=1.0,\
                   press=1.0,\
                   max_iters=10):
     """ Equilibrate system from a crystalline initial configuration
+
     :param inputXML: File in which the initial configuration is stored in the
     hoomd-xml file format.
     :param outfile: File to output final configuration to.
     :param steps: Number of steps to run the equilibration.
-    :param rigid: Boolean value indicating whether the rigid integrators should
-    be used.
     :param potentials: Interaction potentials to use for the simulation. Default
     values are set if no input is given.
     :param temp: Target temperature at which to equilibrate system
@@ -48,7 +39,7 @@ def equil_from_crys(input_xml="mol.xml",\
 
     # Initialise simulation parameters
     # context.initialize()
-    system = init.read_xml(filename=input_xml)
+    init.read_xml(filename=input_xml)
     update.enforce2d()
 
     if not potentials:
@@ -61,21 +52,11 @@ def equil_from_crys(input_xml="mol.xml",\
     gall = group.all()
 
     # Find minimum energy configuration
-    if rigid:
-        fire = integrate.mode_minimize_rigid_fire(group=gall,\
-                                                  dt=0.005,  \
-                                                  ftol=1e-3, \
-                                                  Etol=1e-4  \
-                                                 )
-    else:
-        fire = integrate.mode_minimize_fire(group=gall,\
-                                            dt=0.005,  \
-                                            ftol=1e-3, \
-                                            Etol=1e-4  \
-                                           )
-    run(1000)
-    while not fire.has_converged():
-        run(1000)
+    integrate.mode_minimize_rigid_fire(group=gall,\
+                                              dt=0.005,  \
+                                              ftol=1e-3, \
+                                              Etol=1e-4  \
+                                             )
 
     # Calculate thermodynamic quantities
     thermo = analyze.log(filename=None, \
@@ -85,10 +66,7 @@ def equil_from_crys(input_xml="mol.xml",\
 
     # Perform initial equilibration at target temperature and pressure.
     integrate.mode_standard(dt=0.001)
-    if rigid:
-        npt = integrate.npt_rigid(group=gall, T=temp, tau=5, P=press, tauP=5)
-    else:
-        npt = integrate.npt(group=gall, T=temp, tau=5, P=press, tauP=5)
+    npt = integrate.npt_rigid(group=gall, T=temp, tau=5, P=press, tauP=5)
 
 
     iters = 0
@@ -116,7 +94,6 @@ def equil_from_file(input_xml=None,\
                     press=1.0,\
                     steps=100000,\
                     max_iters=10,\
-                    rigid=True,\
                     potentials=None):
     """ Equilibrate simulation from an input file
 
@@ -141,7 +118,7 @@ def equil_from_file(input_xml=None,\
     # Initialise simulation parameters
     basename = os.path.splitext(outfile)[0]
     # context.initialize()
-    system = init.read_xml(filename=input_xml, restart=basename+'-restart.xml')
+    init.read_xml(filename=input_xml, restart=basename+'-restart.xml')
     update.enforce2d()
 
     if not potentials:
@@ -165,24 +142,21 @@ def equil_from_file(input_xml=None,\
                         )
 
     # Create restart file if simulation stops
-    restart = dump.xml(filename=basename+'-restart.xml', \
+    dump.xml(filename=basename+'-restart.xml', \
                        period=1000000, \
                        restart=True, \
                        all=True)
 
     # Perform initial equilibration at target temperature and pressure.
     integrate.mode_standard(dt=0.001)
-    if rigid:
-        npt = integrate.npt_rigid(group=gall, T=temp, tau=5, P=press, tauP=5)
-    else:
-        npt = integrate.npt(group=gall, T=temp, tau=5, P=press, tauP=5)
+    npt = integrate.npt_rigid(group=gall, T=temp, tau=5, P=press, tauP=5)
 
     iters = 0
     while abs(thermo.query('temperature') - temp) > 0.1*temp or \
           abs(thermo.query('pressure') - press) > 0.1*press:
         run(10000)
         iters += 1
-        if iters > maxIters:
+        if iters > max_iters:
             break
 
     # Run longer equilibration
