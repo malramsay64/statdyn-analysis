@@ -12,22 +12,23 @@ PRESS = 13.5
 STEPS = 10000000
 TEMPERATURES = [(5.00, 1*STEPS),\
                 (4.00, 1*STEPS),\
-                (3.50, 1*STEPS),\
-                (3.00, 1*STEPS),\
-                (2.50, 2*STEPS),\
-                (2.00, 2*STEPS),\
-                (1.80, 4*STEPS),\
-                (1.60, 4*STEPS),\
-                (1.50, 8*STEPS),\
-                (1.40, 8*STEPS),\
-                (1.35, 16*STEPS),\
-                (1.30, 16*STEPS),\
-                (1.25, 32*STEPS),\
-                (1.20, 32*STEPS),\
-                (1.15, 64*STEPS),\
-                (1.10, 128*STEPS),\
-                (1.05, 256*STEPS),\
+                (3.50, 2*STEPS),\
+                (3.00, 2*STEPS),\
+                (2.50, 4*STEPS),\
+                (2.00, 4*STEPS),\
+                (1.80, 8*STEPS),\
+                (1.60, 8*STEPS),\
+                (1.50, 16*STEPS),\
+                (1.40, 16*STEPS),\
+                (1.35, 32*STEPS),\
+                (1.30, 32*STEPS),\
+                (1.25, 64*STEPS),\
+                (1.20, 128*STEPS),\
+                (1.15, 128*STEPS),\
+                (1.10, 256*STEPS),\
+                (1.05, 512*STEPS),\
                ]
+
 
 if __name__ == "__main__":
     context.initialize()
