@@ -100,13 +100,6 @@ class TimeDep2dRigid(TimeDep):
         super().__init__(system)
 
 
-    def get_rot(self, snapshot):
-        """ Calculate the mean rotation of rigid bodies in the system
-        param: snapshot configuration from which to calulcate the motion
-        """
-        rot = self.get_rotations(snapshot)
-        return np.mean(rot, dtype=np.float64)
-
     def get_rotations(self, snapshot):
         """ Calculate the rotation for every rigid body in the system. This
         doesn't take into accout multiple rotations with values falling between
@@ -186,6 +179,141 @@ class TimeDep2dRigid(TimeDep):
                                       delta_rot \
                                      )
 
+    def _calc_mean_rot(self, rotations):
+        """ Calculate the mean rotation given all the rotations
+
+        :param rotations: array containing the rotation of each molecule
+
+        :return The mean rotation
+        """
+        return np.mean(np.abs(rotations))
+
+    def get_mean_rot(self, snapshot):
+        """ Return the mean rotation
+
+        :param snapshot: the snapshot of the system at the end of the motion
+        :return The mean rotation
+        """
+        return self._calc_mean_rot(self.get_rotations(snapshot))
+
+    def _calc_mean_sq_rot(self, rotations):
+        """ Calculate the mean squared rotation given all the rotations
+
+        :param rotations: array containing the rotation of each molecule
+
+        :return The mean rotation
+        """
+        return np.mean(np.power(rotations, 2))
+
+    def get_mean_sq_rot(self, snapshot):
+        """ Return the mean squared rotation
+
+        :param snapshot: the snapshot of the system at the end of the motion
+        :return The mean rotation
+        """
+        return self._calc_mean_sq_rot(self.get_rotations(snapshot))
+
+    def _calc_mean_trans_rot(self, disp_sq, rotations):
+        """ Calculate the coupled translation and rotation
+
+        :param disp_sq: array containing the squared displacement of each \
+                molecule
+        :param rotations: array containing the rotation of each molecule
+        """
+        return np.mean(np.sqrt(disp_sq) * np.abs(rotations))
+
+    def get_mean_trans_rot(self, snapshot):
+        """ Return the coupled translation and rotation
+
+        :param snapshot: the snapshot of the system at the end of the motion
+        :return The mean rotation
+        """
+        return self._calc_mean_trans_rot(self.get_displacement_sq(snapshot), \
+                                      self.get_rotations(snapshot)\
+                                     )
+
+    def _calc_mean_sq_trans_rot(self, disp_sq, rotations):
+        """ Calculate the coupled translation and rotation
+
+        :param disp_sq: array containing the squared displacement of each \
+                molecule
+        :param rotations: array containing the rotation of each molecule
+        """
+        return np.mean(disp_sq * np.power(rotations, 2))
+
+    def get_mean_sq_trans_rot(self, snapshot):
+        """ Return the squared coupled translation and rotation
+
+        :param snapshot: the snapshot of the system at the end of the motion
+        :return The mean rotation
+        """
+        return self._calc_mean_sq_trans_rot(self.get_displacement_sq(snapshot),\
+                                            self.get_rotations(snapshot)\
+                                     )
+
+    def _calc_gamma1(self, disp_sq, rotations):
+        r""" Calculate the first order coupling of translations and rotations
+
+        .. math:: \gamma_1 &= \frac{<\Delta r \Delta\theta > - \
+                <\Delta r><| \Delta \theta |> }\
+                {\sqrt{<\Delta r^2><\Delta\theta^2>}}
+
+        :param disp_sq The squared displacment of all molecules
+        :param rotations The rotation of each molecule
+        :return The $\gamma_1$ value
+        :rtype float
+        """
+        return (self._calc_mean_trans_rot(disp_sq, rotations) \
+                - self._calc_mean_disp(disp_sq)*self._calc_mean_rot(rotations))\
+                / np.sqrt(self._calc_msd(disp_sq)*\
+                    self._calc_mean_sq_rot(rotations))
+
+    def get_gamma1(self, snapshot):
+        r""" Calculate the first order coupling of translations and rotations
+
+        .. math:: \gamma_1 &= \frac{<\Delta r \Delta\theta > - \
+                <\Delta r><| \Delta \theta |> }\
+                {\sqrt{<\Delta r^2><\Delta\theta^2>}}
+
+        :param disp_sq The squared displacment of all molecules
+        :param rotations The rotation of each molecule
+        :return The $\gamma_1$ value
+        :rtype float
+        """
+        return self._calc_gamma1(self.get_displacement_sq(snapshot),\
+                                 self.get_rotations(snapshot))
+
+
+    def _calc_gamma2(self, disp_sq, rotations):
+        r""" Calculate the first order coupling of translations and rotations
+
+        .. math:: \gamma_2 &= \frac{<\Delta r \Delta\theta >^2 - \
+                <\Delta r>^2<\Delta \theta>^2 }{<\Delta r^2><\Delta\theta^2>}
+
+        :param disp_sq The squared displacment of all molecules
+        :param rotations The rotation of each molecule
+        :return The $\gamma_2$ value
+        :rtype float
+        """
+        return (self._calc_mean_sq_trans_rot(disp_sq, rotations) \
+                - self._calc_msd(disp_sq)*self._calc_mean_sq_rot(rotations))\
+                / (self._calc_msd(disp_sq)*\
+                    self._calc_mean_sq_rot(rotations))
+
+    def get_gamma2(self, snapshot):
+        r""" Calculate the first order coupling of translations and rotations
+
+        .. math:: \gamma_2 &= \frac{<\Delta r \Delta\theta >^2 - \
+                <\Delta r>^2<\Delta \theta>^2 }{<\Delta r^2><\Delta\theta^2>}
+
+        :param disp_sq The squared displacment of all molecules
+        :param rotations The rotation of each molecule
+        :return The $\gamma_2$ value
+        :rtype float
+        """
+        return self._calc_gamma2(self.get_displacement_sq(snapshot),\
+                                 self.get_rotations(snapshot))
+
     def print_all(self, snapshot, timestep, outfile=None):
         """ Function to print all the calculated dynamic quantities to either
         stdout or a function. This function only calculates the distances and
@@ -208,6 +336,8 @@ class TimeDep2dRigid(TimeDep):
         output['mean_rot'] = self._calc_mean_rot(rotations)
         output['time'] = self.get_time_diff(timestep)
         output['decoupling'] = self.get_decoupling(snapshot)
+        output['gamma1'] = self._calc_gamma1(disp_sq, rotations)
+        output['gamma2'] = self._calc_gamma2(disp_sq, rotations)
         if outfile:
             print(vals_to_string(output), file=open(outfile, 'a'))
         else:
@@ -226,6 +356,8 @@ class TimeDep2dRigid(TimeDep):
         output['mean_rot'] = 0
         output['time'] = 0
         output['decoupling'] = 0
+        output['gamma1'] = 0
+        output['gamma2'] = 0
         print(keys_to_string(output), file=open(outfile, 'w'))
 
 def keys_to_string(dictionary, sep=' '):
