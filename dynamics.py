@@ -2,6 +2,7 @@
 """ A set of classes used for computing the dynamic properties of a Hoomd MD
 simulation"""
 
+from __future__ import print_function
 import os
 import math
 import numpy as np
@@ -97,7 +98,7 @@ class TimeDep2dRigid(TimeDep):
     """
     rigid = True
     def __init__(self, system):
-        super().__init__(system)
+        super(TimeDep2dRigid, self).__init__(system)
 
 
     def get_rotations(self, snapshot):
