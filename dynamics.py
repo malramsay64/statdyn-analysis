@@ -199,25 +199,55 @@ class TimeDep2dRigid(TimeDep):
         the data is ouput to stdout.
         """
         disp_sq = self.get_displacement_sq(snapshot)
-        msd = self._calc_msd(disp_sq)
-        mfd = self._calc_mfd(disp_sq)
-        alpha = self._calc_alpha(disp_sq)
-        disp = self._calc_mean_disp(disp_sq)
-        rot = self.get_rot(snapshot)
-        time = self.get_time_diff(timestep)
-        decoupling = self.get_decoupling(snapshot)
+        rotations = self.get_rotations(snapshot)
+        output = dict()
+        output['msd'] = self._calc_msd(disp_sq)
+        output['mfd'] = self._calc_mfd(disp_sq)
+        output['alpha'] = self._calc_alpha(disp_sq)
+        output['disp'] = self._calc_mean_disp(disp_sq)
+        output['mean_rot'] = self._calc_mean_rot(rotations)
+        output['time'] = self.get_time_diff(timestep)
+        output['decoupling'] = self.get_decoupling(snapshot)
         if outfile:
-            print(time, rot, disp, msd, mfd, alpha, decoupling, \
-                    file=open(outfile, 'a'))
+            print(vals_to_string(output), file=open(outfile, 'a'))
         else:
-            print(time, rot, disp, msd, mfd, alpha, decoupling)
+            print(vals_to_string(output))
+
 
     def print_heading(self, outfile):
         """ Write heading values to outfile which match up with the values given
         by print_all().
         """
-        print("time", "rotation", "displacement", "msd", "mfd",\
-                "alpha", "coupling", file=open(outfile, 'w'))
+        output = dict()
+        output['msd'] = 0
+        output['mfd'] = 0
+        output['alpha'] = 0
+        output['disp'] = 0
+        output['mean_rot'] = 0
+        output['time'] = 0
+        output['decoupling'] = 0
+        print(keys_to_string(output), file=open(outfile, 'w'))
+
+def keys_to_string(dictionary, sep=' '):
+    """Converts all keys in a dictionary to a string
+
+    :param dictionary: dictionary of key,value pairs
+    :type dictionary: dict
+    :param sep: Key separator in output
+    :type sep: string
+    :return String
+    """
+    return sep.join([str(key) for key in dictionary.keys()])
+
+def vals_to_string(dictionary, sep=' '):
+    """Converts all vals in a dictionary to a string
+
+    :param dictionary: dictionary of key,value pairs
+    :type dictionary: dict
+    :param sep: Key separator in output
+    :type sep: string
+    """
+    return sep.join([str(val) for val in dictionary.vals()])
 
 def quat_to_2d(quat):
     """ Convert the quaternion representation of angle to a two dimensional
