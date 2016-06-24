@@ -14,7 +14,8 @@ from hoomd_script import init,\
                          analyze,\
                          group,\
                          run_upto,\
-                         run
+                         run,\
+                         dump
 import StepSize
 
 class TimeDep(object):
@@ -343,7 +344,7 @@ class TimeDep2dRigid(TimeDep):
         distribution = self._calc_corr_dist(self.get_displacement_sq(snapshot),\
                                             self.get_rotations(snapshot))
         for val in distribution:
-            print(timestep, val, file=open(outfile, 'a'))
+            print(self.get_time_diff(timestep), val, file=open(outfile, 'a'))
 
     def _calc_corr_skew(self, disp_sq, rotations):
         """Compute the skew of the distribution of the correlation of
@@ -545,11 +546,12 @@ def compute_dynamics(input_xml,
     # Initialise dynamics quantities
     dyn = TimeDep2dRigid(system)
     dyn.print_heading(basename+"-dyn.dat")
-    new_step = StepSize.PowerSteps()
+    tstep_init = system.get_metadata()['timestep']
+    new_step = StepSize.PowerSteps(start=tstep_init)
     struct = [(new_step.next(), new_step, dyn)]
-    timestep = 0
+    timestep = tstep_init
 
-    while timestep < steps:
+    while timestep < steps+tstep_init:
         index_min = struct.index(min(struct))
         next_step, step_iter, dyn = struct[index_min]
         timestep = next_step
@@ -571,5 +573,7 @@ def compute_dynamics(input_xml,
             new_step = StepSize.PowerSteps(start=timestep)
             struct.append((new_step.next(), new_step, TimeDep2dRigid(system)))
     thermo.query('pressure')
+    xml = dump.xml(all=True)
+    xml.write(filename=input_xml)
 
 
