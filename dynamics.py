@@ -7,7 +7,14 @@ import os
 import math
 import numpy as np
 from scipy import stats
-from hoomd_script import init, update, pair, integrate, analyze, group, run_upto
+from hoomd_script import init,\
+                         update,\
+                         pair,\
+                         integrate,\
+                         analyze,\
+                         group,\
+                         run_upto,\
+                         run
 import StepSize
 
 class TimeDep(object):
@@ -376,7 +383,7 @@ class TimeDep2dRigid(TimeDep):
         output['disp'] = self._calc_mean_disp(disp_sq)
         output['mean_rot'] = self._calc_mean_rot(rotations)
         output['time'] = self.get_time_diff(timestep)
-        output['decoupling'] = self.get_decoupling(snapshot)
+        output['decoupling'] = self.get_decoupling(snapshot, 0.05, 0.05)
         output['gamma1'] = self._calc_gamma1(disp_sq, rotations)
         output['gamma2'] = self._calc_gamma2(disp_sq, rotations)
         output['correlation'] = self._calc_corr_skew(disp_sq, rotations)
@@ -422,7 +429,7 @@ def vals_to_string(dictionary, sep=' '):
     :param sep: Key separator in output
     :type sep: string
     """
-    return sep.join([str(val) for val in dictionary.vals()])
+    return sep.join([str(val) for val in dictionary.values()])
 
 def quat_to_2d(quat):
     """ Convert the quaternion representation of angle to a two dimensional
@@ -523,6 +530,9 @@ def compute_dynamics(input_xml,
         integrate.npt_rigid(group=gall, T=temp, tau=1, P=press, tauP=1)
     else:
         integrate.npt(group=gall, T=temp, tau=1, P=press, tauP=1)
+
+    # initial run to settle system after reading file
+    run(10000)
 
     thermo = analyze.log(filename=basename+"-thermo.dat", \
                          quantities=['temperature', 'pressure', \
