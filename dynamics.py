@@ -6,6 +6,7 @@ from __future__ import print_function
 import os
 import math
 import numpy as np
+from scipy import stats
 from hoomd_script import init, update, pair, integrate, analyze, group, run_upto
 import StepSize
 
@@ -315,6 +316,45 @@ class TimeDep2dRigid(TimeDep):
         return self._calc_gamma2(self.get_displacement_sq(snapshot),\
                                  self.get_rotations(snapshot))
 
+    def _calc_corr_dist(self, disp_sq, rotations):
+        """Calculate the correlation of residuals for the translations and
+        rotations
+
+        :param disp_sq The squared displacment of all molecules
+        :param rotations The rotation of each molecule
+        :rtype array
+        """
+        return (np.sqrt(disp_sq) - self._calc_msd(disp_sq))\
+                * (rotations - self._calc_mean_rot(rotations))
+
+    def print_corr_dist(self, snapshot, timestep, outfile='dist.dat'):
+        """Print all corrlation values to a file
+
+        :param snapshot: End configuration for values
+        :param outfile: File to append values to
+        """
+        distribution = self._calc_corr_dist(self.get_displacement_sq(snapshot),\
+                                            self.get_rotations(snapshot))
+        for val in distribution:
+            print(timestep, val, file=open(outfile, 'a'))
+
+    def _calc_corr_skew(self, disp_sq, rotations):
+        """Compute the skew of the distribution of the correlation of
+        translations and rotaions
+
+        :param snapshot: Snapshot
+        """
+        return stats.skew(self._calc_corr_dist(disp_sq, rotations))
+
+    def get_corr_skew(self, snapshot):
+        """Compute the skew of the distribution of the correlation of
+        translations and rotaions
+
+        :param snapshot: Snapshot
+        """
+        return self._calc_corr_skew(self.get_displacement_sq(snapshot),\
+                                    self.get_rotations(snapshot))
+
     def print_all(self, snapshot, timestep, outfile=None):
         """ Function to print all the calculated dynamic quantities to either
         stdout or a function. This function only calculates the distances and
@@ -339,6 +379,7 @@ class TimeDep2dRigid(TimeDep):
         output['decoupling'] = self.get_decoupling(snapshot)
         output['gamma1'] = self._calc_gamma1(disp_sq, rotations)
         output['gamma2'] = self._calc_gamma2(disp_sq, rotations)
+        output['correlation'] = self._calc_corr_skew(disp_sq, rotations)
         if outfile:
             print(vals_to_string(output), file=open(outfile, 'a'))
         else:
@@ -359,6 +400,7 @@ class TimeDep2dRigid(TimeDep):
         output['decoupling'] = 0
         output['gamma1'] = 0
         output['gamma2'] = 0
+        output['correlation'] = 0
         print(keys_to_string(output), file=open(outfile, 'w'))
 
 def keys_to_string(dictionary, sep=' '):
@@ -507,6 +549,10 @@ def compute_dynamics(input_xml,
                       timestep, \
                       outfile=basename+"-dyn.dat" \
                      )
+        dyn.print_corr_dist(system.take_snapshot(rigid_bodies=True),\
+                            timestep,\
+                            outfile=basename+"-corr.dat"
+                           )
 
         struct[index_min] = (step_iter.next(), step_iter, dyn)
         # Add new key frame when a run reaches 10000 steps
