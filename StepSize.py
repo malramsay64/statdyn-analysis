@@ -4,16 +4,25 @@
 import math
 
 class PowerSteps(object):
-    """Generate a sequence of steps which consist of a points distributed by a
-    power law which contain a number of linear steps between each jump.
-    :param num_linear The number of linear steps between each jump in power. The
-    distance between these steps is going to increase as the gap between powers
-    become larger. In the case when there num_linear is greater than the number
-    of steps between powers every step is returned.
-    :param pow_jump The jumps in power
+    """Generate a sequence of steps with a power law
 
-    Given num_linear = 9 and pow_jump = 1 this will produce the series
-    1 2 3 4 5 6 7 8 9 10 20 30 40 50 60 70 80 90 100 200 300 ...
+    A sequence of steps which consisting of points spaced by a
+    power law which contain a number of linear steps between each jump.
+
+    Args:
+        num_linear (int): The number of linear steps between each jump in power.
+            The distance between these steps is going to increase as the gap
+            between powers become larger. In the case when there num_linear is
+            greater than the number of steps between powers every step is
+            returned.
+        pow_jump (int): The jumps in powers of 10
+
+    Example:
+
+        >>> p = PowerSteps(9,1)
+        >>> [ p.next() for i in range(19) ]
+        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+
     """
     def __init__(self, num_linear=9, pow_jump=1, start=0):
         self.num_linear = num_linear

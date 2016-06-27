@@ -7,27 +7,30 @@
 # Hoomd helper functions
 
 import os.path
-from hoomd_script import *
+from hoomd_script import (init, update, pair, group, integrate, analyze, run,
+                          dump)
 
-def equil_from_crys(input_xml="mol.xml",\
-                  outfile=None,\
-                  steps=100000,\
-                  potentials=None,\
-                  temp=1.0,\
-                  press=1.0,\
-                  max_iters=10):
+def equil_from_crys(input_xml="mol.xml",
+                    outfile=None,
+                    steps=100000,
+                    potentials=None,
+                    temp=1.0,
+                    press=1.0,
+                    max_iters=10):
     """ Equilibrate system from a crystalline initial configuration
 
-    :param inputXML: File in which the initial configuration is stored in the
-    hoomd-xml file format.
-    :param outfile: File to output final configuration to.
-    :param steps: Number of steps to run the equilibration.
-    :param potentials: Interaction potentials to use for the simulation. Default
-    values are set if no input is given.
-    :param temp: Target temperature at which to equilibrate system
-    :param press: Target pressure for equilibration
-    :param maxIters: Maximum number of iterations for convergence on target
-    pressure and temperature.
+    Args:
+        input_xml (string): Filename of file in which the initial configuration
+            is stored in the hoomd-xml file format.
+        outfile (string): Filename of file to output final configuration to.
+        steps (int): Number of steps to run the equilibration.
+        potentials (class:`hoomd.pair`): Interaction potentials to use for the
+            simulation. Default values are set if no input is given.
+        temp (float): Target temperature at which to equilibrate system
+        press (float): Target pressure for equilibration
+        max_iters (int): Maximum number of iterations for convergence on
+            target pressure and temperature.
+
     """
     # Ensure there is no configuration already initialised
     if init.is_initialized():
@@ -52,16 +55,16 @@ def equil_from_crys(input_xml="mol.xml",\
     gall = group.all()
 
     # Find minimum energy configuration
-    integrate.mode_minimize_rigid_fire(group=gall,\
-                                              dt=0.005,  \
-                                              ftol=1e-3, \
-                                              Etol=1e-4  \
-                                             )
+    integrate.mode_minimize_rigid_fire(group=gall,
+                                       dt=0.005,
+                                       ftol=1e-3,
+                                       Etol=1e-4
+                                      )
 
     # Calculate thermodynamic quantities
-    thermo = analyze.log(filename=None, \
-                         quantities=['temperature', 'pressure'], \
-                         period=1000 \
+    thermo = analyze.log(filename=None,
+                         quantities=['temperature', 'pressure'],
+                         period=1000
                         )
 
     # Perform initial equilibration at target temperature and pressure.
@@ -70,8 +73,8 @@ def equil_from_crys(input_xml="mol.xml",\
 
 
     iters = 0
-    while abs(thermo.query('temperature') - temp) > 0.1*temp or \
-          abs(thermo.query('pressure') - press) > 0.1*press:
+    while (abs(thermo.query('temperature') - temp) > 0.1*temp or
+           abs(thermo.query('pressure') - press) > 0.1*press):
         run(steps/10)
         iters += 1
         if iters > max_iters:
@@ -88,24 +91,26 @@ def equil_from_crys(input_xml="mol.xml",\
     xml = dump.xml(all=True)
     xml.write(filename=outfile)
 
-def equil_from_file(input_xml=None,\
-                    outfile=None,\
-                    temp=1.0,\
-                    press=1.0,\
-                    steps=100000,\
-                    max_iters=10,\
+def equil_from_file(input_xml=None,
+                    outfile=None,
+                    temp=1.0,
+                    press=1.0,
+                    steps=100000,
+                    max_iters=10,
                     potentials=None):
     """ Equilibrate simulation from an input file
 
-    :param inputXml: Input file containing input configuration in hoomd-xml
-    format
-    :param outfile: File to write equilibrated configuration to
-    :param temp: Target temperature for equilibration
-    :param press: Target pressure for equilibration
-    :param steps: Number of steps to run equilibration
-    :param maxIters: Maximum number of iterations to run equilibration step if
-    target temperature or pressure are not reached.
-    :param potentials: Custom interaction potentials for the simulation
+    Args:
+        input_xml (string): Input file containing input configuration in
+            hoomd-xml format
+        outfile (string): File to write equilibrated configuration to
+        temp (float): Target temperature for equilibration
+        press (float): Target pressure for equilibration
+        steps (int): Number of steps to run equilibration
+        max_iters (int): Maximum number of iterations to run equilibration step
+            if target temperature or pressure are not reached.
+        potentials (:class:`hoomd.pair`): Custom interaction potentials for the
+            simulation
     """
     # Ensure there is no configuration already initialised
     if init.is_initialized():
@@ -131,29 +136,29 @@ def equil_from_file(input_xml=None,\
     gall = group.all()
 
     # Calculate thermodynamic quantities
-    thermo = analyze.log(filename=basename+"-thermo.dat", \
-                         quantities=['temperature', \
-                                     'pressure', \
-                                     'potential_energy', \
-                                     'rotational_kinetic_energy', \
-                                     'translational_kinetic_energy'\
-                                    ], \
-                        period=1000\
+    thermo = analyze.log(filename=basename+"-thermo.dat",
+                         quantities=['temperature',
+                                     'pressure',
+                                     'potential_energy',
+                                     'rotational_kinetic_energy',
+                                     'translational_kinetic_energy'
+                                    ],
+                         period=1000
                         )
 
     # Create restart file if simulation stops
-    dump.xml(filename=basename+'-restart.xml', \
-                       period=1000000, \
-                       restart=True, \
-                       all=True)
+    dump.xml(filename=basename+'-restart.xml',
+             period=1000000,
+             restart=True,
+             all=True)
 
     # Perform initial equilibration at target temperature and pressure.
     integrate.mode_standard(dt=0.001)
     npt = integrate.npt_rigid(group=gall, T=temp, tau=5, P=press, tauP=5)
 
     iters = 0
-    while abs(thermo.query('temperature') - temp) > 0.1*temp or \
-          abs(thermo.query('pressure') - press) > 0.1*press:
+    while (abs(thermo.query('temperature') - temp) > 0.1*temp or
+           abs(thermo.query('pressure') - press) > 0.1*press):
         run(10000)
         iters += 1
         if iters > max_iters:

@@ -20,35 +20,52 @@ import StepSize
 
 class TimeDep(object):
     """ Class to compute the time dependent characteristics of individual
-    particles in a hoomd simulation."""
+    particles in a hoomd simulation.
+
+    Args:
+        system (system): Hoomd system object which is the initial configuration
+            for the purposes of the dynamics calculations
+    """
     def __init__(self, system):
         self.t_init = self._take_snapshot(system)
         self.pos_init = self._unwrap(self.t_init)
         self.timestep = system.get_metadata()['timestep']
 
     def _take_snapshot(self, system):
-        """ Takes a snapshot of the system
+        """ Takes a snapshot of the current configuration of the system
 
-        :param system: The state of the system at the time the snapshot is \
-                required
-        :return Snapshot of the system
+        Args:
+            system (system): Hoomd system objet in the configuration to be saved
+
+        Returns:
+            Snapshot: An immutable snapshot of the system at the current time
         """
         return system.take_snapshot()
 
     def get_time_diff(self, timestep):
-        """ Returns the difference in time between the currrent timestep and the
-        initial timestep.
-        param: timestep The timestep the difference is to be calculated at
+        """ The difference in time between the currrent timestep and the
+        timestep of the initial configuration.
+
+        Args:
+            timestep (int): The timestep the difference is to be calculated at
+
+        Returns:
+            int: Difference between initial and current timestep
         """
         return timestep - self.timestep
 
     def _unwrap(self, snapshot):
-        """ Function to unwrap the periodic distances in the snapshots to
-        discreete distances that are easy to use for computing distance.
+        """ Unwraps periodic positions to absolute positions
 
-        param: snapshot Snapshot containing the data to unwrap
-        param: rigid Boolean value indicating whether we are unwrapping rigid
-        body centers of mass or particle positions.
+        Converts the periodic potition of each particle to it's *real* position
+        by taking into account the *image* the particle exitsts on.
+
+        Args:
+            snapshot (snapshot): Hoomd snapshot of the system to unwrap
+
+        Returns:
+            :class:`numpy.array`: A numpy array of position arrays contianing
+            the unwrapped positions
         """
         box_dim = np.array([snapshot.box.Lx,\
                             snapshot.box.Ly,\
@@ -58,140 +75,263 @@ class TimeDep(object):
         image = np.array(snapshot.particles.image)
         return pos + image*box_dim
 
-    def get_displacement_sq(self, snapshot):
+    def _displacement_sq(self, snapshot):
         """ Calculate the squared displacement for all bodies in the system.
-        This is the single function that returns displacements for all the
-        other computations. The squared displacement is found as the sqrt
-        operation is relatively slow and not all functions require it, e.g. msd.
-        param: snapshot The configuration at which the difference is computed
 
-        return: Array of the squared displacements
+        This is the function that computes the per body displacements for all
+        the dynamic quantities. This is where the most computation takes place
+        and can be called once for a number of further calculations.
+
+        Args:
+            snapshot (snapshot): The configuration at which the difference is
+                computed
+
+        Returns:
+            :class:`numpy.array`: An array containing per body displacements
         """
         curr = self._unwrap(snapshot)
         return np.power(curr - self.pos_init, 2).sum(axis=1)
 
     def _calc_mean_disp(self, displacement_sq):
-        """ Calculates the mean displacement for all bodies in the
-        system.
-        param: displacement_sq The squared displacement of all the particles
-        used to calculate the mean displacement
+        """ Performs the calculation of the mean displacement
+
+        Args:
+            displacement_sq (:class:`numpy.array`): Array of squared
+                displacements
+
+        Return:
+            float: The mean displacement
         """
         return np.mean(np.sqrt(displacement_sq))
 
-    def get_mean_disp(self, snapshot):
-        """ Calculates the mean displacement for all rigid bodies in the
-        system.
-        param: snapshot The configuration used to calculate the displacement
+    def get_mean_disp(self, system):
+        R""" Compute the mean displacement
+
+        Finds the mean displacement of the current configuration from the
+        initial configuration upon initialising the class.
+
+        .. math:: \langle r \rangle = \langle \sqrt{x^2 + y^2 + z^2} \rangle
+
+        Args:
+            system (system): Hoomd system object at currrent time
+
+        Return:
+            float: The mean displacement
         """
-        return self._calc_mean_disp(self.get_displacement_sq(snapshot))
+        return self._calc_mean_disp(
+            self._displacement_sq(self._take_snapshot(system)))
 
     def _calc_msd(self, displacement_sq):
-        """ Calculate the mean squared displacement of particles
-        param: displacement_sq The squared displacements of the particles
+        """ Performs the calculation of the mean squared displacement
+
+        Args:
+            displacement_sq (:class:`numpy.array`): Array of squared
+            displacements
+
+        Return:
+            float: The mean of the squared displacements
         """
         return np.mean(displacement_sq)
 
-    def get_msd(self, snapshot):
-        """ Return the mean squared displacement of particles
-        param: snapshot The snapshot the particles have moved to
+    def get_msd(self, system):
+        R""" Compute the mean squared displacement
+
+        Finds the mean squared displacement of the current state from the inital
+        state of the initialisaiton of the class.
+
+        .. math:: MSD = \langle \Delta r^2 \rangle
+
+        Args:
+            system (system): Hoomd system object at the current time
+
+        Return:
+            float: The mean squared displacement
         """
-        return self._calc_msd(self.get_displacement_sq(snapshot))
+        return self._calc_msd(
+            self._displacement_sq(self._take_snapshot(system)))
 
     def _calc_mfd(self, displacement_sq):
-        """ Calculate the mean squared displacement of particles
-        param: displacement_sq The squared displacements of the particles
+        """ Performs the calculation of the mean fourth displacement
+
+        Args:
+            displacement_sq (:class:`numpy.array`): Array of squared
+            displacements
+
+        Return:
+            float: The mean of the displacements to the fourth power
         """
         return np.mean(np.power(displacement_sq, 2))
 
-    def get_mfd(self, snapshot):
-        """ Return the mean fouth (quartic) displacement of particles
-        param: snapshot The snapshot the particles have moved to
+    def get_mfd(self, system):
+        R""" Compute the mean fourth disaplacement
+
+        Finds the mean of the displacements to the fourth power from
+        the initial state to the current configuration.
+
+        .. math:: MFD = \langle \Delta r^4 \rangle
+
+        Args:
+            system (system): Hoomd system object at the current time
+
+        Return:
+            float: The mean fourth displacement
         """
-        return self._calc_mfd(self.get_displacement_sq(snapshot))
+        return self._calc_mfd(
+            self._displacement_sq(self._take_snapshot(system)))
 
     def _calc_alpha(self, displacement_sq):
-        """ Calculate the non-gaussian parameter
-        param: snapshot The configuration the particles have moved to
+        """ Performs the calculation of the non-gaussian parameter
+
+        Args:
+            displacement_sq (:class:`numpy.array`): Array of squared
+            displacements
+
+        Return:
+            float: The non-gaussian parameter alpha
         """
         msd = self._calc_msd(displacement_sq)
         mfd = self._calc_mfd(displacement_sq)
         return mfd/(2.*(msd*msd)) - 1
 
-    def get_alpha(self, snapshot):
-        """ Return the non-gaussian parameter
-        param: snapshot The configuration the particles have moved to
+    def get_alpha(self, system):
+        R""" Compute the non-gaussian parameter :math:`\alpha`
+
+        The non-gaussian parameter is given as
+
+        .. math::
+            \alpha = \frac{\langle \Delta r^4\rangle}
+                      {\langle \Delta r^2  \rangle^2} -1
+
+        Args:
+            system (system): Hoomd system object at the current time
+
+        Return:
+            float: The non-gaussian parameter :math:`\alpha`
         """
-        return self._calc_alpha(self.get_displacement_sq(snapshot))
+        return self._calc_alpha(
+            self._displacement_sq(self._take_snapshot(system)))
 
 
 class TimeDep2dRigid(TimeDep):
-    """ Class to compute the time dependent characteristics of rigid bodies
+    """ Class to compute the time dependent characteristics of 2D rigid bodies
     in a hoomd simulation.
-    param: system The initial system configuration
+
+    This class extends on from :class:TimeDep computing rotational properties of
+    the 2D rigid bodies in the system. The distinction of two dimensional
+    molecules makes for a simpler analysis of the rotational characteristics.
+
+    Note:
+        This class computes positional properties for each rigid body in the
+        system. This means that for computations of rigid bodies it would be
+        expected to get different translational quantities using the
+        :class:TimeDep and the :class:TimeDep2dRigid classes.
+
+    Warning:
+        Hoomd doesn't store rotational data in a regular snapshot, even
+        with the ``rigid_bodies=True`` option. My solution has been to
+        modify the source code to add this functionality to taking
+        snapshots.
+
+    Todo:
+        Have the capability to get the orientations from the system when taking
+        the snapshot allowing for the computation of rotation on a default
+        hoomd install.
+
+    Args:
+        system (system): Hoomd system object at the initial time for the
+            dyanamics computations
+
     """
     def __init__(self, system):
         super(TimeDep2dRigid, self).__init__(system)
 
     def _unwrap(self, snapshot):
-        """ Function to unwrap the periodic distances in the snapshots to
-        discreete distances that are easy to use for computing distance.
+        """ Unwraps the periodic positions to absolute positions
 
-        param: snapshot Snapshot containing the data to unwrap
-        param: rigid Boolean value indicating whether we are unwrapping rigid
-        body centers of mass or particle positions.
+        Converts the periodic positions of each rigid body to absolute
+        positions for computation of displacements.
+
+        Note:
+            This function overwrites the base class function due to differences
+            in the way the rigid and non-rigid positions are stored in a
+            snapshot
+
+        Args:
+            snapshot (snapshot): Hoomd snapshot of the configuration to unwrap
+
+        Return:
+            :class:`numpy.array`: A Numpy array of position arrays for each
+            rigid body center of mass.
         """
-        box_dim = np.array([snapshot.box.Lx,\
-                            snapshot.box.Ly,\
-                            snapshot.box.Lz \
+        box_dim = np.array([snapshot.box.Lx,
+                            snapshot.box.Ly,
+                            snapshot.box.Lz
                            ])
         pos = np.array([scalar3_to_array(i) for i in snapshot.bodies.com])
-        image = np.array([scalar3_to_array(i) \
-                for i in snapshot.bodies.body_image])
+        image = np.array([scalar3_to_array(i)
+                          for i in snapshot.bodies.body_image])
         return pos + image*box_dim
 
     def _take_snapshot(self, system):
-        """ Takes a snapshot of the system
+        """ Takes a snapshot of the system including rigid bodies
 
-        :param system: The state of the system at the time the snapshot is \
-                required
-        :return Snapshot of the system
+        Note:
+            This overrides the :func:`_take_snapshot` of the base
+            :class:`TimeDep` class to specify that that snapshot includes the
+            rigid body data.
+
+        Args:
+            system (system): The hoomd system object
+
+        Return:
+            snapshot (snapshot): The snapshot of the system including the rigid
+                body data
         """
         return system.take_snapshot(rigid_bodies=True)
 
-    def get_rotations(self, snapshot):
-        """ Calculate the rotation for every rigid body in the system. This
-        doesn't take into accout multiple rotations with values falling between
-        -pi and pi.
-        param: snapshot The configuration from which to calculate the rotational
-        change.
+    def _rotations(self, snapshot):
+        R""" Calculate the rotation for every rigid body in the system
+
+        This calculates the angle rotated between the initial configuration and
+        the current configuration. It doesn't take into accout multiple
+        rotations with values falling in the range :math:`[\-pi,\pi)`.
+
+        Args:
+            snapshot (snapshot): The final configuration
+
+        Return:
+            :class:`numpy.array`: Array of all the rotations
         """
         rot = np.empty(len(self.t_init.bodies.com))
         for i in range(len(self.t_init.bodies.com)):
-            rot[i] = quat_to_2d(self.t_init.bodies.orientation[i]) -\
-                     quat_to_2d(snapshot.bodies.orientation[i])
+            rot[i] = (quat_to_2d(self.t_init.bodies.orientation[i])
+                      - quat_to_2d(snapshot.bodies.orientation[i]))
             if rot[i] > math.pi:
                 rot[i] = 2*math.pi - rot[i]
         return rot
 
 
-    def _calc_decoupling(self, snapshot, delta_disp, delta_rot):
-        """ Calculates the coupling strength parameter of the translational and
-        rotational motion as described by [[|Farone and Chen]].
-        :param snapshot The snapshot with which to take the distances and
-        rotations from the initial.
-        :param dr The size on the binning for the translational motion.
-        :param dtheta The size of the binning for the rotational motion.
+    def _calc_decoupling(self, displacement_sq, rotations,
+                         delta_disp, delta_rot):
+        """ Calculates the decoupling of rotations and translations.
+
+        Args:
+            snapshot (snapshot): The snapshot of the current configuration
+            delta_disp (float): The bin size of the displacement for integration
+            delta_rot (float):  The bin size of the rotations for integration
+
+        Return:
+            float: The decoupling parameter
         """
         # Calculate and bin displacements
-        disp = np.sqrt(self.get_displacement_sq(snapshot))
+        disp = np.sqrt(displacement_sq)
         disp = np.floor(disp/delta_disp).astype(int)
         # adding 1 to account for 0 value
         disp_max = np.max(disp+1)
         disp_array = np.asmatrix(np.power(\
                 np.arange(1, disp_max+1)*delta_disp, 2))
         # Calculate and bin rotaitons
-        rot = self.get_rotations(snapshot)
-        rot = np.floor(np.abs(rot)/delta_rot).astype(int)
+        rot = np.floor(np.abs(rotations)/delta_rot).astype(int)
         # adding 1 to account for 0 value
         rot_max = np.max(rot+1)
         rot_array = np.asmatrix(np.sin(\
@@ -222,175 +362,259 @@ class TimeDep2dRigid(TimeDep):
         decoupling /= ((prob*disp_array.transpose()) * rot_array).sum()
         return decoupling.sum()
 
-    def get_decoupling(self, snapshot, delta_disp=0.005, delta_rot=0.005):
-        """ Returns the coupling strength parameter of the translational and
-        rotational motion as described by [[|Farone and Chen]].
-        :param snapshot The snapshot with which to take the distances and
-        rotations from the initial.
-        :param dr The size on the binning for the translational motion. This is
-        set to 0.005 by default.
-        :param dtheta The size of the binning for the rotational motion. This
-        is set to 0.005 by default.
+    def get_decoupling(self, system, delta_disp=0.005, delta_rot=0.005):
+        """ Compute the decoupling of the translational and rotational motion
+
+        This computs the coupling strength parameter as described by
+        Farone and Chen
+
+        References:
+            A. Farone, L. Liu, S.-H. Chen, J. Chem. Phys. 119, 6302 (2003)
+
+        Args:
+            system (system): Hoomd system at the currrent time
+            delta_disp (float): The bin size of displacements for integration
+            delta_rot (float): The bin size of rotations for integration
+
+        Return:
+            float: The decoupling parameter
         """
-        return self._calc_decoupling(snapshot, \
-                                      delta_disp,\
-                                      delta_rot \
-                                     )
+        snapshot = self._take_snapshot(system)
+        return self._calc_decoupling(self._displacement_sq(snapshot),
+                                     self._rotations(snapshot),
+                                     delta_disp,
+                                     delta_rot
+                                    )
 
     def _calc_mean_rot(self, rotations):
         """ Calculate the mean rotation given all the rotations
 
-        :param rotations: array containing the rotation of each molecule
+        This doesn't take into account the direction of the rotation,
+        only its magnitude.
 
-        :return The mean rotation
+        Arg:
+            rotations (:class:numpy:`array`): Array of all rotations
+
+        Retrun:
+            float: The mean rotation
         """
         return np.mean(np.abs(rotations))
 
-    def get_mean_rot(self, snapshot):
-        """ Return the mean rotation
+    def get_mean_rot(self, system):
+        R""" Compute the mean rotational distance
 
-        :param snapshot: the snapshot of the system at the end of the motion
-        :return The mean rotation
+        This finds the mean rotational magnitude, taking the absolute value
+        of the rotations and ignoring their directions.
+
+        .. math:: \langle |\Delta \theta |\rangle
+
+        Args:
+            system (system): The system at the end of the motion
+
+        Return:
+            float: The mean rotation in radians
         """
-        return self._calc_mean_rot(self.get_rotations(snapshot))
+        return self._calc_mean_rot(
+            self._rotations(self._take_snapshot(system)))
 
     def _calc_mean_sq_rot(self, rotations):
-        """ Calculate the mean squared rotation given all the rotations
+        """ Calculate the mean squared rotation
 
-        :param rotations: array containing the rotation of each molecule
+        Args:
+            rotations (:class:numpy:`array`): Array containing the rotations of
+                each rigid body
 
-        :return The mean rotation
+        Return:
+            float: The mean squared rotation
         """
         return np.mean(np.power(rotations, 2))
 
-    def get_mean_sq_rot(self, snapshot):
-        """ Return the mean squared rotation
+    def get_mean_sq_rot(self, system):
+        R""" Compute the mean squared rotation
 
-        :param snapshot: the snapshot of the system at the end of the motion
-        :return The mean rotation
+        Computes the mean of the squared rotation
+
+        .. math:: MSR = \langle \Delta \theta^2 \rangle
+
+        Args:
+            system (system): System at the end of the motion
+
+        Return:
+            float: The mean squared rotation in radians
         """
-        return self._calc_mean_sq_rot(self.get_rotations(snapshot))
+        return self._calc_mean_sq_rot(
+            self._rotations(self._take_snapshot(system)))
 
     def _calc_mean_trans_rot(self, disp_sq, rotations):
         """ Calculate the coupled translation and rotation
 
-        :param disp_sq: array containing the squared displacement of each \
-                molecule
-        :param rotations: array containing the rotation of each molecule
+        Args:
+            disp_sq (:class:numpy:`array`): Array containing the squared
+                displacements
+            rotations (class:numpy:`array`): Array of the rotations
+
+        Return:
+            float: The coupling of translations and rotations
         """
         return np.mean(np.sqrt(disp_sq) * np.abs(rotations))
 
-    def get_mean_trans_rot(self, snapshot):
-        """ Return the coupled translation and rotation
+    def get_mean_trans_rot(self, system):
+        R""" Compute the coupled translation and rotation
 
-        :param snapshot: the snapshot of the system at the end of the motion
-        :return The mean rotation
+        A measure of the coupling of translations and rotations
+
+        .. math:: \langle \Delta r \Delta \theta \rangle
+
+        Args:
+            system (system): The hoomd system objet
+
+        Return:
+            float: The coupling parameter
         """
-        return self._calc_mean_trans_rot(self.get_displacement_sq(snapshot), \
-                                      self.get_rotations(snapshot)\
-                                     )
+        snapshot = self._take_snapshot(system)
+        return self._calc_mean_trans_rot(self._displacement_sq(snapshot),
+                                         self._rotations(snapshot)
+                                        )
 
     def _calc_mean_sq_trans_rot(self, disp_sq, rotations):
-        """ Calculate the coupled translation and rotation
+        R""" Calculate the squared coupled translation and rotation
 
-        :param disp_sq: array containing the squared displacement of each \
-                molecule
-        :param rotations: array containing the rotation of each molecule
+        Args:
+            disp_sq (:class:numpy:`array`): Array containing the squared
+                displacements
+            rotations (class:numpy:`array`): Array of the rotations
+
+        Return:
+            float: The squared coupling of translations and rotations
         """
         return np.mean(disp_sq * np.power(rotations, 2))
 
-    def get_mean_sq_trans_rot(self, snapshot):
-        """ Return the squared coupled translation and rotation
+    def get_mean_sq_trans_rot(self, system):
+        R""" Return the squared coupled translation and rotation
 
-        :param snapshot: the snapshot of the system at the end of the motion
-        :return The mean rotation
+        A measure of the coupling of translations and rotations
+
+        .. math:: \langle \Delta r^2 \Delta \theta^2 \rangle
+
+        Args:
+            system (system): The hoomd system object
+
+        Return:
+            float: The squared coupling of translations and rotations
         """
-        return self._calc_mean_sq_trans_rot(self.get_displacement_sq(snapshot),\
-                                            self.get_rotations(snapshot)\
-                                     )
+        snapshot = self._take_snapshot(system)
+        return self._calc_mean_sq_trans_rot(self._displacement_sq(snapshot),
+                                            self._rotations(snapshot)
+                                           )
 
     def _calc_gamma1(self, disp_sq, rotations):
-        r""" Calculate the first order coupling of translations and rotations
+        R""" Calculate the first order coupling of translations and rotations
 
-        .. math:: \gamma_1 &= \frac{<\Delta r \Delta\theta > - \
-                <\Delta r><| \Delta \theta |> }\
-                {\sqrt{<\Delta r^2><\Delta\theta^2>}}
+        .. math::
+            \gamma_1 &= \frac{\langle \Delta r \Delta\theta \rangle -
+                \langle\Delta r\rangle\langle| \Delta \theta |\rangle }
+                {\sqrt{\langle\Delta r^2 \rangle\langle\Delta\theta^2\rangle}}
 
-        :param disp_sq The squared displacment of all molecules
-        :param rotations The rotation of each molecule
-        :return The $\gamma_1$ value
-        :rtype float
+        Args:
+            disp_sq (:class:numpy:`array`): Array containing the squared
+                displacements
+            rotations (class:numpy:`array`): Array of the rotations
+
+        Return:
+            float: The coupling of translations and rotations :math:`\gamma_1`
         """
         return (self._calc_mean_trans_rot(disp_sq, rotations) \
                 - self._calc_mean_disp(disp_sq)*self._calc_mean_rot(rotations))\
                 / np.sqrt(self._calc_msd(disp_sq)*\
                     self._calc_mean_sq_rot(rotations))
 
-    def get_gamma1(self, snapshot):
-        r""" Calculate the first order coupling of translations and rotations
+    def get_gamma1(self, system):
+        R""" Calculate the first order coupling of translations and rotations
 
-        .. math:: \gamma_1 &= \frac{<\Delta r \Delta\theta > - \
-                <\Delta r><| \Delta \theta |> }\
-                {\sqrt{<\Delta r^2><\Delta\theta^2>}}
+        .. math::
+            \gamma_1 &= \frac{\langle\Delta r \Delta\theta \rangle -
+                \langle\Delta r\rangle\langle| \Delta \theta |\rangle }
+                {\sqrt{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}}
 
-        :param disp_sq The squared displacment of all molecules
-        :param rotations The rotation of each molecule
-        :return The $\gamma_1$ value
-        :rtype float
+        Args:
+            system (system): The hoomd sytem object
+
+        Return:
+            float: The :math:`\gamma_1` value
         """
-        return self._calc_gamma1(self.get_displacement_sq(snapshot),\
-                                 self.get_rotations(snapshot))
+        snapshot = self._take_snapshot(system)
+        return self._calc_gamma1(self._displacement_sq(snapshot),
+                                 self._rotations(snapshot))
 
 
     def _calc_gamma2(self, disp_sq, rotations):
-        r""" Calculate the first order coupling of translations and rotations
+        R""" Calculate the second order coupling of translations and rotations
 
-        .. math:: \gamma_2 &= \frac{<\Delta r \Delta\theta >^2 - \
+        .. math:: \gamma_2 &= \frac{<\Delta r \Delta\theta >^2 -
                 <\Delta r>^2<\Delta \theta>^2 }{<\Delta r^2><\Delta\theta^2>}
 
-        :param disp_sq The squared displacment of all molecules
-        :param rotations The rotation of each molecule
-        :return The $\gamma_2$ value
-        :rtype float
+        Args:
+            disp_sq (:class:numpy:`array`): Array containing the squared
+                displacements
+            rotations (class:numpy:`array`): Array of the rotations
+
+        Return:
+            float: The squared coupling of translations and rotations
+            :math:`\gamma_2`
         """
-        return (self._calc_mean_sq_trans_rot(disp_sq, rotations) \
-                - self._calc_msd(disp_sq)*self._calc_mean_sq_rot(rotations))\
-                / (self._calc_msd(disp_sq)*\
-                    self._calc_mean_sq_rot(rotations))
+        return ((self._calc_mean_sq_trans_rot(disp_sq, rotations)
+                 - self._calc_msd(disp_sq)*self._calc_mean_sq_rot(rotations))
+                / (self._calc_msd(disp_sq)
+                   * self._calc_mean_sq_rot(rotations)))
 
     def get_gamma2(self, snapshot):
-        r""" Calculate the first order coupling of translations and rotations
+        R""" Calculate the second order coupling of translations and rotations
 
-        .. math:: \gamma_2 &= \frac{<\Delta r \Delta\theta >^2 - \
+        .. math:: \gamma_2 &= \frac{<\Delta r \Delta\theta >^2 -
                 <\Delta r>^2<\Delta \theta>^2 }{<\Delta r^2><\Delta\theta^2>}
 
-        :param disp_sq The squared displacment of all molecules
-        :param rotations The rotation of each molecule
-        :return The $\gamma_2$ value
-        :rtype float
+        Args:
+            system (system): The hoomd sytem object
+
+        Return:
+            float: The squared coupling of translations and rotations
+            :math:`\gamma_2`
         """
-        return self._calc_gamma2(self.get_displacement_sq(snapshot),\
-                                 self.get_rotations(snapshot))
+        return self._calc_gamma2(self._displacement_sq(snapshot),
+                                 self._rotations(snapshot))
 
     def _calc_corr_dist(self, disp_sq, rotations):
-        """Calculate the correlation of residuals for the translations and
+        R"""Calculate the correlation of residuals for the translations and
         rotations
 
-        :param disp_sq The squared displacment of all molecules
-        :param rotations The rotation of each molecule
-        :rtype array
-        """
-        return (np.sqrt(disp_sq) - self._calc_msd(disp_sq))\
-                * (rotations - self._calc_mean_rot(rotations))
+        .. math:: Q = \langle (\Delta \theta - \langle \Delta \theta \rangle)
+                (\Delta r - \langle \Delta r \rangle) \rangle
 
-    def print_corr_dist(self, snapshot, timestep, outfile='dist.dat'):
-        """Print all corrlation values to a file
+        Args:
+            disp_sq (:class:numpy:`array`): Array containing the squared
+                displacements
+            rotations (class:numpy:`array`): Array of the rotations
 
-        :param snapshot: End configuration for values
-        :param outfile: File to append values to
+        Return:
+            :class:numpy:`array`: Array of corrrelated residuals
         """
-        distribution = self._calc_corr_dist(self.get_displacement_sq(snapshot),\
-                                            self.get_rotations(snapshot))
+        return ((np.sqrt(disp_sq) - self._calc_msd(disp_sq))
+                * (rotations - self._calc_mean_rot(rotations)))
+
+    def print_corr_dist(self, system, outfile='dist.dat'):
+        R"""Print all corrlation values to a file
+
+        .. math:: Q = \langle (\Delta \theta - \langle \Delta \theta \rangle)
+                (\Delta r - \langle \Delta r \rangle) \rangle
+
+        Args:
+            system (system): Hoomd system object
+            outfile (string): Filename to append output to
+        """
+        snapshot = self._take_snapshot(system)
+        timestep = system.get_metadata()['timestep']
+        distribution = self._calc_corr_dist(self._displacement_sq(snapshot),
+                                            self._rotations(snapshot))
         for val in distribution:
             print(self.get_time_diff(timestep), val, file=open(outfile, 'a'))
 
@@ -398,33 +622,45 @@ class TimeDep2dRigid(TimeDep):
         """Compute the skew of the distribution of the correlation of
         translations and rotaions
 
-        :param snapshot: Snapshot
+        Args:
+            disp_sq (:class:numpy:`array`): Array containing the squared
+            displacements
+            rotations (class:numpy:`array`): Array of the rotations
+
+        Return:
+            float: The skew of the correlation distribution
         """
         return stats.skew(self._calc_corr_dist(disp_sq, rotations))
 
-    def get_corr_skew(self, snapshot):
+    def get_corr_skew(self, system):
         """Compute the skew of the distribution of the correlation of
         translations and rotaions
 
-        :param snapshot: Snapshot
-        """
-        return self._calc_corr_skew(self.get_displacement_sq(snapshot),\
-                                    self.get_rotations(snapshot))
+        Args:
+            system (system): The hoomd sytem object
 
-    def print_all(self, snapshot, timestep, outfile=None):
-        """ Function to print all the calculated dynamic quantities to either
-        stdout or a function. This function only calculates the distances and
-        rotations a single time.
-        param: snapshot The configuration the bodies have moved to. This
-        snapshot requires that the rigid_bodies=True is passed to the
-        take_snapshot function.
-        param: timestep The current timestep of the simulaton. The same timestep
-        as the snapshot.
-        param: outfile Filename of file to write output to. If no file specified
-        the data is ouput to stdout.
+        Return:
+            float: The skew of the correlation distribution
         """
-        disp_sq = self.get_displacement_sq(snapshot)
-        rotations = self.get_rotations(snapshot)
+        snapshot = self._take_snapshot(system)
+        return self._calc_corr_skew(self._displacement_sq(snapshot),\
+                                    self._rotations(snapshot))
+
+    def print_all(self, system, outfile=None):
+        """ Print all dynamic quantities to a file
+
+        Prints all the calculated dynamic quantities to either
+        stdout or a file. This function only calculates the distances and
+        rotations a single time using the private calc methods.
+
+        Args:
+            system (system): The hoomd sytem object
+            outfile (string): Filename to append to
+        """
+        snapshot = self._take_snapshot(system)
+        timestep = system.get_metadata()['timestep']
+        disp_sq = self._displacement_sq(snapshot)
+        rotations = self._rotations(snapshot)
         output = dict()
         output['msd'] = self._calc_msd(disp_sq)
         output['mfd'] = self._calc_mfd(disp_sq)
@@ -432,7 +668,8 @@ class TimeDep2dRigid(TimeDep):
         output['disp'] = self._calc_mean_disp(disp_sq)
         output['mean_rot'] = self._calc_mean_rot(rotations)
         output['time'] = self.get_time_diff(timestep)
-        output['decoupling'] = self.get_decoupling(snapshot, 0.05, 0.05)
+        output['decoupling'] = self._calc_decoupling(
+            disp_sq, rotations, 0.05, 0.05)
         output['gamma1'] = self._calc_gamma1(disp_sq, rotations)
         output['gamma2'] = self._calc_gamma2(disp_sq, rotations)
         output['correlation'] = self._calc_corr_skew(disp_sq, rotations)
@@ -445,6 +682,9 @@ class TimeDep2dRigid(TimeDep):
     def print_heading(self, outfile):
         """ Write heading values to outfile which match up with the values given
         by print_all().
+
+        Args:
+            outfile (string): Filename to write headings to
         """
         output = dict()
         output['msd'] = 0
@@ -462,41 +702,61 @@ class TimeDep2dRigid(TimeDep):
 def keys_to_string(dictionary, sep=' '):
     """Converts all keys in a dictionary to a string
 
-    :param dictionary: dictionary of key,value pairs
-    :type dictionary: dict
-    :param sep: Key separator in output
-    :type sep: string
-    :return String
+    Args:
+        dictionary (dict): Dictionary of key, value pairs
+        sep (string): Separator for between keys
+
+    Return:
+        string: All keys separated by `sep`
     """
     return sep.join([str(key) for key in dictionary.keys()])
 
 def vals_to_string(dictionary, sep=' '):
     """Converts all vals in a dictionary to a string
 
-    :param dictionary: dictionary of key,value pairs
-    :type dictionary: dict
-    :param sep: Key separator in output
-    :type sep: string
+    Args:
+        dictionary (dict): Dictionary of key, value pairs
+        sep (string): Separator for between values
+
+    Return:
+        string: All values separated by `sep`
     """
     return sep.join([str(val) for val in dictionary.values()])
 
 def quat_to_2d(quat):
-    """ Convert the quaternion representation of angle to a two dimensional
+    """ Convert quaternion to angle in 2D plane
+
+    Convert the quaternion representation of angle to a two dimensional
     angle in the xy plane.
-    param: quat Quaternion for conversion
+
+    Args:
+        quat (scalar4): Quaternion representation of an angle
+
+    Return:
+        float: Angle rotated on the xy plane
     """
     return math.atan2(quat.x*quat.w + quat.y*quat.z,\
             0.5-quat.y*quat.y - quat.z-quat.z)
 
 def scalar3_to_array(scalar):
-    """ Convert cuda scalar3 representation to a numpy array
-    param: scalar Scalar3 for conversion
+    """ Convert scalar3 representation to a numpy array
+
+    Args:
+        scalar (scalar3): Scalar3 position array
+
+    Return:
+        :class:`numpy.array`: Position array
     """
     return np.array([scalar.x, scalar.y, scalar.z])
 
 def scalar4_to_array(scalar):
-    """ Convert cuda scalar4 to a numpy array
-    param: scalar Scalar4 for conversion
+    """ Convert scalar4 representation to a numpy array
+
+    Args:
+        scalar (scalar4): Scalar4 position array
+
+    Return:
+        :class:`numpy.array`: numpy array
     """
     return np.array([scalar.x, scalar.y, scalar.z, scalar.w])
 
@@ -505,15 +765,22 @@ def normalise_probability(prob_matrix, rot_matrix, disp_matrix, \
         delta_rot=0.005, delta_disp=0.005):
     """ Function to normalise the probabilty matrix of the decoupling parameter
     to integrate to a value of 1.
-    param: prob_matrix The numpy matrix to be normalised
-    param: rot_matrix The numpy matrix of theta values these include any
-    transformations that are involved in the integration
-    param: disp_matrix The numpy matrix of displacement values with any
-    transformations already applied.
-    param: delta_disp The distance between displacements (i.e. the binning)
-    param: delta_rot The distance between rotations (i.e. the binning)
 
     The components are normalised through the use of matrix multiplication
+
+    Args:
+        prob_matrix (:class:`numpy.matrix`): The numpy matrix to be normalised
+        rot_matrix (:class:`numpy.matrix`): The numpy matrix of theta values
+            these include any transformations that are involved in the
+            integration
+        disp_matrix (:class:`numpy.matrix`): The numpy matrix of displacement
+            values with any transformations already applied.
+        delta_disp (float): The distance between displacements (i.e.
+            the binning) delta_rot
+        (float): The distance between rotations (i.e. the binning)
+
+    Return:
+        :class:`numpy.matrix`: Normalised matrix
     """
     factor = ((rot_matrix * prob_matrix) * disp_matrix.transpose()) * \
             delta_disp * delta_rot
