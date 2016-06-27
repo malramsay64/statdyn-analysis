@@ -393,7 +393,7 @@ class TimeDep2dRigid(TimeDep):
         only its magnitude.
 
         Arg:
-            rotations (:class:numpy:`array`): Array of all rotations
+            rotations (:class:`numpy.array`): Array of all rotations
 
         Retrun:
             float: The mean rotation
@@ -421,7 +421,7 @@ class TimeDep2dRigid(TimeDep):
         """ Calculate the mean squared rotation
 
         Args:
-            rotations (:class:numpy:`array`): Array containing the rotations of
+            rotations (:class:`numpy.array`): Array containing the rotations of
                 each rigid body
 
         Return:
@@ -449,9 +449,9 @@ class TimeDep2dRigid(TimeDep):
         """ Calculate the coupled translation and rotation
 
         Args:
-            disp_sq (:class:numpy:`array`): Array containing the squared
+            disp_sq (:class:`numpy.array`): Array containing the squared
                 displacements
-            rotations (class:numpy:`array`): Array of the rotations
+            rotations (class:`numpy.array`): Array of the rotations
 
         Return:
             float: The coupling of translations and rotations
@@ -480,9 +480,9 @@ class TimeDep2dRigid(TimeDep):
         R""" Calculate the squared coupled translation and rotation
 
         Args:
-            disp_sq (:class:numpy:`array`): Array containing the squared
+            disp_sq (:class:`numpy.array`): Array containing the squared
                 displacements
-            rotations (class:numpy:`array`): Array of the rotations
+            rotations (class:`numpy.array`): Array of the rotations
 
         Return:
             float: The squared coupling of translations and rotations
@@ -516,9 +516,9 @@ class TimeDep2dRigid(TimeDep):
                 {\sqrt{\langle\Delta r^2 \rangle\langle\Delta\theta^2\rangle}}
 
         Args:
-            disp_sq (:class:numpy:`array`): Array containing the squared
+            disp_sq (:class:`numpy.array`): Array containing the squared
                 displacements
-            rotations (class:numpy:`array`): Array of the rotations
+            rotations (class:`numpy.array`): Array of the rotations
 
         Return:
             float: The coupling of translations and rotations :math:`\gamma_1`
@@ -550,13 +550,14 @@ class TimeDep2dRigid(TimeDep):
     def _calc_gamma2(self, disp_sq, rotations):
         R""" Calculate the second order coupling of translations and rotations
 
-        .. math:: \gamma_2 &= \frac{<\Delta r \Delta\theta >^2 -
-                <\Delta r>^2<\Delta \theta>^2 }{<\Delta r^2><\Delta\theta^2>}
+        .. math:: \gamma_2 &= \frac{\langle\Delta r \Delta\theta \rangle^2 -
+                \langle\Delta r\rangle^2\langle\Delta \theta\rangle^2
+                }{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}
 
         Args:
-            disp_sq (:class:numpy:`array`): Array containing the squared
+            disp_sq (:class:`numpy.array`): Array containing the squared
                 displacements
-            rotations (class:numpy:`array`): Array of the rotations
+            rotations (class:`numpy.array`): Array of the rotations
 
         Return:
             float: The squared coupling of translations and rotations
@@ -570,8 +571,9 @@ class TimeDep2dRigid(TimeDep):
     def get_gamma2(self, snapshot):
         R""" Calculate the second order coupling of translations and rotations
 
-        .. math:: \gamma_2 &= \frac{<\Delta r \Delta\theta >^2 -
-                <\Delta r>^2<\Delta \theta>^2 }{<\Delta r^2><\Delta\theta^2>}
+        .. math:: \gamma_2 &= \frac{\langle\Delta r \Delta\theta \rangle^2 -
+                \langle\Delta r\rangle^2\langle\Delta \theta\rangle^2
+                }{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}
 
         Args:
             system (system): The hoomd sytem object
@@ -587,16 +589,16 @@ class TimeDep2dRigid(TimeDep):
         R"""Calculate the correlation of residuals for the translations and
         rotations
 
-        .. math:: Q = \langle (\Delta \theta - \langle \Delta \theta \rangle)
-                (\Delta r - \langle \Delta r \rangle) \rangle
+        .. math:: Q =  (\Delta \theta - \langle \Delta \theta \rangle)
+                (\Delta r - \langle \Delta r \rangle)
 
         Args:
-            disp_sq (:class:numpy:`array`): Array containing the squared
+            disp_sq (:class:`numpy.array`): Array containing the squared
                 displacements
-            rotations (class:numpy:`array`): Array of the rotations
+            rotations (class:`numpy.array`): Array of the rotations
 
         Return:
-            :class:numpy:`array`: Array of corrrelated residuals
+            :class:`numpy.array`: Array of corrrelated residuals
         """
         return ((np.sqrt(disp_sq) - self._calc_msd(disp_sq))
                 * (rotations - self._calc_mean_rot(rotations)))
@@ -604,11 +606,11 @@ class TimeDep2dRigid(TimeDep):
     def print_corr_dist(self, system, outfile='dist.dat'):
         R"""Print all corrlation values to a file
 
-        .. math:: Q = \langle (\Delta \theta - \langle \Delta \theta \rangle)
-                (\Delta r - \langle \Delta r \rangle) \rangle
+        .. math:: Q = (\Delta \theta - \langle \Delta \theta \rangle)
+                (\Delta r - \langle \Delta r \rangle)
 
         Args:
-            system (system): Hoomd system object
+            system (:class:`hoomd.system`): Hoomd system object
             outfile (string): Filename to append output to
         """
         snapshot = self._take_snapshot(system)
@@ -623,9 +625,9 @@ class TimeDep2dRigid(TimeDep):
         translations and rotaions
 
         Args:
-            disp_sq (:class:numpy:`array`): Array containing the squared
+            disp_sq (:class:`numpy.array`): Array containing the squared
             displacements
-            rotations (class:numpy:`array`): Array of the rotations
+            rotations (class:`numpy.array`): Array of the rotations
 
         Return:
             float: The skew of the correlation distribution
@@ -777,13 +779,13 @@ def normalise_probability(prob_matrix, rot_matrix, disp_matrix, \
             values with any transformations already applied.
         delta_disp (float): The distance between displacements (i.e.
             the binning) delta_rot
-        (float): The distance between rotations (i.e. the binning)
+        delta_rot (float): The distance between rotations (i.e. the binning)
 
     Return:
         :class:`numpy.matrix`: Normalised matrix
     """
-    factor = ((rot_matrix * prob_matrix) * disp_matrix.transpose()) * \
-            delta_disp * delta_rot
+    factor = (((rot_matrix * prob_matrix) * disp_matrix.transpose()) *
+              delta_disp * delta_rot)
     return prob_matrix/factor
 
 def compute_dynamics(input_xml,
@@ -794,12 +796,15 @@ def compute_dynamics(input_xml,
     """ Run a hoomd simulation calculating the dynamic quantites on a power
     law scale such that both short timescale and long timescale events are
     vieable on the same figure while retaining a reasonable runtime.
-    param: input_xml Filename of the file containing the input configuration
     for the simulation
-    param: temp The target temperature at which to run the simulation
-    param: press The target pressure at which to run the simulation
-    param: rigid Boolean value indicating whether to integrate using rigid
-    bodes.
+
+    Args:
+        input_xml (string): Filename of the file containing the input
+            configuration
+        temp (float): The target temperature at which to run the simulation
+        press (float): The target pressure at which to run the simulation
+        rigid (bool): Boolean value indicating whether to integrate using rigid
+            bodes.
     """
     if init.is_initialized():
         init.reset()
@@ -853,14 +858,8 @@ def compute_dynamics(input_xml,
         timestep = next_step
         print(timestep, file=open("timesteps.dat", 'a'))
         run_upto(timestep)
-        dyn.print_all(system.take_snapshot(rigid_bodies=True), \
-                      timestep, \
-                      outfile=basename+"-dyn.dat" \
-                     )
-        dyn.print_corr_dist(system.take_snapshot(rigid_bodies=True),\
-                            timestep,\
-                            outfile=basename+"-corr.dat"
-                           )
+        dyn.print_all(system, timestep, outfile=basename+"-dyn.dat")
+        dyn.print_corr_dist(system, timestep, outfile=basename+"-corr.dat")
 
         struct[index_min] = (step_iter.next(), step_iter, dyn)
         # Add new key frame when a run reaches 10000 steps
