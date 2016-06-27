@@ -21,11 +21,19 @@ import StepSize
 class TimeDep(object):
     """ Class to compute the time dependent characteristics of individual
     particles in a hoomd simulation."""
-    rigid = False
     def __init__(self, system):
-        self.t_init = system.take_snapshot(rigid_bodies=self.rigid)
-        self.pos_init = unwrap(self.t_init, self.rigid)
+        self.t_init = self._take_snapshot(system)
+        self.pos_init = self._unwrap(self.t_init)
         self.timestep = system.get_metadata()['timestep']
+
+    def _take_snapshot(self, system):
+        """ Takes a snapshot of the system
+
+        :param system: The state of the system at the time the snapshot is \
+                required
+        :return Snapshot of the system
+        """
+        return system.take_snapshot()
 
     def get_time_diff(self, timestep):
         """ Returns the difference in time between the currrent timestep and the
@@ -33,6 +41,22 @@ class TimeDep(object):
         param: timestep The timestep the difference is to be calculated at
         """
         return timestep - self.timestep
+
+    def _unwrap(self, snapshot):
+        """ Function to unwrap the periodic distances in the snapshots to
+        discreete distances that are easy to use for computing distance.
+
+        param: snapshot Snapshot containing the data to unwrap
+        param: rigid Boolean value indicating whether we are unwrapping rigid
+        body centers of mass or particle positions.
+        """
+        box_dim = np.array([snapshot.box.Lx,\
+                            snapshot.box.Ly,\
+                            snapshot.box.Lz \
+                           ])
+        pos = np.array(snapshot.particles.position)
+        image = np.array(snapshot.particles.image)
+        return pos + image*box_dim
 
     def get_displacement_sq(self, snapshot):
         """ Calculate the squared displacement for all bodies in the system.
@@ -43,7 +67,7 @@ class TimeDep(object):
 
         return: Array of the squared displacements
         """
-        curr = unwrap(snapshot, self.rigid)
+        curr = self._unwrap(snapshot)
         return np.power(curr - self.pos_init, 2).sum(axis=1)
 
     def _calc_mean_disp(self, displacement_sq):
@@ -105,10 +129,34 @@ class TimeDep2dRigid(TimeDep):
     in a hoomd simulation.
     param: system The initial system configuration
     """
-    rigid = True
     def __init__(self, system):
         super(TimeDep2dRigid, self).__init__(system)
 
+    def _unwrap(self, snapshot):
+        """ Function to unwrap the periodic distances in the snapshots to
+        discreete distances that are easy to use for computing distance.
+
+        param: snapshot Snapshot containing the data to unwrap
+        param: rigid Boolean value indicating whether we are unwrapping rigid
+        body centers of mass or particle positions.
+        """
+        box_dim = np.array([snapshot.box.Lx,\
+                            snapshot.box.Ly,\
+                            snapshot.box.Lz \
+                           ])
+        pos = np.array([scalar3_to_array(i) for i in snapshot.bodies.com])
+        image = np.array([scalar3_to_array(i) \
+                for i in snapshot.bodies.body_image])
+        return pos + image*box_dim
+
+    def _take_snapshot(self, system):
+        """ Takes a snapshot of the system
+
+        :param system: The state of the system at the time the snapshot is \
+                required
+        :return Snapshot of the system
+        """
+        return system.take_snapshot(rigid_bodies=True)
 
     def get_rotations(self, snapshot):
         """ Calculate the rotation for every rigid body in the system. This
@@ -452,25 +500,6 @@ def scalar4_to_array(scalar):
     """
     return np.array([scalar.x, scalar.y, scalar.z, scalar.w])
 
-def unwrap(snapshot, rigid):
-    """ Function to unwrap the periodic distances in the snapshots to
-    discreete distances that are easy to use for computing distance.
-    param: snapshot Snapshot containing the data to unwrap
-    param: rigid Boolean value indicating whether we are unwrapping rigid
-    body centers of mass or particle positions.
-    """
-    box_dim = np.array([snapshot.box.Lx,\
-                        snapshot.box.Ly,\
-                        snapshot.box.Lz \
-                       ])
-    if rigid:
-        pos = np.array([scalar3_to_array(i) for i in snapshot.bodies.com])
-        image = np.array([scalar3_to_array(i) \
-                for i in snapshot.bodies.body_image])
-    else:
-        pos = np.array(snapshot.particles.position)
-        image = np.array(snapshot.particles.image)
-    return pos + image*box_dim
 
 def normalise_probability(prob_matrix, rot_matrix, disp_matrix, \
         delta_rot=0.005, delta_disp=0.005):
