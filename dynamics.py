@@ -858,8 +858,8 @@ def compute_dynamics(input_xml,
         timestep = next_step
         print(timestep, file=open("timesteps.dat", 'a'))
         run_upto(timestep)
-        dyn.print_all(system, timestep, outfile=basename+"-dyn.dat")
-        dyn.print_corr_dist(system, timestep, outfile=basename+"-corr.dat")
+        dyn.print_all(system, outfile=basename+"-dyn.dat")
+        # dyn.print_corr_dist(system, outfile=basename+"-corr.dat")
 
         struct[index_min] = (step_iter.next(), step_iter, dyn)
         # Add new key frame when a run reaches 10000 steps
