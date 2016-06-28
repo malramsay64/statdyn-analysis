@@ -110,7 +110,8 @@ class TimeDep(object):
         Finds the mean displacement of the current configuration from the
         initial configuration upon initialising the class.
 
-        .. math:: \langle r \rangle = \langle \sqrt{x^2 + y^2 + z^2} \rangle
+        .. math::
+            \langle \Delta r \rangle = \langle \sqrt{x^2 + y^2 + z^2} \rangle
 
         Args:
             system (system): Hoomd system object at currrent time
@@ -510,11 +511,6 @@ class TimeDep2dRigid(TimeDep):
     def _calc_gamma1(self, disp_sq, rotations):
         R""" Calculate the first order coupling of translations and rotations
 
-        .. math::
-            \gamma_1 &= \frac{\langle \Delta r \Delta\theta \rangle -
-                \langle\Delta r\rangle\langle| \Delta \theta |\rangle }
-                {\sqrt{\langle\Delta r^2 \rangle\langle\Delta\theta^2\rangle}}
-
         Args:
             disp_sq (:class:`numpy.array`): Array containing the squared
                 displacements
@@ -532,7 +528,7 @@ class TimeDep2dRigid(TimeDep):
         R""" Calculate the first order coupling of translations and rotations
 
         .. math::
-            \gamma_1 &= \frac{\langle\Delta r \Delta\theta \rangle -
+            \gamma_1 &= \frac{\langle\Delta r |\Delta\theta| \rangle -
                 \langle\Delta r\rangle\langle| \Delta \theta |\rangle }
                 {\sqrt{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}}
 
@@ -549,10 +545,6 @@ class TimeDep2dRigid(TimeDep):
 
     def _calc_gamma2(self, disp_sq, rotations):
         R""" Calculate the second order coupling of translations and rotations
-
-        .. math:: \gamma_2 &= \frac{\langle\Delta r \Delta\theta \rangle^2 -
-                \langle\Delta r\rangle^2\langle\Delta \theta\rangle^2
-                }{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}
 
         Args:
             disp_sq (:class:`numpy.array`): Array containing the squared
@@ -571,8 +563,8 @@ class TimeDep2dRigid(TimeDep):
     def get_gamma2(self, snapshot):
         R""" Calculate the second order coupling of translations and rotations
 
-        .. math:: \gamma_2 &= \frac{\langle\Delta r \Delta\theta \rangle^2 -
-                \langle\Delta r\rangle^2\langle\Delta \theta\rangle^2
+        .. math:: \gamma_2 &= \frac{\langle(\Delta r \Delta\theta)^2 \rangle -
+                \langle\Delta r^2\rangle\langle\Delta \theta^2\rangle
                 }{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}
 
         Args:
