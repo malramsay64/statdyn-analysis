@@ -45,3 +45,13 @@ Configuring Simulations
 To configure the temperatures and timesteps of the equilibration, edit the `STEPS` and `TEMPERATURES` variables in either the `TrimerDynamics.hoomd` or the `TrimerEquil.hoomd` files.
 
 The `STEPS` variables is a scaling factor for all simulations. It is a base value that applies to each temperature. The `TEMPERATURES` variable contains a list of *tuples*, which contain the temperature and a multiplier\* the `STEPS` variable. This configuration takes into account the slowing down of the dynamics at low temperatures, needing increasingly longer simulation times to reach equilibration.
+
+Building Documentation
+----------------------
+
+Assuming all the prerequisites are installed the documentation can be built using
+
+    $ cd sphinx
+    $ make html
+
+
