@@ -7,15 +7,15 @@ import os
 import math
 import numpy as np
 from scipy import stats
-from hoomd_script import init,\
-                         update,\
-                         pair,\
-                         integrate,\
-                         analyze,\
-                         group,\
-                         run_upto,\
-                         run,\
-                         dump
+from hoomd_script import (init,
+                          update,
+                          pair,
+                          integrate,
+                          analyze,
+                          group,
+                          run_upto,
+                          run,
+                          dump)
 import StepSize
 
 class TimeDep(object):
@@ -67,9 +67,9 @@ class TimeDep(object):
             :class:`numpy.array`: A numpy array of position arrays contianing
             the unwrapped positions
         """
-        box_dim = np.array([snapshot.box.Lx,\
-                            snapshot.box.Ly,\
-                            snapshot.box.Lz \
+        box_dim = np.array([snapshot.box.Lx,
+                            snapshot.box.Ly,
+                            snapshot.box.Lz
                            ])
         pos = np.array(snapshot.particles.position)
         image = np.array(snapshot.particles.image)
@@ -329,21 +329,21 @@ class TimeDep2dRigid(TimeDep):
         disp = np.floor(disp/delta_disp).astype(int)
         # adding 1 to account for 0 value
         disp_max = np.max(disp+1)
-        disp_array = np.asmatrix(np.power(\
-                np.arange(1, disp_max+1)*delta_disp, 2))
+        disp_array = np.asmatrix(np.power(
+            np.arange(1, disp_max+1)*delta_disp, 2))
         # Calculate and bin rotaitons
         rot = np.floor(np.abs(rotations)/delta_rot).astype(int)
         # adding 1 to account for 0 value
         rot_max = np.max(rot+1)
-        rot_array = np.asmatrix(np.sin(\
-                np.arange(1, rot_max+1)*delta_rot))
+        rot_array = np.asmatrix(np.sin(
+            np.arange(1, rot_max+1)*delta_rot))
         # Use binned values to create a probability matrix
         prob = np.zeros((rot_max, disp_max))
         for i, j in zip(rot, disp):
             prob[i][j] += 1
 
-        prob = normalise_probability(np.asmatrix(prob), \
-                                     rot_array, disp_array, \
+        prob = normalise_probability(np.asmatrix(prob),
+                                     rot_array, disp_array,
                                      delta_rot, delta_disp
                                     )
 
@@ -358,8 +358,8 @@ class TimeDep2dRigid(TimeDep):
         # probabilities and then integrate over the differences to find the
         # coupling strength
         diff2 = np.power(prob - p_rot * p_trans.transpose(), 2)
-        decoupling = ((diff2 * np.power(disp_array, 2).transpose()) \
-                * np.power(rot_array, 2)).sum()
+        decoupling = ((diff2 * np.power(disp_array, 2).transpose())
+                      * np.power(rot_array, 2)).sum()
         decoupling /= ((prob*disp_array.transpose()) * rot_array).sum()
         return decoupling.sum()
 
@@ -519,10 +519,10 @@ class TimeDep2dRigid(TimeDep):
         Return:
             float: The coupling of translations and rotations :math:`\gamma_1`
         """
-        return (self._calc_mean_trans_rot(disp_sq, rotations) \
-                - self._calc_mean_disp(disp_sq)*self._calc_mean_rot(rotations))\
-                / np.sqrt(self._calc_msd(disp_sq)*\
-                    self._calc_mean_sq_rot(rotations))
+        return ((self._calc_mean_trans_rot(disp_sq, rotations)
+                 - self._calc_mean_disp(disp_sq)*self._calc_mean_rot(rotations))
+                / np.sqrt(self._calc_msd(disp_sq)*
+                          self._calc_mean_sq_rot(rotations)))
 
     def get_gamma1(self, system):
         R""" Calculate the first order coupling of translations and rotations
@@ -637,7 +637,7 @@ class TimeDep2dRigid(TimeDep):
             float: The skew of the correlation distribution
         """
         snapshot = self._take_snapshot(system)
-        return self._calc_corr_skew(self._displacement_sq(snapshot),\
+        return self._calc_corr_skew(self._displacement_sq(snapshot),
                                     self._rotations(snapshot))
 
     def print_all(self, system, outfile=None):
@@ -729,8 +729,8 @@ def quat_to_2d(quat):
     Return:
         float: Angle rotated on the xy plane
     """
-    return math.atan2(quat.x*quat.w + quat.y*quat.z,\
-            0.5-quat.y*quat.y - quat.z-quat.z)
+    return math.atan2(quat.x*quat.w + quat.y*quat.z,
+                      0.5-quat.y*quat.y - quat.z-quat.z)
 
 def scalar3_to_array(scalar):
     """ Convert scalar3 representation to a numpy array
@@ -755,8 +755,8 @@ def scalar4_to_array(scalar):
     return np.array([scalar.x, scalar.y, scalar.z, scalar.w])
 
 
-def normalise_probability(prob_matrix, rot_matrix, disp_matrix, \
-        delta_rot=0.005, delta_disp=0.005):
+def normalise_probability(prob_matrix, rot_matrix, disp_matrix,
+                          delta_rot=0.005, delta_disp=0.005):
     """ Function to normalise the probabilty matrix of the decoupling parameter
     to integrate to a value of 1.
 
@@ -828,12 +828,12 @@ def compute_dynamics(input_xml,
     # initial run to settle system after reading file
     run(10000)
 
-    thermo = analyze.log(filename=basename+"-thermo.dat", \
-                         quantities=['temperature', 'pressure', \
-                                     'potential_energy', \
-                                     'rotational_kinetic_energy', \
+    thermo = analyze.log(filename=basename+"-thermo.dat",
+                         quantities=['temperature', 'pressure',
+                                     'potential_energy',
+                                     'rotational_kinetic_energy',
                                      'translational_kinetic_energy'
-                                    ], \
+                                    ],
                          period=1000)
 
     # Initialise dynamics quantities
@@ -855,8 +855,8 @@ def compute_dynamics(input_xml,
 
         struct[index_min] = (step_iter.next(), step_iter, dyn)
         # Add new key frame when a run reaches 10000 steps
-        if timestep % 100000 == 0 and \
-                len([s for s in struct if s[0] == timestep+1]) == 0:
+        if (timestep % 100000 == 0 and
+                len([s for s in struct if s[0] == timestep+1]) == 0):
             new_step = StepSize.PowerSteps(start=timestep)
             struct.append((new_step.next(), new_step, TimeDep2dRigid(system)))
     thermo.query('pressure')
