@@ -843,6 +843,7 @@ def compute_dynamics(input_xml,
     new_step = StepSize.PowerSteps(start=tstep_init)
     struct = [(new_step.next(), new_step, dyn)]
     timestep = tstep_init
+    key_rate = int(math.pow(10, int(math.log10(steps))-1))
 
     while timestep < steps+tstep_init:
         index_min = struct.index(min(struct))
@@ -855,7 +856,7 @@ def compute_dynamics(input_xml,
 
         struct[index_min] = (step_iter.next(), step_iter, dyn)
         # Add new key frame when a run reaches 10000 steps
-        if (timestep % 100000 == 0 and
+        if (timestep % key_rate == 0 and
                 len([s for s in struct if s[0] == timestep+1]) == 0):
             new_step = StepSize.PowerSteps(start=timestep)
             struct.append((new_step.next(), new_step, TimeDep2dRigid(system)))
