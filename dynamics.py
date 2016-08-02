@@ -640,6 +640,66 @@ class TimeDep2dRigid(TimeDep):
         return self._calc_corr_skew(self._displacement_sq(snapshot),
                                     self._rotations(snapshot))
 
+    def _calc_rot_relax1(self, rotations):
+        """Compute the first rotational relaxation function
+
+        Args:
+            rotations (:class:`numpy.array`): Array containing the rotations of
+                each molecule
+
+        Return:
+            float: The rotational relaxation
+        """
+        return np.mean(np.cos(rotations))
+
+    def get_rot_relax1(self, system):
+        R"""Compute the first rotational relaxation function
+
+        ..math:: C_1(t) = \langle \hat\mathbf e(0) \cdot
+                    \hat \mathbf e(t) \rangle
+
+        Args:
+            system (system): The hoomd sytem object
+
+        Return:
+            float: The first rotataional relaxation
+
+        """
+        snapshot = self._take_snapshot(system)
+        return self._calc_rot_relax1(self._rotations(snapshot))
+
+    def _calc_rot_relax2(self, rotations):
+        """Compute the second rotational relaxation function
+
+        Args:
+            rotations (:class:`numpy.array`): Array containing the rotations of
+                each molecule
+
+        Return:
+            float: The rotational relaxation
+        """
+        return np.mean(2*np.cos(rotations)**2 - 1)
+
+    def get_rot_relax2(self, system):
+        R"""Compute the second rotational relaxation function
+
+        ..math:: C_1(t) = \langle 2[\hat\mathbf e(0) \cdot
+                    \hat \mathbf e(t)]^2 - 1 \rangle
+
+        Args:
+            system (system): The hoomd sytem object
+
+        Return:
+            float: The first rotataional relaxation
+
+        """
+        snapshot = self._take_snapshot(system)
+        return self._calc_rot_relax1(self._rotations(snapshot))
+
+
+
+
+
     def print_all(self, system, outfile=None):
         """ Print all dynamic quantities to a file
 
@@ -667,6 +727,8 @@ class TimeDep2dRigid(TimeDep):
         output['gamma1'] = self._calc_gamma1(disp_sq, rotations)
         output['gamma2'] = self._calc_gamma2(disp_sq, rotations)
         output['correlation'] = self._calc_corr_skew(disp_sq, rotations)
+        output['rot1'] = self._calc_rot_relax1(rotations)
+        output['rot2'] = self._calc_rot_relax2(rotations)
         if outfile:
             print(vals_to_string(output), file=open(outfile, 'a'))
         else:
@@ -691,6 +753,8 @@ class TimeDep2dRigid(TimeDep):
         output['gamma1'] = 0
         output['gamma2'] = 0
         output['correlation'] = 0
+        output['rot1'] = 0
+        output['rot2'] = 0
         print(keys_to_string(output), file=open(outfile, 'w'))
 
 def keys_to_string(dictionary, sep=' '):
