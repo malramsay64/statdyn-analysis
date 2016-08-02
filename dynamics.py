@@ -843,7 +843,9 @@ def compute_dynamics(input_xml,
     new_step = StepSize.PowerSteps(start=tstep_init)
     struct = [(new_step.next(), new_step, dyn)]
     timestep = tstep_init
-    key_rate = int(math.pow(10, int(math.log10(steps))-1))
+    key_rate = 33000
+    xml = dump.xml(all=True)
+    xml.write(filename=input_xml)
 
     while timestep < steps+tstep_init:
         index_min = struct.index(min(struct))
@@ -857,11 +859,11 @@ def compute_dynamics(input_xml,
         struct[index_min] = (step_iter.next(), step_iter, dyn)
         # Add new key frame when a run reaches 10000 steps
         if (timestep % key_rate == 0 and
+                len(struct) < 2000 and
                 len([s for s in struct if s[0] == timestep+1]) == 0):
             new_step = StepSize.PowerSteps(start=timestep)
             struct.append((new_step.next(), new_step, TimeDep2dRigid(system)))
+        xml.write(filename=input_xml)
     thermo.query('pressure')
-    xml = dump.xml(all=True)
-    xml.write(filename=input_xml)
 
 
