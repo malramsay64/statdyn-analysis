@@ -40,6 +40,12 @@ gamma2 <- p + geom_path(aes(y=gamma2))
 mean_rot <- p + geom_path(aes(y=mean_rot))
 mean_rot <- mean_rot + geom_line(aes(y=pi/2), colour="grey")
 
+rot1 <- p + geom_path(aes(y=rot1))
+rot1 <- rot1
+
+rot2 <- p + geom_path(aes(y=rot2))
+rot2 <- rot2
+
 correlations <- p + geom_path(aes(y=correlation))
 
 pdf("dynamics.pdf", width=8, height=6)
@@ -50,4 +56,6 @@ print(gamma1)
 print(gamma2)
 print(mean_rot)
 print(correlations)
+print(rot1)
+print(rot2)
 dev.off()
