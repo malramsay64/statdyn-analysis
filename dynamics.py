@@ -7,6 +7,7 @@ import os
 import math
 import numpy as np
 from scipy import stats
+import quaternion
 from hoomd_script import (init,
                           update,
                           pair,
@@ -303,12 +304,17 @@ class TimeDep2dRigid(TimeDep):
         Return:
             :class:`numpy.array`: Array of all the rotations
         """
-        rot = np.empty(len(self.t_init.bodies.com))
-        for i in range(len(self.t_init.bodies.com)):
-            rot[i] = (quat_to_2d(self.t_init.bodies.orientation[i])
-                      - quat_to_2d(snapshot.bodies.orientation[i]))
+        orient_init = np.array([scalar4_to_quaternion(i)
+                                for i in self.t_init.bodies.orientation])
+        orient_final = np.array([scalar4_to_quaternion(i)
+                                 for i in snapshot.bodies.orientation])
+        rot_q = orient_final/orient_init
+        rot = quaternion.as_rotation_vector(rot_q)[:, 0]
+        for i in range(len(rot)):
             if rot[i] > math.pi:
-                rot[i] = 2*math.pi - rot[i]
+                rot[i] -= 2*math.pi
+            elif rot[i] < -math.pi:
+                rot[i] += 2*math.pi
         return rot
 
 
@@ -822,6 +828,21 @@ def scalar4_to_array(scalar):
         :class:`numpy.array`: numpy array
     """
     return np.array([scalar.x, scalar.y, scalar.z, scalar.w])
+
+def scalar4_to_quaternion(scalar):
+    R""" Convert scalar4 representation to a quaternion
+
+    Conversion to quaternion where the *w* component of the scalar
+    is the real part of the quaternion and the *x,y,z* values
+    are the vector part.
+
+    Args:
+        scalar (scalar4): Scalar4 object representing a quaternion
+
+    Return:
+        :class:`quaternion.quaternion`: quaternion object
+    """
+    return quaternion.quaternion(scalar.w, scalar.x, scalar.y, scalar.z)
 
 
 def normalise_probability(prob_matrix, rot_matrix, disp_matrix,
