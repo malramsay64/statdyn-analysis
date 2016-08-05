@@ -655,8 +655,8 @@ class TimeDep2dRigid(TimeDep):
     def get_rot_relax1(self, system):
         R"""Compute the first rotational relaxation function
 
-        ..math:: C_1(t) = \langle \hat\mathbf e(0) \cdot
-                    \hat \mathbf e(t) \rangle
+        .. math:: C_1(t) = \langle \hat\vec e(0) \cdot
+                    \hat \vec e(t) \rangle
 
         Args:
             system (system): The hoomd sytem object
@@ -683,8 +683,8 @@ class TimeDep2dRigid(TimeDep):
     def get_rot_relax2(self, system):
         R"""Compute the second rotational relaxation function
 
-        ..math:: C_1(t) = \langle 2[\hat\mathbf e(0) \cdot
-                    \hat \mathbf e(t)]^2 - 1 \rangle
+        .. math:: C_1(t) = \langle 2[\hat\vec e(0) \cdot
+                    \hat \vec e(t)]^2 - 1 \rangle
 
         Args:
             system (system): The hoomd sytem object
@@ -782,10 +782,15 @@ def vals_to_string(dictionary, sep=' '):
     return sep.join([str(val) for val in dictionary.values()])
 
 def quat_to_2d(quat):
-    """ Convert quaternion to angle in 2D plane
+    R""" Convert quaternion to angle in 2D plane
 
-    Convert the quaternion representation of angle to a two dimensional
-    angle in the xy plane.
+    The quaternion representation of angle is converted to a two dimensional
+    orientation in the xy plane using the below formula.
+
+    .. math:: \theta = \text{atan2}(2(q_xq_w - q_yq_z), 1-2(q_x^2 q_z^2))
+
+    Refs:
+        https://en.wikipedia.org/wiki/Margaret_Hamilton_%28scientist%29
 
     Args:
         quat (scalar4): Quaternion representation of an angle
