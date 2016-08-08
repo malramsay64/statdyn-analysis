@@ -4,6 +4,8 @@ simulation"""
 
 from __future__ import print_function
 import os
+import sys
+import json
 import numpy as np
 from hoomd_script import (init,
                           update,
@@ -17,11 +19,59 @@ from hoomd_script import (init,
 import StepSize
 from TimeDep import TimeDep2dRigid
 
+class RawTransRot(object):
+    """Class to hold the translational and rotational data for computation
 
+    The dyanmics quantities that we are interesrted in are all computed from
+    the translations and rotations of the individual molecules. This means
+    that we can compute any of the values of interest from just knowing the
+    translation and rotation of each molecule for a given time difference.
 
+    """
+    def __init__(self):
+        super(RawTransRot, self).__init__()
+        self.trans = np.array()
+        self.rot = np.array()
+        self.timesteps = 0
 
+    def from_arrays(self, trans, rot, timesteps):
+        """Initialise RawTransRot from precomputed arrays
 
+        Both the translational and rotational arrays have to have the same
+        ordering of molecules i.e. the data in `trans[i]` corresponds to the
+        same molecue as `rot[i]`
 
+        Args:
+            trans (array): Array of all translations
+            rot (array): Array of all rotations
+            timesteps (int): Number of timesteps between initial and final
+                configurations.
+
+        """
+        self.trans = np.array(trans)
+        self.rot = np.array(rot)
+        self.timesteps = timesteps
+
+    def from_json(self, string):
+        """Initialise from JSON string"""
+        dct = json.loads(string)
+        self.trans = np.array(dct["translations"])
+        self.rot = np.array(dct["rotations"])
+        self.timesteps = dct["timesteps"]
+
+    def to_json(self, outfile=''):
+        """Convert representation to JSON for writing to a file
+
+        """
+        if outfile:
+            output = sys.stdout
+        else:
+            output = open(outfile, 'w')
+        json.dump({"__RawTransRot__":True,
+                   "timesteps":self.timesteps,
+                   "translations":self.trans.tolist(),
+                   "rotations":self.rot.tolist()
+                  }, output, separators=(',', ':'))
 
 
 def compute_dynamics(input_xml,
