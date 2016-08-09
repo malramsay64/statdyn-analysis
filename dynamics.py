@@ -19,7 +19,53 @@ from hoomd_script import (init,
 import StepSize
 from TimeDep import TimeDep2dRigid
 
-class RawTransRot(object):
+class TransData(object):
+    """Class to deal with the translational data for computation
+
+    The dynamics quantities we are concerned with calculating are all computed
+    from the displacements of atoms. Which means we can store all the
+    information we need for computations in the translation of each atom and
+    the time difference
+
+    """
+    def __init__(self):
+        super(TransData, self).__init__()
+        self.trans = np.array()
+        self.timesteps = 0
+
+    def from_trans_array(self, translations, timesteps):
+        """ Initialise the values of the TransData object from a list
+
+        Args:
+            translations (:numpy:`array`): Array containing the precomputed
+                translational motion of each molecules
+            timesteps (int): The number of timesteps between the initial
+                and final configurations
+        """
+        self.trans = np.array(translations)
+        self.timesteps = timesteps
+
+    def from_json(self, string):
+        """Initialise from JSON string"""
+        dct = json.loads(string)
+        self.trans = np.array(dct["translations"])
+        self.timesteps = dct["timesteps"]
+
+    def to_json(self, outfile=''):
+        """Convert representation to JSON for writing to a file
+        """
+        if outfile:
+            output = sys.stdout
+        else:
+            output = open(outfile, 'w')
+        json.dump({"__TransRotData__":True,
+                   "timesteps":self.timesteps,
+                   "translations":self.trans.tolist(),
+                  }, output, separators=(',', ':'))
+
+
+
+class TransRotData(TransData):
     """Class to hold the translational and rotational data for computation
 
     The dyanmics quantities that we are interesrted in are all computed from
@@ -29,13 +75,11 @@ class RawTransRot(object):
 
     """
     def __init__(self):
-        super(RawTransRot, self).__init__()
-        self.trans = np.array()
+        super(TransRotData, self).__init__()
         self.rot = np.array()
-        self.timesteps = 0
 
-    def from_arrays(self, trans, rot, timesteps):
-        """Initialise RawTransRot from precomputed arrays
+    def from_arrays(self, trans, timesteps, rot):
+        """Initialise TransRotData from precomputed arrays
 
         Both the translational and rotational arrays have to have the same
         ordering of molecules i.e. the data in `trans[i]` corresponds to the
@@ -61,13 +105,12 @@ class RawTransRot(object):
 
     def to_json(self, outfile=''):
         """Convert representation to JSON for writing to a file
-
         """
         if outfile:
             output = sys.stdout
         else:
             output = open(outfile, 'w')
-        json.dump({"__RawTransRot__":True,
+        json.dump({"__TransRotData__":True,
                    "timesteps":self.timesteps,
                    "translations":self.trans.tolist(),
                    "rotations":self.rot.tolist()
