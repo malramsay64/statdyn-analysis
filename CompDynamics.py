@@ -3,6 +3,7 @@
 simulation"""
 
 from __future__ import print_function
+import collections
 import numpy as np
 from TransData import TransData, TransRotData
 
@@ -98,12 +99,12 @@ class CompDynamics(object):
         Args:
             outfile (string): Filename to append to
         """
-        output = dict()
+        output = collections.OrderedDict()
+        output['time'] = self.timestep()
         output['msd'] = self.get_msd()
         output['mfd'] = self.get_mfd()
         output['alpha'] = self.get_alpha()
         output['disp'] = self.get_mean_disp()
-        output['time'] = self.timestep()
         if outfile:
             print(vals_to_string(output), file=open(outfile, 'a'))
         else:
@@ -116,12 +117,12 @@ class CompDynamics(object):
         Args:
             outfile (string): Filename to write headings to
         """
-        output = dict()
+        output = collections.OrderedDict()
+        output['time'] = 0
         output['msd'] = 0
         output['mfd'] = 0
         output['alpha'] = 0
         output['disp'] = 0
-        output['time'] = 0
         print(keys_to_string(output), file=open(outfile, 'w'))
 
 class CompRotDynamics(CompDynamics):
@@ -392,13 +393,13 @@ class CompRotDynamics(CompDynamics):
         Args:
             outfile (string): Filename to append to
         """
-        output = dict()
+        output = collections.OrderedDict()
+        output['time'] = self.timestep()
+        output['disp'] = self.get_mean_disp()
         output['msd'] = self.get_msd()
         output['mfd'] = self.get_mfd()
         output['alpha'] = self.get_alpha()
-        output['disp'] = self.get_mean_disp()
         output['mean_rot'] = self.get_mean_rot()
-        output['time'] = self.timestep()
         output['decoupling'] = self.get_decoupling(0.05, 0.05)
         output['gamma1'] = self.get_gamma1()
         output['gamma2'] = self.get_gamma2()
@@ -417,17 +418,16 @@ class CompRotDynamics(CompDynamics):
         Args:
             outfile (string): Filename to write headings to
         """
-        output = dict()
+        output = collections.OrderedDict()
+        output['time'] = 0
+        output['disp'] = 0
         output['msd'] = 0
         output['mfd'] = 0
         output['alpha'] = 0
-        output['disp'] = 0
         output['mean_rot'] = 0
-        output['time'] = 0
         output['decoupling'] = 0
         output['gamma1'] = 0
         output['gamma2'] = 0
-        output['correlation'] = 0
         output['rot1'] = 0
         output['rot2'] = 0
         print(keys_to_string(output), file=open(outfile, 'w'))
