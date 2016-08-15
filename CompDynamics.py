@@ -16,9 +16,9 @@ class CompDynamics(object):
         system (system): Hoomd system object which is the initial configuration
             for the purposes of the dynamics calculations
     """
-    def __init__(self, TData=TransData()):
+    def __init__(self, TData):
+        assert issubclass(type(TData), TransData)
         self.data = TData
-        assert isinstance(TransData, self.data)
 
     def timestep(self):
         """Return the timestep difference"""
@@ -155,9 +155,10 @@ class CompRotDynamics(CompDynamics):
             dyanamics computations
 
     """
-    def __init__(self, RigidData=TransRotData()):
+    def __init__(self, RigidData):
+        assert issubclass(type(RigidData), TransRotData)
         super(CompRotDynamics, self).__init__(RigidData)
-        assert isinstance(TransRotData, self.data)
+        self.data = RigidData
 
     def rotations(self):
         R""" Calculate the rotation for every rigid body in the system
@@ -172,7 +173,7 @@ class CompRotDynamics(CompDynamics):
         Return:
             :class:`numpy.array`: Array of all the rotations
         """
-        return self.data.rotations
+        return self.data.rot
 
 
     def get_decoupling(self, delta_disp=0.005, delta_rot=0.005):
