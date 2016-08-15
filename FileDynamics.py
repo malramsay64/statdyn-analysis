@@ -29,3 +29,6 @@ def compute_all(directory=".", pattern="*-tr.dat", suffix="-dyn.dat"):
     files = glob.glob(directory+"/"+pattern)
     for infile in files:
         compute_file(infile, infile[:-(len(pattern)-1)]+suffix)
+
+if __name__ == "__main__":
+    compute_all()

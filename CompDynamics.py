@@ -378,11 +378,21 @@ class CompRotDynamics(CompDynamics):
         """
         return np.mean(2*np.cos(self.rotations())**2 - 1)
 
-    def get_param_rot(self):
+    def get_param_rot(self, param=1):
         R"""Compute a parameterised rotational correlation
 
         """
-        return
+        return (np.mean(np.abs(self.rotations())
+                        *np.exp(param*self.translations()))
+                /np.mean(np.exp(param*self.translations())))
+
+    def get_param_trans(self, param=1):
+        R"""Compute a parameterised translational correlation
+
+        """
+        return (np.mean(np.abs(self.translations())
+                        *np.exp(param*self.rotations()))
+                /np.mean(np.exp(param*self.rotations())))
 
     def print_all(self, outfile=None):
         """ Print all dynamic quantities to a file
@@ -406,6 +416,22 @@ class CompRotDynamics(CompDynamics):
         output['gamma2'] = self.get_gamma2()
         output['rot1'] = self.get_rot_relax1()
         output['rot2'] = self.get_rot_relax2()
+        output['param_rot_n3'] = self.get_param_rot(-3)
+        output['param_rot_n2'] = self.get_param_rot(-2)
+        output['param_rot_n1'] = self.get_param_rot(-1)
+        output['param_rot_n0.1'] = self.get_param_rot(-0.1)
+        output['param_rot_0.1'] = self.get_param_rot(0.1)
+        output['param_rot_1'] = self.get_param_rot(1)
+        output['param_rot_2'] = self.get_param_rot(2)
+        output['param_rot_3'] = self.get_param_rot(3)
+        output['param_trans_n3'] = self.get_param_trans(-3)
+        output['param_trans_n2'] = self.get_param_trans(-2)
+        output['param_trans_n1'] = self.get_param_trans(-1)
+        output['param_trans_n0.1'] = self.get_param_trans(-0.1)
+        output['param_trans_0.1'] = self.get_param_trans(0.1)
+        output['param_trans_1'] = self.get_param_trans(1)
+        output['param_trans_2'] = self.get_param_trans(2)
+        output['param_trans_3'] = self.get_param_trans(3)
         if outfile:
             print(vals_to_string(output), file=open(outfile, 'a'))
         else:
@@ -431,6 +457,22 @@ class CompRotDynamics(CompDynamics):
         output['gamma2'] = 0
         output['rot1'] = 0
         output['rot2'] = 0
+        output['param_rot_n3'] = 0
+        output['param_rot_n2'] = 0
+        output['param_rot_n1'] = 0
+        output['param_rot_n0.1'] = 0
+        output['param_rot_0.1'] = 0
+        output['param_rot_1'] = 0
+        output['param_rot_2'] = 0
+        output['param_rot_3'] = 0
+        output['param_trans_n3'] = 0
+        output['param_trans_n2'] = 0
+        output['param_trans_n1'] = 0
+        output['param_trans_n0.1'] = 0
+        output['param_trans_0.1'] = 0
+        output['param_trans_1'] = 0
+        output['param_trans_2'] = 0
+        output['param_trans_3'] = 0
         print(keys_to_string(output), file=open(outfile, 'w'))
 
 def keys_to_string(dictionary, sep=' '):
