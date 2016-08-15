@@ -24,7 +24,7 @@ collated <- collated[order(collated$time),]
 collated_av <- aggregate(collated[,!(names(collated) %in% c("temp", "time"))],
                          list(temp=collated$temp, time=collated$time), mean)
 
-p <- ggplot(collated_av, aes(x=time, colour=temp)) + scale_x_log10()
+p <- ggplot(collated_av, aes(x=time*0.005, colour=temp)) + scale_x_log10()
 
 msd <- p + geom_path(aes(y=msd))
 msd <- msd + scale_y_log10()
