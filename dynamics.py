@@ -1,44 +1,49 @@
 #!/usr/bin/env python
-""" A set of classes used for computing the dynamic properties of a Hoomd MD
-simulation"""
+""" A set of classes used for running simulations to compute the dynamic
+properties of a Hoomd MD simulation"""
 
 from __future__ import print_function
 import os
 import math
 import hoomd
-from hoomd import md, deprecated
+from hoomd import md
 import StepSize
 from TimeDep import TimeDep2dRigid
 from CompDynamics import CompRotDynamics
 
 
-def compute_dynamics(input_xml,
+def compute_dynamics(input_file,
                      temp,
                      press,
                      steps,
                     ):
-    """ Run a hoomd simulation calculating the dynamic quantites on a power
+    """Run a simulation computing the dynamic properties
+
+    Run a hoomd simulation calculating the dynamic quantites on a power
     law scale such that both short timescale and long timescale events are
     vieable on the same figure while retaining a reasonable runtime.
-    for the simulation
+    for the simulation.
 
     Args:
-        input_xml (string): Filename of the file containing the input
+        input_file (string): Filename of the file containing the input
             configuration
         temp (float): The target temperature at which to run the simulation
         press (float): The target pressure at which to run the simulation
+        steps (int): The number of steps for which to collect dynamics data
     """
-    basename = os.path.splitext(input_xml)[0]
+    basename = os.path.splitext(input_file)[0]
 
     # Initialise simulation parameters
     hoomd.context.initialize()
-    system = deprecated.init.read_xml(filename=input_xml, time_step=0)
+    system = hoomd.init.read_gsd(filename=input_file, time_step=0)
     md.update.enforce2d()
 
+    # Set moments of inertia for every central particle
     for particle in system.particles:
         if particle.type == '1':
             particle.moment_inertia = (1.65, 10, 10)
 
+    # Set interaction potentials
     potentials = md.pair.lj(r_cut=2.5, nlist=md.nlist.cell())
     potentials.pair_coeff.set('1', '1', epsilon=1, sigma=2)
     potentials.pair_coeff.set('2', '2', epsilon=1, sigma=0.637556*2)
@@ -51,7 +56,6 @@ def compute_dynamics(input_xml,
                                      math.cos(math.pi/3), 0)],
                     types=['2', '2']
                    )
-
     rigid.create_bodies(create=False)
     center = hoomd.group.rigid_center()
 
@@ -60,15 +64,15 @@ def compute_dynamics(input_xml,
     md.integrate.npt(group=center, kT=temp, tau=2, P=press, tauP=2)
 
     # initial run to settle system after reading file
-    hoomd.run(10000)
+    hoomd.run(100000)
 
-    thermo = hoomd.analyze.log(filename=basename+"-thermo.dat",
-                               quantities=['temperature', 'pressure',
-                                           'potential_energy',
-                                           'rotational_kinetic_energy',
-                                           'translational_kinetic_energy'
-                                          ],
-                               period=1000)
+    hoomd.analyze.log(filename=basename+"-thermo.dat",
+                      quantities=['temperature', 'pressure',
+                                  'potential_energy',
+                                  'rotational_kinetic_energy',
+                                  'translational_kinetic_energy'
+                                 ],
+                      period=1000)
 
     # Initialise dynamics quantities
     dyn = TimeDep2dRigid(system)
@@ -89,19 +93,16 @@ def compute_dynamics(input_xml,
         index_min = struct.index(min(struct))
         next_step, step_iter, dyn = struct[index_min]
         timestep = next_step
-        # print(timestep, file=open("timesteps.dat", 'a'))
         hoomd.run_upto(timestep)
         dyn.print_all(system, outfile=basename+"-dyn.dat")
         # dyn.print_data(system, outfile=basename+"-tr.dat")
-        # dyn.print_corr_dist(system, outfile=basename+"-corr.dat")
 
         struct[index_min] = (step_iter.next(), step_iter, dyn)
-        # Add new key frame when a run reaches 10000 steps
+        # Add new key frame every key_rate steps, limited to 5000
         if (timestep % key_rate == 0 and
                 len(struct) < 5000 and
                 len([s for s in struct if s[0] == timestep+1]) == 0):
             new_step = StepSize.PowerSteps(start=timestep)
             struct.append((new_step.next(), new_step, TimeDep2dRigid(system)))
-    thermo.query('pressure')
 
 

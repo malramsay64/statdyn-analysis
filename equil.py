@@ -1,5 +1,6 @@
 #!/usr/bin/env python
-""" A series of functions to equilibrate hoomd MD simulations"""
+"""This module contains a series of functions to easily equilibrate hoomd
+MD simulations. """
 #
 # Malcolm Ramsay 2016-03-09
 #
@@ -16,37 +17,55 @@ def equil_from_rand(outfile=None,
                     temp=1.0,
                     press=1.0,
                     max_iters=10):
-    """ Equilibrate system from a crystalline initial configuration
+    """ Equilibrate system from a lattice initial configuration
+
+    The inttial configuration consists of a numer of particles on a hexagonal
+    lattice arrangement. Each particle is the central atom of a molecule which
+    is currently a bent trimer molecule.
+
+    The equilibration is initally carried out at low temperature with small
+    timesteps allowing any high energy overlaps to be dealt with gracefully.
+
+    Todo:
+        Pass molecule parameters to the function allowing simple expansion to
+            any molecular shape.
+        Pass the pair potentials which is relevant to the previous point in
+            being able to easily expand to different molecules.
+        Pass the number of molecules as a paramter
+        Compute moments of interta of molecules or allow them to be passed to
+            the function
 
     Args:
-        input_xml (string): Filename of file in which the initial configuration
-            is stored in the hoomd-xml file format.
         outfile (string): Filename of file to output final configuration to.
+            The output file will be in the GSD file format and so it is
+            advisable the output files have the `.gsd` extension.
         steps (int): Number of steps to run the equilibration.
-        potentials (class:`hoomd.pair`): Interaction potentials to use for the
-            simulation. Default values are set if no input is given.
         temp (float): Target temperature at which to equilibrate system
         press (float): Target pressure for equilibration
         max_iters (int): Maximum number of iterations for convergence on
             target pressure and temperature.
 
     """
+    # Initialise context, also removes any previously intialised contexts
     hoomd.context.initialize()
 
     # Create hexagonal lattice of central particles
     system = hoomd.init.create_lattice(unitcell=hoomd.lattice.hex(a=4),
                                        n=[25, 25])
 
+    # Assign the moment of intertial of each molecule.
     for particle in system.particles:
         particle.moment_inertia = (1.65, 10, 10)
 
     system.particles.types.add('B')
 
+    # Create the pair coefficients
     lj_c = md.pair.lj(r_cut=2.5, nlist=md.nlist.cell())
     lj_c.pair_coeff.set('A', 'A', epsilon=1.0, sigma=2.0)
     lj_c.pair_coeff.set('A', 'B', epsilon=1.0, sigma=1.637556)
     lj_c.pair_coeff.set('B', 'B', epsilon=1.0, sigma=2*0.637556)
 
+    # Create rigid particles and define their configuration
     rigid = md.constrain.rigid()
     rigid.set_param('A', positions=[(math.sin(math.pi/3),
                                      math.cos(math.pi/3), 0),
@@ -68,7 +87,8 @@ def equil_from_rand(outfile=None,
     md.integrate.mode_standard(dt=0.001)
     npt = md.integrate.npt(group=center, kT=temp, tau=5, P=press, tauP=5)
 
-
+    # Iterate  until the target pressure and temperature are close to the
+    # target values.
     iters = 0
     while (abs(thermo.query('temperature') - temp) > 0.1*temp or
            abs(thermo.query('pressure') - press) > 0.1*press):
@@ -98,16 +118,21 @@ def equil_from_file(input_file=None,
                     potentials=None):
     """ Equilibrate simulation from an input file
 
+    This function is to equilibrate configuration for a number of timesteps
+    such that the configuration has reached thermodynamic equilibrium.
+
     Args:
-        input_xml (string): Input file containing input configuration in
-            hoomd-xml format
-        outfile (string): File to write equilibrated configuration to
+        input_file (string): Input file containing input configuration in
+            the  GSD format
+        outfile (string): File to write equilibrated configuration to. This
+            output file will be in the GSD file format and the filename should
+            include the `.gsd` extension.
         temp (float): Target temperature for equilibration
         press (float): Target pressure for equilibration
         steps (int): Number of steps to run equilibration
         max_iters (int): Maximum number of iterations to run equilibration step
             if target temperature or pressure are not reached.
-        potentials (:class:`hoomd.pair`): Custom interaction potentials for the
+        potentials (:class:`md.pair`): Custom interaction potentials for the
             simulation
     """
     # Initialise simulation parameters
@@ -116,13 +141,14 @@ def equil_from_file(input_file=None,
     hoomd.init.read_gsd(filename=input_file, time_step=0)
     md.update.enforce2d()
 
+    # Set interaction potentials
     if not potentials:
         potentials = md.pair.lj(r_cut=2.5, nlist=md.nlist.cell())
         potentials.pair_coeff.set('A', 'A', epsilon=1, sigma=2)
         potentials.pair_coeff.set('B', 'B', epsilon=1, sigma=0.637556*2)
         potentials.pair_coeff.set('A', 'B', epsilon=1, sigma=1.637556)
 
-
+    # Set configuration of rigid bodies
     rigid = md.constrain.rigid()
     rigid.set_param('A', positions=[(math.sin(math.pi/3),
                                      math.cos(math.pi/3), 0),
@@ -130,7 +156,6 @@ def equil_from_file(input_file=None,
                                      math.cos(math.pi/3), 0)],
                     types=['B', 'B']
                    )
-
     rigid.create_bodies(create=False)
     center = hoomd.group.rigid_center()
 
@@ -149,6 +174,7 @@ def equil_from_file(input_file=None,
     md.integrate.mode_standard(dt=0.001)
     npt = md.integrate.npt(group=center, kT=temp, tau=5, P=press, tauP=5)
 
+    # Equilibrate until close to target thermodynamic parameters
     iters = 0
     while (abs(thermo.query('temperature') - temp) > 0.1*temp or
            abs(thermo.query('pressure') - press) > 0.1*press):
