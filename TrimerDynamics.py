@@ -3,7 +3,7 @@
 for a series of temperatures"""
 
 # import os.path
-from hoomd_script import context
+import hoomd
 import dynamics
 
 PRESS = 13.5
@@ -31,7 +31,7 @@ TEMPERATURES = [(5.00, 1*STEPS),\
 
 
 if __name__ == "__main__":
-    context.initialize()
+    hoomd.context.initialize()
 
     for temp, steps in TEMPERATURES:
         input_xml = "Trimer-{press:.2f}-{temp:.2f}.xml"\

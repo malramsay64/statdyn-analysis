@@ -9,6 +9,7 @@
 import os.path
 import numpy as np
 from hoomd_script import *
+from TimeDep import TimeDep2dRigid
 
 context.initialize()
 
@@ -38,7 +39,12 @@ npt = integrate.npt_rigid(group=gall, \
                           P=13.5/2, \
                           tauP=5\
                          )
-run(10000)
+run(100)
+init = TimeDep2dRigid(system)
+run(1000)
+init.print_data(system)
+run(1000)
+init.print_data(system)
 npt.set_params(tau=1, tauP=1)
 run(10000)
 integrate.mode_standard(dt=0.005)

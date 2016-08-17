@@ -7,13 +7,12 @@
 # Hoomd helper functions
 
 import os.path
-from hoomd_script import (init, update, pair, group, integrate, analyze, run,
-                          dump)
+import math
+import hoomd
+from hoomd import md
 
-def equil_from_crys(input_xml="mol.xml",
-                    outfile=None,
+def equil_from_rand(outfile=None,
                     steps=100000,
-                    potentials=None,
                     temp=1.0,
                     press=1.0,
                     max_iters=10):
@@ -32,66 +31,65 @@ def equil_from_crys(input_xml="mol.xml",
             target pressure and temperature.
 
     """
-    # Ensure there is no configuration already initialised
-    if init.is_initialized():
-        init.reset()
+    hoomd.context.initialize()
 
-    # Fix for an issue where the pressure equilibrates to a value larger than
-    # the desired pressure
-    press /= 2.2
+    # Create hexagonal lattice of central particles
+    system = hoomd.init.create_lattice(unitcell=hoomd.lattice.hex(a=4),
+                                       n=[25, 25])
 
-    # Initialise simulation parameters
-    # context.initialize()
-    init.read_xml(filename=input_xml)
-    update.enforce2d()
+    for particle in system.particles:
+        particle.moment_inertia = (1.65, 10, 10)
 
-    if not potentials:
-        potentials = pair.lj(r_cut=2.5)
-        potentials.pair_coeff.set('1', '1', epsilon=1, sigma=2)
-        potentials.pair_coeff.set('2', '2', epsilon=1, sigma=0.637556*2)
-        potentials.pair_coeff.set('1', '2', epsilon=1, sigma=1.637556)
+    system.particles.types.add('B')
 
-    # Create particle groups
-    gall = group.all()
+    lj_c = md.pair.lj(r_cut=2.5, nlist=md.nlist.cell())
+    lj_c.pair_coeff.set('A', 'A', epsilon=1.0, sigma=2.0)
+    lj_c.pair_coeff.set('A', 'B', epsilon=1.0, sigma=1.637556)
+    lj_c.pair_coeff.set('B', 'B', epsilon=1.0, sigma=2*0.637556)
 
-    # Find minimum energy configuration
-    integrate.mode_minimize_rigid_fire(group=gall,
-                                       dt=0.005,
-                                       ftol=1e-3,
-                                       Etol=1e-4
-                                      )
+    rigid = md.constrain.rigid()
+    rigid.set_param('A', positions=[(math.sin(math.pi/3),
+                                     math.cos(math.pi/3), 0),
+                                    (-math.sin(math.pi/3),
+                                     math.cos(math.pi/3), 0)],
+                    types=['B', 'B']
+                   )
+    rigid.create_bodies(create=True)
+    center = hoomd.group.rigid_center()
+    md.update.enforce2d()
 
     # Calculate thermodynamic quantities
-    thermo = analyze.log(filename=None,
-                         quantities=['temperature', 'pressure'],
-                         period=1000
-                        )
+    thermo = hoomd.analyze.log(filename=None,
+                               quantities=['temperature', 'pressure'],
+                               period=1000
+                              )
 
     # Perform initial equilibration at target temperature and pressure.
-    integrate.mode_standard(dt=0.001)
-    npt = integrate.npt_rigid(group=gall, T=temp, tau=5, P=press, tauP=5)
+    md.integrate.mode_standard(dt=0.001)
+    npt = md.integrate.npt(group=center, kT=temp, tau=5, P=press, tauP=5)
 
 
     iters = 0
     while (abs(thermo.query('temperature') - temp) > 0.1*temp or
            abs(thermo.query('pressure') - press) > 0.1*press):
-        run(steps/10)
+        hoomd.run(steps/10)
         iters += 1
         if iters > max_iters:
             break
 
     # Run longer equilibration
-    integrate.mode_standard(dt=0.005)
+    md.integrate.mode_standard(dt=0.005)
     npt.set_params(tau=1, tauP=1)
-    run(steps)
+    hoomd.run(steps)
 
     # Write final configuration to file
     if not outfile:
-        outfile = 'Trimer-{press}-{temp}'.format(press=press, temp=temp)
-    xml = dump.xml(all=True)
-    xml.write(filename=outfile)
+        outfile = 'Trimer-{press}-{temp}.gsd'.format(press=press, temp=temp)
+    hoomd.dump.gsd(filename=outfile,
+                   period=None,
+                   group=hoomd.group.all())
 
-def equil_from_file(input_xml=None,
+def equil_from_file(input_file=None,
                     outfile=None,
                     temp=1.0,
                     press=1.0,
@@ -112,68 +110,64 @@ def equil_from_file(input_xml=None,
         potentials (:class:`hoomd.pair`): Custom interaction potentials for the
             simulation
     """
-    # Ensure there is no configuration already initialised
-    if init.is_initialized():
-        init.reset()
-
-    # Fix for an issue where the pressure equilibrates to double the desired
-    # pressure
-    press /= 2.2
-
     # Initialise simulation parameters
     basename = os.path.splitext(outfile)[0]
-    # context.initialize()
-    init.read_xml(filename=input_xml, restart=basename+'-restart.xml')
-    update.enforce2d()
+    hoomd.context.initialize()
+    hoomd.init.read_gsd(filename=input_file, time_step=0)
+    md.update.enforce2d()
 
     if not potentials:
-        potentials = pair.lj(r_cut=2.5)
-        potentials.pair_coeff.set('1', '1', epsilon=1, sigma=2)
-        potentials.pair_coeff.set('2', '2', epsilon=1, sigma=0.637556*2)
-        potentials.pair_coeff.set('1', '2', epsilon=1, sigma=1.637556)
+        potentials = md.pair.lj(r_cut=2.5, nlist=md.nlist.cell())
+        potentials.pair_coeff.set('A', 'A', epsilon=1, sigma=2)
+        potentials.pair_coeff.set('B', 'B', epsilon=1, sigma=0.637556*2)
+        potentials.pair_coeff.set('A', 'B', epsilon=1, sigma=1.637556)
 
-    # Create particle groups
-    gall = group.all()
+
+    rigid = md.constrain.rigid()
+    rigid.set_param('A', positions=[(math.sin(math.pi/3),
+                                     math.cos(math.pi/3), 0),
+                                    (-math.sin(math.pi/3),
+                                     math.cos(math.pi/3), 0)],
+                    types=['B', 'B']
+                   )
+
+    rigid.create_bodies(create=False)
+    center = hoomd.group.rigid_center()
 
     # Calculate thermodynamic quantities
-    thermo = analyze.log(filename=basename+"-thermo.dat",
-                         quantities=['temperature',
-                                     'pressure',
-                                     'potential_energy',
-                                     'rotational_kinetic_energy',
-                                     'translational_kinetic_energy'
-                                    ],
-                         period=1000
-                        )
-
-    # Create restart file if simulation stops
-    dump.xml(filename=basename+'-restart.xml',
-             period=1000000,
-             restart=True,
-             all=True)
+    thermo = hoomd.analyze.log(filename=basename+"-thermo.dat",
+                               quantities=['temperature',
+                                           'pressure',
+                                           'potential_energy',
+                                           'rotational_kinetic_energy',
+                                           'translational_kinetic_energy'
+                                          ],
+                               period=1000
+                              )
 
     # Perform initial equilibration at target temperature and pressure.
-    integrate.mode_standard(dt=0.001)
-    npt = integrate.npt_rigid(group=gall, T=temp, tau=5, P=press, tauP=5)
+    md.integrate.mode_standard(dt=0.001)
+    npt = md.integrate.npt(group=center, kT=temp, tau=5, P=press, tauP=5)
 
     iters = 0
     while (abs(thermo.query('temperature') - temp) > 0.1*temp or
            abs(thermo.query('pressure') - press) > 0.1*press):
-        run(10000)
+        hoomd.run(10000)
         iters += 1
         if iters > max_iters:
             break
 
     # Run longer equilibration
-    integrate.mode_standard(dt=0.005)
+    md.integrate.mode_standard(dt=0.005)
     npt.set_params(tau=1, tauP=1)
-    run(steps)
+    hoomd.run(steps)
 
     # Write final configuration to file
     if not outfile:
-        outfile = 'Trimer-{press}-{temp}'.format(press=press, temp=temp)
-    xml = dump.xml(all=True)
-    xml.write(filename=outfile)
+        outfile = 'Trimer-{press}-{temp}.gsd'.format(press=press, temp=temp)
+    hoomd.dump.gsd(filename=outfile,
+                   period=None,
+                   group=hoomd.group.all())
 
 
 

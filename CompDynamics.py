@@ -155,7 +155,7 @@ class CompRotDynamics(CompDynamics):
             dyanamics computations
 
     """
-    def __init__(self, RigidData):
+    def __init__(self, RigidData=TransRotData()):
         assert issubclass(type(RigidData), TransRotData)
         super(CompRotDynamics, self).__init__(RigidData)
         self.data = RigidData
