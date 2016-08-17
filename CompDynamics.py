@@ -9,36 +9,45 @@ from TransData import TransData, TransRotData
 
 
 class CompDynamics(object):
-    """ Class to compute the time dependent characteristics of individual
-    particles in a hoomd simulation.
+    """ Class to compute the time dependent properties.
+
+    This computes a number of dynamic quantities that are relevant to a
+    molecular dynamics simulation.
 
     Args:
-        system (system): Hoomd system object which is the initial configuration
-            for the purposes of the dynamics calculations
+        TData (class:`TransData.TransData`): A class:`TransData.TransData`
+            object containg the translational motion and time over which
+            that translational motion took place.
     """
     def __init__(self, TData):
         assert issubclass(type(TData), TransData)
         self.data = TData
 
     def timestep(self):
-        """Return the timestep difference"""
+        """Compute the timestep difference
+
+        Return:
+            int: The number of timesteps the displacement corresponds to
+        """
         return self.data.timesteps
 
     def translations(self):
-        """Return the translation of each molecule"""
+        """Return the translation of each molecule
+
+        Return:
+            class:`numpy.array`: An array of the translational motion that each
+                molecule/particle underwent in a period of time.
+        """
         return self.data.trans
 
     def get_mean_disp(self):
         R""" Compute the mean displacement
 
-        Finds the mean displacement of the current configuration from the
-        initial configuration upon initialising the class.
+        Finds the mean displacement of the molecules using the
+        class:`numpy.mean` function.
 
         .. math::
             \langle \Delta r \rangle = \langle \sqrt{x^2 + y^2 + z^2} \rangle
-
-        Args:
-            system (system): Hoomd system object at currrent time
 
         Return:
             float: The mean displacement
@@ -48,13 +57,10 @@ class CompDynamics(object):
     def get_msd(self):
         R""" Compute the mean squared displacement
 
-        Finds the mean squared displacement of the current state from the inital
-        state of the initialisaiton of the class.
+        Uses the class:`numpy.mean` and class:`numpy.power` functions for
+        the computation.
 
         .. math:: MSD = \langle \Delta r^2 \rangle
-
-        Args:
-            system (system): Hoomd system object at the current time
 
         Return:
             float: The mean squared displacement
@@ -64,8 +70,9 @@ class CompDynamics(object):
     def get_mfd(self):
         R""" Compute the mean fourth disaplacement
 
-        Finds the mean of the displacements to the fourth power from
-        the initial state to the current configuration.
+        Finds the mean of the displacements to the fourth power. Uses the
+        class:`numpy.mean` and class:`numpy.power` functions for
+        the computation.
 
         .. math:: MFD = \langle \Delta r^4 \rangle
 
@@ -93,18 +100,22 @@ class CompDynamics(object):
         """ Print all dynamic quantities to a file
 
         Prints all the calculated dynamic quantities to either
-        stdout or a file. This function only calculates the distances and
-        rotations a single time using the private calc methods.
+        stdout or a file. The output quantities are:
+        * timeteps
+        * Mean Displacement
+        * Mean Squared Displacement (MSD)
+        * Mead Fourth Displacement (MFD)
+        * Nongaussian parameter (:math:`alpha`)
 
         Args:
-            outfile (string): Filename to append to
+            outfile (string): Filename to append output to
         """
         output = collections.OrderedDict()
         output['time'] = self.timestep()
+        output['disp'] = self.get_mean_disp()
         output['msd'] = self.get_msd()
         output['mfd'] = self.get_mfd()
         output['alpha'] = self.get_alpha()
-        output['disp'] = self.get_mean_disp()
         if outfile:
             print(vals_to_string(output), file=open(outfile, 'a'))
         else:
@@ -119,41 +130,33 @@ class CompDynamics(object):
         """
         output = collections.OrderedDict()
         output['time'] = 0
+        output['disp'] = 0
         output['msd'] = 0
         output['mfd'] = 0
         output['alpha'] = 0
-        output['disp'] = 0
         print(keys_to_string(output), file=open(outfile, 'w'))
 
 class CompRotDynamics(CompDynamics):
     """ Class to compute the time dependent characteristics of 2D rigid bodies
     in a hoomd simulation.
 
-    This class extends on from :class:TimeDep computing rotational properties of
-    the 2D rigid bodies in the system. The distinction of two dimensional
+    This class extends on from :class:`TimeDep` computing rotational properties
+    of the 2D rigid bodies in the system. The distinction of two dimensional
     molecules makes for a simpler analysis of the rotational characteristics.
+
+    Todo:
+        Generalise the rotational characteristics to a 3D system.
 
     Note:
         This class computes positional properties for each rigid body in the
         system. This means that for computations of rigid bodies it would be
         expected to get different translational quantities using the
-        :class:TimeDep and the :class:TimeDep2dRigid classes.
-
-    Warning:
-        Hoomd doesn't store rotational data in a regular snapshot, even
-        with the ``rigid_bodies=True`` option. My solution has been to
-        modify the source code to add this functionality to taking
-        snapshots.
-
-    Todo:
-        Have the capability to get the orientations from the system when taking
-        the snapshot allowing for the computation of rotation on a default
-        hoomd install.
+        :class:`TimeDep` and the :class:`TimeDep2dRigid` classes.
 
     Args:
-        system (system): Hoomd system object at the initial time for the
-            dyanamics computations
-
+        RigidData (class:`TransData.TransRotData`): A data class containing
+            the translational, rotational and time data for all the molecules
+            in the system.
     """
     def __init__(self, RigidData=TransRotData()):
         assert issubclass(type(RigidData), TransRotData)
@@ -164,11 +167,8 @@ class CompRotDynamics(CompDynamics):
         R""" Calculate the rotation for every rigid body in the system
 
         This calculates the angle rotated between the initial configuration and
-        the current configuration. It doesn't take into accout multiple
-        rotations with values falling in the range :math:`[\-pi,\pi)`.
-
-        Args:
-            snapshot (snapshot): The final configuration
+        the current configuration. It doesn't take into accout rotations past a
+        half rotation with values falling in the range :math:`[\-pi,\pi)`.
 
         Return:
             :class:`numpy.array`: Array of all the rotations
@@ -179,11 +179,18 @@ class CompRotDynamics(CompDynamics):
     def get_decoupling(self, delta_disp=0.005, delta_rot=0.005):
         """ Calculates the decoupling of rotations and translations.
 
+        This function performs an intergration over rotational and
+        translational space to compute the decoupling of these two
+        parameters.
+
+        Note:
+            The choice of `delta_disp` and `delta_rot` affect the resulting
+            values, especially at small time scales.
+
         References:
             A. Farone, L. Liu, S.-H. Chen, J. Chem. Phys. 119, 6302 (2003)
 
         Args:
-            snapshot (snapshot): The snapshot of the current configuration
             delta_disp (float): The bin size of the displacement for integration
             delta_rot (float):  The bin size of the rotations for integration
 
@@ -213,7 +220,6 @@ class CompRotDynamics(CompDynamics):
                                      delta_rot, delta_disp
                                     )
 
-
         # Calculate tranlational and rotational probabilities
         p_trans = (prob.transpose() * rot_array.transpose())
         p_trans *= delta_rot
@@ -237,10 +243,8 @@ class CompRotDynamics(CompDynamics):
 
         .. math:: \langle |\Delta \theta |\rangle
 
-        Arg:
-            rotations (:class:`numpy.array`): Array of all rotations
 
-        Retrun:
+        Return:
             float: The mean rotation
         """
         return np.mean(np.abs(self.rotations()))
@@ -252,9 +256,6 @@ class CompRotDynamics(CompDynamics):
 
         .. math:: MSR = \langle \Delta \theta^2 \rangle
 
-        Args:
-            system (system): System at the end of the motion
-
         Return:
             float: The mean squared rotation in radians
         """
@@ -265,28 +266,12 @@ class CompRotDynamics(CompDynamics):
 
         A measure of the coupling of translations and rotations
 
-        .. math:: \langle \Delta r \Delta \theta \rangle
-
-        Args:
-            system (system): The hoomd system objet
+        .. math:: \langle \Delta r |\Delta \theta| \rangle
 
         Return:
             float: The coupling parameter
         """
         return np.mean(self.translations()*np.abs(self.rotations()))
-
-    def _calc_mean_sq_trans_rot(self, disp_sq, rotations):
-        R""" Calculate the squared coupled translation and rotation
-
-        Args:
-            disp_sq (:class:`numpy.array`): Array containing the squared
-                displacements
-            rotations (class:`numpy.array`): Array of the rotations
-
-        Return:
-            float: The squared coupling of translations and rotations
-        """
-        return np.mean(disp_sq * np.power(rotations, 2))
 
     def get_mean_sq_trans_rot(self):
         R""" Return the squared coupled translation and rotation
@@ -294,9 +279,6 @@ class CompRotDynamics(CompDynamics):
         A measure of the coupling of translations and rotations
 
         .. math:: \langle \Delta r^2 \Delta \theta^2 \rangle
-
-        Args:
-            system (system): The hoomd system object
 
         Return:
             float: The squared coupling of translations and rotations
@@ -311,11 +293,6 @@ class CompRotDynamics(CompDynamics):
             \gamma_1 &= \frac{\langle\Delta r |\Delta\theta| \rangle -
                 \langle\Delta r\rangle\langle| \Delta \theta |\rangle }
                 {\sqrt{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}}
-
-        Args:
-            disp_sq (:class:`numpy.array`): Array containing the squared
-                displacements
-            rotations (class:`numpy.array`): Array of the rotations
 
         Return:
             float: The coupling of translations and rotations :math:`\gamma_1`
@@ -333,12 +310,6 @@ class CompRotDynamics(CompDynamics):
                 \langle\Delta r^2\rangle\langle\Delta \theta^2\rangle
                 }{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}
 
-
-        Args:
-            disp_sq (:class:`numpy.array`): Array containing the squared
-                displacements
-            rotations (class:`numpy.array`): Array of the rotations
-
         Return:
             float: The squared coupling of translations and rotations
             :math:`\gamma_2`
@@ -354,10 +325,6 @@ class CompRotDynamics(CompDynamics):
         .. math:: C_1(t) = \langle \hat\vec e(0) \cdot
                     \hat \vec e(t) \rangle
 
-        Args:
-            rotations (:class:`numpy.array`): Array containing the rotations of
-                each molecule
-
         Return:
             float: The rotational relaxation
         """
@@ -369,30 +336,47 @@ class CompRotDynamics(CompDynamics):
         .. math:: C_1(t) = \langle 2[\hat\vec e(0) \cdot
                     \hat \vec e(t)]^2 - 1 \rangle
 
-        Args:
-            rotations (:class:`numpy.array`): Array containing the rotations of
-                each molecule
-
         Return:
             float: The rotational relaxation
         """
         return np.mean(2*np.cos(self.rotations())**2 - 1)
 
-    def get_param_rot(self, param=1):
+    def get_param_rot(self, alpha=1):
         R"""Compute a parameterised rotational correlation
+
+        .. math::
+        \langle \Delta\hat\theta(\alpha)\rangle = \frac{
+        \langle|\Delta\theta|\e^{\alpha\Delta r} \rangle}{
+        \langle\e^{\alpha\Delta r} \rangle}
+
+        Args:
+            alpha (float): Parameter
+
+        Return:
+            float: The computed value
 
         """
         return (np.mean(np.abs(self.rotations())
-                        *np.exp(param*self.translations()))
-                /np.mean(np.exp(param*self.translations())))
+                        *np.exp(alpha*self.translations()))
+                /np.mean(np.exp(alpha*self.translations())))
 
-    def get_param_trans(self, param=1):
+    def get_param_trans(self, kappa=1):
         R"""Compute a parameterised translational correlation
 
+        .. math::
+        \langle \Delta\hat r(\kappa)\rangle = \frac{
+        \langle\Delta r\e^{\kappa|\Delta \theta|} \rangle}{
+        \langle\e^{\kappa|\Delta \theta|} \rangle}
+
+        Args:
+            kappa (float): Parameter
+
+        Return:
+            float: Computed value
         """
         return (np.mean(np.abs(self.translations())
-                        *np.exp(param*self.rotations()))
-                /np.mean(np.exp(param*self.rotations())))
+                        *np.exp(kappa*self.rotations()))
+                /np.mean(np.exp(kappa*self.rotations())))
 
     def print_all(self, outfile=None):
         """ Print all dynamic quantities to a file
