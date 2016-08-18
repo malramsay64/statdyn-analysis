@@ -7,47 +7,56 @@
 # Hoomd helper functions
 
 import os.path
+import math
 import numpy as np
-from hoomd_script import *
+import hoomd
+from hoomd import md
 from TimeDep import TimeDep2dRigid
 
-context.initialize()
+hoomd.context.initialize()
 
-if init.is_initialized():
-    init.reset()
-
-system = init.read_xml(filename="Trimer-13.50-5.00.xml")
-update.enforce2d()
-
-potentials = pair.lj(r_cut=2.5)
-potentials.pair_coeff.set('1', '1', epsilon=1, sigma=2)
-potentials.pair_coeff.set('2', '2', epsilon=1, sigma=0.637556*2)
-potentials.pair_coeff.set('1', '2', epsilon=1, sigma=1.637556)
+input_file = 'Trimer-13.50-5.00.gsd'
+system = hoomd.init.read_gsd(filename=input_file, time_step=0)
+md.update.enforce2d()
+# Set moments of inertia for every central particle
+for particle in system.particles:
+    if particle.type == 'A':
+        particle.moment_inertia = (1.65, 10, 10)
 
 
-thermo = analyze.log(filename=None,\
+potentials = md.pair.lj(r_cut=2.5, nlist=md.nlist.cell())
+potentials.pair_coeff.set('A', 'A', epsilon=1, sigma=2)
+potentials.pair_coeff.set('B', 'B', epsilon=1, sigma=0.637556*2)
+potentials.pair_coeff.set('A', 'B', epsilon=1, sigma=1.637556)
+
+rigid = md.constrain.rigid()
+rigid.set_param('A', positions=[(math.sin(math.pi/3),
+                                 math.cos(math.pi/3), 0),
+                                (-math.sin(math.pi/3),
+                                 math.cos(math.pi/3), 0)],
+                types=['B', 'B']
+               )
+rigid.create_bodies(create=False)
+center = hoomd.group.rigid_center()
+
+
+thermo = hoomd.analyze.log(filename=None,\
                      quantities=['temperature', 'pressure'], \
                      period=1000 \
                     )
-gall = group.all()
 
-
-integrate.mode_standard(dt=0.001)
-npt = integrate.npt_rigid(group=gall, \
-                          T=2.5, \
+md.integrate.mode_standard(dt=0.001)
+npt = md.integrate.npt(group=center, \
+                          kT=2.5, \
                           tau=5, \
                           P=13.5/2, \
                           tauP=5\
                          )
-run(100)
+hoomd.run(100)
 init = TimeDep2dRigid(system)
-run(1000)
-init.print_data(system)
-run(1000)
-init.print_data(system)
 npt.set_params(tau=1, tauP=1)
-run(10000)
-integrate.mode_standard(dt=0.005)
+hoomd.run(10000)
+md.integrate.mode_standard(dt=0.005)
 
 
 def get_stats(steps=1000, points=200):
@@ -61,7 +70,7 @@ def get_stats(steps=1000, points=200):
     press = []
     temp = []
     for i in range(points):
-        run(steps)
+        hoomd.run(steps)
         temp.append(thermo.query('temperature'))
         press.append(thermo.query('pressure'))
     print("Temp -- Mean: {mean} Stddev: {stdev}"\
@@ -76,8 +85,8 @@ def get_stats(steps=1000, points=200):
 
 snapshot = ''
 def run_t_p(temp, press, steps=500000):
-    npt.set_params(T=temp, P=press)
-    run(steps)
+    npt.set_params(kT=temp, P=press)
+    hoomd.run(steps)
     stats = get_stats()
     print(stats)
     global snapshot
