@@ -18,8 +18,8 @@ class TimeDep(object):
             for the purposes of the dynamics calculations
     """
     def __init__(self, system):
-        t_init = self._take_snapshot(system)
-        self.pos_init = self._unwrap(t_init)
+        self.t_init = self._take_snapshot(system)
+        self.pos_init = self._unwrap(self.t_init)
         self.timestep = system.get_metadata()['timestep']
 
     def _take_snapshot(self, system):
@@ -62,8 +62,8 @@ class TimeDep(object):
                             snapshot.box.Ly,
                             snapshot.box.Lz
                            ])
-        pos = np.array(snapshot.particles.position)
-        image = np.array(snapshot.particles.image)
+        pos = snapshot.particles.position
+        image = snapshot.particles.image
         return pos + image*box_dim
 
     def _displacement(self, snapshot):
@@ -85,16 +85,17 @@ class TimeDep(object):
 
     def get_data(self, system):
         """ Get translational and rotational data """
-
-        return TransData().from_trans_array(
+        data = TransData()
+        data.from_trans_array(
             self._displacement(self._take_snapshot(system)),
-            self.get_time_diff(system.get_metadata['timestep']))
+            self.get_time_diff(system.get_metadata()['timestep']))
+        return data
 
     def print_all(self, system, outfile):
         """Print all data to file"""
         data = self.get_data(system)
         CompDynamics(data).print_all(outfile)
-        data.to_json(outfile+".json")
+        data.to_json(outfile+"-tr.dat")
 
 
 class TimeDep2dRigid(TimeDep):
@@ -111,17 +112,6 @@ class TimeDep2dRigid(TimeDep):
         expected to get different translational quantities using the
         :class:TimeDep and the :class:TimeDep2dRigid classes.
 
-    Warning:
-        Hoomd doesn't store rotational data in a regular snapshot, even
-        with the ``rigid_bodies=True`` option. My solution has been to
-        modify the source code to add this functionality to taking
-        snapshots.
-
-    Todo:
-        Have the capability to get the orientations from the system when taking
-        the snapshot allowing for the computation of rotation on a default
-        hoomd install.
-
     Args:
         system (system): Hoomd system object at the initial time for the
             dyanamics computations
@@ -129,53 +119,10 @@ class TimeDep2dRigid(TimeDep):
     """
     def __init__(self, system):
         super(TimeDep2dRigid, self).__init__(system)
-        t_init = self._take_snapshot(system)
-        self.orient_init = np.array([scalar4_to_quaternion(i)
-                                     for i in t_init.bodies.orientation])
-
-    def _unwrap(self, snapshot):
-        """ Unwraps the periodic positions to absolute positions
-
-        Converts the periodic positions of each rigid body to absolute
-        positions for computation of displacements.
-
-        Note:
-            This function overwrites the base class function due to differences
-            in the way the rigid and non-rigid positions are stored in a
-            snapshot
-
-        Args:
-            snapshot (snapshot): Hoomd snapshot of the configuration to unwrap
-
-        Return:
-            :class:`numpy.array`: A Numpy array of position arrays for each
-            rigid body center of mass.
-        """
-        box_dim = np.array([snapshot.box.Lx,
-                            snapshot.box.Ly,
-                            snapshot.box.Lz
-                           ])
-        pos = np.array([scalar3_to_array(i) for i in snapshot.bodies.com])
-        image = np.array([scalar3_to_array(i)
-                          for i in snapshot.bodies.body_image])
-        return pos + image*box_dim
-
-    def _take_snapshot(self, system):
-        """ Takes a snapshot of the system including rigid bodies
-
-        Note:
-            This overrides the :func:`_take_snapshot` of the base
-            :class:`TimeDep` class to specify that that snapshot includes the
-            rigid body data.
-
-        Args:
-            system (system): The hoomd system object
-
-        Return:
-            snapshot (snapshot): The snapshot of the system including the rigid
-                body data
-        """
-        return system.take_snapshot(rigid_bodies=True)
+        self.bodies = np.max(self.t_init.particles.body)+1
+        self.pos_init = self.pos_init[:self.bodies]
+        self.orient_init = quaternion.as_quat_array(np.array(
+            self.t_init.particles.orientation[:self.bodies], dtype=float))
 
     def _rotations(self, snapshot):
         R""" Calculate the rotation for every rigid body in the system
@@ -190,8 +137,8 @@ class TimeDep2dRigid(TimeDep):
         Return:
             :class:`numpy.array`: Array of all the rotations
         """
-        orient_final = np.array([scalar4_to_quaternion(i)
-                                 for i in snapshot.bodies.orientation])
+        orient_final = quaternion.as_quat_array(np.array(
+            snapshot.particles.orientation[:self.bodies], dtype=float))
         rot_q = orient_final/self.orient_init
         rot = quaternion.as_rotation_vector(rot_q)[:, 0]
         for i, val in enumerate(rot):
@@ -201,54 +148,37 @@ class TimeDep2dRigid(TimeDep):
                 rot[i] += 2*math.pi
         return rot
 
+    def _displacement(self, snapshot):
+        """ Calculate the squared displacement for all bodies in the system.
+
+        This is the function that computes the per body displacements for all
+        the dynamic quantities. This is where the most computation takes place
+        and can be called once for a number of further calculations.
+
+        Args:
+            snapshot (snapshot): The configuration at which the difference is
+                computed
+
+        Returns:
+            :class:`numpy.array`: An array containing per body displacements
+        """
+        curr = self._unwrap(snapshot)[:self.bodies]
+        return np.sqrt(np.power(curr - self.pos_init, 2).sum(1))
+
     def get_data(self, system):
         """ Get translational and rotational data """
         snap = self._take_snapshot(system)
 
-        return TransRotData().from_arrays(
+        data = TransRotData()
+        data.from_arrays(
             self._displacement(snap),
             self._rotations(snap),
-            self.get_time_diff(system.get_metadata['timestep']))
+            self.get_time_diff(system.get_metadata()['timestep']))
+        assert (issubclass(type(data), TransRotData)), type(data)
+        return data
 
     def print_all(self, system, outfile):
         """Print all data to file"""
         data = self.get_data(system)
         CompRotDynamics(data).print_all(outfile)
-        data.to_json(outfile+".json")
-
-def scalar3_to_array(scalar):
-    """ Convert scalar3 representation to a numpy array
-
-    Args:
-        scalar (scalar3): Scalar3 position array
-
-    Return:
-        :class:`numpy.array`: Position array
-    """
-    return np.array([scalar.x, scalar.y, scalar.z])
-
-def scalar4_to_array(scalar):
-    """ Convert scalar4 representation to a numpy array
-
-    Args:
-        scalar (scalar4): Scalar4 position array
-
-    Return:
-        :class:`numpy.array`: numpy array
-    """
-    return np.array([scalar.x, scalar.y, scalar.z, scalar.w])
-
-def scalar4_to_quaternion(scalar):
-    R""" Convert scalar4 representation to a quaternion
-
-    Conversion to quaternion where the *w* component of the scalar
-    is the real part of the quaternion and the *x,y,z* values
-    are the vector part.
-
-    Args:
-        scalar (scalar4): Scalar4 object representing a quaternion
-
-    Return:
-        :class:`quaternion.quaternion`: quaternion object
-    """
-    return quaternion.quaternion(scalar.w, scalar.x, scalar.y, scalar.z)
+        data.to_json(outfile[:-8]+"-tr.dat")
