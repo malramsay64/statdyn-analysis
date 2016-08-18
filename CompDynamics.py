@@ -159,7 +159,7 @@ class CompRotDynamics(CompDynamics):
             in the system.
     """
     def __init__(self, RigidData=TransRotData()):
-        assert issubclass(type(RigidData), TransRotData)
+        assert (issubclass(type(RigidData), TransRotData)), type(RigidData)
         super(CompRotDynamics, self).__init__(RigidData)
         self.data = RigidData
 

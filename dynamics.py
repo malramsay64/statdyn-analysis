@@ -40,21 +40,21 @@ def compute_dynamics(input_file,
 
     # Set moments of inertia for every central particle
     for particle in system.particles:
-        if particle.type == '1':
+        if particle.type == 'A':
             particle.moment_inertia = (1.65, 10, 10)
 
     # Set interaction potentials
     potentials = md.pair.lj(r_cut=2.5, nlist=md.nlist.cell())
-    potentials.pair_coeff.set('1', '1', epsilon=1, sigma=2)
-    potentials.pair_coeff.set('2', '2', epsilon=1, sigma=0.637556*2)
-    potentials.pair_coeff.set('1', '2', epsilon=1, sigma=1.637556)
+    potentials.pair_coeff.set('A', 'A', epsilon=1, sigma=2)
+    potentials.pair_coeff.set('B', 'B', epsilon=1, sigma=0.637556*2)
+    potentials.pair_coeff.set('A', 'B', epsilon=1, sigma=1.637556)
 
     rigid = md.constrain.rigid()
-    rigid.set_param('1', positions=[(math.sin(math.pi/3),
+    rigid.set_param('A', positions=[(math.sin(math.pi/3),
                                      math.cos(math.pi/3), 0),
                                     (-math.sin(math.pi/3),
                                      math.cos(math.pi/3), 0)],
-                    types=['2', '2']
+                    types=['B', 'B']
                    )
     rigid.create_bodies(create=False)
     center = hoomd.group.rigid_center()

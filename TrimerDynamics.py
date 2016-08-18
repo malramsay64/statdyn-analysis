@@ -34,6 +34,6 @@ if __name__ == "__main__":
     hoomd.context.initialize()
 
     for temp, steps in TEMPERATURES:
-        input_xml = "Trimer-{press:.2f}-{temp:.2f}.xml"\
+        input_file = "Trimer-{press:.2f}-{temp:.2f}.gsd"\
                 .format(press=PRESS, temp=temp)
-        dynamics.compute_dynamics(input_xml, temp, PRESS, steps)
+        dynamics.compute_dynamics(input_file, temp, PRESS, steps)
