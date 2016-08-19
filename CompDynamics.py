@@ -15,7 +15,7 @@ class CompDynamics(object):
     molecular dynamics simulation.
 
     Args:
-        TData (class:`TransData.TransData`): A class:`TransData.TransData`
+        TData (:class:`TransData.TransData`): A :class:`TransData.TransData`
             object containg the translational motion and time over which
             that translational motion took place.
     """
@@ -35,8 +35,8 @@ class CompDynamics(object):
         """Return the translation of each molecule
 
         Return:
-            class:`numpy.array`: An array of the translational motion that each
-                molecule/particle underwent in a period of time.
+            :class:`numpy.ndarray`: An array of the translational motion that
+            each molecule/particle underwent in a period of time.
         """
         return self.data.trans
 
@@ -44,7 +44,7 @@ class CompDynamics(object):
         R""" Compute the mean displacement
 
         Finds the mean displacement of the molecules using the
-        class:`numpy.mean` function.
+        :func:`numpy.mean` function.
 
         .. math::
             \langle \Delta r \rangle = \langle \sqrt{x^2 + y^2 + z^2} \rangle
@@ -57,7 +57,7 @@ class CompDynamics(object):
     def get_msd(self):
         R""" Compute the mean squared displacement
 
-        Uses the class:`numpy.mean` and class:`numpy.power` functions for
+        Uses the :func:`numpy.mean` and :func:`numpy.power` functions for
         the computation.
 
         .. math:: MSD = \langle \Delta r^2 \rangle
@@ -71,7 +71,7 @@ class CompDynamics(object):
         R""" Compute the mean fourth disaplacement
 
         Finds the mean of the displacements to the fourth power. Uses the
-        class:`numpy.mean` and class:`numpy.power` functions for
+        :func:`numpy.mean` and :func:`numpy.power` functions for
         the computation.
 
         .. math:: MFD = \langle \Delta r^4 \rangle
@@ -97,15 +97,16 @@ class CompDynamics(object):
         return self.get_mfd()/(np.power(self.get_msd(), 2)) - 1
 
     def print_all(self, outfile=None):
-        """ Print all dynamic quantities to a file
+        R""" Print all dynamic quantities to a file
 
         Prints all the calculated dynamic quantities to either
         stdout or a file. The output quantities are:
+
         * timeteps
         * Mean Displacement
         * Mean Squared Displacement (MSD)
         * Mead Fourth Displacement (MFD)
-        * Nongaussian parameter (:math:`alpha`)
+        * Nongaussian parameter (:math:`\alpha`)
 
         Args:
             outfile (string): Filename to append output to
@@ -154,7 +155,7 @@ class CompRotDynamics(CompDynamics):
         :class:`TimeDep` and the :class:`TimeDep2dRigid` classes.
 
     Args:
-        RigidData (class:`TransData.TransRotData`): A data class containing
+        RigidData (:class:`TransData.TransRotData`): A data class containing
             the translational, rotational and time data for all the molecules
             in the system.
     """
@@ -168,10 +169,10 @@ class CompRotDynamics(CompDynamics):
 
         This calculates the angle rotated between the initial configuration and
         the current configuration. It doesn't take into accout rotations past a
-        half rotation with values falling in the range :math:`[\-pi,\pi)`.
+        half rotation with values falling in the range :math:`[-\pi,\pi)`.
 
         Return:
-            :class:`numpy.array`: Array of all the rotations
+            :class:`numpy.ndarray`: Array of all the rotations
         """
         return self.data.rot
 
@@ -278,7 +279,8 @@ class CompRotDynamics(CompDynamics):
 
         A measure of the coupling of translations and rotations
 
-        .. math:: \langle \Delta r^2 \Delta \theta^2 \rangle
+        .. math::
+            \langle \Delta r^2 \Delta \theta^2 \rangle
 
         Return:
             float: The squared coupling of translations and rotations
@@ -306,7 +308,8 @@ class CompRotDynamics(CompDynamics):
     def get_gamma2(self):
         R""" Calculate the second order coupling of translations and rotations
 
-        .. math:: \gamma_2 &= \frac{\langle(\Delta r \Delta\theta)^2 \rangle -
+        .. math::
+            \gamma_2 &= \frac{\langle(\Delta r \Delta\theta)^2 \rangle -
                 \langle\Delta r^2\rangle\langle\Delta \theta^2\rangle
                 }{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}
 
@@ -322,8 +325,9 @@ class CompRotDynamics(CompDynamics):
     def get_rot_relax1(self):
         R"""Compute the first rotational relaxation function
 
-        .. math:: C_1(t) = \langle \hat\vec e(0) \cdot
-                    \hat \vec e(t) \rangle
+        .. math::
+            C_1(t) = \langle \hat\vec e(0) \cdot
+                \hat \vec e(t) \rangle
 
         Return:
             float: The rotational relaxation
@@ -333,8 +337,9 @@ class CompRotDynamics(CompDynamics):
     def get_rot_relax2(self):
         R"""Compute the second rotational relaxation function
 
-        .. math:: C_1(t) = \langle 2[\hat\vec e(0) \cdot
-                    \hat \vec e(t)]^2 - 1 \rangle
+        .. math::
+            C_1(t) = \langle 2[\hat\vec e(0) \cdot \
+                \hat \vec e(t)]^2 - 1 \rangle
 
         Return:
             float: The rotational relaxation
@@ -345,9 +350,9 @@ class CompRotDynamics(CompDynamics):
         R"""Compute a parameterised rotational correlation
 
         .. math::
-        \langle \Delta\hat\theta(\alpha)\rangle = \frac{
-        \langle|\Delta\theta|\e^{\alpha\Delta r} \rangle}{
-        \langle\e^{\alpha\Delta r} \rangle}
+            \langle \Delta\hat\theta(\alpha)\rangle = \frac{
+                \langle|\Delta\theta|e^{\alpha\Delta r} \rangle}{
+                \langle e^{\alpha\Delta r} \rangle}
 
         Args:
             alpha (float): Parameter
@@ -363,10 +368,9 @@ class CompRotDynamics(CompDynamics):
     def get_param_trans(self, kappa=1):
         R"""Compute a parameterised translational correlation
 
-        .. math::
-        \langle \Delta\hat r(\kappa)\rangle = \frac{
-        \langle\Delta r\e^{\kappa|\Delta \theta|} \rangle}{
-        \langle\e^{\kappa|\Delta \theta|} \rangle}
+        .. math:: \langle \Delta\hat r(\kappa)\rangle = \frac{
+            \langle\Delta r e^{\kappa|\Delta \theta|} \rangle}{
+            \langle e^{\kappa|\Delta \theta|} \rangle}
 
         Args:
             kappa (float): Parameter

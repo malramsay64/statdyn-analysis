@@ -17,7 +17,7 @@ def equil_from_rand(outfile=None,
                     temp=1.0,
                     press=1.0,
                     max_iters=10):
-    """ Equilibrate system from a lattice initial configuration
+    R""" Equilibrate system from a lattice initial configuration
 
     The inttial configuration consists of a numer of particles on a hexagonal
     lattice arrangement. Each particle is the central atom of a molecule which
@@ -27,13 +27,13 @@ def equil_from_rand(outfile=None,
     timesteps allowing any high energy overlaps to be dealt with gracefully.
 
     Todo:
-        Pass molecule parameters to the function allowing simple expansion to
-            any molecular shape.
-        Pass the pair potentials which is relevant to the previous point in
-            being able to easily expand to different molecules.
-        Pass the number of molecules as a paramter
-        Compute moments of interta of molecules or allow them to be passed to
-            the function
+        - Pass molecule parameters to the function allowing simple expansion to
+          any molecular shape.
+        - Pass the pair potentials which is relevant to the previous point in
+          being able to easily expand to different molecules.
+        - Pass the number of molecules as a paramter
+        - Compute moments of interta of molecules or allow them to be passed to
+          the function
 
     Args:
         outfile (string): Filename of file to output final configuration to.
