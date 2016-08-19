@@ -1,6 +1,6 @@
 #!/bin/sh
 
-#PBS -N Trimer_equil
+#PBS -N TrimerEquil
 #PBS -l nodes=1:ppn=24
 #PBS -l walltime=24:00:00
 #PBS -l cput=576:00:00
@@ -11,6 +11,6 @@
 
 #cd $HOME/project/Trimer-Hoomd
 
-cd $PBS_O_WORKDIR
+cd "$PBS_O_WORKDIR" || exit
 
-hoomd ~/MD-Molecules-Hoomd/Trimer-equil.hoomd > outfile.log
+python ~/MD-Molecules-Hoomd/TrimerEquil.py > outfile.log
