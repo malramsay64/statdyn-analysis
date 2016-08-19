@@ -11,10 +11,15 @@ Contents:
 .. toctree::
    :maxdepth: 4
 
-   dynamics
+   TrimerEquil
    equil
+   TrimerDynamics
+   dynamics
+   CompDynamics
+   FileDynamics
+   TimeDep
+   TransData
    StepSize
-   TrimerSetup
 
 
 

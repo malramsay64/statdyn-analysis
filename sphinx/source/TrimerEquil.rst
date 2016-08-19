@@ -1,7 +1,7 @@
-TrimerSetup module
+TrimerEquil module
 ==================
 
-.. automodule:: TrimerSetup
-    :members:
+.. automodule:: TrimerEquil
+    :members
     :undoc-members:
     :show-inheritance:
