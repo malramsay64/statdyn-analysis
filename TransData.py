@@ -26,8 +26,8 @@ class TransData(object):
         """ Initialise the values of the TransData object from an array
 
         Args:
-            translations (:numpy:`array`): Array containing the precomputed
-                translational motion of each molecules
+            translations (:class:`numpy.ndarray`): Array containing the
+                precomputed translational motion of each molecules
             timesteps (int): The number of timesteps between the initial
                 and final configurations
         """
@@ -43,6 +43,7 @@ class TransData(object):
         This is a string encoded in JSON containing at least a list of the
         translational motion of each molecule and the timestep. The following
         is a minimal example ::
+
             >>> string = "{'timesteps':1, 'translations':[0.1,0.1,0,0.2,0.2]}"
             >>> TransData().from_json(string)
 
@@ -50,7 +51,7 @@ class TransData(object):
             Deal with error conditions, when the data is incomplete/incorrect
 
         Args:
-            string (str): String in the JSON format containg the data to be
+            string (string): String in the JSON format containg the data to be
                 imported. The json requires both a `translations` field and
                 a `timesteps` field.
         """
@@ -76,7 +77,7 @@ class TransData(object):
             by line.
 
         Args:
-            outfile (str): Filename to direct data to
+            outfile (string): Filename to direct data to
         """
         if outfile:
             output = sys.stdout
@@ -106,7 +107,7 @@ class TransRotData(TransData):
         self.rot = np.array([])
 
     def from_arrays(self, trans, rot, timesteps):
-        """Initialise TransRotData from precomputed :class`numpy.array`
+        """Initialise TransRotData from precomputed :class:`numpy.ndarray`
 
         Both the translational and rotational arrays have to have the same
         ordering of molecules i.e. the data in `trans[i]` corresponds to the
@@ -117,8 +118,8 @@ class TransRotData(TransData):
             number of molecules etc.
 
         Args:
-            trans (nuarray): Array of all translations
-            rot (array): Array of all rotations
+            trans (:class:`numpy.ndarray`): Array of all translations
+            rot (:class:`numpy.ndarray`): Array of all rotations
             timesteps (int): Number of timesteps between initial and final
                 configurations.
 
@@ -141,6 +142,7 @@ class TransRotData(TransData):
         This is a string encoded in JSON containing at least a list of the
         translational motion of each molecule, the rotational motion of each
         molecule and the timestep. The following is a minimal example ::
+
             >>> string = "{'timesteps':1, 'translations':[0.1,0.1,0,0.2,0.2],
             'rotations':[0.1,0.1,0,0.2,0.2]}"
             >>> TransRotData().from_json(string)
@@ -149,7 +151,7 @@ class TransRotData(TransData):
             Deal with error conditions, when the data is incomplete/incorrect
 
         Args:
-            string (str): String in the JSON format containg the data to be
+            string (string): String in the JSON format containg the data to be
                 imported. The json requires a `translations` field, a
                 `rotations` field and a `timesteps` field.
         """
@@ -176,7 +178,7 @@ class TransRotData(TransData):
             by line.
 
         Args:
-            outfile (str): Filename to direct data to
+            outfile (string): Filename to direct data to
         """
         if outfile == '':
             output = sys.stdout

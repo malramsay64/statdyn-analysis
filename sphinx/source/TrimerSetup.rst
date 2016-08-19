@@ -1,7 +1,0 @@
-TrimerSetup module
-==================
-
-.. automodule:: TrimerSetup
-    :members:
-    :undoc-members:
-    :show-inheritance:
