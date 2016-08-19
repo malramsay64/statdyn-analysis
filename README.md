@@ -7,7 +7,7 @@ Installation
 ------------
 
 There are some prerequisites for this set of scripts to run properly
- - hoomd-blue version 1.3.3
+ - hoomd-blue version 2.0.x
  - R
  - python numpy
  - python scipy
@@ -22,14 +22,13 @@ To set up the equilibration runs
 
     $ mkdir scratch
     $ cd scratch
-    $ cp mol.xml .
-    $ hoomd ../TrimerEquil.hoomd
+    $ python ../TrimerEquil.py
 
 Note that using the default set of temperatures and steps will result in an equilibration that will take on the order of 3-5 days depending on configuration. There is a similar timescale for the production runs as well.
 
 To set up the production runs, which require the files generated in the equilibration runs, the command
 
-    $ hoomd ../TrimerDynamics.hoomd
+    $ python ../TrimerDynamics.py
 
 will run the simulation.
 
