@@ -52,6 +52,7 @@ def compute_all(pattern="*-tr.dat", suffix="-dyn.dat", directory="."):
     """
     files = glob.glob(directory+"/"+pattern)
     for infile in files:
+        print(infile)
         compute_file(infile, infile[:-(len(pattern)-1)]+suffix)
 
 if __name__ == "__main__":
