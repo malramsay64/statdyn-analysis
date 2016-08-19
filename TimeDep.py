@@ -140,7 +140,7 @@ class TimeDep2dRigid(TimeDep):
         orient_final = quaternion.as_quat_array(np.array(
             snapshot.particles.orientation[:self.bodies], dtype=float))
         rot_q = orient_final/self.orient_init
-        rot = quaternion.as_rotation_vector(rot_q)[:, 0]
+        rot = quaternion.as_rotation_vector(rot_q).sum(axis=1)
         for i, val in enumerate(rot):
             if val > math.pi:
                 rot[i] -= 2*math.pi
