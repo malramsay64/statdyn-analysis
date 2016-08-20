@@ -55,7 +55,7 @@ def equil_from_rand(outfile=None,
 
     # Assign the moment of intertial of each molecule.
     for particle in system.particles:
-        particle.moment_inertia = (1.65, 10, 10)
+        particle.moment_inertia = (0, 0, 1.65)
 
     system.particles.types.add('B')
 

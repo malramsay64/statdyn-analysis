@@ -41,7 +41,7 @@ def compute_dynamics(input_file,
     # Set moments of inertia for every central particle
     for particle in system.particles:
         if particle.type == 'A':
-            particle.moment_inertia = (1.65, 10, 10)
+            particle.moment_inertia = (0, 0, 1.65)
 
     # Set interaction potentials
     potentials = md.pair.lj(r_cut=2.5, nlist=md.nlist.cell())
