@@ -19,9 +19,12 @@ for (file in files) {
 }
 
 p <- ggplot(collated, aes(x=timestep, colour=temp))
-thermo <- p + geom_smooth(aes(y=temperature))
-thermo <- thermo + geom_smooth(aes(y=pressure))
+p <- p + scale_x_log10()
+
+temp <- p + geom_path(aes(y=temperature))
+press <- p + geom_path(aes(y=pressure))
 
 pdf("thermo.pdf", width=8, height=6)
-print(thermo)
+print(temp)
+print(press)
 dev.off()
