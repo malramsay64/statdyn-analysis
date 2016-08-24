@@ -19,12 +19,16 @@ for (file in files) {
 }
 
 p <- ggplot(collated, aes(x=timestep, colour=temp))
-p <- p + scale_x_log10()
+p <- p + scale_x_log10() 
 
-temp <- p + geom_path(aes(y=temperature))
-press <- p + geom_path(aes(y=pressure))
+temp <- p + geom_smooth(aes(y=temperature), level=0.999)
+press <- p + geom_smooth(aes(y=pressure), level=0.999)
+energy_potential <- p + geom_smooth(aes(y=abs(potential_energy)), level=0.999)
+energy_kinetic <- p + geom_smooth(aes(y=translational_kinetic_energy+rotational_kinetic_energy), level=0.999)
 
 pdf("thermo.pdf", width=8, height=6)
 print(temp)
 print(press)
+print(energy_potential)
+print(energy_kinetic)
 dev.off()
