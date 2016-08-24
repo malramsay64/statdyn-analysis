@@ -1,6 +1,4 @@
 library('ggplot2')
-library('reshape2')
-library('plotly')
 
 files <- dir(pattern='*-dyn.dat')
 timestep <- 0.005
@@ -65,27 +63,6 @@ diff_rot <- diff_rot + geom_path(aes(y=param_rot_0.1-mean_rot, colour="0.1"))
 diff_rot <- diff_rot + geom_path(aes(y=param_rot_1-mean_rot, colour="1"))
 diff_rot <- diff_rot + geom_path(aes(y=param_rot_2-mean_rot, colour="2"))
 diff_rot <- diff_rot + geom_path(aes(y=param_rot_3-mean_rot, colour="3"))
-
-trans_heading <- grep("param_trans", names(collated_av), value=TRUE)
-conv_trans <- list(
-    "time"="time",
-    "temp"="temp",
-    "param_trans_n3"=-3,
-    "param_trans_n2"=-2,
-    "param_trans_n1"=-1,
-    "param_trans_n0.1"=-0.1,
-    "param_trans_0.1"=0.1,
-    "param_trans_1"=1,
-    "param_trans_2"=2,
-    "param_trans_3"=3
-    )
-trans_heading <- c(grep("param_trans", names(collated_av), value=TRUE), "time", "temp")
-trans_2d <- collated_av[trans_heading]
-names(trans_2d) <- conv_trans[names(trans_2d)]
-trano_2d <- subset(trans_2d, trans_2d$temp == "1.40")
-trans_2dm <- melt(trans_2d, id.vars = c("time", "temp"))
-t2d <- plot_ly(trans_2dm, x=log(time), y=variable, z=log(value), type="scatter3d", group=temp, mode="markers")
-print(t2d)
 
 pdf("dynamics.pdf", width=8, height=6)
 print(msd)
