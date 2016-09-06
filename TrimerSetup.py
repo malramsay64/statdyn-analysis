@@ -6,7 +6,6 @@
 
 # Hoomd helper functions
 
-import os.path
 import math
 import numpy as np
 import hoomd
@@ -86,7 +85,7 @@ npt.set_params(tau=1, tauP=1)
 xml = deprecated.dump.xml(filename="out.xml", group=hoomd.group.all(), all=True)
 xml.write("out.xml")
 hoomd.analyze.imd(
-    port = 4321,
-    period = 200,
+    port=4321,
+    period=200,
 )
 hoomd.run(100000)
