@@ -96,6 +96,21 @@ class CompDynamics(object):
         """
         return self.get_mfd()/(2*np.power(self.get_msd(), 2)) - 1
 
+    def get_struct(self, dist=0.3):
+        R""" Compute the structural relaxation
+
+        The structural relaxation is given as the proportion of
+        particles which have moved further than `dist` from their
+        initial positions.
+
+        Args:
+            dist (float): The distance cutoff for considering relaxation.
+                Defualts to 0.3
+
+        Return:
+            float: The structural relaxation of the configuration
+        """
+        return np.mean(self.translations() < dist)
 
     def print_all(self, outfile=None):
         R""" Print all dynamic quantities to a file
@@ -108,6 +123,7 @@ class CompDynamics(object):
         * Mean Squared Displacement (MSD)
         * Mead Fourth Displacement (MFD)
         * Nongaussian parameter (:math:`\alpha`)
+        * Structural relaxation
 
         Args:
             outfile (string): Filename to append output to
@@ -118,6 +134,7 @@ class CompDynamics(object):
         output['msd'] = self.get_msd()
         output['mfd'] = self.get_mfd()
         output['alpha'] = self.get_alpha()
+        output['struct'] = self.get_struct()
         if outfile:
             print(vals_to_string(output), file=open(outfile, 'a'))
         else:
@@ -136,6 +153,7 @@ class CompDynamics(object):
         output['msd'] = 0
         output['mfd'] = 0
         output['alpha'] = 0
+        output['struct'] = 0
         print(keys_to_string(output), file=open(outfile, 'w'))
 
 class CompRotDynamics(CompDynamics):
