@@ -20,7 +20,8 @@ class TimeDep(object):
     """
     def __init__(self, system):
         self.t_init = self._take_snapshot(system)
-        self.pos_init = self._unwrap(self.t_init)
+        self.pos_init = self.t_init.particles.position
+        self.image_init = self.t_init.particles.image
         self.timestep = system.get_metadata()['timestep']
 
     def _take_snapshot(self, system):
@@ -66,7 +67,7 @@ class TimeDep(object):
                             snapshot.box.Lz
                            ])
         pos = snapshot.particles.position
-        image = snapshot.particles.image
+        image = snapshot.particles.image - self.image_init
         return pos + image*box_dim
 
     def _displacement(self, snapshot):
