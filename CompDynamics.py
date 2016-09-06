@@ -20,7 +20,7 @@ class CompDynamics(object):
             that translational motion took place.
     """
     def __init__(self, TData):
-        assert issubclass(type(TData), TransData)
+        assert issubclass(type(TData), TransData), type(TData)
         self.data = TData
 
     def timestep(self):
@@ -89,12 +89,13 @@ class CompDynamics(object):
 
         .. math::
             \alpha = \frac{\langle \Delta r^4\rangle}
-                      {\langle \Delta r^2  \rangle^2} -1
+                      {2\langle \Delta r^2  \rangle^2} -1
 
         Return:
             float: The non-gaussian parameter :math:`\alpha`
         """
-        return self.get_mfd()/(np.power(self.get_msd(), 2)) - 1
+        return self.get_mfd()/(2*np.power(self.get_msd(), 2)) - 1
+
 
     def print_all(self, outfile=None):
         R""" Print all dynamic quantities to a file
@@ -378,9 +379,9 @@ class CompRotDynamics(CompDynamics):
         Return:
             float: Computed value
         """
-        return (np.mean(np.abs(self.translations())
-                        *np.exp(kappa*self.rotations()))
-                /np.mean(np.exp(kappa*self.rotations())))
+        return (np.mean(self.translations()
+                        *np.exp(kappa*np.abs(self.rotations())))
+                /np.mean(np.exp(kappa*np.abs(self.rotations()))))
 
     def print_all(self, outfile=None):
         """ Print all dynamic quantities to a file
