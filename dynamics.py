@@ -63,15 +63,23 @@ def compute_dynamics(input_file,
     md.integrate.mode_standard(dt=0.001)
     md.integrate.npt(group=center, kT=temp, tau=2, P=press, tauP=2)
 
+    # Zero momentum
+    md.update.zero_momentum(period=10000)
+
     # initial run to settle system after reading file
     hoomd.run(100000)
+    md.integrate.mode_standard(dt=0.005)
 
     hoomd.analyze.log(filename=basename+"-thermo.dat",
-                      quantities=['temperature', 'pressure',
-                                  'potential_energy',
-                                  'rotational_kinetic_energy',
-                                  'translational_kinetic_energy'
-                                 ],
+                      quantities=[
+                          'temperature',
+                          'pressure',
+                          'potential_energy',
+                          'volume',
+                          'N',
+                          'rotational_kinetic_energy',
+                          'translational_kinetic_energy'
+                      ],
                       period=1000)
 
     # Initialise dynamics quantities
