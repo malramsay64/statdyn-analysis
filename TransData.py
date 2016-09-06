@@ -79,12 +79,9 @@ class TransData(object):
         Args:
             outfile (string): Filename to direct data to
         """
-        if outfile:
-            output = sys.stdout
-        else:
-            output = open(outfile, 'a')
-        l_trans = np.array(self.trans)
-        output.write(json.dumps({"__TransRotData__":True,
+        output = open(outfile, 'a')
+        l_trans = self.trans.tolist()
+        output.write(json.dumps({"__TransData__":True,
                                  "timesteps":self.timesteps,
                                  "translations":l_trans,
                                 }, output, separators=(',', ':')))
@@ -105,8 +102,9 @@ class TransRotData(TransData):
     def __init__(self):
         super(TransRotData, self).__init__()
         self.rot = np.array([])
+        self.bodies = 0
 
-    def from_arrays(self, trans, rot, timesteps):
+    def from_arrays(self, trans, rot, timesteps, bodies=0):
         """Initialise TransRotData from precomputed :class:`numpy.ndarray`
 
         Both the translational and rotational arrays have to have the same
@@ -122,7 +120,7 @@ class TransRotData(TransData):
             rot (:class:`numpy.ndarray`): Array of all rotations
             timesteps (int): Number of timesteps between initial and final
                 configurations.
-
+            bodies (int): The number of rigid bodies in the system
         """
         if isinstance(trans, np.ndarray):
             self.trans = trans
@@ -135,6 +133,10 @@ class TransRotData(TransData):
             self.rot = np.array(rot)
         assert isinstance(rot, np.ndarray)
         self.timesteps = timesteps
+        if bodies == 0:
+            self.bodies = len(self.trans)
+        else:
+            self.bodies = bodies
 
     def from_json(self, string):
         """Initialise from JSON string
@@ -159,6 +161,10 @@ class TransRotData(TransData):
         self.trans = np.array(dct["translations"])
         self.rot = np.array(dct["rotations"])
         self.timesteps = dct["timesteps"]
+        if dct.get("bodies", 0):
+            self.bodies = bodies
+        else:
+            self.bodies = len(self.trans)
 
     def to_json(self, outfile=''):
         """Convert representation to JSON string for writing to a file
@@ -188,6 +194,7 @@ class TransRotData(TransData):
         l_rot = np.ndarray.tolist(self.rot)
         output.write(json.dumps({"__TransRotData__":True,
                                  "timesteps":self.timesteps,
+                                 "bodies": self.bodies,
                                  "translations":l_trans,
                                  "rotations":l_rot
                                 }, output, separators=(',', ':')))

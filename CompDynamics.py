@@ -193,8 +193,25 @@ class CompRotDynamics(CompDynamics):
         Return:
             :class:`numpy.ndarray`: Array of all the rotations
         """
-        return self.data.rot
+        return self.data.rot[:self.data.bodies]
 
+    def translations(self):
+        """Return the translation of each molecule
+
+        Return:
+            :class:`numpy.ndarray`: An array of the translational motion that
+            each molecule/particle underwent in a period of time.
+        """
+        return self.data.trans[:self.data.bodies]
+
+    def _all_translations(self):
+        """Return the translation of every particles
+
+        Return:
+            :class:`numpy.ndarray`: An array of the translational motion that
+            each particle underwent in a period of time.
+        """
+        return self.data.trans
 
     def get_decoupling(self, delta_disp=0.005, delta_rot=0.005):
         """ Calculates the decoupling of rotations and translations.
@@ -401,6 +418,22 @@ class CompRotDynamics(CompDynamics):
                         *np.exp(kappa*np.abs(self.rotations())))
                 /np.mean(np.exp(kappa*np.abs(self.rotations()))))
 
+    def get_struct(self, dist=0.3):
+        R""" Compute the structural relaxation
+
+        The structural relaxation is given as the proportion of
+        particles which have moved further than `dist` from their
+        initial positions.
+
+        Args:
+            dist (float): The distance cutoff for considering relaxation.
+                Defualts to 0.3
+
+        Return:
+            float: The structural relaxation of the configuration
+        """
+        return np.mean(self._all_translations() < dist)
+
     def print_all(self, outfile=None):
         """ Print all dynamic quantities to a file
 
@@ -423,6 +456,7 @@ class CompRotDynamics(CompDynamics):
         output['gamma2'] = self.get_gamma2()
         output['rot1'] = self.get_rot_relax1()
         output['rot2'] = self.get_rot_relax2()
+        output['struct'] = self.get_struct()
         output['param_rot_n3'] = self.get_param_rot(-3)
         output['param_rot_n2'] = self.get_param_rot(-2)
         output['param_rot_n1'] = self.get_param_rot(-1)
@@ -464,6 +498,7 @@ class CompRotDynamics(CompDynamics):
         output['gamma2'] = 0
         output['rot1'] = 0
         output['rot2'] = 0
+        output['struct'] = 0
         output['param_rot_n3'] = 0
         output['param_rot_n2'] = 0
         output['param_rot_n1'] = 0
