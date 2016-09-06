@@ -50,8 +50,8 @@ def equil_from_rand(outfile=None,
     hoomd.context.initialize()
 
     # Create hexagonal lattice of central particles
-    system = hoomd.init.create_lattice(unitcell=hoomd.lattice.hex(a=4),
-                                       n=[25, 25])
+    system = hoomd.init.create_lattice(unitcell=hoomd.lattice.sq(a=4),
+                                       n=[50, 50])
 
     # Assign the moment of intertial of each molecule.
     for particle in system.particles:
@@ -160,15 +160,22 @@ def equil_from_file(input_file=None,
     center = hoomd.group.rigid_center()
 
     # Calculate thermodynamic quantities
-    thermo = hoomd.analyze.log(filename=basename+"-thermo.dat",
-                               quantities=['temperature',
-                                           'pressure',
-                                           'potential_energy',
-                                           'rotational_kinetic_energy',
-                                           'translational_kinetic_energy'
-                                          ],
-                               period=1000
-                              )
+    thermo = hoomd.analyze.log(
+        filename=basename+"-thermo.dat",
+        quantities=[
+            'temperature',
+            'pressure',
+            'potential_energy',
+            'rotational_kinetic_energy',
+            'translational_kinetic_energy',
+            'N',
+            'volume'
+        ],
+        period=1000
+    )
+
+    # Zero momentum
+    md.update.zero_momentum(period=1000)
 
     # Perform initial equilibration at target temperature and pressure.
     md.integrate.mode_standard(dt=0.001)
