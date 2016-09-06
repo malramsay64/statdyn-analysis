@@ -10,24 +10,25 @@ PRESS = 13.5
 # Holds tuples of the temperature and number of steps
 # to iterate through
 STEPS = 10000000
-TEMPERATURES = [(5.00, 1*STEPS),\
-                (4.00, 1*STEPS),\
-                (3.50, 2*STEPS),\
-                (3.00, 2*STEPS),\
-                (2.50, 4*STEPS),\
-                (2.00, 4*STEPS),\
-                (1.80, 8*STEPS),\
-                (1.60, 8*STEPS),\
-                (1.50, 16*STEPS),\
-                (1.40, 16*STEPS),\
-                (1.35, 32*STEPS),\
-                (1.30, 32*STEPS),\
-                (1.25, 64*STEPS),\
-                (1.20, 128*STEPS),\
-                (1.15, 128*STEPS),\
-                (1.10, 256*STEPS),\
-                (1.05, 512*STEPS),\
-               ]
+TEMPERATURES = [
+    (5.00, 1*STEPS),
+    (4.00, 1*STEPS),
+    (3.50, 2*STEPS),
+    (3.00, 2*STEPS),
+    (2.50, 4*STEPS),
+    (2.00, 4*STEPS),
+    (1.80, 8*STEPS),
+    (1.60, 16*STEPS),
+    (1.50, 32*STEPS),
+    (1.40, 64*STEPS),
+    (1.35, 64*STEPS),
+    (1.30, 128*STEPS),
+    (1.25, 128*STEPS),
+    (1.20, 256*STEPS),
+    (1.15, 256*STEPS),
+    (1.10, 512*STEPS),
+    (1.05, 1024*STEPS),
+]
 
 
 if __name__ == "__main__":
