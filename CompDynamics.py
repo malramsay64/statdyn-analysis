@@ -81,7 +81,6 @@ class CompDynamics(object):
         """
         return np.mean(np.power(self.translations(), 4))
 
-
     def get_alpha(self):
         R""" Compute the non-gaussian parameter :math:`\alpha`
 
@@ -156,6 +155,7 @@ class CompDynamics(object):
         output['struct'] = 0
         print(keys_to_string(output), file=open(outfile, 'w'))
 
+
 class CompRotDynamics(CompDynamics):
     """ Class to compute the time dependent characteristics of 2D rigid bodies
     in a hoomd simulation.
@@ -228,7 +228,8 @@ class CompRotDynamics(CompDynamics):
             A. Farone, L. Liu, S.-H. Chen, J. Chem. Phys. 119, 6302 (2003)
 
         Args:
-            delta_disp (float): The bin size of the displacement for integration
+            delta_disp (float): The bin size of the displacement for
+                integration
             delta_rot (float):  The bin size of the rotations for integration
 
         Return:
@@ -434,6 +435,69 @@ class CompRotDynamics(CompDynamics):
         """
         return np.mean(self._all_translations() < dist)
 
+    def get_trans_correl(self):
+        r""" Compute the correlation of rotations and translations
+
+        This correlation factor is given by the equation
+        .. math:
+            \frac{
+                \langle \Delta r \Delta \theta \rangle
+                - \langle \Delta r \rangle \langle \Delta \theta \rangle
+                }{
+                \frac {
+                    \langle \Delta r \rangle \langle \Delta \theta^2 \rangle
+                    }{
+                    \langle \Delta \theta \rangle
+                    }
+                - \langle \Delta r \rangle \langle \Delta\theta\rangle
+                }
+
+        Return:
+            float: the rotational correlation of the configuration
+        """
+        x, residuals, rank, s = np.linalg.lstsq(
+            np.vstack([self.translations(), np.ones(len(self.rotations()))]).T,
+            self.rotations()
+        )
+        return np.sum(np.power(residuals, 2))
+        numerator = (np.mean(self.translations()*self.rotations())
+                     - np.mean(self.translations())*np.mean(self.rotations()))
+        denominator = (np.mean(self.translations())/np.mean(self.rotations())
+                       *np.var(self.rotations()))
+        return numerator/denominator
+
+    def get_rot_correl(self):
+        r""" Compute the correlation of rotations and translations
+
+        This correlation factor is given by the equation
+        .. math:
+            \frac{
+                \langle \Delta r \Delta \theta \rangle
+                - \langle \Delta r \rangle \langle \Delta \theta \rangle
+                }{
+                \frac {
+                    \langle \Delta \theta \rangle \langle \Delta r^2 \rangle
+                    }{
+                    \langle \Delta r \rangle
+                    }
+                - \langle \Delta r \rangle \langle \Delta\theta\rangle
+                }
+
+        Return:
+            float: the rotational correlation of the configuration
+        """
+        x, residuals, rank, s = np.linalg.lstsq(
+            np.vstack([self.rotations(), np.ones(len(self.rotations()))]).T,
+            self.translations()
+        )
+        return np.sum(np.power(residuals, 2))
+        numerator = (np.mean(self.translations()*self.rotations())
+                     - np.mean(self.translations())*np.mean(self.rotations()))
+        denominator = (np.mean(self.rotations())/np.mean(self.translations())
+                       *np.var(self.translations()))
+        return numerator/denominator
+
+
     def print_all(self, outfile=None):
         """ Print all dynamic quantities to a file
 
@@ -457,6 +521,8 @@ class CompRotDynamics(CompDynamics):
         output['rot1'] = self.get_rot_relax1()
         output['rot2'] = self.get_rot_relax2()
         output['struct'] = self.get_struct()
+        output['trans_corel'] = self.get_trans_correl()
+        output['rot_corel'] = self.get_rot_correl()
         output['param_rot_n3'] = self.get_param_rot(-3)
         output['param_rot_n2'] = self.get_param_rot(-2)
         output['param_rot_n1'] = self.get_param_rot(-1)
@@ -499,6 +565,8 @@ class CompRotDynamics(CompDynamics):
         output['rot1'] = 0
         output['rot2'] = 0
         output['struct'] = 0
+        output['trans_corel'] = 0
+        output['rot_corel'] = 0
         output['param_rot_n3'] = 0
         output['param_rot_n2'] = 0
         output['param_rot_n1'] = 0

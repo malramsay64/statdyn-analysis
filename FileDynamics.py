@@ -56,4 +56,4 @@ def compute_all(pattern="*-tr.dat", suffix="-dyn.dat", directory="."):
         compute_file(infile, infile[:-(len(pattern)-1)]+suffix)
 
 if __name__ == "__main__":
-    compute_all()
+    compute_all(pattern="*0-tr.dat", suffix="0-dyn.dat")

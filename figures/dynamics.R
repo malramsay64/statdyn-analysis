@@ -1,6 +1,7 @@
 library('ggplot2')
 
-files <- dir(pattern='*-dyn.dat')
+files <- dir(pattern='*0-dyn.dat')
+files_trans <- dir(pattern='*-dyn2.dat')
 timestep <- 0.005
 
 get_temp <- function(filename) {
@@ -19,11 +20,27 @@ for (file in files) {
     }
 }
 
+collated_trans <- data.frame()
+for (file in files_trans) {
+    data <- read.table(file, header=TRUE)
+    names(data) <- c("time", "displacement", "MSD", "MFD",  "alpha", "struct")
+    data["temp"] <- rep(get_temp(file), length(data$time))
+    if (nrow(collated_trans) == 0) {
+        collated_trans <- data
+    }
+    else {
+        collated_trans <- rbind(collated_trans, data)
+    }
+}
+
 collated["decoupling"] <- collated$decoupling * 0.05 * 0.05
 collated <- collated[order(collated$time),]
+collated_trans <- collated_trans[order(collated_trans$time),]
 
 collated_av <- aggregate(collated[,!(names(collated) %in% c("temp", "time"))],
                          list(temp=collated$temp, time=collated$time), mean)
+collated_trans <- aggregate(collated_trans[,!(names(collated_trans) %in% c("temp", "time"))],
+                         list(temp=collated_trans$temp, time=collated_trans$time), mean)
 
 p <- ggplot(collated_av, aes(x=time*timestep, colour=temp)) + scale_x_log10() + labs(x="Time")
 
@@ -47,7 +64,11 @@ rot1 <- p + geom_path(aes(y=rot1))
 
 rot2 <- p + geom_path(aes(y=rot2))
 
-diff <- ggplot(subset(collated_av, collated_av$temp == "2.00"), aes(x=time))
+trans_corel <- p + geom_path(aes(y=trans_corel)) 
+rot_corel <- p + geom_path(aes(y=rot_corel))
+
+diff <- ggplot(subset(collated_av, collated_av$temp == "1.40"), aes(x=time))
+diff <- diff + scale_color_discrete(expression(alpha), labels=c("-3"="-3", "-2"="-2", "-1"="-1", "-0.1"="-0.1", "0.1"="0.1", "1"="1", "2"="2", "3"="3"))
 diff_trans <- diff + geom_path(aes(y=param_trans_n3-disp, colour="-3"))
 diff_trans <- diff_trans + geom_path(aes(y=param_trans_n2-disp, colour="-2"))
 diff_trans <- diff_trans + geom_path(aes(y=param_trans_n1-disp, colour="-1"))
@@ -128,6 +149,8 @@ print(gamma2)
 print(mean_rot)
 print(rot1)
 print(rot2)
+print(trans_corel)
+print(rot_corel)
 print(diff_trans)
 print(diff_rot)
 print(rot1_rplot)
