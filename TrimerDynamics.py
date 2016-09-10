@@ -23,11 +23,6 @@ TEMPERATURES = [
     (1.40, 64*STEPS),
     (1.35, 64*STEPS),
     (1.30, 128*STEPS),
-    (1.25, 128*STEPS),
-    (1.20, 256*STEPS),
-    (1.15, 256*STEPS),
-    (1.10, 512*STEPS),
-    (1.05, 1024*STEPS),
 ]
 
 
