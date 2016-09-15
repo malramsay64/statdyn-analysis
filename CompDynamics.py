@@ -551,6 +551,9 @@ class CompRotDynamics(CompDynamics):
         output['mfd'] = self.get_mfd()
         output['alpha'] = self.get_alpha()
         output['mean_rot'] = self.get_mean_rot()
+        output['mean_rot2'] = self._d_theta2()
+        output['mean_trans_rot'] = self._d_disp_d_theta()
+        output['mean_trans2_rot2'] = self._d_disp2_d_theta2()
         output['decoupling'] = self.get_decoupling(0.05, 0.05)
         output['gamma1'] = self.get_gamma1()
         output['gamma2'] = self.get_gamma2()
@@ -594,6 +597,9 @@ class CompRotDynamics(CompDynamics):
         output['mfd'] = 0
         output['alpha'] = 0
         output['mean_rot'] = 0
+        output['mean_rot2'] = 0
+        output['mean_trans_rot'] = 0
+        output['mean_trans2_rot2'] = 0
         output['decoupling'] = 0
         output['gamma1'] = 0
         output['gamma2'] = 0
