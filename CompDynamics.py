@@ -22,6 +22,9 @@ class CompDynamics(object):
     def __init__(self, TData):
         assert issubclass(type(TData), TransData), type(TData)
         self.data = TData
+        self._d_disp_compute = 0
+        self._d_disp2_compute = 0
+        self._d_disp4_compute = 0
 
     def timestep(self):
         """Compute the timestep difference
@@ -43,17 +46,23 @@ class CompDynamics(object):
     def _d_disp(self):
         """ Internal funtion to compute mean displacement
         """
-        return np.mean(self.translations())
+        if self._d_disp_compute == 0:
+            self._d_disp_compute = np.mean(self.translations())
+        return self._d_disp_compute
 
     def _d_disp2(self):
         """Internal function to compute mean squared disp
         """
-        return np.mean(np.power(self.translations(), 2))
+        if self._d_disp2_compute == 0:
+            self._d_disp2_compute = np.mean(np.power(self.translations(), 2))
+        return self._d_disp2_compute
 
     def _d_disp4(self):
         """Internal function to compute mean fourth disp
         """
-        return np.mean(np.power(self.translations(), 4))
+        if self._d_disp4_compute == 0:
+            self._d_disp_compute = np.mean(np.power(self.translations(), 4))
+        return self._d_disp4_compute
 
     def get_mean_disp(self):
         R""" Compute the mean displacement
@@ -197,6 +206,10 @@ class CompRotDynamics(CompDynamics):
         assert (issubclass(type(RigidData), TransRotData)), type(RigidData)
         super(CompRotDynamics, self).__init__(RigidData)
         self.data = RigidData
+        self._d_theta_compute = 0
+        self._d_theta2_compute = 0
+        self._d_disp_d_theta_compute = 0
+        self._d_disp2_d_theta2_compute = 0
 
     def rotations(self):
         R""" Calculate the rotation for every rigid body in the system
@@ -230,20 +243,31 @@ class CompRotDynamics(CompDynamics):
 
     def _d_theta(self):
         """Compute the mean rotation"""
-        return np.mean(np.abs(self.rotations()))
+        if self._d_theta_compute == 0:
+            self._d_theta_compute = np.mean(np.abs(self.rotations()))
+        return self._d_theta_compute
 
     def _d_theta2(self):
         """Compute the mean squared rotation"""
-        return np.mean(np.power(self.rotations(), 2))
+        if self._d_theta2_compute == 0:
+            self._d_theta2_compute = np.mean(np.power(self.rotations(), 2))
+        return self._d_theta2_compute
 
     def _d_disp_d_theta(self):
         """Compute dr dtheta"""
-        return np.mean(self.translations() * np.abs(self.rotations()))
+        if self._d_disp_d_theta_compute == 0:
+            self._d_disp_d_theta_compute = np.mean(self.translations()
+                                                   * np.abs(self.rotations()))
+        return self._d_disp_d_theta_compute
 
     def _d_disp2_d_theta2(self):
         "Compute dr2 dtheta2"""
-        return np.mean(np.power(self.translations(), 2)
-                       * np.power(self.rotations(), 2))
+        if self._d_disp2_d_theta2_compute == 0:
+            self._d_disp2_d_theta2_compute = np.mean(
+                np.power(self.translations(), 2)
+                * np.power(self.rotations(), 2)
+            )
+        return self._d_disp2_d_theta2_compute
 
     def get_decoupling(self, delta_disp=0.005, delta_rot=0.005):
         """ Calculates the decoupling of rotations and translations.
