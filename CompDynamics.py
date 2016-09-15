@@ -40,6 +40,21 @@ class CompDynamics(object):
         """
         return self.data.trans
 
+    def _d_disp(self):
+        """ Internal funtion to compute mean displacement
+        """
+        return np.mean(self.translations())
+
+    def _d_disp2(self):
+        """Internal function to compute mean squared disp
+        """
+        return np.mean(np.power(self.translations(), 2))
+
+    def _d_disp4(self):
+        """Internal function to compute mean fourth disp
+        """
+        return np.mean(np.power(self.translations(), 4))
+
     def get_mean_disp(self):
         R""" Compute the mean displacement
 
@@ -52,7 +67,7 @@ class CompDynamics(object):
         Return:
             float: The mean displacement
         """
-        return np.mean(self.translations())
+        return self._d_disp()
 
     def get_msd(self):
         R""" Compute the mean squared displacement
@@ -65,7 +80,7 @@ class CompDynamics(object):
         Return:
             float: The mean squared displacement
         """
-        return np.mean(np.power(self.translations(), 2))
+        return self._d_disp2()
 
     def get_mfd(self):
         R""" Compute the mean fourth disaplacement
@@ -79,7 +94,7 @@ class CompDynamics(object):
         Return:
             float: The mean fourth displacement
         """
-        return np.mean(np.power(self.translations(), 4))
+        return self._d_disp4()
 
     def get_alpha(self):
         R""" Compute the non-gaussian parameter :math:`\alpha`
@@ -93,7 +108,7 @@ class CompDynamics(object):
         Return:
             float: The non-gaussian parameter :math:`\alpha`
         """
-        return self.get_mfd()/(2*np.power(self.get_msd(), 2)) - 1
+        return self._d_disp4()/(2*np.power(self._d_disp2(), 2)) - 1
 
     def get_struct(self, dist=0.3):
         R""" Compute the structural relaxation
@@ -213,6 +228,23 @@ class CompRotDynamics(CompDynamics):
         """
         return self.data.trans
 
+    def _d_theta(self):
+        """Compute the mean rotation"""
+        return np.mean(np.abs(self.rotations()))
+
+    def _d_theta2(self):
+        """Compute the mean squared rotation"""
+        return np.mean(np.power(self.rotations(), 2))
+
+    def _d_disp_d_theta(self):
+        """Compute dr dtheta"""
+        return np.mean(self.translations() * np.abs(self.rotations()))
+
+    def _d_disp2_d_theta2(self):
+        "Compute dr2 dtheta2"""
+        return np.mean(np.power(self.translations(), 2)
+                       * np.power(self.rotations(), 2))
+
     def get_decoupling(self, delta_disp=0.005, delta_rot=0.005):
         """ Calculates the decoupling of rotations and translations.
 
@@ -253,10 +285,11 @@ class CompRotDynamics(CompDynamics):
         for i, j in zip(rot, disp):
             prob[i][j] += 1
 
-        prob = normalise_probability(np.asmatrix(prob),
-                                     rot_array, disp_array,
-                                     delta_rot, delta_disp
-                                    )
+        prob = normalise_probability(
+            np.asmatrix(prob),
+            rot_array, disp_array,
+            delta_rot, delta_disp
+        )
 
         # Calculate tranlational and rotational probabilities
         p_trans = (prob.transpose() * rot_array.transpose())
@@ -336,11 +369,8 @@ class CompRotDynamics(CompDynamics):
         Return:
             float: The coupling of translations and rotations :math:`\gamma_1`
         """
-        return ((self.get_mean_trans_rot()
-                 - self.get_mean_disp()*self.get_mean_rot())
-                / np.sqrt(self.get_msd()*
-                          self.get_mean_sq_rot()))
-
+        return ((self._d_disp_d_theta() - self._d_disp() * self._d_theta()) /
+                (self._d_disp() * self._d_theta()))
 
     def get_gamma2(self):
         R""" Calculate the second order coupling of translations and rotations
@@ -354,10 +384,9 @@ class CompRotDynamics(CompDynamics):
             float: The squared coupling of translations and rotations
             :math:`\gamma_2`
         """
-        return ((self.get_mean_sq_trans_rot()
-                 - self.get_msd()*self.get_mean_sq_rot())
-                / (self.get_msd()
-                   * self.get_mean_sq_rot()))
+        return ((self._d_disp2_d_theta2()
+                 - self._d_disp2() * self._d_theta2()) /
+                (self._d_disp2() * self._d_theta2()))
 
     def get_rot_relax1(self):
         R"""Compute the first rotational relaxation function
@@ -399,8 +428,8 @@ class CompRotDynamics(CompDynamics):
 
         """
         return (np.mean(np.abs(self.rotations())
-                        *np.exp(alpha*self.translations()))
-                /np.mean(np.exp(alpha*self.translations())))
+                        * np.exp(alpha * self.translations()))
+                / np.mean(np.exp(alpha * self.translations())))
 
     def get_param_trans(self, kappa=1):
         R"""Compute a parameterised translational correlation
@@ -416,8 +445,8 @@ class CompRotDynamics(CompDynamics):
             float: Computed value
         """
         return (np.mean(self.translations()
-                        *np.exp(kappa*np.abs(self.rotations())))
-                /np.mean(np.exp(kappa*np.abs(self.rotations()))))
+                        * np.exp(kappa * np.abs(self.rotations())))
+                / np.mean(np.exp(kappa * np.abs(self.rotations()))))
 
     def get_struct(self, dist=0.3):
         R""" Compute the structural relaxation
@@ -439,9 +468,9 @@ class CompRotDynamics(CompDynamics):
         r""" Compute the correlation of rotations and translations
 
         This correlation factor is given by the equation
+
         .. math:
-            \frac{
-                \langle \Delta r \Delta \theta \rangle
+            \frac{\langle \Delta r \Delta \theta \rangle
                 - \langle \Delta r \rangle \langle \Delta \theta \rangle
                 }{
                 \frac {
@@ -455,24 +484,16 @@ class CompRotDynamics(CompDynamics):
         Return:
             float: the rotational correlation of the configuration
         """
-        x, residuals, rank, s = np.linalg.lstsq(
-            np.vstack([self.translations(), np.ones(len(self.rotations()))]).T,
-            self.rotations()
-        )
-        return np.sum(np.power(residuals, 2))
-        numerator = (np.mean(self.translations()*self.rotations())
-                     - np.mean(self.translations())*np.mean(self.rotations()))
-        denominator = (np.mean(self.translations())/np.mean(self.rotations())
-                       *np.var(self.rotations()))
-        return numerator/denominator
+        return ((self._d_disp2() - np.power(self._d_disp(), 2))
+                / np.power(self._d_disp(), 2))
 
     def get_rot_correl(self):
         r""" Compute the correlation of rotations and translations
 
         This correlation factor is given by the equation
+
         .. math:
-            \frac{
-                \langle \Delta r \Delta \theta \rangle
+            \frac{ \langle \Delta r \Delta \theta \rangle
                 - \langle \Delta r \rangle \langle \Delta \theta \rangle
                 }{
                 \frac {
@@ -486,17 +507,8 @@ class CompRotDynamics(CompDynamics):
         Return:
             float: the rotational correlation of the configuration
         """
-        x, residuals, rank, s = np.linalg.lstsq(
-            np.vstack([self.rotations(), np.ones(len(self.rotations()))]).T,
-            self.translations()
-        )
-        return np.sum(np.power(residuals, 2))
-        numerator = (np.mean(self.translations()*self.rotations())
-                     - np.mean(self.translations())*np.mean(self.rotations()))
-        denominator = (np.mean(self.rotations())/np.mean(self.translations())
-                       *np.var(self.translations()))
-        return numerator/denominator
-
+        return ((self._d_theta2() - np.power(self._d_theta(), 2))
+                / np.power(self._d_theta(), 2))
 
     def print_all(self, outfile=None):
         """ Print all dynamic quantities to a file
@@ -544,7 +556,6 @@ class CompRotDynamics(CompDynamics):
         else:
             print(vals_to_string(output))
 
-
     def print_heading(self, outfile):
         """ Write heading values to outfile which match up with the values given
         by print_all().
@@ -565,8 +576,8 @@ class CompRotDynamics(CompDynamics):
         output['rot1'] = 0
         output['rot2'] = 0
         output['struct'] = 0
-        output['trans_corel'] = 0
-        output['rot_corel'] = 0
+        output['trans_correl'] = 0
+        output['rot_correl'] = 0
         output['param_rot_n3'] = 0
         output['param_rot_n2'] = 0
         output['param_rot_n1'] = 0
@@ -585,6 +596,7 @@ class CompRotDynamics(CompDynamics):
         output['param_trans_3'] = 0
         print(keys_to_string(output), file=open(outfile, 'w'))
 
+
 def keys_to_string(dictionary, sep=' '):
     """Converts all keys in a dictionary to a string
 
@@ -597,6 +609,7 @@ def keys_to_string(dictionary, sep=' '):
     """
     return sep.join([str(key) for key in dictionary.keys()])
 
+
 def vals_to_string(dictionary, sep=' '):
     """Converts all vals in a dictionary to a string
 
@@ -608,6 +621,7 @@ def vals_to_string(dictionary, sep=' '):
         string: All values separated by `sep`
     """
     return sep.join([str(val) for val in dictionary.values()])
+
 
 def normalise_probability(prob_matrix, rot_matrix, disp_matrix,
                           delta_rot=0.005, delta_disp=0.005):
@@ -633,4 +647,3 @@ def normalise_probability(prob_matrix, rot_matrix, disp_matrix,
     factor = (((rot_matrix * prob_matrix) * disp_matrix.transpose()) *
               delta_disp * delta_rot)
     return prob_matrix/factor
-
