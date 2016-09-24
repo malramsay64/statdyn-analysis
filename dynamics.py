@@ -100,7 +100,7 @@ def compute_dynamics(input_file,
     while timestep < steps+tstep_init:
         index_min = struct.index(min(struct))
         next_step, step_iter, dyn = struct[index_min]
-        timestep = next_step
+        timestep = min(next_step, steps)
         hoomd.run_upto(timestep)
         dyn.print_all(system, outfile=basename+"-dyn.dat")
         # dyn.print_data(system, outfile=basename+"-tr.dat")
