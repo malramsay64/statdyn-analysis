@@ -3,8 +3,12 @@
 """
 
 import glob
+import gsd.fl
+import gsd.hoomd
+from TimeDep import TimeDep2dRigid
 from CompDynamics import CompRotDynamics
-from TransData import TransRotData
+# from TransData import TransRotData
+
 
 def compute_file(fname, outfile='out.dat'):
     """Read data from file, compute dynamics and print results
@@ -21,16 +25,17 @@ def compute_file(fname, outfile='out.dat'):
         fname (string): Path to file containing the translations and rotations
         outfile (string): Filename of output file
     """
-    with open(fname) as infile:
-        init = True
-        for line in infile:
-            data = TransRotData()
-            data.from_json(line)
-            dyn = CompRotDynamics(data)
-            if init:
-                dyn.print_heading(outfile)
-                init = False
-            dyn.print_all(outfile)
+    infile = gsd.fl.GSDFile(fname, 'rb')
+    snapshots = gsd.hoomd.HOOMDTrajectory(infile)
+    keyframes = []
+    for i, snapshot in enumerate(snapshots):
+        if i == 0:
+            CompRotDynamics().print_heading(outfile)
+        for frame in keyframes:
+            frame.print_all(snapshot, snapshot.configuration.step, outfile)
+        if i % 10 == 0:
+            keyframes.append(TimeDep2dRigid(snapshot, snapshot.configuration.step))
+
 
 def compute_all(pattern="*-tr.dat", suffix="-dyn.dat", directory="."):
     """Compute all files in directory matching pattern
@@ -56,4 +61,5 @@ def compute_all(pattern="*-tr.dat", suffix="-dyn.dat", directory="."):
         compute_file(infile, infile[:-(len(pattern)-1)]+suffix)
 
 if __name__ == "__main__":
-    compute_all(pattern="*0-tr.dat", suffix="0-dyn.dat")
+    compute_file("Trimer-13.50-5.00-traj.gsd")
+    # compute_all(pattern="*0-tr.dat", suffix="0-dyn.dat")

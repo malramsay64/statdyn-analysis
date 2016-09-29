@@ -12,11 +12,7 @@ from TimeDep import TimeDep2dRigid
 from CompDynamics import CompRotDynamics
 
 
-def compute_dynamics(input_file,
-                     temp,
-                     press,
-                     steps,
-                    ):
+def compute_dynamics(input_file, temp, press, steps,):
     """Run a simulation computing the dynamic properties
 
     Run a hoomd simulation calculating the dynamic quantites on a power
@@ -50,24 +46,27 @@ def compute_dynamics(input_file,
     potentials.pair_coeff.set('A', 'B', epsilon=1, sigma=1.637556)
 
     rigid = md.constrain.rigid()
-    rigid.set_param('A', positions=[(math.sin(math.pi/3),
-                                     math.cos(math.pi/3), 0),
-                                    (-math.sin(math.pi/3),
-                                     math.cos(math.pi/3), 0)],
-                    types=['B', 'B']
-                   )
+    rigid.set_param(
+        'A',
+        positions=[
+            (math.sin(math.pi/3), math.cos(math.pi/3), 0),
+            (-math.sin(math.pi/3),
+             math.cos(math.pi/3), 0)
+        ],
+        types=['B', 'B']
+    )
     rigid.create_bodies(create=False)
     center = hoomd.group.rigid_center()
 
     # Set integration parameters
     md.integrate.mode_standard(dt=0.001)
-    md.integrate.npt(group=center, kT=temp, tau=2, P=press, tauP=2)
+    md.integrate.npt(group=center, kT=temp, tau=1, P=press, tauP=1)
 
     # Zero momentum
     md.update.zero_momentum(period=10000)
 
     # initial run to settle system after reading file
-    hoomd.run(100000)
+    # hoomd.run(100000)
     md.integrate.mode_standard(dt=0.005)
 
     hoomd.analyze.log(filename=basename+"-thermo.dat",
@@ -83,34 +82,42 @@ def compute_dynamics(input_file,
                       period=1000)
 
     # Initialise dynamics quantities
-    dyn = TimeDep2dRigid(system)
+    snapshot = system.take_snapshot()
+    tstep_init = hoomd.get_step()
+    timestep = tstep_init
+    last_timestep = tstep_init
+    dyn = TimeDep2dRigid(snapshot, timestep)
     CompRotDynamics().print_heading(basename+"-dyn.dat")
-    tstep_init = system.get_metadata()['timestep']
     new_step = StepSize.PowerSteps(start=tstep_init)
     struct = [(new_step.next(), new_step, dyn)]
-    timestep = tstep_init
     key_rate = 20000
-    hoomd.dump.gsd(filename=basename+'.gsd',
-                   period=10000000,
-                   group=hoomd.group.all(),
-                   overwrite=True,
-                   truncate=True,
-                  )
+    gsd = hoomd.dump.gsd(
+        filename=basename+'-traj.gsd',
+        period=None,
+        group=hoomd.group.all(),
+        overwrite=True,
+        truncate=False,
+    )
 
     while timestep < steps+tstep_init:
         index_min = struct.index(min(struct))
         next_step, step_iter, dyn = struct[index_min]
         timestep = min(next_step, steps)
-        hoomd.run_upto(timestep)
-        dyn.print_all(system, outfile=basename+"-dyn.dat")
-        # dyn.print_data(system, outfile=basename+"-tr.dat")
+        # Only run if incrementing number of steps
+        if timestep > last_timestep:
+            hoomd.run_upto(timestep)
+            gsd.write_restart()
+            snapshot = system.take_snapshot()
 
+        last_timestep = timestep
+        dyn.print_all(snapshot, timestep, outfile=basename+"-dyn.dat")
+        # dyn.print_data(system, outfile=basename+"-tr.dat")
         struct[index_min] = (step_iter.next(), step_iter, dyn)
         # Add new key frame every key_rate steps, limited to 5000
         if (timestep % key_rate == 0 and
                 len(struct) < 5000 and
                 len([s for s in struct if s[0] == timestep+1]) == 0):
             new_step = StepSize.PowerSteps(start=timestep)
-            struct.append((new_step.next(), new_step, TimeDep2dRigid(system)))
-
-
+            struct.append(
+                (new_step.next(), new_step, TimeDep2dRigid(snapshot, timestep))
+            )

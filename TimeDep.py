@@ -9,40 +9,29 @@ import quaternion
 from TransData import TransData, TransRotData
 from CompDynamics import CompDynamics, CompRotDynamics
 
+
 class TimeDep(object):
     """ Class to compute the time dependent characteristics of individual
     particles in a hoomd simulation.
 
     Args:
-        system (:class:`hoomd.data.system_data`): Hoomd system object which is
-            the initial configuration for the purposes of the dynamics
-            calculations
+        snapshot (:class:`hoomd.data.SnapshotParticleData`): Hoomd snapshot
+            object which is the initial configuration for the purposes of the
+            dynamics calculations
     """
-    def __init__(self, system):
-        self.t_init = self._take_snapshot(system)
+    def __init__(self, snapshot, timestep):
+        self.t_init = snapshot
         self.pos_init = self.t_init.particles.position
         self.image_init = self.t_init.particles.image
-        self.timestep = system.get_metadata()['timestep']
-
-    def _take_snapshot(self, system):
-        """ Takes a snapshot of the current configuration of the system
-
-        Args:
-            system (:class:`hoomd.data.system_data`): Hoomd system objet
-                in the configuration to be saved
-
-        Returns:
-            :class:`hoomd.data.SnapshotParticleData`: An immutable snapshot
-                of the system at the current time
-        """
-        return system.take_snapshot()
+        self.timestep = timestep
 
     def get_time_diff(self, timestep):
         """ The difference in time between the currrent timestep and the
         timestep of the initial configuration.
 
         Args:
-            timestep (int): The timestep the difference is to be calculated at
+            snapshot (:class:`hoomd.data.SnapshotParticleData`): The snapshot
+                the difference is to be calculated at
 
         Returns:
             int: Difference between initial and current timestep
@@ -62,10 +51,19 @@ class TimeDep(object):
             :class:`numpy.array`: A numpy array of position arrays contianing
             the unwrapped positions
         """
-        box_dim = np.array([snapshot.box.Lx,
-                            snapshot.box.Ly,
-                            snapshot.box.Lz
-                           ])
+        try:
+            box_dim = np.array([
+                snapshot.box.Lx,
+                snapshot.box.Ly,
+                snapshot.box.Lz
+            ])
+        except AttributeError:
+            box_dim = np.array([
+                snapshot.configuration.box[0],
+                snapshot.configuration.box[1],
+                snapshot.configuration.box[2]
+            ])
+
         pos = snapshot.particles.position
         image = snapshot.particles.image - self.image_init
         return pos + image*box_dim
@@ -87,12 +85,12 @@ class TimeDep(object):
         curr = self._unwrap(snapshot)
         return np.sqrt(np.power(curr - self.pos_init, 2).sum(1))
 
-    def get_data(self, system):
+    def get_data(self, snapshot, timestep):
         """ Get translational and rotational data
 
         Args:
-            system (:class:`hoomd.data.system_data`): Hoomd system objet in
-                the configuration to be saved
+            system (:class:`hoomd.data.SnapshotParticleData`): Hoomd system
+                object in the configuration to be saved
 
         Returns:
             :class:`TransData`: Data object
@@ -100,21 +98,21 @@ class TimeDep(object):
         """
         data = TransData()
         data.from_trans_array(
-            self._displacement(self._take_snapshot(system)),
-            self.get_time_diff(system.get_metadata()['timestep']))
+            self._displacement(snapshot),
+            self.get_time_diff(timestep))
         return data
 
-    def print_all(self, system, outfile):
+    def print_all(self, snapshot, timestep, outfile):
         """Print all data to file
 
         Args:
-            system (:class:`hoomd.data.system_data`): Hoomd system objet in the
-                configuration to be saved
+            system (:class:`hoomd.data.SnapshotParticleData`): Hoomd snapshot
+                object in the configuration to be saved
             outfile (string): filename to output data to
         """
-        data = self.get_data(system)
+        data = self.get_data(snapshot, timestep)
         CompDynamics(data).print_all(outfile)
-        data.to_json(outfile[:-8]+"-tr.dat")
+        # data.to_json(outfile[:-8]+"-tr.dat")
 
 
 class TimeDep2dRigid(TimeDep):
@@ -132,12 +130,12 @@ class TimeDep2dRigid(TimeDep):
         :class:`TimeDep` and the :class:`TimeDep2dRigid` classes.
 
     Args:
-        system (:class:`hoomd.data.system_data`): Hoomd system object at the
-            initial time for the dyanamics computations
+        snapshot (:class:`hoomd.data.SnapshotParticleData`): Hoomd snapshot
+            object at the initial time for the dyanamics computations
 
     """
-    def __init__(self, system):
-        super(TimeDep2dRigid, self).__init__(system)
+    def __init__(self, snapshot, timestep):
+        super(TimeDep2dRigid, self).__init__(snapshot, timestep)
         self.bodies = np.max(self.t_init.particles.body)+1
         self.pos_init = self.pos_init[:self.bodies]
         self.orient_init = quaternion.as_quat_array(np.array(
@@ -185,33 +183,33 @@ class TimeDep2dRigid(TimeDep):
         curr = self._unwrap(snapshot)[:self.bodies]
         return np.sqrt(np.power(curr - self.pos_init, 2).sum(1))
 
-    def get_data(self, system):
+    def get_data(self, snapshot, timestep):
         """ Get translational and rotational data
 
         Args:
-            system (:class:`hoomd.data.system_data`): Hoomd data object
+            snapshot (:class:`hoomd.data.SnapshotParticleData`): Hoomd data
+                object
 
         Returns:
             :class:`TransRotData`: Translational and rotational data
         """
-        snap = self._take_snapshot(system)
 
         data = TransRotData()
         data.from_arrays(
-            self._displacement(snap),
-            self._rotations(snap),
-            self.get_time_diff(system.get_metadata()['timestep']))
+            self._displacement(snapshot),
+            self._rotations(snapshot),
+            self.get_time_diff(timestep))
         assert (issubclass(type(data), TransRotData)), type(data)
         return data
 
-    def print_all(self, system, outfile):
+    def print_all(self, snapshot, timestep, outfile):
         """Print all data to file
 
         Args:
-            system (:class:`hoomd.data.system_data`): Hoomd system objet in
-                the configuration to be saved
+            snapshot (:class:`hoomd.data.SnapshotParticleData`): Hoomd snapshot
+                object in the configuration to be saved
             outfile (string): filename to output data to
         """
-        data = self.get_data(system)
+        data = self.get_data(snapshot, timestep)
         CompRotDynamics(data).print_all(outfile)
-        data.to_json(outfile[:-8]+"-tr.dat")
+        # data.to_json(outfile[:-8]+"-tr.dat")
