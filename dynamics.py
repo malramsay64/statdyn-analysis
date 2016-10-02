@@ -97,6 +97,7 @@ def compute_dynamics(input_file, temp, press, steps,):
         group=hoomd.group.all(),
         overwrite=True,
         truncate=False,
+        static=['attribute', 'topology']
     )
 
     while timestep < steps+tstep_init:
