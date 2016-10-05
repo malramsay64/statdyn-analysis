@@ -122,6 +122,34 @@ class Trimer(Molecule):
         return rigid
 
 
+class Dimer(Molecule):
+    """Dimer class"""
+    def __init__(self, radius=0.637556, distance=1.0):
+        super(Dimer, self).__init__()
+        self.radius = radius
+        self.distance = distance
+        self.particles = ["B"]
+        self.moment_inertia = self.compute_moment_intertia()
+
+    def compute_moment_intertia(self):
+        """Compute the moment of inertia from the particle paramters"""
+        return (0, 0, 2*(self.distance/2)**2)
+
+    def define_potential(self):
+        """Define potential in simulation context"""
+        potential = super(Dimer, self).define_potential()
+        potential.pair_coeff.set('B', 'B', epsilon=1, sigma=self.radius*2)
+        potential.pair_coeff.set('A', 'B', epsilon=1, sigma=1.0+self.radius)
+        return potential
+
+    def define_rigid(self, create=False, params=None):
+        if not params:
+            params = dict()
+        params.setdefault('positions', [(self.distance, 0, 0)])
+        rigid = super(Dimer, self).define_rigid(create, params)
+        return rigid
+
+
 if __name__ == "__main__":
     hoomd.context.initialize()
     hoomd.init.create_lattice(unitcell=hoomd.lattice.sq(a=4), n=[4, 4])
