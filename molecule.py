@@ -17,18 +17,22 @@ class Molecule(object):
     in a hoomd simulation.
     """
     def __init__(self):
-        self._system = hoomd.context.current.system_definition
         self.moment_inertia = (0, 0, 0)
         self.potential = hoomd.md.pair.lj
-        self.potential_args = dict(r_cut=2.5, nlist=hoomd.md.nlist.cell())
+        self.potential_args = dict()
         self.particles = []
 
     def initialise(self, create=False):
         """Initialse the molecule for hoomd to use"""
+        self._system = hoomd.context.current.system_definition
         self.define_particles()
         self.define_moment_inertia()
         self.define_potential()
         self.define_rigid(create)
+
+    def initialize(self, create):
+        """Because spelling see func:`Molecule.initialise`"""
+        return self.initialise(create)
 
     def set_potential(self, potential, args):
         """Set the interaction potential of the molecules.
@@ -49,7 +53,11 @@ class Molecule(object):
 
     def define_potential(self):
         """Define the potential in the simulation context"""
-        potential = self.potential(**self.potential_args)
+        self.potential_args.setdefault('r_cut', 2.5)
+        potential = self.potential(
+            **self.potential_args,
+            nlist=hoomd.md.nlist.cell()
+        )
         potential.pair_coeff.set('A', 'A', epsilon=1, sigma=2.0)
         return potential
 
@@ -63,7 +71,7 @@ class Molecule(object):
         """
         if not params:
             params = dict()
-        params.setdefault('typename', 'A')
+        params.setdefault('type_name', 'A')
         params.setdefault('types', self.particles)
         rigid = hoomd.md.constrain.rigid()
         rigid.set_param(**params)
@@ -93,7 +101,7 @@ class Trimer(Molecule):
         self.radius = radius
         self.distance = distance
         self.angle = angle
-        self.particles = ["B"]
+        self.particles = ["B", "B"]
         self.moment_inertia = (0, 0, 1.65)
 
     def define_potential(self):

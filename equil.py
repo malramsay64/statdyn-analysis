@@ -8,15 +8,17 @@ MD simulations. """
 # Hoomd helper functions
 
 import os.path
-import math
 import hoomd
 from hoomd import md
+import molecule
+
 
 def equil_from_rand(outfile=None,
                     steps=100000,
                     temp=1.0,
                     press=1.0,
-                    max_iters=10):
+                    max_iters=10,
+                    mol=None):
     R""" Equilibrate system from a lattice initial configuration
 
     The inttial configuration consists of a numer of particles on a hexagonal
@@ -50,30 +52,12 @@ def equil_from_rand(outfile=None,
     hoomd.context.initialize()
 
     # Create hexagonal lattice of central particles
-    system = hoomd.init.create_lattice(unitcell=hoomd.lattice.sq(a=4),
-                                       n=[50, 50])
+    hoomd.init.create_lattice(unitcell=hoomd.lattice.sq(a=4), n=[50, 50])
 
-    # Assign the moment of intertial of each molecule.
-    for particle in system.particles:
-        particle.moment_inertia = (0, 0, 1.65)
+    if not mol:
+        mol = molecule.Trimer()
+    mol.initialise(create=True)
 
-    system.particles.types.add('B')
-
-    # Create the pair coefficients
-    lj_c = md.pair.lj(r_cut=2.5, nlist=md.nlist.cell())
-    lj_c.pair_coeff.set('A', 'A', epsilon=1.0, sigma=2.0)
-    lj_c.pair_coeff.set('A', 'B', epsilon=1.0, sigma=1.637556)
-    lj_c.pair_coeff.set('B', 'B', epsilon=1.0, sigma=2*0.637556)
-
-    # Create rigid particles and define their configuration
-    rigid = md.constrain.rigid()
-    rigid.set_param('A', positions=[(math.sin(math.pi/3),
-                                     math.cos(math.pi/3), 0),
-                                    (-math.sin(math.pi/3),
-                                     math.cos(math.pi/3), 0)],
-                    types=['B', 'B']
-                   )
-    rigid.create_bodies(create=True)
     center = hoomd.group.rigid_center()
     md.update.enforce2d()
 
@@ -109,13 +93,14 @@ def equil_from_rand(outfile=None,
                    period=None,
                    group=hoomd.group.all())
 
+
 def equil_from_file(input_file=None,
                     outfile=None,
                     temp=1.0,
                     press=1.0,
                     steps=100000,
                     max_iters=10,
-                    potentials=None):
+                    mol=None):
     """ Equilibrate simulation from an input file
 
     This function is to equilibrate configuration for a number of timesteps
@@ -141,22 +126,9 @@ def equil_from_file(input_file=None,
     hoomd.init.read_gsd(filename=input_file, time_step=0)
     md.update.enforce2d()
 
-    # Set interaction potentials
-    if not potentials:
-        potentials = md.pair.lj(r_cut=2.5, nlist=md.nlist.cell())
-        potentials.pair_coeff.set('A', 'A', epsilon=1, sigma=2)
-        potentials.pair_coeff.set('B', 'B', epsilon=1, sigma=0.637556*2)
-        potentials.pair_coeff.set('A', 'B', epsilon=1, sigma=1.637556)
-
-    # Set configuration of rigid bodies
-    rigid = md.constrain.rigid()
-    rigid.set_param('A', positions=[(math.sin(math.pi/3),
-                                     math.cos(math.pi/3), 0),
-                                    (-math.sin(math.pi/3),
-                                     math.cos(math.pi/3), 0)],
-                    types=['B', 'B']
-                   )
-    rigid.create_bodies(create=False)
+    if not mol:
+        mol = molecule.Trimer()
+    mol.initialise()
     center = hoomd.group.rigid_center()
 
     # Calculate thermodynamic quantities
@@ -201,6 +173,3 @@ def equil_from_file(input_file=None,
     hoomd.dump.gsd(filename=outfile,
                    period=None,
                    group=hoomd.group.all())
-
-
-

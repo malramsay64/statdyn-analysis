@@ -4,15 +4,15 @@ properties of a Hoomd MD simulation"""
 
 from __future__ import print_function
 import os
-import math
 import hoomd
 from hoomd import md
 import StepSize
 from TimeDep import TimeDep2dRigid
 from CompDynamics import CompRotDynamics
+import molecule
 
 
-def compute_dynamics(input_file, temp, press, steps,):
+def compute_dynamics(input_file, temp, press, steps, mol=None):
     """Run a simulation computing the dynamic properties
 
     Run a hoomd simulation calculating the dynamic quantites on a power
@@ -34,28 +34,9 @@ def compute_dynamics(input_file, temp, press, steps,):
     system = hoomd.init.read_gsd(filename=input_file, time_step=0)
     md.update.enforce2d()
 
-    # Set moments of inertia for every central particle
-    for particle in system.particles:
-        if particle.type == 'A':
-            particle.moment_inertia = (0, 0, 1.65)
-
-    # Set interaction potentials
-    potentials = md.pair.lj(r_cut=2.5, nlist=md.nlist.cell())
-    potentials.pair_coeff.set('A', 'A', epsilon=1, sigma=2)
-    potentials.pair_coeff.set('B', 'B', epsilon=1, sigma=0.637556*2)
-    potentials.pair_coeff.set('A', 'B', epsilon=1, sigma=1.637556)
-
-    rigid = md.constrain.rigid()
-    rigid.set_param(
-        'A',
-        positions=[
-            (math.sin(math.pi/3), math.cos(math.pi/3), 0),
-            (-math.sin(math.pi/3),
-             math.cos(math.pi/3), 0)
-        ],
-        types=['B', 'B']
-    )
-    rigid.create_bodies(create=False)
+    if not mol:
+        mol = molecule.Trimer()
+    mol.initialise(create=False)
     center = hoomd.group.rigid_center()
 
     # Set integration parameters
