@@ -25,7 +25,10 @@ class Molecule(object):
 
     def initialise(self, create=False):
         """Initialse the molecule for hoomd to use"""
-        pass
+        self.define_particles()
+        self.define_moment_inertia()
+        self.define_potential()
+        self.define_rigid(create)
 
     def set_potential(self, potential, args):
         """Set the interaction potential of the molecules.
@@ -46,9 +49,11 @@ class Molecule(object):
 
     def define_potential(self):
         """Define the potential in the simulation context"""
-        self.potential(**self.potential_args)
+        potential = self.potential(**self.potential_args)
+        potential.pair_coeff.set('A', 'A', epsilon=1, sigma=2.0)
+        return potential
 
-    def define_rigid(self, create=False):
+    def define_rigid(self, create=False, params=None):
         """Define the rigid constraints of the molecule
 
         Args:
@@ -56,7 +61,14 @@ class Molecule(object):
                 additional particles when creating the rigid bodies. Defaults
                 to False.
         """
-        pass
+        if not params:
+            params = dict()
+        params.setdefault('typename', 'A')
+        params.setdefault('types', self.particles)
+        rigid = hoomd.md.constrain.rigid()
+        rigid.set_param(**params)
+        rigid.create_bodies(create)
+        return rigid
 
     def define_moment_inertia(self):
         """Set the moment of intertia of all particles in the system"""
@@ -86,12 +98,12 @@ class Trimer(Molecule):
 
     def define_potential(self):
         """Define the potential in the simulation context"""
-        potential = self.potential(**self.potential_args)
-        potential.pair_coeff.set('A', 'A', epsilon=1, sigma=2.0)
+        potential = super(Trimer, self).define_potential()
         potential.pair_coeff.set('B', 'B', epsilon=1, sigma=self.radius*2)
         potential.pair_coeff.set('A', 'B', epsilon=1, sigma=1.0+self.radius)
+        return potential
 
-    def define_rigid(self, create=False):
+    def define_rigid(self, create=False, params=None):
         """Define the rigid constraints of the molecule
 
         Args:
@@ -100,23 +112,14 @@ class Trimer(Molecule):
                 to False.
         """
         angle = (self.angle/2)*math.pi/180.
-        rigid = hoomd.md.constrain.rigid()
-        rigid.set_param(
-            'A',
-            positions=[
-                (math.sin(angle), math.cos(angle), 0),
-                (-math.sin(angle), math.cos(angle), 0)
-            ],
-            types=['B', 'B']
-        )
-
-    def initialise(self, create=False):
-        """Initialise the molecule such that hoomd can use it for
-        simulations"""
-        self.define_particles()
-        self.define_potential()
-        self.define_moment_inertia()
-        self.define_rigid(create)
+        if not params:
+            params = dict()
+        params.setdefault('positions', [
+            (math.sin(angle), math.cos(angle), 0),
+            (-math.sin(angle), math.cos(angle), 0)
+        ])
+        rigid = super(Trimer, self).define_rigid(create, params)
+        return rigid
 
 
 if __name__ == "__main__":
