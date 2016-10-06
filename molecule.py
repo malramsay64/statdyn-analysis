@@ -75,7 +75,7 @@ class Molecule(object):
             self._system.getParticleData().addType(particle)
 
     def define_potential(self):
-        """Define the potential in the simulation context
+        R"""Define the potential in the simulation context
 
         A helper function that defines the potential to be used by the  hoomd
         simulation context. The default values for the potential are a
@@ -168,7 +168,7 @@ class Trimer(Molecule):
         self.moment_inertia = (0, 0, 1.65)
 
     def define_potential(self):
-        """Define the potential in the simulation context
+        R"""Define the potential in the simulation context
 
         A helper function that defines the potential to be used by the  hoomd
         simulation context. The default values for the potential are a
@@ -241,7 +241,7 @@ class Dimer(Molecule):
         return (0, 0, 2*(self.distance/2)**2)
 
     def define_potential(self):
-        """Define the potential in the simulation context
+        R"""Define the potential in the simulation context
 
         A helper function that defines the potential to be used by the  hoomd
         simulation context. The default values for the potential are a
