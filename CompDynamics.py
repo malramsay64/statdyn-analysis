@@ -19,6 +19,14 @@ class CompDynamics(object):
             object containg the translational motion and time over which
             that translational motion took place.
     """
+    self._output_all = collections.OrderedDict()
+    self._output_all['time'] = self.timestep
+    self._output_all['disp'] = self.get_mean_disp
+    self._output_all['msd'] = self.get_msd
+    self._output_all['mfd'] = self.get_mfd
+    self._output_all['alpha'] = self.get_alpha
+    self._output_all['struct'] = self.get_struct
+
     def __init__(self, TData):
         assert issubclass(type(TData), TransData), type(TData)
         self.data = TData
@@ -151,17 +159,12 @@ class CompDynamics(object):
         Args:
             outfile (string): Filename to append output to
         """
-        output = collections.OrderedDict()
-        output['time'] = self.timestep()
-        output['disp'] = self.get_mean_disp()
-        output['msd'] = self.get_msd()
-        output['mfd'] = self.get_mfd()
-        output['alpha'] = self.get_alpha()
-        output['struct'] = self.get_struct()
+        string = ' '.join(
+            [func() for func in self._output_all.values()])
         if outfile:
-            print(vals_to_string(output), file=open(outfile, 'a'))
+            print(string, file=open(outfile, 'a'))
         else:
-            print(vals_to_string(output))
+            print(string)
 
     def print_heading(self, outfile):
         """ Write heading values to outfile which match up with the values given
@@ -170,14 +173,9 @@ class CompDynamics(object):
         Args:
             outfile (string): Filename to write headings to
         """
-        output = collections.OrderedDict()
-        output['time'] = 0
-        output['disp'] = 0
-        output['msd'] = 0
-        output['mfd'] = 0
-        output['alpha'] = 0
-        output['struct'] = 0
-        print(keys_to_string(output), file=open(outfile, 'w'))
+        string = ' '.join(
+            [key for key in self._output_all.keys()]
+        print(string, file=open(outfile, 'w'))
 
 
 class CompRotDynamics(CompDynamics):
@@ -202,6 +200,26 @@ class CompRotDynamics(CompDynamics):
             the translational, rotational and time data for all the molecules
             in the system.
     """
+    self._output_all = collections.OrderedDict()
+    self._output_all['time'] = self.timestep
+    self._output_all['disp'] = self.get_mean_disp
+    self._output_all['msd'] = self.get_msd
+    self._output_all['mfd'] = self.get_mfd
+    self._output_all['alpha'] = self.get_alpha
+    self._output_all['mean_rot'] = self.get_mean_rot
+    self._output_all['mean_rot2'] = self._d_theta2
+    self._output_all['mean_trans_rot'] = self._d_disp_d_theta
+    self._output_all['mean_trans2_rot2'] = self._d_disp2_d_theta2
+    self._output_all['decoupling'] = self.get_decoupling
+    self._output_all['gamma1'] = self.get_gamma1
+    self._output_all['gamma2'] = self.get_gamma2
+    self._output_all['rot1'] = self.get_rot_relax1
+    self._output_all['rot2'] = self.get_rot_relax2
+    self._output_all['struct'] = self.get_struct
+    self._output_all['COM_struct'] = self.get_COM_struct
+    self._output_all['trans_corel'] = self.get_trans_correl
+    self._output_all['rot_corel'] = self.get_rot_correl
+
     def __init__(self, RigidData=TransRotData()):
         assert (issubclass(type(RigidData), TransRotData)), type(RigidData)
         super(CompRotDynamics, self).__init__(RigidData)
@@ -560,45 +578,12 @@ class CompRotDynamics(CompDynamics):
         Args:
             outfile (string): Filename to append to
         """
-        output = collections.OrderedDict()
-        output['time'] = self.timestep()
-        output['disp'] = self.get_mean_disp()
-        output['msd'] = self.get_msd()
-        output['mfd'] = self.get_mfd()
-        output['alpha'] = self.get_alpha()
-        output['mean_rot'] = self.get_mean_rot()
-        output['mean_rot2'] = self._d_theta2()
-        output['mean_trans_rot'] = self._d_disp_d_theta()
-        output['mean_trans2_rot2'] = self._d_disp2_d_theta2()
-        output['decoupling'] = self.get_decoupling(0.05, 0.05)
-        output['gamma1'] = self.get_gamma1()
-        output['gamma2'] = self.get_gamma2()
-        output['rot1'] = self.get_rot_relax1()
-        output['rot2'] = self.get_rot_relax2()
-        output['struct'] = self.get_struct()
-        output['COM_struct'] = self.get_COM_struct()
-        output['trans_corel'] = self.get_trans_correl()
-        output['rot_corel'] = self.get_rot_correl()
-        output['param_rot_n3'] = self.get_param_rot(-3)
-        output['param_rot_n2'] = self.get_param_rot(-2)
-        output['param_rot_n1'] = self.get_param_rot(-1)
-        output['param_rot_n0.1'] = self.get_param_rot(-0.1)
-        output['param_rot_0.1'] = self.get_param_rot(0.1)
-        output['param_rot_1'] = self.get_param_rot(1)
-        output['param_rot_2'] = self.get_param_rot(2)
-        output['param_rot_3'] = self.get_param_rot(3)
-        output['param_trans_n3'] = self.get_param_trans(-3)
-        output['param_trans_n2'] = self.get_param_trans(-2)
-        output['param_trans_n1'] = self.get_param_trans(-1)
-        output['param_trans_n0.1'] = self.get_param_trans(-0.1)
-        output['param_trans_0.1'] = self.get_param_trans(0.1)
-        output['param_trans_1'] = self.get_param_trans(1)
-        output['param_trans_2'] = self.get_param_trans(2)
-        output['param_trans_3'] = self.get_param_trans(3)
+        string = ' '.join(
+            [func() for func in self._output_all.values()])
         if outfile:
-            print(vals_to_string(output), file=open(outfile, 'a'))
+            print(string, file=open(outfile, 'a'))
         else:
-            print(vals_to_string(output))
+            print(string)
 
     def print_heading(self, outfile):
         """ Write heading values to outfile which match up with the values given
@@ -607,68 +592,9 @@ class CompRotDynamics(CompDynamics):
         Args:
             outfile (string): Filename to write headings to
         """
-        output = collections.OrderedDict()
-        output['time'] = 0
-        output['disp'] = 0
-        output['msd'] = 0
-        output['mfd'] = 0
-        output['alpha'] = 0
-        output['mean_rot'] = 0
-        output['mean_rot2'] = 0
-        output['mean_trans_rot'] = 0
-        output['mean_trans2_rot2'] = 0
-        output['decoupling'] = 0
-        output['gamma1'] = 0
-        output['gamma2'] = 0
-        output['rot1'] = 0
-        output['rot2'] = 0
-        output['struct'] = 0
-        output['COM_struct'] = 0
-        output['trans_correl'] = 0
-        output['rot_correl'] = 0
-        output['param_rot_n3'] = 0
-        output['param_rot_n2'] = 0
-        output['param_rot_n1'] = 0
-        output['param_rot_n0.1'] = 0
-        output['param_rot_0.1'] = 0
-        output['param_rot_1'] = 0
-        output['param_rot_2'] = 0
-        output['param_rot_3'] = 0
-        output['param_trans_n3'] = 0
-        output['param_trans_n2'] = 0
-        output['param_trans_n1'] = 0
-        output['param_trans_n0.1'] = 0
-        output['param_trans_0.1'] = 0
-        output['param_trans_1'] = 0
-        output['param_trans_2'] = 0
-        output['param_trans_3'] = 0
-        print(keys_to_string(output), file=open(outfile, 'w'))
-
-
-def keys_to_string(dictionary, sep=' '):
-    """Converts all keys in a dictionary to a string
-
-    Args:
-        dictionary (dict): Dictionary of key, value pairs
-        sep (string): Separator for between keys
-
-    Return:
-        string: All keys separated by `sep`
-    """
-    return sep.join([str(key) for key in dictionary.keys()])
-
-
-def vals_to_string(dictionary, sep=' '):
-    """Converts all vals in a dictionary to a string
-
-    Args:
-        dictionary (dict): Dictionary of key, value pairs
-        sep (string): Separator for between values
-
-    Return:
-        string: All values separated by `sep`
-    """
-    return sep.join([str(val) for val in dictionary.values()])
+        string = ' '.join(
+            [key for key in self._output_all.keys()]
+        print((string), file=open(outfile, 'w'))
 
 
 def normalise_probability(prob_matrix, rot_matrix, disp_matrix,
