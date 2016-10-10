@@ -488,6 +488,22 @@ class CompRotDynamics(CompDynamics):
         """
         return np.mean(self._all_translations() < dist)
 
+    def get_com_struct(self, dist=0.3):
+        R""" Compute the structural relaxation for the Centers of mass
+
+        The structural relaxation of the Centers of Mass (COM) is given as the
+        proportion of molecules that have moved further than `dist` from their
+        initial positions.
+
+        Args:
+            dist (float): The distance cutoff for considering relaxation.
+                Defualts to 0.3
+
+        Return:
+            float: The structural COM relaxation of the configuration
+        """
+        return np.mean(self.translations() < dist)
+
     def get_trans_correl(self):
         r""" Compute the correlation of rotations and translations
 
@@ -560,6 +576,7 @@ class CompRotDynamics(CompDynamics):
         output['rot1'] = self.get_rot_relax1()
         output['rot2'] = self.get_rot_relax2()
         output['struct'] = self.get_struct()
+        output['COM_struct'] = self.get_COM_struct()
         output['trans_corel'] = self.get_trans_correl()
         output['rot_corel'] = self.get_rot_correl()
         output['param_rot_n3'] = self.get_param_rot(-3)
@@ -606,6 +623,7 @@ class CompRotDynamics(CompDynamics):
         output['rot1'] = 0
         output['rot2'] = 0
         output['struct'] = 0
+        output['COM_struct'] = 0
         output['trans_correl'] = 0
         output['rot_correl'] = 0
         output['param_rot_n3'] = 0
