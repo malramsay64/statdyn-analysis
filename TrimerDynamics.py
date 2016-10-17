@@ -10,7 +10,7 @@ import dynamics
 PRESS = 13.5
 # Holds tuples of the temperature and number of steps
 # to iterate through
-STEPS = 100
+STEPS = 10000000
 TEMPERATURES = {
     5.00: 1*STEPS,
     4.00: 1*STEPS,
