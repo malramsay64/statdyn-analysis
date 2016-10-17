@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """ A set of classes used for computing the dynamic properties of a Hoomd MD
 simulation"""
 
@@ -19,13 +19,6 @@ class CompDynamics(object):
             object containg the translational motion and time over which
             that translational motion took place.
     """
-    self._output_all = collections.OrderedDict()
-    self._output_all['time'] = self.timestep
-    self._output_all['disp'] = self.get_mean_disp
-    self._output_all['msd'] = self.get_msd
-    self._output_all['mfd'] = self.get_mfd
-    self._output_all['alpha'] = self.get_alpha
-    self._output_all['struct'] = self.get_struct
 
     def __init__(self, TData):
         assert issubclass(type(TData), TransData), type(TData)
@@ -33,6 +26,13 @@ class CompDynamics(object):
         self._d_disp_compute = 0
         self._d_disp2_compute = 0
         self._d_disp4_compute = 0
+        self._output_all = collections.OrderedDict()
+        self._output_all['time'] = self.timestep
+        self._output_all['disp'] = self.get_mean_disp
+        self._output_all['msd'] = self.get_msd
+        self._output_all['mfd'] = self.get_mfd
+        self._output_all['alpha'] = self.get_alpha
+        self._output_all['struct'] = self.get_struct
 
     def timestep(self):
         """Compute the timestep difference
@@ -174,7 +174,7 @@ class CompDynamics(object):
             outfile (string): Filename to write headings to
         """
         string = ' '.join(
-            [key for key in self._output_all.keys()]
+            [key for key in self._output_all.keys()])
         print(string, file=open(outfile, 'w'))
 
 
@@ -200,25 +200,6 @@ class CompRotDynamics(CompDynamics):
             the translational, rotational and time data for all the molecules
             in the system.
     """
-    self._output_all = collections.OrderedDict()
-    self._output_all['time'] = self.timestep
-    self._output_all['disp'] = self.get_mean_disp
-    self._output_all['msd'] = self.get_msd
-    self._output_all['mfd'] = self.get_mfd
-    self._output_all['alpha'] = self.get_alpha
-    self._output_all['mean_rot'] = self.get_mean_rot
-    self._output_all['mean_rot2'] = self._d_theta2
-    self._output_all['mean_trans_rot'] = self._d_disp_d_theta
-    self._output_all['mean_trans2_rot2'] = self._d_disp2_d_theta2
-    self._output_all['decoupling'] = self.get_decoupling
-    self._output_all['gamma1'] = self.get_gamma1
-    self._output_all['gamma2'] = self.get_gamma2
-    self._output_all['rot1'] = self.get_rot_relax1
-    self._output_all['rot2'] = self.get_rot_relax2
-    self._output_all['struct'] = self.get_struct
-    self._output_all['COM_struct'] = self.get_COM_struct
-    self._output_all['trans_corel'] = self.get_trans_correl
-    self._output_all['rot_corel'] = self.get_rot_correl
 
     def __init__(self, RigidData=TransRotData()):
         assert (issubclass(type(RigidData), TransRotData)), type(RigidData)
@@ -228,6 +209,25 @@ class CompRotDynamics(CompDynamics):
         self._d_theta2_compute = 0
         self._d_disp_d_theta_compute = 0
         self._d_disp2_d_theta2_compute = 0
+        self._output_all = collections.OrderedDict()
+        self._output_all['time'] = self.timestep
+        self._output_all['disp'] = self.get_mean_disp
+        self._output_all['msd'] = self.get_msd
+        self._output_all['mfd'] = self.get_mfd
+        self._output_all['alpha'] = self.get_alpha
+        self._output_all['mean_rot'] = self.get_mean_rot
+        self._output_all['mean_rot2'] = self._d_theta2
+        self._output_all['mean_trans_rot'] = self._d_disp_d_theta
+        self._output_all['mean_trans2_rot2'] = self._d_disp2_d_theta2
+        self._output_all['decoupling'] = self.get_decoupling
+        self._output_all['gamma1'] = self.get_gamma1
+        self._output_all['gamma2'] = self.get_gamma2
+        self._output_all['rot1'] = self.get_rot_relax1
+        self._output_all['rot2'] = self.get_rot_relax2
+        self._output_all['struct'] = self.get_struct
+        self._output_all['COM_struct'] = self.get_com_struct
+        self._output_all['trans_corel'] = self.get_trans_correl
+        self._output_all['rot_corel'] = self.get_rot_correl
 
     def rotations(self):
         R""" Calculate the rotation for every rigid body in the system
@@ -579,7 +579,7 @@ class CompRotDynamics(CompDynamics):
             outfile (string): Filename to append to
         """
         string = ' '.join(
-            [func() for func in self._output_all.values()])
+            [str(func()) for func in self._output_all.values()])
         if outfile:
             print(string, file=open(outfile, 'a'))
         else:
@@ -593,7 +593,7 @@ class CompRotDynamics(CompDynamics):
             outfile (string): Filename to write headings to
         """
         string = ' '.join(
-            [key for key in self._output_all.keys()]
+            [key for key in self._output_all.keys()])
         print((string), file=open(outfile, 'w'))
 
 

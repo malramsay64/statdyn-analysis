@@ -61,5 +61,5 @@ def compute_all(pattern="*-tr.dat", suffix="-dyn.dat", directory="."):
         compute_file(infile, infile[:-(len(pattern)-1)]+suffix)
 
 if __name__ == "__main__":
-    compute_file("Trimer-13.50-5.00-traj.gsd")
-    # compute_all(pattern="*0-tr.dat", suffix="0-dyn.dat")
+    # compute_file("Trimer-13.50-5.00-traj.gsd")
+    compute_all(pattern="*0-tr.dat", suffix="0-dyn.dat")
