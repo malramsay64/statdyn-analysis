@@ -26,6 +26,7 @@ class Molecule(object):
         self.potential = hoomd.md.pair.lj
         self.potential_args = dict()
         self.particles = []
+        self._system = None
 
     def initialise(self, create=False):
         """Initialse the molecule for hoomd to use
@@ -168,6 +169,9 @@ class Trimer(Molecule):
             one. Default is 1.0
         angle (float): Angle between the two outer particles in degrees.
             Default is 120
+
+    TODO:
+        Compute the moment of inertia
     """
     def __init__(self, radius=0.637556, distance=1.0, angle=120):
         super(Trimer, self).__init__()
