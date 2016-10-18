@@ -26,6 +26,7 @@ class Molecule(object):
         self.potential = hoomd.md.pair.lj
         self.potential_args = dict()
         self.particles = []
+        self._system = None
 
     def initialise(self, create=False):
         """Initialse the molecule for hoomd to use
@@ -141,6 +142,16 @@ class Molecule(object):
         for particle in range(self._system.getParticleData().getN()):
             self._system.getParticleData().setMomentsOfInertia(particle, mom_i)
 
+    def set_moment_inertia(self, moment_inertia):
+        """Set the moment of inertia to a specific value
+
+        Args:
+            moment_inertia (tuple): A tuple containg the moment of inertia in
+                the form :math:`(L_x,L_y,L_z)`
+
+        """
+        self.moment_inertia = moment_inertia
+
 
 class Trimer(Molecule):
     """Defines a Trimer molecule for initialisation within a hoomd context
@@ -158,6 +169,9 @@ class Trimer(Molecule):
             one. Default is 1.0
         angle (float): Angle between the two outer particles in degrees.
             Default is 120
+
+    TODO:
+        Compute the moment of inertia
     """
     def __init__(self, radius=0.637556, distance=1.0, angle=120):
         super(Trimer, self).__init__()
