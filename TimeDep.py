@@ -137,7 +137,6 @@ class TimeDep2dRigid(TimeDep):
     def __init__(self, snapshot, timestep):
         super(TimeDep2dRigid, self).__init__(snapshot, timestep)
         self.bodies = np.max(self.t_init.particles.body)+1
-        self.pos_init = self.pos_init[:self.bodies]
         self.orient_init = quaternion.as_quat_array(np.array(
             self.t_init.particles.orientation[:self.bodies], dtype=float))
 
@@ -180,7 +179,7 @@ class TimeDep2dRigid(TimeDep):
         Returns:
             :class:`numpy.array`: An array containing per body displacements
         """
-        curr = self._unwrap(snapshot)[:self.bodies]
+        curr = self._unwrap(snapshot)
         return np.sqrt(np.power(curr - self.pos_init, 2).sum(1))
 
     def get_data(self, snapshot, timestep):
@@ -198,7 +197,9 @@ class TimeDep2dRigid(TimeDep):
         data.from_arrays(
             self._displacement(snapshot),
             self._rotations(snapshot),
-            self.get_time_diff(timestep))
+            self.get_time_diff(timestep),
+            self.bodies
+        )
         assert (issubclass(type(data), TransRotData)), type(data)
         return data
 
@@ -212,4 +213,3 @@ class TimeDep2dRigid(TimeDep):
         """
         data = self.get_data(snapshot, timestep)
         CompRotDynamics(data).print_all(outfile)
-        # data.to_json(outfile[:-8]+"-tr.dat")
