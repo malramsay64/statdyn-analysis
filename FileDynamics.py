@@ -7,7 +7,6 @@ import gsd.fl
 import gsd.hoomd
 from TimeDep import TimeDep2dRigid
 from CompDynamics import CompRotDynamics
-# from TransData import TransRotData
 
 
 def compute_file(fname, outfile='out.dat'):
@@ -29,12 +28,15 @@ def compute_file(fname, outfile='out.dat'):
     snapshots = gsd.hoomd.HOOMDTrajectory(infile)
     keyframes = []
     for i, snapshot in enumerate(snapshots):
-        if i == 0:
-            CompRotDynamics().print_heading(outfile)
         for frame in keyframes:
             frame.print_all(snapshot, snapshot.configuration.step, outfile)
-        if i == 0 or i-1 % 9 == 0 and i > 1:
-            keyframes.append(TimeDep2dRigid(snapshot, snapshot.configuration.step))
+        if i == 0:
+            CompRotDynamics().print_heading(outfile)
+            keyframes.append(TimeDep2dRigid(
+                snapshot, snapshot.configuration.step))
+        elif (i-1) % 39 == 0 and i > 1:
+            keyframes.append(TimeDep2dRigid(
+                snapshot, snapshot.configuration.step))
 
 
 def compute_all(pattern="*-tr.dat", suffix="-dyn.dat", directory="."):
