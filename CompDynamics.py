@@ -360,7 +360,7 @@ class CompRotDynamics(CompDynamics):
         Return:
             float: The mean rotation
         """
-        return np.mean(np.abs(self.rotations()))
+        return self._d_theta()
 
     def get_mean_sq_rot(self):
         R""" Compute the mean squared rotation
@@ -372,7 +372,7 @@ class CompRotDynamics(CompDynamics):
         Return:
             float: The mean squared rotation in radians
         """
-        return np.mean(np.power(self.rotations(), 2))
+        return self._d_theta2()
 
     def get_mean_trans_rot(self):
         R""" Compute the coupled translation and rotation
@@ -384,7 +384,7 @@ class CompRotDynamics(CompDynamics):
         Return:
             float: The coupling parameter
         """
-        return np.mean(self.translations()*np.abs(self.rotations()))
+        return self._d_disp_d_theta()
 
     def get_mean_sq_trans_rot(self):
         R""" Return the squared coupled translation and rotation
@@ -397,8 +397,7 @@ class CompRotDynamics(CompDynamics):
         Return:
             float: The squared coupling of translations and rotations
         """
-        return np.mean(np.power(self.translations(), 2)
-                       * np.power(self.rotations(), 2))
+        return self._d_disp2_d_theta2()
 
     def get_gamma1(self):
         R""" Calculate the first order coupling of translations and rotations
