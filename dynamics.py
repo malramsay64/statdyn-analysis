@@ -11,6 +11,8 @@ from TimeDep import TimeDep2dRigid
 from CompDynamics import CompRotDynamics
 import molecule
 
+MAX_FRAMES = 1000
+
 
 def compute_dynamics(input_file, temp, press, steps, mol=None):
     """Run a simulation computing the dynamic properties
@@ -97,7 +99,7 @@ def compute_dynamics(input_file, temp, press, steps, mol=None):
         struct[index_min] = (step_iter.next(), step_iter, dyn)
         # Add new key frame every key_rate steps, limited to 5000
         if (timestep % key_rate == 0 and
-                len(struct) < 5000 and
+                len(struct) < MAX_FRAMES and
                 len([s for s in struct if s[0] == timestep+1]) == 0):
             new_step = StepSize.PowerSteps(start=timestep)
             struct.append(

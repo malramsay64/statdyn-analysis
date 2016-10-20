@@ -33,7 +33,7 @@ def compute_file(fname, outfile='out.dat'):
             CompRotDynamics().print_heading(outfile)
         for frame in keyframes:
             frame.print_all(snapshot, snapshot.configuration.step, outfile)
-        if i % 10 == 0:
+        if i == 0 or i-1 % 9 == 0 and i > 1:
             keyframes.append(TimeDep2dRigid(snapshot, snapshot.configuration.step))
 
 
@@ -62,4 +62,4 @@ def compute_all(pattern="*-tr.dat", suffix="-dyn.dat", directory="."):
 
 if __name__ == "__main__":
     # compute_file("Trimer-13.50-5.00-traj.gsd")
-    compute_all(pattern="*0-tr.dat", suffix="0-dyn.dat")
+    compute_all(pattern="*-traj.gsd", suffix="-dyn.dat")

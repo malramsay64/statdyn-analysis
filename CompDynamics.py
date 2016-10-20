@@ -219,7 +219,7 @@ class CompRotDynamics(CompDynamics):
         self._output_all['mean_rot2'] = self._d_theta2
         self._output_all['mean_trans_rot'] = self._d_disp_d_theta
         self._output_all['mean_trans2_rot2'] = self._d_disp2_d_theta2
-        self._output_all['decoupling'] = self.get_decoupling
+        # self._output_all['decoupling'] = self.get_decoupling
         self._output_all['gamma1'] = self.get_gamma1
         self._output_all['gamma2'] = self.get_gamma2
         self._output_all['rot1'] = self.get_rot_relax1
