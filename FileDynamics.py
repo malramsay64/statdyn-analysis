@@ -3,6 +3,7 @@
 """
 
 import glob
+import math
 import gsd.fl
 import gsd.hoomd
 from TimeDep import TimeDep2dRigid
@@ -28,16 +29,17 @@ def compute_file(fname, outfile='out.dat'):
     snapshots = gsd.hoomd.HOOMDTrajectory(infile)
     keyframes = []
     for i, snapshot in enumerate(snapshots):
+        if snapshot.configuration.step % 36 == 1:
+            keyframes.append(TimeDep2dRigid(
+                snapshots[i-1], snapshots[i-1].configuration.step))
         for frame in keyframes:
-            frame.print_all(snapshot, snapshot.configuration.step, outfile)
+            diff = frame.get_time_diff(snapshot.configuration.step)
+            if diff % (10**(int(math.log10(diff)))) == 0:
+                frame.print_all(snapshot, snapshot.configuration.step, outfile)
         if i == 0:
             CompRotDynamics().print_heading(outfile)
             keyframes.append(TimeDep2dRigid(
                 snapshot, snapshot.configuration.step))
-        elif (i-1) % 39 == 0 and i > 1:
-            keyframes.append(TimeDep2dRigid(
-                snapshot, snapshot.configuration.step))
-
 
 def compute_all(pattern="*-tr.dat", suffix="-dyn.dat", directory="."):
     """Compute all files in directory matching pattern
