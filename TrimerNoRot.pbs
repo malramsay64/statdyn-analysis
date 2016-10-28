@@ -1,6 +1,6 @@
 #!/bin/bash
 
-#PBS -N TrimerDynamics
+#PBS -N TrimerNoRot
 #PBS -l select=1:ngpus=1:ncpus=1:mem=16gb
 #PBS -l walltime=168:00:00
 #PBS -P RDS-FSC-CrysGrowth-RW
@@ -16,4 +16,5 @@ temps=(5.00 4.00 3.50 3.00 2.50 2.00 1.80 1.60 1.50 1.40 1.35 1.30 1.25 1.20 1.1
 
 cd "$PBS_O_WORKDIR" || exit
 
-python MD-Molecules-Hoomd/TrimerDynamics.py "${temps["$PBS_ARRAY_INDEX"]}" > outfile-"${temps[$PBS_ARRAY_INDEX]}".log
+python MD-Molecules-Hoomd/TrimerDynamics.py "${temps["$PBS_ARRAY_INDEX"]}"  > outfile-"${temps[$PBS_ARRAY_INDEX]}".log
+
