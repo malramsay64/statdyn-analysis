@@ -28,8 +28,16 @@ def compute_file(fname, outfile='out.dat'):
     infile = gsd.fl.GSDFile(fname, 'rb')
     snapshots = gsd.hoomd.HOOMDTrajectory(infile)
     keyframes = []
+    jump = 0
+    jump_prev = 0
+    step = 0
+    step_prev = 0
     for i, snapshot in enumerate(snapshots):
-        if snapshot.configuration.step % 36 == 1:
+        step_prev = step
+        step = snapshot.configuration.step
+        jump_prev = jump
+        jump = step-step_prev
+        if jump == 1 and jump_prev > 1:
             keyframes.append(TimeDep2dRigid(
                 snapshots[i-1], snapshots[i-1].configuration.step))
         for frame in keyframes:
@@ -39,7 +47,8 @@ def compute_file(fname, outfile='out.dat'):
         if i == 0:
             CompRotDynamics().print_heading(outfile)
             keyframes.append(TimeDep2dRigid(
-                snapshot, snapshot.configuration.step))
+                snapshots[i], snapshots[i].configuration.step))
+
 
 def compute_all(pattern="*-tr.dat", suffix="-dyn.dat", directory="."):
     """Compute all files in directory matching pattern
