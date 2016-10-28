@@ -13,4 +13,4 @@ cd "$PBS_O_WORKDIR" || exit
 
 module load cuda/7.5.18
 
-python ~/MD-Molecules-Hoomd/TrimerEquil.py $temp > outfile.log
+python MD-Molecules-Hoomd/TrimerEquil.py $temp > outfile.log

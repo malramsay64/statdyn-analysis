@@ -34,8 +34,8 @@ TEMPERATURES = {
 if __name__ == "__main__":
     hoomd.context.initialize()
     if len(argv) == 2:
-        if TEMPERATURES.get(argv[1], 0):
-            temp = float(argv[2])
+        temp = float(argv[1])
+        if TEMPERATURES.get(temp, 0):
             steps = TEMPERATURES.get(temp)
         input_file = "Trimer-{press:.2f}-{temp:.2f}.gsd".format(
             press=PRESS, temp=temp)
