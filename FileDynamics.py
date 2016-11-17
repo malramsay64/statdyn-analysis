@@ -8,6 +8,7 @@ import gsd.fl
 import gsd.hoomd
 from TimeDep import TimeDep2dRigid
 from CompDynamics import CompRotDynamics
+from multiprocessing.dummy import Pool as ThreadPool
 
 
 def compute_file(fname, outfile='out.dat'):
@@ -25,6 +26,9 @@ def compute_file(fname, outfile='out.dat'):
         fname (string): Path to file containing the translations and rotations
         outfile (string): Filename of output file
     """
+    suffix="-dyn.dat"
+    outfile = fname[:-9]+suffix
+    print("Infile:", fname, " Outfile:",outfile)
     infile = gsd.fl.GSDFile(fname, 'rb')
     snapshots = gsd.hoomd.HOOMDTrajectory(infile)
     keyframes = []
@@ -69,9 +73,8 @@ def compute_all(pattern="*-tr.dat", suffix="-dyn.dat", directory="."):
             Default is the current directory.
     """
     files = glob.glob(directory+"/"+pattern)
-    for infile in files:
-        print(infile)
-        compute_file(infile, infile[:-(len(pattern)-1)]+suffix)
+    pool = ThreadPool(4)
+    pool.map(compute_file, files)
 
 if __name__ == "__main__":
     # compute_file("Trimer-13.50-5.00-traj.gsd")
