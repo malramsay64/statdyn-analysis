@@ -69,7 +69,7 @@ class CompDynamics(object):
         """Internal function to compute mean fourth disp
         """
         if self._d_disp4_compute == 0:
-            self._d_disp_compute = np.mean(np.power(self.translations(), 4))
+            self._d_disp4_compute = np.mean(np.power(self.translations(), 4))
         return self._d_disp4_compute
 
     def get_mean_disp(self):
