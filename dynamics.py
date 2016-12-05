@@ -71,7 +71,7 @@ def compute_dynamics(input_file, temp, press, steps, mol=None):
     last_timestep = tstep_init
     dyn = TimeDep2dRigid(snapshot, timestep)
     CompRotDynamics().print_heading(basename+"-dyn.dat")
-    new_step = StepSize.PowerSteps(start=tstep_init)
+    new_step = StepSize.PowerSteps(num_linear=19, start=tstep_init)
     struct = [(new_step.next(), new_step, dyn)]
     key_rate = 20000
     gsd = hoomd.dump.gsd(
@@ -101,7 +101,7 @@ def compute_dynamics(input_file, temp, press, steps, mol=None):
         if (timestep % key_rate == 0 and
                 len(struct) < MAX_FRAMES and
                 len([s for s in struct if s[0] == timestep+1]) == 0):
-            new_step = StepSize.PowerSteps(start=timestep)
+            new_step = StepSize.PowerSteps(num_linear=19, start=timestep)
             struct.append(
                 (new_step.next(), new_step, TimeDep2dRigid(snapshot, timestep))
             )

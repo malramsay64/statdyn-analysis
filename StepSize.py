@@ -35,9 +35,9 @@ class PowerSteps(object):
     def next(self):
         """ Calculate the next value in the series"""
         self.curr_step = int(self.curr_step + self.delta_step)
-        if self.curr_step >= math.pow(10, self.power+1):
+        if self.curr_step >= (self.num_linear+1)*math.pow(10, self.power):
             self.power += 1
-            self.curr_step = int(math.pow(10, self.power))
+            self.curr_step = (self.num_linear+1)*int(math.pow(10, self.power-1))
             self.delta_step = self.get_delta_step()
         return self.curr_step + self.start
 
@@ -46,8 +46,7 @@ class PowerSteps(object):
 
     def get_delta_step(self):
         """ Calculate the step size"""
-        delta_s = (math.pow(10, self.power+1) - math.pow(10, self.power))
-        delta_s /= self.num_linear
+        delta_s = (math.pow(10, self.power))
         if delta_s < 1:
             delta_s = 1
         return delta_s
