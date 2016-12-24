@@ -54,9 +54,9 @@ def equil_from_lattice(outfile=None,
 
     # Create hexagonal lattice of central particles
     if unitcell:
-        hoomd.init.create_lattice(unitcell=unitcell, n=[50, 50])
+        sys = hoomd.init.create_lattice(unitcell=unitcell, n=[25, 25])
     else:
-        hoomd.init.create_lattice(unitcell=hoomd.lattice.sq(a=4), n=[50, 50])
+        sys = hoomd.init.create_lattice(unitcell=hoomd.lattice.sq(a=4), n=[50, 50])
 
     if not mol:
         mol = molecule.Trimer()

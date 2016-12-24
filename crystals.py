@@ -50,6 +50,9 @@ class Crystal(object):
             orientation=self.get_orientations(),
         )
 
+    def get_matrix(self):
+        return np.array([self._a1, self._a2, self._a3])
+
     def get_orientations(self):
         """Return the orientation quaternions of the
 
@@ -62,10 +65,22 @@ class Crystal(object):
         angles = self._orientations*(math.pi/180)
         return quaternion.as_float_array(np.array([quaternion.from_euler_angles(angle, 0, 0)
                                                    for angle in angles]))
+    def set_positions(self, array):
+        """Set the positions using absolute coordinates"""
+        matrix = np.linalg.inv(np.array([self._a1, self._a2, self._a3]))
+        self._positions = np.array([np.dot(pos, matrix) for pos in array])
+        print("After:\n", self._positions)
 
     def get_num_molecules(self):
         """Return the number of molecules"""
         return len(self._orientations)
+
+    def get_positions(self):
+        tmp_positions = []
+        matrix = self.get_matrix()
+        for pos in self._positions:
+            tmp_positions.append(np.dot(pos, matrix) - self.get_matrix()*0.5)
+        return tmp_positions
 
 
 class CrysTrimer(Crystal):
@@ -79,14 +94,12 @@ class p2(CrysTrimer):
     """Defining the unit cell of the p2 group of the Trimer molecule"""
     def __init__(self):
         super().__init__()
-        self._a1 = [3.82, 0, 0]
-        self._a2 = [0.68, 2.53, 0]
-        self._a3 = [0, 0, 0]
-        self._positions = [
-            [0.70, 0.33, 0],
-            [3.12, 2.20, 0]
-        ]
-        self._orientations = np.array([151, 151+180])
+        self._a1 = np.array([3.82, 0, 0])
+        self._a2 = np.array([0.68, 2.53, 0])
+        self._a3 = np.array([0, 0, 1])
+        self._positions = np.array([[0.3, 0.32, 0], [0.7, 0.68, 0]])
+        self._orientations = np.array([40, -140])
+
 
 def main():
     crys = p2()
