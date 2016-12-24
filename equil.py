@@ -13,12 +13,13 @@ from hoomd import md
 import molecule
 
 
-def equil_from_rand(outfile=None,
+def equil_from_lattice(outfile=None,
                     steps=100000,
                     temp=1.0,
                     press=1.0,
                     max_iters=10,
-                    mol=None):
+                    mol=None,
+                    unitcell=None):
     R""" Equilibrate system from a lattice initial configuration
 
     The inttial configuration consists of a numer of particles on a hexagonal
@@ -52,7 +53,10 @@ def equil_from_rand(outfile=None,
     hoomd.context.initialize()
 
     # Create hexagonal lattice of central particles
-    hoomd.init.create_lattice(unitcell=hoomd.lattice.sq(a=4), n=[50, 50])
+    if unitcell:
+        hoomd.init.create_lattice(unitcell=unitcell, n=[50, 50])
+    else:
+        hoomd.init.create_lattice(unitcell=hoomd.lattice.sq(a=4), n=[50, 50])
 
     if not mol:
         mol = molecule.Trimer()
@@ -62,10 +66,15 @@ def equil_from_rand(outfile=None,
     md.update.enforce2d()
 
     # Calculate thermodynamic quantities
-    thermo = hoomd.analyze.log(filename=None,
-                               quantities=['temperature', 'pressure'],
-                               period=1000
-                              )
+    thermo = hoomd.analyze.log(
+        filename=None,
+        quantities=['temperature', 'pressure'],
+        period=1000
+    )
+    # dump starting configuration
+    hoomd.dump.gsd(filename=outfile,
+                   period=None,
+                   group=hoomd.group.all())
 
     # Perform initial equilibration at target temperature and pressure.
     md.integrate.mode_standard(dt=0.001)

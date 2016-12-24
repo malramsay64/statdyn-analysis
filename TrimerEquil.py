@@ -11,6 +11,7 @@ using Hoomd """
 import os.path
 from sys import argv
 import equil
+import crystals
 
 PRESS = 13.5
 # Holds tuples of the temperature and number of steps
@@ -35,11 +36,18 @@ TEMPERATURES = {
     1.10: 2048*STEPS,
 }
 
-if __name__ == "__main__":
+
+def main(unitcell=None):
+    """Main function to run equilibration of hoomd files"""
     # Equilibrate initial file
     if not os.path.isfile("Trimer-init.gsd"):
-        equil.equil_from_rand(outfile="Trimer-init.gsd", temp=0.1, press=PRESS)
-    PREV_T = 5.00
+        equil.equil_from_lattice(
+            outfile="Trimer-init.gsd",
+            temp=0.1,
+            press=PRESS,
+            unitcell=unitcell
+        )
+    prev_t = 5.00
     # If argument passed
     if len(argv) == 2:
         if TEMPERATURES.get(argv[1], 0):
@@ -47,13 +55,13 @@ if __name__ == "__main__":
             for i in sorted(TEMPERATURES.keys(), reverse=True):
                 if temp == i:
                     break
-                PREV_T = i
+                prev_t = i
             steps = TEMPERATURES.get(temp)
             if temp == 5.00:
                 input_file = "Trimer-init.gsd"
             else:
                 input_file = ("Trimer-{press:.2f}-{temp:.2f}.gsd"
-                              .format(press=PRESS, temp=PREV_T))
+                              .format(press=PRESS, temp=prev_t))
             equil.equil_from_file(
                 input_file=input_file,
                 outfile=outfile,
@@ -68,8 +76,8 @@ if __name__ == "__main__":
             input_file = "Trimer-init.gsd"
         else:
             input_file = ("Trimer-{press:.2f}-{temp:.2f}.gsd"
-                          .format(press=PRESS, temp=PREV_T))
-        PREV_T = temp
+                          .format(press=PRESS, temp=prev_t))
+        prev_t = temp
         outfile = ("Trimer-{press:.2f}-{temp:.2f}.gsd"
                    .format(press=PRESS, temp=temp))
 
@@ -82,3 +90,8 @@ if __name__ == "__main__":
                 steps=steps,
                 max_iters=1
             )
+
+
+if __name__ == "__main__":
+    unitcell=crystals.p2().get_unitcell()
+    main(unitcell)
