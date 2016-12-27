@@ -27,7 +27,12 @@ class Crystal(object):
         return self._dimensions
 
     def get_positions(self):
-        return self._positions
+        """Convert fractional coordinates to coordinates for hoomd"""
+        tmp_positions = []
+        matrix = self.get_matrix()
+        for pos in self._positions:
+            tmp_positions.append(np.dot(pos, matrix) - self.get_matrix()*0.5)
+        return tmp_positions
 
     def get_cell_len(self):
         """Return the unit cell parameters
@@ -63,8 +68,9 @@ class Crystal(object):
             class:`numpy.quaternion`: Quaternion representation of the angle
         """
         angles = self._orientations*(math.pi/180)
-        return quaternion.as_float_array(np.array([quaternion.from_euler_angles(angle, 0, 0)
-                                                   for angle in angles]))
+        return quaternion.as_float_array(np.array(
+            [quaternion.from_euler_angles(angle, 0, 0) for angle in angles]))
+
     def set_positions(self, array):
         """Set the positions using absolute coordinates"""
         matrix = np.linalg.inv(np.array([self._a1, self._a2, self._a3]))
@@ -74,13 +80,6 @@ class Crystal(object):
     def get_num_molecules(self):
         """Return the number of molecules"""
         return len(self._orientations)
-
-    def get_positions(self):
-        tmp_positions = []
-        matrix = self.get_matrix()
-        for pos in self._positions:
-            tmp_positions.append(np.dot(pos, matrix) - self.get_matrix()*0.5)
-        return tmp_positions
 
 
 class CrysTrimer(Crystal):
@@ -105,6 +104,7 @@ def main():
     crys = p2()
     crys.get_unitcell()
     return crys
+
 
 if __name__ == "__main__":
     crys = main()
