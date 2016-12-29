@@ -219,9 +219,9 @@ class CompRotDynamics(CompDynamics):
         self._output_all['mean_rot2'] = self._d_theta2
         self._output_all['mean_trans_rot'] = self._d_disp_d_theta
         self._output_all['mean_trans2_rot2'] = self._d_disp2_d_theta2
-        # self._output_all['decoupling'] = self.get_decoupling
         self._output_all['gamma1'] = self.get_gamma1
         self._output_all['gamma2'] = self.get_gamma2
+        self._output_all['gamma_mobile'] = self.get_gamma_fast
         self._output_all['rot1'] = self.get_rot_relax1
         self._output_all['rot2'] = self.get_rot_relax2
         self._output_all['struct'] = self.get_struct
@@ -428,6 +428,36 @@ class CompRotDynamics(CompDynamics):
         return ((self._d_disp2_d_theta2()
                  - self._d_disp2() * self._d_theta2()) /
                 (self._d_disp2() * self._d_theta2()))
+
+    def get_gamma_fast(self, fraction=0.1):
+        R""" Calculate the second order coupling of highly mobile molecules
+
+        .. math::
+            \gamma_2 &= \frac{\langle(\Delta r \Delta\theta)^2 \rangle -
+                \langle\Delta r^2\rangle\langle\Delta \theta^2\rangle
+                }{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}
+
+        Args:
+            fraction (float): the fraction of molecules that are considered
+                highly mobile. Defaults to 0.1
+
+        Return:
+            float: The squared coupling of translations and rotations of
+                the top `fraction` of particles
+
+        This uses the fraction of both highly rotationally mobile and
+        highly translationally mobile molecules so the complete set of
+        molecules studied is likely over the fraction given.
+        """
+        num_mobile = int(len(self._d_disp2())*fraction)
+        mobile_disp = np.argpartition(self._d_disp2(), num_mobile)[-num_mobile:]
+        mobile_rot = np.argpartition(self._d_theta2(), num_mobile)[-num_mobile:]
+        mobile = np.union1d(mobile_disp, mobile_rot)
+        translations2 = np.power(self.translations()[mobile], 2)
+        rotations2 = np.power(self.rotations()[mobile], 2)
+        return ((np.mean(translations2*rotations2)
+                 - np.mean(translations2)*np.mean(rotations2))
+                / (np.mean(translations2) * np.mean(rotations2)))
 
     def get_rot_relax1(self):
         R"""Compute the first rotational relaxation function
