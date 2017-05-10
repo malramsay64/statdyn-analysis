@@ -21,7 +21,6 @@ class CompDynamics(object):
     """
 
     def __init__(self, TData):
-        assert issubclass(type(TData), TransData), type(TData)
         self.data = TData
         self._d_disp_compute = 0
         self._d_disp2_compute = 0
@@ -40,7 +39,7 @@ class CompDynamics(object):
         Return:
             int: The number of timesteps the displacement corresponds to
         """
-        return self.data.timesteps
+        return self.data.time_diff
 
     def translations(self):
         """Return the translation of each molecule
@@ -49,7 +48,7 @@ class CompDynamics(object):
             :class:`numpy.ndarray`: An array of the translational motion that
             each molecule/particle underwent in a period of time.
         """
-        return self.data.trans
+        return self.data['displacement']
 
     def _d_disp(self):
         """ Internal funtion to compute mean displacement
@@ -201,8 +200,7 @@ class CompRotDynamics(CompDynamics):
             in the system.
     """
 
-    def __init__(self, RigidData=TransRotData()):
-        assert (issubclass(type(RigidData), TransRotData)), type(RigidData)
+    def __init__(self, RigidData):
         super(CompRotDynamics, self).__init__(RigidData)
         self.data = RigidData
         self._d_theta_compute = 0
@@ -239,7 +237,7 @@ class CompRotDynamics(CompDynamics):
         Return:
             :class:`numpy.ndarray`: Array of all the rotations
         """
-        return self.data.rot[:self.data.bodies]
+        return self.data['rotation'][:self.data.bodies]
 
     def translations(self):
         """Return the translation of each molecule
@@ -248,16 +246,16 @@ class CompRotDynamics(CompDynamics):
             :class:`numpy.ndarray`: An array of the translational motion that
             each molecule/particle underwent in a period of time.
         """
-        return self.data.trans[:self.data.bodies]
+        return self.data['displacement'][:self.data.bodies]
 
     def _all_translations(self):
-        """Return the translation of every particles
+        """Return the translation of every particle
 
         Return:
             :class:`numpy.ndarray`: An array of the translational motion that
             each particle underwent in a period of time.
         """
-        return self.data.trans
+        return self.data['displacement']
 
     def _d_theta(self):
         """Compute the mean rotation"""

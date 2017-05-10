@@ -8,6 +8,7 @@ import numpy as np
 import quaternion
 from TransData import TransData, TransRotData
 from CompDynamics import CompDynamics, CompRotDynamics
+import pandas
 
 
 class TimeDep(object):
@@ -96,10 +97,10 @@ class TimeDep(object):
             :class:`TransData`: Data object
 
         """
-        data = TransData()
-        data.from_trans_array(
-            self._displacement(snapshot),
-            self.get_time_diff(timestep))
+        data = pandas.DataFrame({
+            'displacement': self._displacement(snapshot),
+        })
+        data.time_diff = self.get_time_diff(timestep)
         return data
 
     def print_all(self, snapshot, timestep, outfile):
@@ -158,11 +159,8 @@ class TimeDep2dRigid(TimeDep):
             snapshot.particles.orientation[:self.bodies], dtype=float))
         rot_q = orient_final/self.orient_init
         rot = quaternion.as_rotation_vector(rot_q).sum(axis=1)
-        for i, val in enumerate(rot):
-            if val > math.pi:
-                rot[i] -= 2*math.pi
-            elif val < -math.pi:
-                rot[i] += 2*math.pi
+        rot[rot > np.pi] -= 2*np.pi
+        rot[rot < -np.pi] += 2*np.pi
         return rot
 
     def _displacement(self, snapshot):
@@ -192,15 +190,12 @@ class TimeDep2dRigid(TimeDep):
         Returns:
             :class:`TransRotData`: Translational and rotational data
         """
-
-        data = TransRotData()
-        data.from_arrays(
-            self._displacement(snapshot),
-            self._rotations(snapshot),
-            self.get_time_diff(timestep),
-            self.bodies
-        )
-        assert (issubclass(type(data), TransRotData)), type(data)
+        data = pandas.DataFrame({
+            'displacement': self._displacement(snapshot),
+            'rotation': self._rotations(snapshot),
+        })
+        data.time_diff = self.get_time_diff(timestep)
+        data.bodies = self.bodies
         return data
 
     def print_all(self, snapshot, timestep, outfile):
