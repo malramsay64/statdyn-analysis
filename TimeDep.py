@@ -3,10 +3,8 @@
 simulation"""
 
 from __future__ import print_function
-import math
 import numpy as np
 import quaternion
-from TransData import TransData, TransRotData
 from CompDynamics import CompDynamics, CompRotDynamics
 import pandas
 
@@ -22,9 +20,13 @@ class TimeDep(object):
     """
     def __init__(self, snapshot, timestep):
         self.t_init = snapshot
+        self.timestep = timestep
+        self._init_snapshot(snapshot)
+        self._data = self.get_data(snapshot, timestep)
+
+    def _init_snapshot(self, snapshot):
         self.pos_init = self.t_init.particles.position
         self.image_init = self.t_init.particles.image
-        self.timestep = timestep
 
     def get_time_diff(self, timestep):
         """ The difference in time between the currrent timestep and the
@@ -86,6 +88,7 @@ class TimeDep(object):
         curr = self._unwrap(snapshot)
         return np.sqrt(np.power(curr - self.pos_init, 2).sum(1))
 
+
     def get_data(self, snapshot, timestep):
         """ Get translational and rotational data
 
@@ -99,9 +102,13 @@ class TimeDep(object):
         """
         data = pandas.DataFrame({
             'displacement': self._displacement(snapshot),
+            'time': self.get_time_diff(timestep)
         })
         data.time_diff = self.get_time_diff(timestep)
         return data
+
+    def get_all_data(self):
+        return self._data
 
     def print_all(self, snapshot, timestep, outfile):
         """Print all data to file
@@ -137,9 +144,17 @@ class TimeDep2dRigid(TimeDep):
     """
     def __init__(self, snapshot, timestep):
         super(TimeDep2dRigid, self).__init__(snapshot, timestep)
+
+    def _init_snapshot(self, snapshot):
+        super()._init_snapshot(snapshot)
         self.bodies = np.max(self.t_init.particles.body)+1
-        self.orient_init = quaternion.as_quat_array(np.array(
-            self.t_init.particles.orientation[:self.bodies], dtype=float))
+        self.orient_init = self.array2quat(
+            self.t_init.particles.orientation[:self.bodies])
+
+    @staticmethod
+    def array2quat(array):
+        """Convert a numpy array to an array of quaternions"""
+        return quaternion.as_quat_array(array.astype(float))
 
     def _rotations(self, snapshot):
         R""" Calculate the rotation for every rigid body in the system
@@ -155,8 +170,8 @@ class TimeDep2dRigid(TimeDep):
         Return:
             :class:`numpy.array`: Array of all the rotations
         """
-        orient_final = quaternion.as_quat_array(np.array(
-            snapshot.particles.orientation[:self.bodies], dtype=float))
+        orient_final = self.array2quat(
+            snapshot.particles.orientation[:self.bodies])
         rot_q = orient_final/self.orient_init
         rot = quaternion.as_rotation_vector(rot_q).sum(axis=1)
         rot[rot > np.pi] -= 2*np.pi
@@ -177,8 +192,28 @@ class TimeDep2dRigid(TimeDep):
         Returns:
             :class:`numpy.array`: An array containing per body displacements
         """
+        curr = self._unwrap(snapshot)[:self.bodies]
+        return np.sqrt(np.power(curr - self.pos_init[:self.bodies], 2).sum(1))
+
+    def _all_displacement(self, snapshot):
+        """ Calculate the squared displacement for all bodies in the system.
+
+        This is the function that computes the per body displacements for all
+        the dynamic quantities. This is where the most computation takes place
+        and can be called once for a number of further calculations.
+
+        Args:
+            snapshot (:class:'hoomd.data.SnapshotParticleData'): The
+                configuration at which the difference is computed
+
+        Returns:
+            :class:`numpy.array`: An array containing per body displacements
+        """
         curr = self._unwrap(snapshot)
         return np.sqrt(np.power(curr - self.pos_init, 2).sum(1))
+
+    def append(self, snapshot, timestep):
+        self._data.append(self.get_data(snapshot, timestep))
 
     def get_data(self, snapshot, timestep):
         """ Get translational and rotational data
@@ -188,15 +223,17 @@ class TimeDep2dRigid(TimeDep):
                 object
 
         Returns:
-            :class:`TransRotData`: Translational and rotational data
         """
         data = pandas.DataFrame({
             'displacement': self._displacement(snapshot),
             'rotation': self._rotations(snapshot),
+            'time': self.get_time_diff(timestep),
         })
-        data.time_diff = self.get_time_diff(timestep)
         data.bodies = self.bodies
         return data
+
+    def get_all_data(self):
+        return self._data
 
     def print_all(self, snapshot, timestep, outfile):
         """Print all data to file

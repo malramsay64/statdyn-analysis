@@ -3,16 +3,19 @@
 
 import math
 
-def generate_steps(num_linear=99, start=0):
+def generate_steps(total_steps, num_linear=99, start=0):
     """Generate a sequence of steps"""
     curr_step = start
     step_size = 1
     lin_steps = 0
-    while True:
+    while curr_step < total_steps:
         while lin_steps < num_linear:
             curr_step += step_size
             lin_steps += 1
-            yield curr_step
+            if curr_step < total_steps:
+                yield curr_step
+            else:
+                yield total_steps
         step_size *= 10
 
 
