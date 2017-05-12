@@ -1,11 +1,14 @@
 """Run a basic simulation"""
 
+import os
+
 import hoomd
-from hoomd import md
 import molecule
 import numpy as np
-from StepSize import generate_steps
+import pandas
 import TimeDep
+from hoomd import md
+from StepSize import generate_steps
 
 
 def randomise(snapshot):
@@ -22,7 +25,7 @@ def randomise(snapshot):
     Returns:
         class:`hoomd.data.snapshot`: A new snapshot with randomised momenta
     """
-    temp = hoomd.context.initialize('--mode=cpu --notice-level=0')
+    temp = hoomd.context.initialize('--notice-level=0')
     with temp:
         system = hoomd.init.read_snapshot(snapshot)
         mysnap = system.take_snapshot(all=True)
@@ -34,7 +37,7 @@ def randomise(snapshot):
 
 def initialise(snapshot):
     """Initialise a hoomd simulation"""
-    context = hoomd.context.initialize('--mode=cpu --notice-level=0')
+    context = hoomd.context.initialize('--notice-level=0')
     with context:
         system = hoomd.init.read_snapshot(snapshot)
         md.update.enforce2d()
@@ -55,7 +58,7 @@ def read_snapshot(fname):
     Returns:
         class:`hoomd.data.Snapshot`: Hoomd snapshot
     """
-    with hoomd.context.initialize('--mode=cpu --notice-level=0'):
+    with hoomd.context.initialize('--notice-level=0'):
         system = hoomd.init.read_gsd(fname)
         return system.take_snapshot(all=True)
 
@@ -65,7 +68,7 @@ def main(init_file, steps):
     snap1 = read_snapshot(init_file)
     snap2 = randomise(snap1)
     context1, sys1 = initialise(snap1)
-    context2, sys2 = initialise(snap1)
+    context2, sys2 = initialise(snap2)
     with context1:
         dynamics1 = TimeDep.TimeDep2dRigid(snap1, 0)
         for curr_step in generate_steps(steps):
@@ -76,8 +79,11 @@ def main(init_file, steps):
         dynamics2 = TimeDep.TimeDep2dRigid(snap2, 0)
         for curr_step in generate_steps(steps):
             hoomd.run_upto(curr_step)
-            dynamics2.append(sys1.take_snapshot(all=True), curr_step)
-        fin2 = sys1.take_snapshot(all=True)
+            dynamics2.append(sys2.take_snapshot(all=True), curr_step)
+        fin2 = sys2.take_snapshot(all=True)
+    with pandas.HDFStore(os.path.splitext(init_file)[0]+'.hdf5') as store:
+        store['dyn1'] = dynamics1.get_all_data()
+        store['dyn2'] = dynamics2.get_all_data()
     return (snap1, fin1, dynamics1.get_all_data(),
             snap2, fin2, dynamics2.get_all_data())
 

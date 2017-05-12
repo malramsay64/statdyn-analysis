@@ -213,7 +213,7 @@ class TimeDep2dRigid(TimeDep):
         return np.sqrt(np.power(curr - self.pos_init, 2).sum(1))
 
     def append(self, snapshot, timestep):
-        self._data.append(self.get_data(snapshot, timestep))
+        self._data = self._data.append(self.get_data(snapshot, timestep))
 
     def get_data(self, snapshot, timestep):
         """ Get translational and rotational data
