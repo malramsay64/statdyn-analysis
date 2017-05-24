@@ -53,13 +53,14 @@ def read_snapshot(fname, rand=False):
         return snapshot
 
 
-def main(init_file, temp, steps):
+def main(directory, temp, steps, iterations=2):
     """Main function to run stuff"""
-    dynamics1 = run_npt(read_snapshot(init_file, rand=True), temp, steps)
-    dynamics2 = run_npt(read_snapshot(init_file, rand=True), temp, steps)
-    with pandas.HDFStore(os.path.splitext(init_file)[0]+'.hdf5') as store:
-        store['dyn1'] = dynamics1.get_all_data()
-        store['dyn2'] = dynamics2.get_all_data()
+    init_file = directory + "/Trimer-{press}-{temp}.gsd".format(
+        press=13.50, temp=temp)
+    for iteration in range(iterations):
+        dynamics = run_npt(read_snapshot(init_file, rand=True), temp, steps)
+        with pandas.HDFStore(os.path.splitext(init_file)[0]+'.hdf5') as store:
+            store['dyn{i}'.format(i=iteration)] = dynamics.get_all_data()
 
 if __name__ == '__main__':
-    main("./Trimer-13.50-1.30.gsd", 1000)
+    main(".", 1.30, 1000, 20)
