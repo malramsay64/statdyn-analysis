@@ -120,7 +120,6 @@ class TimeDep(object):
         """
         data = self.get_data(snapshot, timestep)
         CompDynamics(data).print_all(outfile)
-        # data.to_json(outfile[:-8]+"-tr.dat")
 
 
 class TimeDep2dRigid(TimeDep):

@@ -17,6 +17,7 @@ class Crystal(object):
         self._dimensions = [2]
         self._orientations = np.ndarray([0])
         self._positions = [[0, 0, 0]]
+        self._molecule = molecule.Molecule()
 
     def get_dimensions(self):
         """Get the number of dimensions in a lattice
@@ -28,11 +29,7 @@ class Crystal(object):
 
     def get_positions(self):
         """Convert fractional coordinates to coordinates for hoomd"""
-        tmp_positions = []
-        matrix = self.get_matrix()
-        for pos in self._positions:
-            tmp_positions.append(np.dot(pos, matrix) - self.get_matrix()*0.5)
-        return tmp_positions
+        return self._positions
 
     def get_cell_len(self):
         """Return the unit cell parameters
@@ -53,6 +50,9 @@ class Crystal(object):
             position=self.get_positions(),
             dimensions=self.get_dimensions(),
             orientation=self.get_orientations(),
+            type_name=['A']*self.get_num_molecules(),
+            mass=[1.0]*self.get_num_molecules(),
+            moment_inertia=[self._molecule.moment_inertia]*self.get_num_molecules()
         )
 
     def get_matrix(self):
@@ -69,13 +69,13 @@ class Crystal(object):
         """
         angles = self._orientations*(math.pi/180)
         return quaternion.as_float_array(np.array(
-            [quaternion.from_euler_angles(angle, 0, 0) for angle in angles]))
+            [quaternion.from_euler_angles(0, 0, angle) for angle in angles]))
 
-    def set_positions(self, array):
-        """Set the positions using absolute coordinates"""
-        matrix = np.linalg.inv(np.array([self._a1, self._a2, self._a3]))
-        self._positions = np.array([np.dot(pos, matrix) for pos in array])
-        print("After:\n", self._positions)
+    # def set_positions(self, array):
+        # """Set the positions using absolute coordinates"""
+        # matrix = np.linalg.inv(np.array([self._a1, self._a2, self._a3]))
+        # self._positions = np.array([np.dot(pos, matrix) for pos in array])
+        # print("After:\n", self._positions)
 
     def get_num_molecules(self):
         """Return the number of molecules"""
@@ -87,24 +87,25 @@ class CrysTrimer(Crystal):
     def __init__(self):
         super().__init__()
         self._dimensions = 2
-
+        self._molecule = molecule.Trimer()
 
 class p2(CrysTrimer):
     """Defining the unit cell of the p2 group of the Trimer molecule"""
     def __init__(self):
         super().__init__()
-        self._a1 = np.array([3.82, 0, 0])
-        self._a2 = np.array([0.68, 2.53, 0])
-        self._a3 = np.array([0, 0, 1])
-        self._positions = np.array([[0.3, 0.32, 0], [0.7, 0.68, 0]])
+        self._a1 = [3.82, 0, 0]
+        self._a2 = [0.68, 2.53, 0]
+        self._a3 = [0, 0, 1]
+        self._positions = [[0.3, 0.32, 0], [0.7, 0.68, 0]]
         self._orientations = np.array([40, -140])
 
 
 def main():
+    hoomd.context.initialize()
     crys = p2()
-    crys.get_unitcell()
-    return crys
+    sys = hoomd.init.create_lattice(crys.get_unitcell(), n=4)
+    return sys
 
 
 if __name__ == "__main__":
-    crys = main()
+    sys = main()
