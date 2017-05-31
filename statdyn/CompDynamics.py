@@ -5,7 +5,7 @@ simulation"""
 from __future__ import print_function
 import collections
 import numpy as np
-from TransData import TransData, TransRotData
+import pandas
 
 
 class CompDynamics(object):
@@ -15,9 +15,9 @@ class CompDynamics(object):
     molecular dynamics simulation.
 
     Args:
-        TData (:class:`TransData.TransData`): A :class:`TransData.TransData`
-            object containg the translational motion and time over which
-            that translational motion took place.
+        TData (:class:`pandas.DataFrame`): A :class:`pandas.DataFrame` object
+            containg the translational motion and time over which that
+            translational motion took place.
     """
 
     def __init__(self, TData):
@@ -25,13 +25,14 @@ class CompDynamics(object):
         self._d_disp_compute = 0
         self._d_disp2_compute = 0
         self._d_disp4_compute = 0
-        self._output_all = collections.OrderedDict()
-        self._output_all['time'] = self.timestep
-        self._output_all['disp'] = self.get_mean_disp
-        self._output_all['msd'] = self.get_msd
-        self._output_all['mfd'] = self.get_mfd
-        self._output_all['alpha'] = self.get_alpha
-        self._output_all['struct'] = self.get_struct
+        self._output_all = pandas.DataFrame({
+            'time': self.timestep,
+            'disp': self.get_mean_disp,
+            'msd': self.get_msd,
+            'mfd': self.get_mfd,
+            'alpha': self.get_alpha,
+            'struct': self.get_struct,
+        })
 
     def timestep(self):
         """Compute the timestep difference
@@ -142,40 +143,6 @@ class CompDynamics(object):
         """
         return np.mean(self.translations() < dist)
 
-    def print_all(self, outfile=None):
-        R""" Print all dynamic quantities to a file
-
-        Prints all the calculated dynamic quantities to either
-        stdout or a file. The output quantities are:
-
-        * timeteps
-        * Mean Displacement
-        * Mean Squared Displacement (MSD)
-        * Mead Fourth Displacement (MFD)
-        * Nongaussian parameter (:math:`\alpha`)
-        * Structural relaxation
-
-        Args:
-            outfile (string): Filename to append output to
-        """
-        string = ' '.join(
-            [func() for func in self._output_all.values()])
-        if outfile:
-            print(string, file=open(outfile, 'a'))
-        else:
-            print(string)
-
-    def print_heading(self, outfile):
-        """ Write heading values to outfile which match up with the values given
-        by print_all().
-
-        Args:
-            outfile (string): Filename to write headings to
-        """
-        string = ' '.join(
-            [key for key in self._output_all.keys()])
-        print(string, file=open(outfile, 'w'))
-
 
 class CompRotDynamics(CompDynamics):
     """ Class to compute the time dependent characteristics of 2D rigid bodies
@@ -195,11 +162,10 @@ class CompRotDynamics(CompDynamics):
         :class:`TimeDep` and the :class:`TimeDep2dRigid` classes.
 
     Args:
-        RigidData (:class:`TransData.TransRotData`): A data class containing
+        RigidData (:class:`pandas.DataFrame`): A data class containing
             the translational, rotational and time data for all the molecules
             in the system.
     """
-
     def __init__(self, RigidData):
         super(CompRotDynamics, self).__init__(RigidData)
         self.data = RigidData
@@ -207,25 +173,26 @@ class CompRotDynamics(CompDynamics):
         self._d_theta2_compute = 0
         self._d_disp_d_theta_compute = 0
         self._d_disp2_d_theta2_compute = 0
-        self._output_all = collections.OrderedDict()
-        self._output_all['time'] = self.timestep
-        self._output_all['disp'] = self.get_mean_disp
-        self._output_all['msd'] = self.get_msd
-        self._output_all['mfd'] = self.get_mfd
-        self._output_all['alpha'] = self.get_alpha
-        self._output_all['mean_rot'] = self.get_mean_rot
-        self._output_all['mean_rot2'] = self._d_theta2
-        self._output_all['mean_trans_rot'] = self._d_disp_d_theta
-        self._output_all['mean_trans2_rot2'] = self._d_disp2_d_theta2
-        self._output_all['gamma1'] = self.get_gamma1
-        self._output_all['gamma2'] = self.get_gamma2
-        self._output_all['gamma_mobile'] = self.get_gamma_fast
-        self._output_all['rot1'] = self.get_rot_relax1
-        self._output_all['rot2'] = self.get_rot_relax2
-        self._output_all['struct'] = self.get_struct
-        self._output_all['COM_struct'] = self.get_com_struct
-        self._output_all['trans_corel'] = self.get_trans_correl
-        self._output_all['rot_corel'] = self.get_rot_correl
+        self._output_all = pandas.DataFrame({
+            'time': self.timestep
+            'disp': self.get_mean_disp,
+            'msd': self.get_msd,
+            'mfd': self.get_mfd,
+            'alpha': self.get_alpha,
+            'mean_rot': self.get_mean_rot,
+            'mean_rot2': self._d_theta2,
+            'mean_trans_rot': self._d_disp_d_theta,
+            'mean_trans2_rot2': self._d_disp2_d_theta2,
+            'gamma1': self.get_gamma1,
+            'gamma2': self.get_gamma2,
+            'gamma_mobile': self.get_gamma_fast,
+            'rot1': self.get_rot_relax1,
+            'rot2': self.get_rot_relax2,
+            'struct': self.get_struct,
+            'COM_struct': self.get_com_struct,
+            'trans_corel': self.get_trans_correl,
+            'rot_corel': self.get_rot_correl,
+        })
 
     def rotations(self):
         R""" Calculate the rotation for every rigid body in the system
@@ -284,67 +251,6 @@ class CompRotDynamics(CompDynamics):
                 * np.power(self.rotations(), 2)
             )
         return self._d_disp2_d_theta2_compute
-
-    def get_decoupling(self, delta_disp=0.005, delta_rot=0.005):
-        """ Calculates the decoupling of rotations and translations.
-
-        This function performs an intergration over rotational and
-        translational space to compute the decoupling of these two
-        parameters.
-
-        Note:
-            The choice of `delta_disp` and `delta_rot` affect the resulting
-            values, especially at small time scales.
-
-        References:
-            A. Farone, L. Liu, S.-H. Chen, J. Chem. Phys. 119, 6302 (2003)
-
-        Args:
-            delta_disp (float): The bin size of the displacement for
-                integration
-            delta_rot (float):  The bin size of the rotations for integration
-
-        Return:
-            float: The decoupling parameter
-        """
-        # Calculate and bin displacements
-        disp = self.translations()
-        disp = np.floor(disp/delta_disp).astype(int)
-        # adding 1 to account for 0 value
-        disp_max = np.max(disp+1)
-        disp_array = np.asmatrix(np.power(
-            np.arange(1, disp_max+1)*delta_disp, 2))
-        # Calculate and bin rotaitons
-        rot = np.floor(np.abs(self.rotations())/delta_rot).astype(int)
-        # adding 1 to account for 0 value
-        rot_max = np.max(rot+1)
-        rot_array = np.asmatrix(np.sin(
-            np.arange(1, rot_max+1)*delta_rot))
-        # Use binned values to create a probability matrix
-        prob = np.zeros((rot_max, disp_max))
-        for i, j in zip(rot, disp):
-            prob[i][j] += 1
-
-        prob = normalise_probability(
-            np.asmatrix(prob),
-            rot_array, disp_array,
-            delta_rot, delta_disp
-        )
-
-        # Calculate tranlational and rotational probabilities
-        p_trans = (prob.transpose() * rot_array.transpose())
-        p_trans *= delta_rot
-        p_rot = (prob * disp_array.transpose())
-        p_rot *= delta_disp
-
-        # Calculate the squared difference between the combined and individual
-        # probabilities and then integrate over the differences to find the
-        # coupling strength
-        diff2 = np.power(prob - p_rot * p_trans.transpose(), 2)
-        decoupling = ((diff2 * np.power(disp_array, 2).transpose())
-                      * np.power(rot_array, 2)).sum()
-        decoupling /= ((prob*disp_array.transpose()) * rot_array).sum()
-        return decoupling.sum()
 
     def get_mean_rot(self):
         R""" Calculate the mean rotation given all the rotations
@@ -594,57 +500,3 @@ class CompRotDynamics(CompDynamics):
         """
         return ((self._d_theta2() - np.power(self._d_theta(), 2))
                 / np.power(self._d_theta(), 2))
-
-    def print_all(self, outfile=None):
-        """ Print all dynamic quantities to a file
-
-        Prints all the calculated dynamic quantities to either
-        stdout or a file. This function only calculates the distances and
-        rotations a single time using the private calc methods.
-
-        Args:
-            outfile (string): Filename to append to
-        """
-        string = ' '.join(
-            [str(func()) for func in self._output_all.values()])
-        if outfile:
-            print(string, file=open(outfile, 'a'))
-        else:
-            print(string)
-
-    def print_heading(self, outfile):
-        """ Write heading values to outfile which match up with the values given
-        by print_all().
-
-        Args:
-            outfile (string): Filename to write headings to
-        """
-        string = ' '.join(
-            [key for key in self._output_all.keys()])
-        print((string), file=open(outfile, 'w'))
-
-
-def normalise_probability(prob_matrix, rot_matrix, disp_matrix,
-                          delta_rot=0.005, delta_disp=0.005):
-    """ Function to normalise the probabilty matrix of the decoupling parameter
-    to integrate to a value of 1.
-
-    The components are normalised through the use of matrix multiplication
-
-    Args:
-        prob_matrix (:class:`numpy.matrix`): The numpy matrix to be normalised
-        rot_matrix (:class:`numpy.matrix`): The numpy matrix of theta values
-            these include any transformations that are involved in the
-            integration
-        disp_matrix (:class:`numpy.matrix`): The numpy matrix of displacement
-            values with any transformations already applied.
-        delta_disp (float): The distance between displacements (i.e.
-            the binning) delta_rot
-        delta_rot (float): The distance between rotations (i.e. the binning)
-
-    Return:
-        :class:`numpy.matrix`: Normalised matrix
-    """
-    factor = (((rot_matrix * prob_matrix) * disp_matrix.transpose()) *
-              delta_disp * delta_rot)
-    return prob_matrix/factor

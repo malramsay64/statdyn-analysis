@@ -5,7 +5,7 @@ simulation"""
 from __future__ import print_function
 import numpy as np
 import quaternion
-from CompDynamics import CompDynamics, CompRotDynamics
+from statdyn import CompDynamics
 import pandas
 
 
@@ -119,7 +119,7 @@ class TimeDep(object):
             outfile (string): filename to output data to
         """
         data = self.get_data(snapshot, timestep)
-        CompDynamics(data).print_all(outfile)
+        CompDynamics.CompDynamics(data).print_all(outfile)
 
 
 class TimeDep2dRigid(TimeDep):
@@ -243,4 +243,4 @@ class TimeDep2dRigid(TimeDep):
             outfile (string): filename to output data to
         """
         data = self.get_data(snapshot, timestep)
-        CompRotDynamics(data).print_all(outfile)
+        CompDynamics.CompRotDynamics(data).print_all(outfile)

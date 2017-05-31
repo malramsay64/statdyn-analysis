@@ -4,7 +4,7 @@ import math
 import numpy as np
 import hoomd
 import quaternion
-import molecule
+from statdyn import molecule
 
 
 class Crystal(object):
@@ -71,12 +71,6 @@ class Crystal(object):
         return quaternion.as_float_array(np.array(
             [quaternion.from_euler_angles(0, 0, angle) for angle in angles]))
 
-    # def set_positions(self, array):
-        # """Set the positions using absolute coordinates"""
-        # matrix = np.linalg.inv(np.array([self._a1, self._a2, self._a3]))
-        # self._positions = np.array([np.dot(pos, matrix) for pos in array])
-        # print("After:\n", self._positions)
-
     def get_num_molecules(self):
         """Return the number of molecules"""
         return len(self._orientations)
@@ -98,14 +92,3 @@ class p2(CrysTrimer):
         self._a3 = [0, 0, 1]
         self._positions = [[0.3, 0.32, 0], [0.7, 0.68, 0]]
         self._orientations = np.array([40, -140])
-
-
-def main():
-    hoomd.context.initialize()
-    crys = p2()
-    sys = hoomd.init.create_lattice(crys.get_unitcell(), n=4)
-    return sys
-
-
-if __name__ == "__main__":
-    sys = main()
