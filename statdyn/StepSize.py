@@ -8,16 +8,22 @@ from numba import jit
 def generate_steps(total_steps, num_linear=99, start=0):
     """Generate a sequence of steps with a power law
 
-    A sequence of steps which consisting of points spaced by a
-    power law which contain a number of linear steps between each jump.
+    This is a function for generating a sequence of steps such that they create
+    a continous curve when plotted on a log scale. The idea is that at long
+    timescales, data only needs to be collected very infrequently compared to
+    short timescales.  By changing the rate at which we collect the data as the
+    timescale increases it drastically reduces the amount of data required for
+    capture, storage, processing, and visualisation.
 
     Args:
-        num_linear (int): The number of linear steps between each jump in power.
-            The distance between these steps is going to increase as the gap
-            between powers become larger. In the case when there num_linear is
-            greater than the number of steps between powers every step is
-            returned.
-        pow_jump (int): The jumps in powers of 10
+        total_steps (int): The total number of steps required for the
+            simulation, i.e. the value you want to stop on.
+        num_linear (int): The numer of linear steps before increasing the size
+            of the steps by a power of 10. There is always an extra step in the
+            first sequence, this is to make the patterns nicer.
+            The default value of 99 gives dense data across the plot.
+        start int): The starting value (default is 0) if the data capture is
+            commenced at a timestep after (or before) 0.
 
     Example:
 
