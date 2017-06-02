@@ -174,7 +174,7 @@ class CompRotDynamics(CompDynamics):
         self._d_disp_d_theta_compute = 0
         self._d_disp2_d_theta2_compute = 0
         self._output_all = pandas.DataFrame({
-            'time': self.timestep
+            'time': self.timestep,
             'disp': self.get_mean_disp,
             'msd': self.get_msd,
             'mfd': self.get_mfd,

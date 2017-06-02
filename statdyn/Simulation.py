@@ -14,7 +14,7 @@ import hoomd
 from hoomd import md
 import numpy as np
 import pandas
-from statdyn import TimeDep, molecule
+from statdyn import TimeDep, initialise
 from statdyn.StepSize import generate_steps
 
 def run_npt(snapshot, temp, steps, **kwargs):
@@ -39,11 +39,9 @@ def run_npt(snapshot, temp, steps, **kwargs):
         tauP (float): The restoring mass for the pressure integrator
             Default: 1.
     """
-    with hoomd.context.initialize(kwargs.get('init_args', '')):
-        system = hoomd.init.read_snapshot(snapshot, time_step=0)
-        md.update.enforce2d()
-        mol = kwargs.get('mol', molecule.Trimer())
-        mol.initialize(create=False)
+    with hoomd.context.initialize(kwargs.get('init_args', '')) as context:
+        kwargs['context'] = context
+        system = initialise.init_from_snapshot(snapshot, **kwargs)
         md.integrate.mode_standard(kwargs.get('dt', 0.005))
         md.integrate.npt(
             group=hoomd.group.rigid_center(),
@@ -56,7 +54,7 @@ def run_npt(snapshot, temp, steps, **kwargs):
         for curr_step in generate_steps(steps):
             hoomd.run_upto(curr_step)
             dynamics.append(system.take_snapshot(all=True), curr_step)
-        return dynamics.get_all_data()
+    return dynamics.get_all_data()
 
 
 def read_snapshot(fname, rand=False):
@@ -69,14 +67,13 @@ def read_snapshot(fname, rand=False):
     Returns:
         class:`hoomd.data.Snapshot`: Hoomd snapshot
     """
-    if not hoomd.context.current:
-        hoomd.context.initialize()
-    snapshot = hoomd.data.gsd_snapshot(fname)
-    if rand:
-        nbodies = snapshot.particles.body.max() + 1
-        np.random.shuffle(snapshot.particles.velocity[:nbodies])
-        np.random.shuffle(snapshot.particles.angmom[:nbodies])
-    return snapshot
+    with hoomd.context.initialize():
+        snapshot = hoomd.data.gsd_snapshot(fname)
+        if rand:
+            nbodies = snapshot.particles.body.max() + 1
+            np.random.shuffle(snapshot.particles.velocity[:nbodies])
+            np.random.shuffle(snapshot.particles.angmom[:nbodies])
+        return snapshot
 
 
 def iterate_random(directory, temp, steps, iterations=2, **kwargs):

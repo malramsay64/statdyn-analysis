@@ -11,10 +11,10 @@ class Crystal(object):
     """Defines the base class of a crystal lattice"""
     def __init__(self):
         super().__init__()
-        self._a1 = [1, 0, 0]
-        self._a2 = [0, 1, 0]
-        self._a3 = [0, 0, 1]
-        self._dimensions = [2]
+        self.a1 = [1, 0, 0]
+        self.a2 = [0, 1, 0]
+        self.a3 = [0, 0, 1]
+        self.dimensions = 2
         self._orientations = np.ndarray([0])
         self._positions = [[0, 0, 0]]
         self._molecule = molecule.Molecule()
@@ -59,7 +59,7 @@ class Crystal(object):
         return np.array([self._a1, self._a2, self._a3])
 
     def get_orientations(self):
-        """Return the orientation quaternions of the
+        """Return the orientation quaternions of each molecule
 
         Args:
             angle (float): The angle that a molecule is oriented

@@ -4,7 +4,8 @@
 #
 """Module to define a molecule to use for simulation."""
 
-import math
+import sys
+import numpy as np
 import hoomd
 import hoomd.md
 
@@ -25,63 +26,30 @@ class Molecule(object):
         self.moment_inertia = (0, 0, 0)
         self.potential = hoomd.md.pair.lj
         self.potential_args = dict()
-        self.particles = []
-        self._system = None
+        self.particles = ['A']
+        self.dimensions = 3
 
-    def initialise(self, create=False):
-        """Initialse the molecule for hoomd to use
+    def get_types(self):
+        """Get the types of particles present in a molecule"""
+        return list(np.unique(np.array(self.particles)))
 
-        func:`Molecule.initialise` initialises all the molecule variables
-        within the current hoomd context.
+    def define_dimensions(self):
+        """Set the number of dimensions for the simulation
 
-        Args:
-            create (bool): Boolean flag to indicate whether to create the
-                particles surrounding the center of the rigid bodies.
-                Default is False.
+        This takes into accout the number of dimensions of the molecule,
+        a 2D molecule can only be a 2D molecule, since there will be no
+        rotations in that 3rd dimension anyway.
         """
-        self._system = hoomd.context.current.system_definition
-        self.define_particles()
-        self.define_moment_inertia()
-        self.define_potential()
-        self.define_rigid(create)
-
-    def initialize(self, create):
-        """Because spelling. See func:`Molecule.initialise`"""
-        return self.initialise(create)
-
-    def set_potential(self, potential, args):
-        """Set the interaction potential of the molecules.
-
-        Args:
-            potential (class:`hoomd.md.pair`): Interaction potential of the
-                molecules
-            args (dict): dict containing the arguments for the
-                interaction potential.
-
-        Note:
-            The `nlist` property doesn't work properly when initialised
-            from a dictionary. Not entirely sure why, but avoid including that
-            value when passing the arguments
-        """
-        self.potential = potential
-        self.potential_args = args
-
-    def define_particles(self):
-        """Add the particles to the simulation context
-
-        A helper function that adds the extra particles required for the
-        molecule to the hoomd simulation context.
-        """
-        for particle in self.particles:
-            self._system.getParticleData().addType(particle)
+        hoomd.md.update.enforce2d()
 
     def define_potential(self):
         R"""Define the potential in the simulation context
 
         A helper function that defines the potential to be used by the  hoomd
         simulation context. The default values for the potential are a
-        Lennard-Jones potential with a cutoff of 2.5 and interaction parameters
-        of :math:`\epsilon = 1.0` and :math:`\sigma = 2.0`.
+        Lennard-Jones potential with a cutoff of :math:`2.5\sigma` and
+        interaction parameters of :math:`\epsilon = 1.0` and
+        :math:`\sigma = 2.0`.
 
         Returns:
             class:`hoomd.md.pair`: The interaction potential object class.
@@ -112,45 +80,16 @@ class Molecule(object):
         Returns:
             class:`hoomd.md.constrain.rigid`: Rigid constraint object
         """
+        if len(self.particles) <= 1:
+            print("Not enough particles for a rigid body", file=sys.stderr)
+            return
         if not params:
             params = dict()
-        params.setdefault('type_name', 'A')
-        params.setdefault('types', self.particles)
+        params['type_name'] = self.particles[0]
+        params['types'] = self.particles[1:]
         rigid = hoomd.md.constrain.rigid()
         rigid.set_param(**params)
-        rigid.create_bodies(create)
         return rigid
-
-    def define_moment_inertia(self):
-        """Set the moment of intertia of all particles in the system
-
-        A helper function to set the moment of inertia of all the molecules in
-        the current hoomd context. It sets the moment of inertia of all
-        all particles in the simulation system to the value of the variable
-        `self.moment_inertia`.
-
-        Note:
-            This changes the moment of intertia of every particle in the
-            system. As initialise is currently set up the moments of intertia
-            are set before the extra particles in the rigid bodies are
-            created. While I don't expect there to be issues with running this
-            after those particles have been created I currently don't know
-            the outcome, so beware.
-        """
-        mom_i = hoomd._hoomd.Scalar3()
-        mom_i.x, mom_i.y, mom_i.z = self.moment_inertia
-        for particle in range(self._system.getParticleData().getN()):
-            self._system.getParticleData().setMomentsOfInertia(particle, mom_i)
-
-    def set_moment_inertia(self, moment_inertia):
-        """Set the moment of inertia to a specific value
-
-        Args:
-            moment_inertia (tuple): A tuple containg the moment of inertia in
-                the form :math:`(L_x,L_y,L_z)`
-
-        """
-        self.moment_inertia = moment_inertia
 
 
 class Trimer(Molecule):
@@ -178,8 +117,9 @@ class Trimer(Molecule):
         self.radius = radius
         self.distance = distance
         self.angle = angle
-        self.particles = ["B", "B"]
+        self.particles = ['A', 'B', 'B']
         self.moment_inertia = (0, 0, 1.65)
+        self.dimensions = 2
 
     def define_potential(self):
         R"""Define the potential in the simulation context
@@ -215,12 +155,12 @@ class Trimer(Molecule):
         Returns:
             class:`hoomd.md.constrain.rigid`: Rigid constraint object
         """
-        angle = (self.angle/2)*math.pi/180.
+        angle = (self.angle/2)*np.pi/180.
         if not params:
             params = dict()
         params.setdefault('positions', [
-            (math.sin(angle), math.cos(angle), 0),
-            (-math.sin(angle), math.cos(angle), 0)
+            (np.sin(angle), np.cos(angle), 0),
+            (-np.sin(angle), np.cos(angle), 0)
         ])
         rigid = super(Trimer, self).define_rigid(create, params)
         return rigid
@@ -247,8 +187,9 @@ class Dimer(Molecule):
         super(Dimer, self).__init__()
         self.radius = radius
         self.distance = distance
-        self.particles = ["B"]
+        self.particles = ['A', 'B']
         self.moment_inertia = self.compute_moment_intertia()
+        self.dimensions = 2
 
     def compute_moment_intertia(self):
         """Compute the moment of inertia from the particle paramters"""
@@ -293,9 +234,3 @@ class Dimer(Molecule):
         params.setdefault('positions', [(self.distance, 0, 0)])
         rigid = super(Dimer, self).define_rigid(create, params)
         return rigid
-
-
-if __name__ == "__main__":
-    hoomd.context.initialize()
-    hoomd.init.create_lattice(unitcell=hoomd.lattice.sq(a=4), n=[4, 4])
-    Trimer().initialise()
