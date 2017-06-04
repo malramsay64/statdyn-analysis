@@ -5,7 +5,6 @@ simulation"""
 from __future__ import print_function
 import numpy as np
 import quaternion
-from statdyn import CompDynamics
 import pandas
 
 
@@ -109,17 +108,6 @@ class TimeDep(object):
 
     def get_all_data(self):
         return self._data
-
-    def print_all(self, snapshot, timestep, outfile):
-        """Print all data to file
-
-        Args:
-            system (:class:`hoomd.data.SnapshotParticleData`): Hoomd snapshot
-                object in the configuration to be saved
-            outfile (string): filename to output data to
-        """
-        data = self.get_data(snapshot, timestep)
-        CompDynamics.CompDynamics(data).print_all(outfile)
 
 
 class TimeDep2dRigid(TimeDep):
@@ -234,13 +222,23 @@ class TimeDep2dRigid(TimeDep):
     def get_all_data(self):
         return self._data
 
-    def print_all(self, snapshot, timestep, outfile):
-        """Print all data to file
 
-        Args:
-            snapshot (:class:`hoomd.data.SnapshotParticleData`): Hoomd snapshot
-                object in the configuration to be saved
-            outfile (string): filename to output data to
-        """
-        data = self.get_data(snapshot, timestep)
-        CompDynamics.CompRotDynamics(data).print_all(outfile)
+class TimeDepMany(object):
+    def __init__(self):
+        self._snapshots = {}
+        self._data = []
+
+    def add_init(self, snapshot, index, timestep):
+        self._snapshots[index] = TimeDep2dRigid(snapshot, timestep)
+        self.append(snapshot, index, timestep)
+
+    def append(self, snapshot, index, timestep):
+        try:
+            data = self._snapshots[index].get_data(snapshot, timestep)
+            data['index'] = index
+            self._data.append(data)
+        except IndexError:
+            self.add_init(snapshot, index, timestep)
+
+    def get_data(self):
+        return pandas.concat(self._data)

@@ -15,7 +15,7 @@ from hoomd import md
 import numpy as np
 import pandas
 from statdyn import TimeDep, initialise
-from statdyn.StepSize import generate_steps
+from statdyn.StepSize import generate_steps, generate_step_series
 
 def run_npt(snapshot, temp, steps, **kwargs):
     """Initialise and run a hoomd npt simulation
@@ -39,8 +39,9 @@ def run_npt(snapshot, temp, steps, **kwargs):
         tauP (float): The restoring mass for the pressure integrator
             Default: 1.
     """
-    with hoomd.context.initialize(kwargs.get('init_args', '')) as context:
-        kwargs['context'] = context
+    context = hoomd.context.initialize('')
+    kwargs['context'] = context
+    with context:
         system = initialise.init_from_snapshot(snapshot, **kwargs)
         md.integrate.mode_standard(kwargs.get('dt', 0.005))
         md.integrate.npt(
@@ -57,6 +58,49 @@ def run_npt(snapshot, temp, steps, **kwargs):
     return dynamics.get_all_data()
 
 
+def run_multiple_concurrent(snapshot, temp, steps, **kwargs):
+    """Initialise and run a hoomd npt simulatins with data collection for
+    dynamics.
+
+    Args:
+        snapshot (class:`hoomd.data.snapshot`): Hoomd snapshot object
+        temp (float): The temperature the simulation will run at
+        steps (int): number of timesteps the simulation will run for
+
+    Keyword Args:
+        init_args (str): Args with which to initialise the hoomd context.
+            Default: ''
+        mol (class:`statdyn.Molecule`): Molecule to use in the simulation
+            Default: class:`statdyn.Molecule.Trimer()`
+        dt (float): size of each timestep in the simulation
+            Default: 0.005
+        tau (float): Restoring mass for the temperature integrator
+            Default: 1.
+        press (float): the pressure of the simulation
+            Default: 13.5
+        tauP (float): The restoring mass for the pressure integrator
+            Default: 1.
+    """
+    context = hoomd.context.SimulationContext()
+    kwargs['context'] = context
+    with context:
+        system = initialise.init_from_snapshot(snapshot, **kwargs)
+        md.integrate.mode_standard(kwargs.get('dt', 0.005))
+        md.integrate.npt(
+            group=hoomd.group.rigid_center(),
+            kT=temp,
+            tau=kwargs.get('tau', 1.),
+            P=kwargs.get('press', 13.5),
+            tauP=kwargs.get('tauP', 1.)
+        )
+        dynamics = TimeDep.TimeDepMany()
+        dynamics.add_init(system.take_snapshot(all=True), 0, 0)
+        for curr_step, index in generate_step_series(steps, index=True):
+            hoomd.run_upto(curr_step)
+            dynamics.append(system.take_snapshot(all=True), index, curr_step)
+    return dynamics.get_data()
+
+
 def read_snapshot(fname, rand=False):
     """Read a hoomd snapshot from a hoomd gsd file
 
@@ -67,7 +111,7 @@ def read_snapshot(fname, rand=False):
     Returns:
         class:`hoomd.data.Snapshot`: Hoomd snapshot
     """
-    with hoomd.context.initialize():
+    with hoomd.context.initialize(''):
         snapshot = hoomd.data.gsd_snapshot(fname)
         if rand:
             nbodies = snapshot.particles.body.max() + 1

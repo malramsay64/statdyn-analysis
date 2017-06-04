@@ -13,12 +13,19 @@ Test the simulation module
 from statdyn import Simulation, initialise
 import pytest
 
+def test_run_npt():
+    snapshot = initialise.init_from_none().take_snapshot()
+    Simulation.run_npt(snapshot, 3.00, 200)
+    assert True
 
-def run_npt_test():
-    run_npt(initialise.init_from_none().take_snapshot(),
-            3.00,
-            1000,
-            )
+def test_run_npt_from_file():
+    snapshot = initialise.init_from_file(
+        'test/data/Trimer-13.50-3.00.gsd').take_snapshot()
+    Simulation.run_npt(snapshot, 3.00, 200)
+    assert True
 
 
-
+def test_run_multiple_concurrent():
+    snapshot = initialise.init_from_file(
+        'test/data/Trimer-13.50-3.00.gsd').take_snapshot()
+    Simulation.run_multiple_concurrent(snapshot, 3.00, 200)

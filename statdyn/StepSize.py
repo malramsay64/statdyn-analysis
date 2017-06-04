@@ -43,3 +43,28 @@ def generate_steps(total_steps, num_linear=99, start=0):
         lin_steps += 1
         curr_step += step_size
     yield total_steps
+
+
+def generate_step_series(total_steps, num_linear=99, gen_steps=300000, max_gen=500, index=False):
+    gen = generate_steps(total_steps, num_linear, 0)
+    curr_step = next(gen)
+    generators = [(next(gen), gen)]
+    argmin = 0
+    try:
+        while curr_step <= total_steps:
+            if index:
+                yield curr_step, argmin
+            else:
+                yield curr_step
+            if curr_step % gen_steps == 0 and curr_step > 0 and len(generators) < max_gen:
+                gen = generate_steps(total_steps, num_linear, curr_step)
+                generators.append((curr_step, gen))
+            argmin = min(enumerate(generators), key=lambda x: x[1][0])[0]
+            curr_step, gen = generators[argmin]
+            generators[argmin] = (next(gen), gen)
+    except StopIteration:
+        if index:
+            yield curr_step, argmin
+        else:
+            yield curr_step
+

@@ -11,7 +11,7 @@ Testing for the stepsize module
 """
 
 import pytest
-from statdyn.StepSize import generate_steps
+from statdyn.StepSize import generate_steps, generate_step_series
 
 
 @pytest.fixture(params=[
@@ -25,9 +25,10 @@ from statdyn.StepSize import generate_steps
      'def': [-5, -4, -3, -2, -1, 0, 10]},
 ])
 def steps(request):
-    request.param['gen'] = [s for s in generate_steps(request.param['max'],
-                                                      request.param['lin'],
-                                                      request.param['start'])]
+    request.param['gen'] = list(generate_steps(request.param['max'],
+                                               request.param['lin'],
+                                               request.param['start'])
+                                )
     return request.param
 
 def test_generate_steps(steps):
@@ -35,4 +36,11 @@ def test_generate_steps(steps):
     assert steps['gen'] == steps['def']
 
 
+def test_generate_step_series():
+    single = list(generate_steps(1000, 9, 0))
+    series = list(generate_step_series(1000, 9, 10000, 1))
+    print(series)
+    assert single == series
 
+def test_generate_step_series():
+    list(generate_step_series(10000, 9, 1000, 100))
