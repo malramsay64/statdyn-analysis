@@ -37,7 +37,7 @@ def get_closest(temp, directory):
     return temp+min([get_temp(t) - temp for t in files if get_temp(t) > temp])
 
 
-def main(steps, temp, directory, output):
+def main(steps, temp, directory, output, thermo=True):
     if glob.glob(directory+'/'+get_fname(temp)):
         snapshot = initialise.init_from_file(
             directory+'/'+get_fname(temp)).take_snapshot()
@@ -48,6 +48,7 @@ def main(steps, temp, directory, output):
         snapshot,
         temp,
         steps,
+        thermo=thermo
     )
     os.makedirs(output, exist_ok=True)
     with pandas.HDFStore(output+get_fname(temp, 'hdf5')) as dst:
@@ -79,6 +80,11 @@ if __name__ == "__main__":
         '--output',
         type=str,
         help='The directory to store the log files and data files'
+    )
+    parser.add_argument(
+        '--no-thermo',
+        action='store_false',
+        help='Do not output thermodynamic data to a file'
     )
     args = parser.parse_args()
     main(args.steps, args.temp, args.dir, args.output)
