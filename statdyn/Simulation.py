@@ -106,6 +106,7 @@ def run_multiple_concurrent(snapshot, temp, steps, **kwargs):
 
 
 def _set_integrator(kwargs):
+    md.update.enforce2d()
     md.integrate.mode_standard(kwargs.get('dt'))
     md.integrate.npt(
         group=hoomd.group.rigid_center(),

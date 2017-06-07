@@ -14,6 +14,7 @@ import tempfile
 from statdyn import initialise, molecule, crystals
 import pytest
 import hoomd
+import numpy as np
 
 
 def create_snapshot():
@@ -66,12 +67,27 @@ def test_2d(init_func, args, kwargs):
         sys = init_func()
     assert sys.box.dimensions == 2
 
-@pytest.mark.parametrize("init_func, args, kwargs", init_test_params)
-def test_kwarg_propogation(init_func, args, kwargs):
-    if args:
-        sys = init_func(*args, mol=molecule.Dimer(), **kwargs)
-    else:
-        sys = init_func(mol=molecule.Dimer(), **kwargs)
-    snap = sys.take_snapshot()
-    assert snap.particles.N == 200
+def test_make_orthorhombic():
+    with hoomd.context.initialize():
+        snap = create_snapshot()
+        assert np.all(initialise._make_orthorhombic(snap).particles.position ==
+                    snap.particles.position)
+        assert snap.box.xy == 0
+        assert snap.box.xz == 0
+        assert snap.box.yz == 0
+    with hoomd.context.initialize():
+        snap_crys = hoomd.init.create_lattice(
+            unitcell=crystals.p2().get_unitcell(),
+            n=(10, 10)
+        ).take_snapshot()
+        snap_ortho = initialise._make_orthorhombic(snap_crys)
+        assert np.all(snap_ortho.particles.position[:, 0] < snap_ortho.box.Lx/2.)
+        assert np.all(snap_ortho.particles.position[:, 0] > -snap_ortho.box.Lx/2.)
+        assert np.all(snap_ortho.particles.position[:, 1] < snap_ortho.box.Ly/2.)
+        assert np.all(snap_ortho.particles.position[:, 1] > -snap_ortho.box.Ly/2.)
+        assert snap.box.xy == 0
+        assert snap.box.xz == 0
+        assert snap.box.yz == 0
+
+
 

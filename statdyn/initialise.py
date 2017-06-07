@@ -16,6 +16,7 @@ config.
 from statdyn import molecule, crystals
 import numpy as np
 import hoomd
+from hoomd import md
 
 def set_defaults(kwargs):
     kwargs.setdefault('mol', molecule.Trimer())
@@ -76,15 +77,36 @@ def init_from_snapshot(snapshot, **kwargs):
 def init_from_crystal(crystal, **kwargs):
     kwargs.setdefault('mol', crystal.molecule)
     set_defaults(kwargs)
-    context = kwargs.get('context', hoomd.context.initialize(kwargs.get('cmd_args')))
-    with context:
+    context1 = hoomd.context.initialize(kwargs.get('cmd_args'))
+    with context1:
         sys = hoomd.init.create_lattice(
             unitcell=crystal.get_unitcell(),
             n=kwargs.get('cell_dimensions')
         )
         snap = sys.take_snapshot(all=True)
-    return init_from_snapshot(snap, **kwargs)
+        sys = init_from_snapshot(snap, **kwargs)
+        md.integrate.mode_minimize_fire(hoomd.group.rigid_center(), dt=0.005)
+        hoomd.run(1000)
+        equil_snap = sys.take_snapshot(all=True)
+    context2 = kwargs.get('context', hoomd.context.initialize(kwargs.get('cmd_args')))
+    with context2:
+        snap = _make_orthorhombic(equil_snap)
+        sys = init_from_snapshot(snap, **kwargs)
+    return sys
 
+def _make_orthorhombic(snapshot):
+    Ly = snapshot.box.Ly
+    Lx = snapshot.box.Lx
+    Lz = snapshot.box.Lz
+    xlen = Lx + snapshot.box.xy*Ly
+    pos = snapshot.particles.position
+    pos += np.array([xlen/2., Ly/2., Lz/2.])
+    pos = pos % np.array([Lx, Ly, Lz])
+    pos -= np.array([Lx/2., Ly/2., Lz/2.])
+    snapshot.particles.position[:] = pos
+    box = hoomd.data.boxdim(Lx, Ly, Lz, 0, 0, 0, dimensions=2)
+    hoomd.data.set_snapshot_box(snapshot, box)
+    return snapshot
 
 def _check_properties(snapshot, mol):
     num_atoms = snapshot.particles.N

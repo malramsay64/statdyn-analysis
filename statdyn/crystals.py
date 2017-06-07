@@ -28,6 +28,9 @@ class Crystal(object):
         """
         return self.a1, self.a2, self.a3
 
+    def get_abs_positions(self):
+        return np.dot(np.array(self.positions), self.get_matrix())
+
     def get_unitcell(self):
         """Return the hoomd unit cell parameter"""
         return hoomd.lattice.unitcell(
@@ -35,7 +38,7 @@ class Crystal(object):
             a1=self.a1,
             a2=self.a2,
             a3=self.a3,
-            position=self.positions,
+            position=self.get_abs_positions(),
             dimensions=self.dimensions,
             orientation=self.get_orientations(),
             type_name=['A']*self.get_num_molecules(),
@@ -51,9 +54,7 @@ class Crystal(object):
             ))
         elif self.dimensions == 2:
             return np.linalg.norm(np.cross(
-                np.array(self.a1),
-                np.array(self.a2)
-            ))
+                np.array(self.a1), np.array(self.a2)))
         else:
             raise ValueError("Dimensions needs to be either 2 or 3")
 

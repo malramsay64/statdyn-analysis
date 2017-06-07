@@ -43,3 +43,7 @@ def test_compute_volume(crys_class):
     crys = crys_class()
     assert isinstance(crys.compute_volume(), float)
 
+@pytest.mark.parametrize("crys_class", test_classes)
+def test_abs_positions(crys_class):
+    crys = crys_class()
+    assert crys.get_abs_positions().shape == np.array(crys.positions).shape
