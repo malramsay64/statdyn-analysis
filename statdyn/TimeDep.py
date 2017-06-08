@@ -237,8 +237,8 @@ class TimeDepMany(object):
             data = self._snapshots[index].get_data(snapshot, timestep)
             data['index'] = index
             self._data.append(data)
-        except IndexError:
+        except (IndexError, KeyError):
             self.add_init(snapshot, index, timestep)
 
-    def get_data(self):
+    def get_all_data(self):
         return pandas.concat(self._data)

@@ -19,6 +19,7 @@ from statdyn.StepSize import generate_steps, generate_step_series
 
 
 def set_defaults(kwargs):
+    kwargs.setdefault('init_args', '')
     kwargs.setdefault('tau', 1.)
     kwargs.setdefault('press', 13.5)
     kwargs.setdefault('tauP', 1.)
@@ -30,6 +31,7 @@ def set_defaults(kwargs):
     kwargs.setdefault('dump_dir', '.')
     kwargs.setdefault('dump_period', 50000)
     kwargs.setdefault('restart', True)
+    kwargs.setdefault('dyn_many', True)
 
 
 def run_npt(snapshot, temp, steps, **kwargs):
@@ -54,69 +56,38 @@ def run_npt(snapshot, temp, steps, **kwargs):
         tauP (float): The restoring mass for the pressure integrator
             Default: 1.
     """
-    context = hoomd.context.initialize('')
     set_defaults(kwargs)
+    context = hoomd.context.initialize(kwargs.get('init_args'))
     kwargs['context'] = context
     kwargs['temp'] = temp
-    print(kwargs.get('tauP'))
     with context:
         system = initialise.init_from_snapshot(snapshot, **kwargs)
         _set_integrator(kwargs)
         _set_thermo(kwargs)
         _set_dump(kwargs)
-        dynamics = TimeDep.TimeDep2dRigid(system.take_snapshot(all=True), 0)
-        for curr_step in generate_steps(steps):
-            hoomd.run_upto(curr_step)
-            dynamics.append(system.take_snapshot(all=True), curr_step)
+        if kwargs.get('dyn_many'):
+            dynamics = TimeDep.TimeDepMany()
+            dynamics.append(system.take_snapshot(all=True), 0, 0)
+            for curr_step, index in generate_step_series(steps, index=True):
+                hoomd.run_upto(curr_step)
+                dynamics.append(system.take_snapshot(all=True), index, curr_step)
+        else:
+            dynamics = TimeDep.TimeDep2dRigid(system.take_snapshot(all=True), 0)
+            for curr_step in generate_steps(steps):
+                hoomd.run_upto(curr_step)
+                dynamics.append(system.take_snapshot(all=True), curr_step)
+        _make_restart(kwargs)
     return dynamics.get_all_data()
 
 
-def run_multiple_concurrent(snapshot, temp, steps, **kwargs):
-    """Initialise and run a hoomd npt simulatins with data collection for
-    dynamics.
-
-    Args:
-        snapshot (class:`hoomd.data.snapshot`): Hoomd snapshot object
-        temp (float): The temperature the simulation will run at
-        steps (int): number of timesteps the simulation will run for
-
-    Keyword Args:
-        init_args (str): Args with which to initialise the hoomd context.
-            Default: ''
-        mol (class:`statdyn.Molecule`): Molecule to use in the simulation
-            Default: class:`statdyn.Molecule.Trimer()`
-        dt (float): size of each timestep in the simulation
-            Default: 0.005
-        tau (float): Restoring mass for the temperature integrator
-            Default: 1.
-        press (float): the pressure of the simulation
-            Default: 13.5
-        tauP (float): The restoring mass for the pressure integrator
-            Default: 1.
-    """
-    context = hoomd.context.SimulationContext()
-    set_defaults(kwargs)
-    kwargs['context'] = context
-    kwargs['temp'] = temp
-    with context:
-        system = initialise.init_from_snapshot(snapshot, **kwargs)
-        _set_integrator(kwargs)
-        _set_thermo(kwargs)
-        _set_dump(kwargs)
-        dynamics = TimeDep.TimeDepMany()
-        dynamics.add_init(system.take_snapshot(all=True), 0, 0)
-        for curr_step, index in generate_step_series(steps, index=True):
-            hoomd.run_upto(curr_step)
-            dynamics.append(system.take_snapshot(all=True), index, curr_step)
-        if kwargs.get('restart'):
-            hoomd.dump.gsd(
-                initialise.get_fname(kwargs.get('temp')),
-                None,
-                group=hoomd.group.all(),
-                overwrite=True,
-            )
-    return dynamics.get_data()
-
+def _make_restart(kwargs):
+    if kwargs.get('restart'):
+        hoomd.dump.gsd(
+            initialise.get_fname(kwargs.get('temp')),
+            None,
+            group=hoomd.group.all(),
+            overwrite=True,
+        )
 
 def _set_integrator(kwargs):
     md.update.enforce2d()

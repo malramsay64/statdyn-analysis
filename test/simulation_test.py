@@ -15,7 +15,7 @@ import pytest
 
 def test_run_npt():
     snapshot = initialise.init_from_none().take_snapshot()
-    Simulation.run_npt(snapshot, 3.00, 100)
+    Simulation.run_npt(snapshot, 3.00, 100, dyn_many=False)
     assert True
 
 
@@ -29,4 +29,4 @@ def test_run_npt_from_file():
 def test_run_multiple_concurrent():
     snapshot = initialise.init_from_file(
         'test/data/Trimer-13.50-3.00.gsd').take_snapshot()
-    Simulation.run_multiple_concurrent(snapshot, 3.00, 100)
+    Simulation.run_npt(snapshot, 3.00, 100, dyn_many=True)
