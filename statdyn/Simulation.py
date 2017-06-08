@@ -29,6 +29,7 @@ def set_defaults(kwargs):
     kwargs.setdefault('dump', True)
     kwargs.setdefault('dump_dir', '.')
     kwargs.setdefault('dump_period', 50000)
+    kwargs.setdefault('restart', True)
 
 
 def run_npt(snapshot, temp, steps, **kwargs):
