@@ -51,7 +51,7 @@ def main(steps, temp, directory, output, thermo=True):
         thermo=thermo
     )
     os.makedirs(output, exist_ok=True)
-    with pandas.HDFStore(output+get_fname(temp, 'hdf5')) as dst:
+    with pandas.HDFStore(output+'/'+get_fname(temp, 'hdf5')) as dst:
         dst['dynamics'] = data
 
 
