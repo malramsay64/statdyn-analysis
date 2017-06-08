@@ -94,6 +94,16 @@ def init_from_crystal(crystal, **kwargs):
         sys = init_from_snapshot(snap, **kwargs)
     return sys
 
+
+def get_fname(temp, ext='gsd'):
+    return '{mol}-{press:.2f}-{temp:.2f}.{ext}'.format(
+        mol='Trimer',
+        press=13.50,
+        temp=temp,
+        ext=ext
+    )
+
+
 def _make_orthorhombic(snapshot):
     Ly = snapshot.box.Ly
     Lx = snapshot.box.Lx
@@ -107,6 +117,7 @@ def _make_orthorhombic(snapshot):
     box = hoomd.data.boxdim(Lx, Ly, Lz, 0, 0, 0, dimensions=2)
     hoomd.data.set_snapshot_box(snapshot, box)
     return snapshot
+
 
 def _check_properties(snapshot, mol):
     num_atoms = snapshot.particles.N

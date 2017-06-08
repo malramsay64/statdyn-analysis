@@ -26,6 +26,9 @@ def set_defaults(kwargs):
     kwargs.setdefault('thermo', True)
     kwargs.setdefault('thermo_dir', '.')
     kwargs.setdefault('thermo_period', 10000)
+    kwargs.setdefault('dump', True)
+    kwargs.setdefault('dump_dir', '.')
+    kwargs.setdefault('dump_period', 50000)
 
 
 def run_npt(snapshot, temp, steps, **kwargs):
@@ -59,6 +62,7 @@ def run_npt(snapshot, temp, steps, **kwargs):
         system = initialise.init_from_snapshot(snapshot, **kwargs)
         _set_integrator(kwargs)
         _set_thermo(kwargs)
+        _set_dump(kwargs)
         dynamics = TimeDep.TimeDep2dRigid(system.take_snapshot(all=True), 0)
         for curr_step in generate_steps(steps):
             hoomd.run_upto(curr_step)
@@ -97,11 +101,19 @@ def run_multiple_concurrent(snapshot, temp, steps, **kwargs):
         system = initialise.init_from_snapshot(snapshot, **kwargs)
         _set_integrator(kwargs)
         _set_thermo(kwargs)
+        _set_dump(kwargs)
         dynamics = TimeDep.TimeDepMany()
         dynamics.add_init(system.take_snapshot(all=True), 0, 0)
         for curr_step, index in generate_step_series(steps, index=True):
             hoomd.run_upto(curr_step)
             dynamics.append(system.take_snapshot(all=True), index, curr_step)
+        if kwargs.get('restart'):
+            hoomd.dump.gsd(
+                initialise.get_fname(kwargs.get('temp')),
+                None,
+                group=hoomd.group.all(),
+                overwrite=True,
+            )
     return dynamics.get_data()
 
 
@@ -120,13 +132,22 @@ def _set_integrator(kwargs):
 def _set_thermo(kwargs):
     if kwargs.get('thermo'):
         hoomd.analyze.log(
-            kwargs.get('thermo_dir')+'/'+'thermo-{press}-{temp}.log'.format(
+            kwargs.get('thermo_dir')+'/'+'thermo-{press:.2f}-{temp:.2f}.log'.format(
                 press=kwargs.get('press'), temp=kwargs.get('temp')),
             ['volume', 'potential_energy', 'kinetic_energy',
              'rotational_kinetic_energy', 'temperature', 'pressure'],
             period=kwargs.get('thermo_period'),
         )
 
+
+def _set_dump(kwargs):
+    if kwargs.get('dump'):
+        hoomd.dump.gsd(
+            kwargs.get('dump_dir')+'/'+'dump-{press:.2f}-{temp:.2f}.gsd'.format(
+                press=kwargs.get('press'), temp=kwargs.get('temp')),
+            period=kwargs.get('dump_period'),
+            group=hoomd.group.all()
+        )
 
 def read_snapshot(fname, rand=False):
     """Read a hoomd snapshot from a hoomd gsd file

@@ -12,18 +12,10 @@ Run simulation with boilerplate taken care of by the statdyn library
 
 import argparse
 import glob
-import pandas
-from statdyn import initialise, Simulation
 import os
+import pandas
+from statdyn import initialise, Simulation, crystals
 
-
-def get_fname(temp, ext='gsd'):
-    return '{mol}-{press:.2f}-{temp:.2f}.{ext}'.format(
-        mol='Trimer',
-        press=13.50,
-        temp=temp,
-        ext=ext
-    )
 
 def get_temp(fname):
     from os.path import split, splitext
@@ -37,12 +29,17 @@ def get_closest(temp, directory):
     return temp+min([get_temp(t) - temp for t in files if get_temp(t) > temp])
 
 
+def crystalline():
+    snapshot = initialise.init_from_crystal(crystals.p2()).take_snapshot()
+    Simulation.run_npt(snapshot, 0.1, 1)
+
+
 def main(steps, temp, directory, output, thermo=True):
-    if glob.glob(directory+'/'+get_fname(temp)):
+    if glob.glob(directory+'/'+initialise.get_fname(temp)):
         snapshot = initialise.init_from_file(
-            directory+'/'+get_fname(temp)).take_snapshot()
+            directory+'/'+initialise.get_fname(temp)).take_snapshot()
     else:
-        snapshot = initialise.init_from_file(directory+'/'+get_fname(
+        snapshot = initialise.init_from_file(directory+'/'+initialise.get_fname(
             get_closest(temp, directory))).take_snapshot()
     data = Simulation.run_multiple_concurrent(
         snapshot,
