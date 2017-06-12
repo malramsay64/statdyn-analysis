@@ -15,14 +15,14 @@ from statdyn.StepSize import generate_steps, generate_step_series
 
 
 @pytest.fixture(params=[
-    {'max': 100, 'lin': 9, 'start': 0,
+    {'max': 100, 'lin': 10, 'start': 0,
      'def': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]},
-    {'max': 99, 'lin': 9, 'start': 0,
+    {'max': 99, 'lin': 10, 'start': 0,
      'def': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]},
-    {'max': 87, 'lin': 9, 'start': 0,
+    {'max': 87, 'lin': 10, 'start': 0,
      'def': [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 87]},
-    {'max': 10, 'lin': 5, 'start': -6,
-     'def': [-5, -4, -3, -2, -1, 0, 10]},
+    {'max': 10, 'lin': 5, 'start': -5,
+     'def': [-4, -3, -2, -1, 0, 10]},
 ])
 def steps(request):
     request.param['gen'] = list(generate_steps(request.param['max'],

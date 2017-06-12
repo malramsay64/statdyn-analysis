@@ -27,20 +27,17 @@ def generate_steps(total_steps, num_linear=99, start=0):
 
     Example:
 
-        >>> [s for s in generate_steps(100, 9)]
+        >>> [s for s in generate_steps(100, 10)]
         [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
     """
     curr_step = start
     step_size = 1
-    lin_steps = 0
     curr_step += step_size
     while curr_step < total_steps:
-        if lin_steps == num_linear:
+        if curr_step-start == step_size*num_linear:
             step_size *= 10
-            lin_steps = 0
         yield curr_step
-        lin_steps += 1
         curr_step += step_size
     yield total_steps
 
