@@ -13,12 +13,14 @@ This module allows the initialisation from a number of different starting
 configurations, whether that is a file, a crystal lattice, or no predefined
 config.
 """
-from statdyn import molecule, crystals
-import numpy as np
 import hoomd
-from hoomd import md
+import hoomd.md as md
+import numpy as np
+from statdyn import molecule
+
 
 def set_defaults(kwargs):
+    """Set the argument defaults"""
     kwargs.setdefault('mol', molecule.Trimer())
     kwargs.setdefault('cell_len', 4)
     kwargs.setdefault('cell_dimensions', (10, 10))
@@ -27,16 +29,25 @@ def set_defaults(kwargs):
 
 
 def init_from_file(fname, **kwargs):
+    """Initialise a hoomd simulation from an input file
+    """
     set_defaults(kwargs)
-    context = kwargs.get('context', hoomd.context.initialize(kwargs.get('cmd_args')))
+    context = kwargs.get('context',
+                         hoomd.context.initialize(kwargs.get('cmd_args')))
     snapshot = hoomd.data.gsd_snapshot(fname, kwargs.get('timestep', 0))
-    sys = init_from_snapshot(snapshot, **kwargs)
+    sys = init_from_snapshot(snapshot, context=context, **kwargs)
     return sys
 
 
 def init_from_none(**kwargs):
+    """Initialise a system from no inputs
+
+    This creates a simulation with a large unit cell lattice such that there
+    is no chance of molecules overlapping and places molecules on the lattice.
+    """
     set_defaults(kwargs)
-    context = kwargs.get('context', hoomd.context.initialize(kwargs.get('cmd_args')))
+    context = kwargs.get(
+        'context', hoomd.context.initialize(kwargs.get('cmd_args')))
     with context:
         sys = hoomd.init.create_lattice(
             unitcell=hoomd.lattice.sq(a=kwargs.get('cell_len')),
@@ -74,7 +85,14 @@ def init_from_snapshot(snapshot, **kwargs):
     rigid.create_bodies(create=create_bodies)
     return sys
 
+
 def init_from_crystal(crystal, **kwargs):
+    """Initialise a hoomd simulation from a crystal lattice
+
+    Args:
+        crystal (class:`statdyn.crystals.Crystal`): The crystal lattice to
+            generate the simulation from.
+    """
     kwargs.setdefault('mol', crystal.molecule)
     set_defaults(kwargs)
     context1 = hoomd.context.initialize(kwargs.get('cmd_args'))
@@ -88,14 +106,23 @@ def init_from_crystal(crystal, **kwargs):
         md.integrate.mode_minimize_fire(hoomd.group.rigid_center(), dt=0.005)
         hoomd.run(1000)
         equil_snap = sys.take_snapshot(all=True)
-    context2 = kwargs.get('context', hoomd.context.initialize(kwargs.get('cmd_args')))
+    context2 = kwargs.get('context',
+                          hoomd.context.initialize(kwargs.get('cmd_args')))
     with context2:
         snap = _make_orthorhombic(equil_snap)
         sys = init_from_snapshot(snap, **kwargs)
     return sys
 
 
-def get_fname(temp, ext='gsd'):
+def get_fname(temp: float, ext: str='gsd') -> str:
+    """A constructor for the filename of based on the temperature
+
+    Args:
+        temp (float): The temperature of the simulation
+
+    Returns:
+        str: The standard filename for my simulations
+    """
     return '{mol}-{press:.2f}-{temp:.2f}.{ext}'.format(
         mol='Trimer',
         press=13.50,
@@ -105,16 +132,16 @@ def get_fname(temp, ext='gsd'):
 
 
 def _make_orthorhombic(snapshot):
-    Ly = snapshot.box.Ly
-    Lx = snapshot.box.Lx
-    Lz = snapshot.box.Lz
-    xlen = Lx + snapshot.box.xy*Ly
+    len_x = snapshot.box.Lx
+    len_y = snapshot.box.Ly
+    len_z = snapshot.box.Lz
+    xlen = len_x + snapshot.box.xy * len_y
     pos = snapshot.particles.position
-    pos += np.array([xlen/2., Ly/2., Lz/2.])
-    pos = pos % np.array([Lx, Ly, Lz])
-    pos -= np.array([Lx/2., Ly/2., Lz/2.])
+    pos += np.array([xlen / 2., len_y / 2., len_z / 2.])
+    pos = pos % np.array([len_x, len_y, len_z])
+    pos -= np.array([len_x / 2., len_y / 2., len_z / 2.])
     snapshot.particles.position[:] = pos
-    box = hoomd.data.boxdim(Lx, Ly, Lz, 0, 0, 0, dimensions=2)
+    box = hoomd.data.boxdim(len_x, len_y, len_z, 0, 0, 0, dimensions=2)
     hoomd.data.set_snapshot_box(snapshot, box)
     return snapshot
 
@@ -122,6 +149,6 @@ def _make_orthorhombic(snapshot):
 def _check_properties(snapshot, mol):
     num_atoms = snapshot.particles.N
     snapshot.particles.types = mol.get_types()
-    snapshot.particles.moment_inertia[:num_atoms+1] = np.array(
-        [mol.moment_inertia]*num_atoms)
+    snapshot.particles.moment_inertia[:num_atoms + 1] = np.array(
+        [mol.moment_inertia] * num_atoms)
     return snapshot

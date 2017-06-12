@@ -1,11 +1,13 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """ A set of classes used for computing the dynamic properties of a Hoomd MD
 simulation"""
 
 from __future__ import print_function
+
 import numpy as np
-import quaternion
 import pandas
+import quaternion
 
 
 class TimeDep(object):
@@ -17,6 +19,7 @@ class TimeDep(object):
             object which is the initial configuration for the purposes of the
             dynamics calculations
     """
+
     def __init__(self, snapshot, timestep):
         self.t_init = snapshot
         self.timestep = timestep
@@ -24,8 +27,9 @@ class TimeDep(object):
         self._data = self.get_data(snapshot, timestep)
 
     def _init_snapshot(self, snapshot):
-        self.pos_init = self.t_init.particles.position
-        self.image_init = self.t_init.particles.image
+        """Set the initial snapshot"""
+        self.pos_init = snapshot.particles.position
+        self.image_init = snapshot.particles.image
 
     def get_time_diff(self, timestep):
         """ The difference in time between the currrent timestep and the
@@ -68,7 +72,7 @@ class TimeDep(object):
 
         pos = snapshot.particles.position
         image = snapshot.particles.image - self.image_init
-        return pos + image*box_dim
+        return pos + image * box_dim
 
     def _displacement(self, snapshot):
         """ Calculate the squared displacement for all bodies in the system.
@@ -86,7 +90,6 @@ class TimeDep(object):
         """
         curr = self._unwrap(snapshot)
         return np.sqrt(np.power(curr - self.pos_init, 2).sum(1))
-
 
     def get_data(self, snapshot, timestep):
         """ Get translational and rotational data
@@ -106,7 +109,12 @@ class TimeDep(object):
         data.time_diff = self.get_time_diff(timestep)
         return data
 
-    def get_all_data(self):
+    def get_all_data(self) -> pandas.DataFrame:
+        """Return all the data
+
+        Returns:
+            class:`pandas.DataFrame`: All the data
+        """
         return self._data
 
 
@@ -129,12 +137,13 @@ class TimeDep2dRigid(TimeDep):
             object at the initial time for the dyanamics computations
 
     """
+
     def __init__(self, snapshot, timestep):
         super(TimeDep2dRigid, self).__init__(snapshot, timestep)
 
     def _init_snapshot(self, snapshot):
         super()._init_snapshot(snapshot)
-        self.bodies = np.max(self.t_init.particles.body)+1
+        self.bodies = np.max(self.t_init.particles.body) + 1
         self.orient_init = self.array2quat(
             self.t_init.particles.orientation[:self.bodies])
 
@@ -159,10 +168,10 @@ class TimeDep2dRigid(TimeDep):
         """
         orient_final = self.array2quat(
             snapshot.particles.orientation[:self.bodies])
-        rot_q = orient_final/self.orient_init
+        rot_q = orient_final / self.orient_init
         rot = quaternion.as_rotation_vector(rot_q).sum(axis=1)
-        rot[rot > np.pi] -= 2*np.pi
-        rot[rot < -np.pi] += 2*np.pi
+        rot[rot > np.pi] -= 2 * np.pi
+        rot[rot < -np.pi] += 2 * np.pi
         return rot
 
     def _displacement(self, snapshot):
@@ -200,6 +209,7 @@ class TimeDep2dRigid(TimeDep):
         return np.sqrt(np.power(curr - self.pos_init, 2).sum(1))
 
     def append(self, snapshot, timestep):
+        """Append measurement to data"""
         self._data = self._data.append(self.get_data(snapshot, timestep))
 
     def get_data(self, snapshot, timestep):
@@ -220,19 +230,30 @@ class TimeDep2dRigid(TimeDep):
         return data
 
     def get_all_data(self):
+        """Get all the data"""
         return self._data
 
 
 class TimeDepMany(object):
+    """Class to hold many TimeDep instances"""
+
     def __init__(self):
         self._snapshots = {}
         self._data = []
 
     def add_init(self, snapshot, index, timestep):
+        """Add an initial snapshot at index"""
         self._snapshots[index] = TimeDep2dRigid(snapshot, timestep)
         self.append(snapshot, index, timestep)
 
     def append(self, snapshot, index, timestep):
+        """Add a measurement to dataset
+
+        Args:
+            snapshot: Hoomd snapshot
+            index: The index of the starting position
+            timestep: Current timestep
+        """
         try:
             data = self._snapshots[index].get_data(snapshot, timestep)
             data['index'] = index
@@ -240,5 +261,6 @@ class TimeDepMany(object):
         except (IndexError, KeyError):
             self.add_init(snapshot, index, timestep)
 
-    def get_all_data(self):
+    def get_all_data(self) -> pandas.DataFrame:
+        """Return all the data"""
         return pandas.concat(self._data)

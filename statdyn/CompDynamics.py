@@ -1,9 +1,8 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 """ A set of classes used for computing the dynamic properties of a Hoomd MD
 simulation"""
 
-from __future__ import print_function
-import collections
 import numpy as np
 import pandas
 
@@ -125,7 +124,7 @@ class CompDynamics(object):
         Return:
             float: The non-gaussian parameter :math:`\alpha`
         """
-        return self._d_disp4()/(2*np.power(self._d_disp2(), 2)) - 1
+        return self._d_disp4() / (2 * np.power(self._d_disp2(), 2)) - 1
 
     def get_struct(self, dist=0.3):
         R""" Compute the structural relaxation
@@ -166,6 +165,7 @@ class CompRotDynamics(CompDynamics):
             the translational, rotational and time data for all the molecules
             in the system.
     """
+
     def __init__(self, RigidData):
         super(CompRotDynamics, self).__init__(RigidData)
         self.data = RigidData
@@ -353,14 +353,16 @@ class CompRotDynamics(CompDynamics):
         highly translationally mobile molecules so the complete set of
         molecules studied is likely over the fraction given.
         """
-        num_mobile = int(len(self._d_disp2())*fraction)
-        mobile_disp = np.argpartition(self._d_disp2(), num_mobile)[-num_mobile:]
-        mobile_rot = np.argpartition(self._d_theta2(), num_mobile)[-num_mobile:]
+        num_mobile = int(len(self._d_disp2()) * fraction)
+        mobile_disp = np.argpartition(
+            self._d_disp2(), num_mobile)[-num_mobile:]
+        mobile_rot = np.argpartition(
+            self._d_theta2(), num_mobile)[-num_mobile:]
         mobile = np.union1d(mobile_disp, mobile_rot)
         translations2 = np.power(self.translations()[mobile], 2)
         rotations2 = np.power(self.rotations()[mobile], 2)
-        return ((np.mean(translations2*rotations2)
-                 - np.mean(translations2)*np.mean(rotations2))
+        return ((np.mean(translations2 * rotations2)
+                 - np.mean(translations2) * np.mean(rotations2))
                 / (np.mean(translations2) * np.mean(rotations2)))
 
     def get_rot_relax1(self):
@@ -385,7 +387,7 @@ class CompRotDynamics(CompDynamics):
         Return:
             float: The rotational relaxation
         """
-        return np.mean(2*np.cos(self.rotations())**2 - 1)
+        return np.mean(2 * np.cos(self.rotations())**2 - 1)
 
     def get_param_rot(self, alpha=1):
         R"""Compute a parameterised rotational correlation

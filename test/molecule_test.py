@@ -10,17 +10,22 @@
 Module to test the molecule class
 """
 
-from statdyn import molecule
 import pytest
+from statdyn import molecule
+
 
 @pytest.fixture(params=[molecule.Molecule, molecule.Trimer, molecule.Dimer])
 def mol_setup(request):
+    """setup molecule"""
     return request.param()
 
-def test_mol_types(mol_setup):
+
+def test_mol_types(mol_setup):  # pylint: disable=redefined-outer-name
+    """test mol_types"""
     assert isinstance(mol_setup.get_types(), list)
 
-def test_moment_inertia(mol_setup):
+
+def test_moment_inertia(mol_setup):  # pylint: disable=redefined-outer-name
+    """Test moment_inertia"""
     assert isinstance(mol_setup.moment_inertia, tuple)
     assert len(mol_setup.moment_inertia) == 3
-
