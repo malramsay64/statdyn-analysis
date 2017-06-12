@@ -9,16 +9,18 @@
 """
 Module for setting up and running a hoomd simulation
 """
-import os
+from os.path import splitext
+
 import hoomd
-from hoomd import md
+import hoomd.md as md
 import numpy as np
 import pandas
 from statdyn import TimeDep, initialise
-from statdyn.StepSize import generate_steps, generate_step_series
+from statdyn.StepSize import generate_step_series, generate_steps
 
 
 def set_defaults(kwargs):
+    """Set the default values for parameters"""
     kwargs.setdefault('init_args', '')
     kwargs.setdefault('tau', 1.)
     kwargs.setdefault('press', 13.5)
@@ -68,11 +70,14 @@ def run_npt(snapshot, temp, steps, **kwargs):
         if kwargs.get('dyn_many'):
             dynamics = TimeDep.TimeDepMany()
             dynamics.append(system.take_snapshot(all=True), 0, 0)
-            for curr_step, index in generate_step_series(steps, index=True):
+            for curr_step, index in generate_step_series(steps,
+                                                         ret_index=True):
                 hoomd.run_upto(curr_step)
-                dynamics.append(system.take_snapshot(all=True), index, curr_step)
+                dynamics.append(system.take_snapshot(all=True),
+                                index, curr_step)
         else:
-            dynamics = TimeDep.TimeDep2dRigid(system.take_snapshot(all=True), 0)
+            dynamics = TimeDep.TimeDep2dRigid(  # pylint: disable=redefined-variable-type
+                system.take_snapshot(all=True), 0)
             for curr_step in generate_steps(steps):
                 hoomd.run_upto(curr_step)
                 dynamics.append(system.take_snapshot(all=True), curr_step)
@@ -89,6 +94,7 @@ def _make_restart(kwargs):
             overwrite=True,
         )
 
+
 def _set_integrator(kwargs):
     md.update.enforce2d()
     md.integrate.mode_standard(kwargs.get('dt'))
@@ -104,7 +110,8 @@ def _set_integrator(kwargs):
 def _set_thermo(kwargs):
     if kwargs.get('thermo'):
         hoomd.analyze.log(
-            kwargs.get('thermo_dir')+'/'+'thermo-{press:.2f}-{temp:.2f}.log'.format(
+            kwargs.get('thermo_dir') + '/' +
+            'thermo-{press:.2f}-{temp:.2f}.log'.format(
                 press=kwargs.get('press'), temp=kwargs.get('temp')),
             ['volume', 'potential_energy', 'kinetic_energy',
              'rotational_kinetic_energy', 'temperature', 'pressure'],
@@ -115,11 +122,13 @@ def _set_thermo(kwargs):
 def _set_dump(kwargs):
     if kwargs.get('dump'):
         hoomd.dump.gsd(
-            kwargs.get('dump_dir')+'/'+'dump-{press:.2f}-{temp:.2f}.gsd'.format(
+            kwargs.get('dump_dir') + '/' +
+            'dump-{press:.2f}-{temp:.2f}.gsd'.format(
                 press=kwargs.get('press'), temp=kwargs.get('temp')),
             period=kwargs.get('dump_period'),
             group=hoomd.group.all()
         )
+
 
 def read_snapshot(fname, rand=False):
     """Read a hoomd snapshot from a hoomd gsd file
@@ -167,5 +176,5 @@ def iterate_random(directory, temp, steps, iterations=2, **kwargs):
             steps,
             **kwargs
         )
-        with pandas.HDFStore(os.path.splitext(init_file)[0]+'.hdf5') as store:
+        with pandas.HDFStore(splitext(init_file)[0] + '.hdf5') as store:
             store['dyn{i}'.format(i=iteration)] = dynamics

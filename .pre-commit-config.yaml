@@ -16,11 +16,6 @@
         entry: python -m pylint -r n
         language: system
         files: \.py$
-      - id: flake8
-        name: flake8
-        entry: python -m flake8
-        language: system
-        files: \.py$
       - id: mypy
         name: mypy
         entry: python -m mypy --ignore-missing-imports

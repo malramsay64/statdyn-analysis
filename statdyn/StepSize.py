@@ -1,11 +1,16 @@
 #!/usr/bin/env python
+# -*- coding: utf-8 -*-
 """ A series of classes that specify various step size functions"""
+
+from typing import Iterator
 
 from numba import jit
 
 
 @jit
-def generate_steps(total_steps, num_linear=99, start=0):
+def generate_steps(total_steps: int,
+                   num_linear: int=100,
+                   start: int=0) -> Iterator[int]:
     """Generate a sequence of steps with a power law
 
     This is a function for generating a sequence of steps such that they create
@@ -35,33 +40,40 @@ def generate_steps(total_steps, num_linear=99, start=0):
     step_size = 1
     curr_step += step_size
     while curr_step < total_steps:
-        if curr_step-start == step_size*num_linear:
+        if curr_step - start == step_size * num_linear:
             step_size *= 10
         yield curr_step
         curr_step += step_size
     yield total_steps
 
 
-def generate_step_series(total_steps, num_linear=99, gen_steps=300000, max_gen=500, index=False):
+def generate_step_series(total_steps: int,
+                         num_linear: int=100,
+                         gen_steps: int=300000,
+                         max_gen: int=500,
+                         ret_index: bool=False):
+    """Generate a many sequences of steps with different starting values
+    """
     gen = generate_steps(total_steps, num_linear, 0)
     curr_step = next(gen)
     generators = [(next(gen), gen)]
     argmin = 0
     try:
         while curr_step <= total_steps:
-            if index:
+            if ret_index:
                 yield curr_step, argmin
             else:
                 yield curr_step
-            if curr_step % gen_steps == 0 and curr_step > 0 and len(generators) < max_gen:
+            if (curr_step % gen_steps == 0
+                    and curr_step > 0
+                    and len(generators) < max_gen):
                 gen = generate_steps(total_steps, num_linear, curr_step)
                 generators.append((curr_step, gen))
             argmin = min(enumerate(generators), key=lambda x: x[1][0])[0]
             curr_step, gen = generators[argmin]
             generators[argmin] = (next(gen), gen)
     except StopIteration:
-        if index:
+        if ret_index:
             yield curr_step, argmin
         else:
             yield curr_step
-
