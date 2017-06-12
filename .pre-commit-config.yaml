@@ -1,0 +1,28 @@
+-   repo: git://github.com/pre-commit/pre-commit-hooks
+    sha: v0.8.0
+    hooks:
+    -   id: trailing-whitespace
+    -   id: autopep8-wrapper
+    -   id: fix-encoding-pragma
+    -   id: check-case-conflict
+-   repo: git://github.com/FalconSocial/pre-commit-python-sorter
+    sha: 1.0.4
+    hooks:
+    -   id: python-import-sorter
+-   repo: local
+    hooks:
+      - id: pylint
+        name: pylint
+        entry: python -m pylint -r n
+        language: system
+        files: \.py$
+      - id: flake8
+        name: flake8
+        entry: python -m flake8
+        language: system
+        files: \.py$
+      - id: mypy
+        name: mypy
+        entry: python -m mypy --ignore-missing-imports
+        language: system
+        files: \.py$
