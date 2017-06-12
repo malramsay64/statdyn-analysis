@@ -26,3 +26,8 @@
         entry: python -m mypy --ignore-missing-imports
         language: system
         files: \.py$
+      - id: pytest
+        name: pytest
+        entry: python -m pytest
+        language: system
+        always_run: true
