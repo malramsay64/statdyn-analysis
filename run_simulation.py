@@ -18,7 +18,7 @@ from statdyn import initialise, Simulation, crystals
 
 
 crystal_funcs={
-    'p2': crystals.p2,
+    'p2': crystals.TrimerP2,
 }
 
 def get_temp(fname):
@@ -38,28 +38,44 @@ def crystalline():
     Simulation.run_npt(snapshot, 0.1, 1)
 
 
-def main(steps, temp, directory, output, thermo=True, init_crys=None, lattice_lengths=(30, 40)):
-    if init_crys:
+def main():
+    args = _argument_parser().parse_args()
+    if args.init_crys:
         crys = crystal_funcs.get(init_crys)
-        snapshot = initialise.init_from_crystal(crys(), cell_dimensions=lattice_lengths).take_snapshot()
-    elif glob.glob(directory+'/'+initialise.get_fname(temp)):
+        snapshot = initialise.init_from_crystal(
+            crys(),
+            cell_dimensions=lattice_lengths,
+            init_args=args.hoomd_args,
+        ).take_snapshot()
+    elif glob.glob(args.dir+'/'+initialise.get_fname(args.temp)):
         snapshot = initialise.init_from_file(
-            directory+'/'+initialise.get_fname(temp)).take_snapshot()
+            args.dir+'/'+initialise.get_fname(args.temp),
+            init_args=args.hoomd_args,
+        ).take_snapshot()
     else:
-        snapshot = initialise.init_from_file(directory+'/'+initialise.get_fname(
-            get_closest(temp, directory))).take_snapshot()
-    data = Simulation.run_npt(
-        snapshot,
-        temp,
-        steps,
-        thermo=thermo
-    )
-    os.makedirs(output, exist_ok=True)
-    with pandas.HDFStore(output+'/'+initialise.get_fname(temp, 'hdf5')) as dst:
-        dst['dynamics'] = data
+        snapshot = initialise.init_from_file(args.dir+'/'+initialise.get_fname(
+            get_closest(args.temp, args.dir))).take_snapshot()
+    if args.iterations:
+        Simulation.iterate_random(args.dir,
+                                  args.temp,
+                                  args.steps,
+                                  args.iterations,
+                                  args.output,
+                                  init_args=args.hoomd_args,
+                                 )
+    else:
+        data = Simulation.run_npt(
+            snapshot,
+            args.temp,
+            args.steps,
+            thermo=args.thermo,
+            init_args=args.hoomd_args,
+        )
+        os.makedirs(output, exist_ok=True)
+        with pandas.HDFStore(args.output+'/'+initialise.get_fname(args.temp, 'hdf5')) as dst:
+            dst['dynamics'] = data
 
-
-if __name__ == "__main__":
+def _argument_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '-s',
@@ -112,7 +128,21 @@ if __name__ == "__main__":
         default=(30, 40),
         help='Number of repetitions in the a and b lattice vectors'
     )
+    parser.add_argument(
+        '--iterations',
+        type=int,
+        default=None,
+        help='Number of random iterations to run'
+    )
+    parser.add_argument(
+        '--hoomd-args',
+        type=str,
+        default='',
+        help='String of arguments to pass to hoomd on initialisation'
+    )
     parser.set_defaults(thermo=True)
-    args = parser.parse_args()
-    main(args.steps, args.temp, args.dir, args.output, args.thermo, args.init_crys, args.lattice_lengths)
+    return parser
 
+
+if __name__ == "__main__":
+    main()

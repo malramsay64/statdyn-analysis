@@ -149,7 +149,7 @@ def read_snapshot(fname, rand=False):
             return snapshot
 
 
-def iterate_random(directory, temp, steps, iterations=2, **kwargs):
+def iterate_random(directory, temp, steps, iterations=2, output='.', **kwargs):
     """Main function to run stuff
     Keyword Args:
         init_args (str): Args with which to initialise the hoomd context.
@@ -176,5 +176,5 @@ def iterate_random(directory, temp, steps, iterations=2, **kwargs):
             steps,
             **kwargs
         )
-        with pandas.HDFStore(splitext(init_file)[0] + '.hdf5') as store:
+        with pandas.HDFStore(output+'/'+splitext(init_file)[0] + '.hdf5') as store:
             store['dyn{i}'.format(i=iteration)] = dynamics

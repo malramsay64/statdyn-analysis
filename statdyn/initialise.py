@@ -25,7 +25,7 @@ def set_defaults(kwargs):
     kwargs.setdefault('cell_len', 4)
     kwargs.setdefault('cell_dimensions', (10, 10))
     kwargs.setdefault('timesep', 0)
-    kwargs.setdefault('cmd_args', '')
+    kwargs.setdefault('init_args', '')
 
 
 def init_from_file(fname, **kwargs):
@@ -33,7 +33,7 @@ def init_from_file(fname, **kwargs):
     """
     set_defaults(kwargs)
     context = kwargs.get('context',
-                         hoomd.context.initialize(kwargs.get('cmd_args')))
+                         hoomd.context.initialize(kwargs.get('init_args')))
     snapshot = hoomd.data.gsd_snapshot(fname, kwargs.get('timestep', 0))
     sys = init_from_snapshot(snapshot, context=context, **kwargs)
     return sys
@@ -47,7 +47,7 @@ def init_from_none(**kwargs):
     """
     set_defaults(kwargs)
     context = kwargs.get(
-        'context', hoomd.context.initialize(kwargs.get('cmd_args')))
+        'context', hoomd.context.initialize(kwargs.get('init_args')))
     with context:
         sys = hoomd.init.create_lattice(
             unitcell=hoomd.lattice.sq(a=kwargs.get('cell_len')),
@@ -95,7 +95,7 @@ def init_from_crystal(crystal, **kwargs):
     """
     kwargs.setdefault('mol', crystal.molecule)
     set_defaults(kwargs)
-    context1 = hoomd.context.initialize(kwargs.get('cmd_args'))
+    context1 = hoomd.context.initialize(kwargs.get('init_args'))
     with context1:
         sys = hoomd.init.create_lattice(
             unitcell=crystal.get_unitcell(),
@@ -107,7 +107,7 @@ def init_from_crystal(crystal, **kwargs):
         hoomd.run(1000)
         equil_snap = sys.take_snapshot(all=True)
     context2 = kwargs.get('context',
-                          hoomd.context.initialize(kwargs.get('cmd_args')))
+                          hoomd.context.initialize(kwargs.get('init_args')))
     with context2:
         snap = _make_orthorhombic(equil_snap)
         sys = init_from_snapshot(snap, **kwargs)
