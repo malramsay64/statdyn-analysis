@@ -6,21 +6,20 @@
 #
 # Distributed under terms of the MIT license.
 
-"""
-Module for setting up and running a hoomd simulation
-"""
-from os.path import splitext
+"""Module for setting up and running a hoomd simulation."""
+
+from pathlib import Path
 
 import hoomd
 import hoomd.md as md
 import numpy as np
 import pandas
 from statdyn import TimeDep, initialise
-from statdyn.StepSize import generate_step_series, generate_steps
+from statdyn.StepSize import GenerateStepSeries
 
 
 def set_defaults(kwargs):
-    """Set the default values for parameters"""
+    """Set the default values for parameters."""
     kwargs.setdefault('init_args', '')
     kwargs.setdefault('tau', 1.)
     kwargs.setdefault('press', 13.5)
@@ -36,8 +35,11 @@ def set_defaults(kwargs):
     kwargs.setdefault('dyn_many', True)
 
 
-def run_npt(snapshot, temp, steps, **kwargs):
-    """Initialise and run a hoomd npt simulation
+def run_npt(snapshot: hoomd.data.SnapshotParticleData,
+            temp: float,
+            steps: int,
+            **kwargs) -> pandas.DataFrame:
+    """Initialise and run a hoomd npt simulation.
 
     Args:
         snapshot (class:`hoomd.data.snapshot`): Hoomd snapshot object
@@ -57,6 +59,7 @@ def run_npt(snapshot, temp, steps, **kwargs):
             Default: 13.5
         tauP (float): The restoring mass for the pressure integrator
             Default: 1.
+
     """
     set_defaults(kwargs)
     context = hoomd.context.initialize(kwargs.get('init_args'))
@@ -67,20 +70,16 @@ def run_npt(snapshot, temp, steps, **kwargs):
         _set_integrator(kwargs)
         _set_thermo(kwargs)
         _set_dump(kwargs)
+        dynamics = TimeDep.TimeDepMany()
+        dynamics.append(system.take_snapshot(all=True), 0, 0)
         if kwargs.get('dyn_many'):
-            dynamics = TimeDep.TimeDepMany()
-            dynamics.append(system.take_snapshot(all=True), 0, 0)
-            for curr_step, index in generate_step_series(steps,
-                                                         ret_index=True):
-                hoomd.run_upto(curr_step)
-                dynamics.append(system.take_snapshot(all=True),
-                                index, curr_step)
+            iterator = GenerateStepSeries(steps)
         else:
-            dynamics = TimeDep.TimeDep2dRigid(  # pylint: disable=redefined-variable-type
-                system.take_snapshot(all=True), 0)
-            for curr_step in generate_steps(steps):
-                hoomd.run_upto(curr_step)
-                dynamics.append(system.take_snapshot(all=True), curr_step)
+            iterator = GenerateStepSeries(steps, max_gen=1)
+        for curr_step in iterator:
+            hoomd.run_upto(curr_step)
+            dynamics.append(system.take_snapshot(all=True),
+                            iterator.get_index(), curr_step)
         _make_restart(kwargs)
     return dynamics.get_all_data()
 
@@ -130,15 +129,17 @@ def _set_dump(kwargs):
         )
 
 
-def read_snapshot(fname, rand=False):
-    """Read a hoomd snapshot from a hoomd gsd file
+def read_snapshot(fname: str,
+                  rand: bool=False) -> hoomd.data.SnapshotParticleData:
+    """Read a hoomd snapshot from a hoomd gsd file.
 
     Args:
         fname (string): Filename of GSD file to read in
         rand (bool): Whether to randomise the momenta of all the particles
 
     Returns:
-        class:`hoomd.data.Snapshot`: Hoomd snapshot
+        class:`hoomd.data.SnapshotParticleData`: Hoomd snapshot
+
     """
     with hoomd.context.initialize(''):
         snapshot = hoomd.data.gsd_snapshot(fname)
@@ -149,8 +150,25 @@ def read_snapshot(fname, rand=False):
             return snapshot
 
 
-def iterate_random(directory, temp, steps, iterations=2, output='.', **kwargs):
-    """Main function to run stuff
+def iterate_random(directory: str,
+                   temp: float,
+                   steps: int,
+                   iterations: int=2,
+                   output: str='.',
+                   **kwargs) -> None:
+    """Iterate over a configuration initialised with randomised momenta.
+
+    This function will take a single configuration and then run `iterations`
+    iterations initialising each with a different random momenta for both
+    translations and rotations.
+
+    Args:
+        directory (str): dir of input files
+        temp (float): temp of simulation
+        steps (int): number of steps to run simulation
+        iterations(int): number of iterations of length steps to run
+        output (str): directory to output data
+
     Keyword Args:
         init_args (str): Args with which to initialise the hoomd context.
         Default: ''
@@ -164,17 +182,19 @@ def iterate_random(directory, temp, steps, iterations=2, output='.', **kwargs):
         Default: 13.5
         tauP (float): The restoring mass for the pressure integrator
         Default: 1.
+
     """
-    init_file = directory + "/Trimer-{press:.2f}-{temp:.2f}.gsd".format(
+    init_file = Path(directory) / "Trimer-{press:.2f}-{temp:.2f}.gsd".format(
         press=kwargs.get('press', 13.5),
         temp=temp
     )
     for iteration in range(iterations):
         dynamics = run_npt(
-            read_snapshot(init_file, rand=True),
+            read_snapshot(str(init_file), rand=True),
             temp,
             steps,
             **kwargs
         )
-        with pandas.HDFStore(output+'/'+splitext(init_file)[0] + '.hdf5') as store:
+        outfile = Path(output) / (init_file.stem + '.hdf5')
+        with pandas.HDFStore(outfile) as store:
             store['dyn{i}'.format(i=iteration)] = dynamics

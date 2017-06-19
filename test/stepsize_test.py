@@ -6,12 +6,10 @@
 #
 # Distributed under terms of the MIT license.
 
-"""
-Testing for the stepsize module
-"""
+"""Testing for the stepsize module."""
 
 import pytest
-from statdyn.StepSize import generate_step_series, generate_steps
+from statdyn.StepSize import GenerateStepSeries, generate_steps
 
 
 @pytest.fixture(params=[
@@ -29,7 +27,7 @@ from statdyn.StepSize import generate_step_series, generate_steps
      [-4, -3, -2, -1, 0, 10]},
 ])
 def steps(request):
-    """generate the steps lists"""
+    """Generate the steps lists."""
     request.param['gen'] = list(generate_steps(request.param['max'],
                                                request.param['lin'],
                                                request.param['start']))
@@ -37,20 +35,23 @@ def steps(request):
 
 
 def test_generate_steps(steps):  # pylint: disable=redefined-outer-name
-    """Test generation of steps"""
+    """Test generation of steps."""
     assert steps['gen'][-1] == steps['max']
     assert steps['gen'] == steps['def']
 
 
 def test_generate_step_series():
-    """Test generate_steps adn generate_step_series give same results for case
-    of only a single series"""
-    single = list(generate_steps(1000, 9, 0))
-    series = list(generate_step_series(1000, 9, 10000, 1))
+    """Test generate_steps and generate_step_series.
+
+    This ensures that both functions give same results for case of only a
+    single series
+    """
+    single = list(generate_steps(1000, 10, 0))
+    series = list(GenerateStepSeries(1000, 10, 10000, 1))
     print(series)
     assert single == series
 
 
 def test_generate_step_series_many():
-    """Test generation of a step series works"""
-    list(generate_step_series(10000, 9, 1000, 100))
+    """Test generation of a step series works."""
+    list(GenerateStepSeries(10000, 10, 1000, 100))

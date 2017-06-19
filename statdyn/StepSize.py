@@ -1,17 +1,14 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-""" A series of classes that specify various step size functions"""
+"""A series of classes that specify various step size functions."""
 
-from typing import Iterator
-
-from numba import jit
+from typing import Iterable, Iterator, List
 
 
-@jit
 def generate_steps(total_steps: int,
                    num_linear: int=100,
                    start: int=0) -> Iterator[int]:
-    """Generate a sequence of steps with a power law
+    """Generate a sequence of steps with a power law.
 
     This is a function for generating a sequence of steps such that they create
     a continous curve when plotted on a log scale. The idea is that at long
@@ -47,33 +44,57 @@ def generate_steps(total_steps: int,
     yield total_steps
 
 
-def generate_step_series(total_steps: int,
-                         num_linear: int=100,
-                         gen_steps: int=300000,
-                         max_gen: int=500,
-                         ret_index: bool=False):
-    """Generate a many sequences of steps with different starting values
-    """
-    gen = generate_steps(total_steps, num_linear, 0)
-    curr_step = next(gen)
-    generators = [(next(gen), gen)]
-    argmin = 0
-    try:
-        while curr_step <= total_steps:
-            if ret_index:
-                yield curr_step, argmin
-            else:
-                yield curr_step
-            if (curr_step % gen_steps == 0
-                    and curr_step > 0
-                    and len(generators) < max_gen):
-                gen = generate_steps(total_steps, num_linear, curr_step)
-                generators.append((curr_step, gen))
-            argmin = min(enumerate(generators), key=lambda x: x[1][0])[0]
-            curr_step, gen = generators[argmin]
-            generators[argmin] = (next(gen), gen)
-    except StopIteration:
-        if ret_index:
-            yield curr_step, argmin
-        else:
-            yield curr_step
+class GenerateStepSeries(Iterable):
+    """Generate a many sequences of steps with different starting values."""
+
+    def __init__(self,
+                 total_steps: int,
+                 num_linear: int=100,
+                 gen_steps: int=300000,
+                 max_gen: int=500) -> None:
+        self.total_steps = total_steps
+        self.num_linear = num_linear
+        self.gen_steps = gen_steps
+        self.max_gen = max_gen
+        self.generators: List = []
+        self.argmin = 0
+        self.stop_iteration = False
+
+    def __iter__(self):
+        gen = generate_steps(self.total_steps, self.num_linear, 0)
+        self.generators = [(next(gen), gen)]
+        self.argmin = 0
+        self.stop_iteration = False
+        return self
+
+    def __next__(self) -> int:
+        if self.stop_iteration:
+            raise StopIteration
+        self.argmin = min(enumerate(self.generators),
+                          key=lambda x: x[1][0])[0]
+        curr_step, gen = self.generators[self.argmin]
+        print(curr_step)
+        try:
+            self.generators[self.argmin] = (next(gen), gen)
+            if (curr_step % self.gen_steps == 0
+                    and len(self.generators) < self.max_gen):
+                self.generators.append(
+                    (curr_step,
+                     generate_steps(self.total_steps,
+                                    self.num_linear,
+                                    curr_step))
+                )
+            print(curr_step)
+            return curr_step
+        except StopIteration:
+            self.stop_iteration = True
+            return curr_step
+        return self.total_steps
+
+    def get_index(self) -> int:
+        """Return the index from which the previous step was returned."""
+        return self.argmin
+
+    def next(self) -> int:
+        """Return the next value of the iterator."""
+        return self.__next__()

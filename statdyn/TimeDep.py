@@ -1,51 +1,69 @@
-#!/usr/bin/env python
+#! /usr/bin/env python
 # -*- coding: utf-8 -*-
-""" A set of classes used for computing the dynamic properties of a Hoomd MD
-simulation"""
+# vim:fenc=utf-8
+#
+# Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
+#
+# Distributed under terms of the MIT license.
 
-from __future__ import print_function
+"""Used for computing the dynamic properties of a Hoomd MD simulation."""
 
+from typing import List
+
+import hoomd
 import numpy as np
 import pandas
 import quaternion
 
 
 class TimeDep(object):
-    """ Class to compute the time dependent characteristics of individual
-    particles in a hoomd simulation.
+    """Compute time dependent characteristics of individual particles."""
 
-    Args:
-        snapshot (:class:`hoomd.data.SnapshotParticleData`): Hoomd snapshot
-            object which is the initial configuration for the purposes of the
-            dynamics calculations
-    """
+    def __init__(self,
+                 snapshot: hoomd.data.SnapshotParticleData,
+                 timestep: int) -> None:
+        """Initialise TimeDep instance.
 
-    def __init__(self, snapshot, timestep):
+        Args:
+            snapshot (:class:`hoomd.data.SnapshotParticleData`): Hoomd snapshot
+                object which is the initial configuration for the purposes of
+                the dynamics calculations
+            timestep (int): Timestep at which the inital configuration starts.
+        """
         self.t_init = snapshot
         self.timestep = timestep
         self._init_snapshot(snapshot)
         self._data = self.get_data(snapshot, timestep)
 
-    def _init_snapshot(self, snapshot):
-        """Set the initial snapshot"""
+    def _init_snapshot(self,
+                       snapshot: hoomd.data.SnapshotParticleData) -> None:
+        """Set the initial snapshot.
+
+        Args:
+            snapshot: (class:`hoomd.data.SnapshotParticleData`): The initial
+                snapshot
+        """
         self.pos_init = snapshot.particles.position
         self.image_init = snapshot.particles.image
 
-    def get_time_diff(self, timestep):
-        """ The difference in time between the currrent timestep and the
+    def get_time_diff(self, timestep: int) -> int:
+        """Compute the time difference between timesteps.
+
+        The difference in time between the currrent timestep and the
         timestep of the initial configuration.
 
         Args:
-            snapshot (:class:`hoomd.data.SnapshotParticleData`): The snapshot
-                the difference is to be calculated at
+            timestep (int): The timestep at which to compute the difference.
 
         Returns:
             int: Difference between initial and current timestep
+
         """
         return timestep - self.timestep
 
-    def _unwrap(self, snapshot):
-        """ Unwraps periodic positions to absolute positions
+    def _unwrap(self,
+                snapshot: hoomd.data.SnapshotParticleData) -> np.array:
+        """Unwraps periodic positions to absolute positions.
 
         Converts the periodic potition of each particle to it's *real* position
         by taking into account the *image* the particle exitsts on.
@@ -56,6 +74,7 @@ class TimeDep(object):
         Returns:
             :class:`numpy.array`: A numpy array of position arrays contianing
             the unwrapped positions
+
         """
         try:
             box_dim = np.array([
@@ -74,8 +93,9 @@ class TimeDep(object):
         image = snapshot.particles.image - self.image_init
         return pos + image * box_dim
 
-    def _displacement(self, snapshot):
-        """ Calculate the squared displacement for all bodies in the system.
+    def _displacement(self,
+                      snapshot: hoomd.data.SnapshotParticleData) -> np.array:
+        """Calculate the squared displacement for all bodies in the system.
 
         This is the function that computes the per body displacements for all
         the dynamic quantities. This is where the most computation takes place
@@ -87,12 +107,15 @@ class TimeDep(object):
 
         Returns:
             :class:`numpy.array`: An array containing per body displacements
+
         """
         curr = self._unwrap(snapshot)
         return np.sqrt(np.power(curr - self.pos_init, 2).sum(1))
 
-    def get_data(self, snapshot, timestep):
-        """ Get translational and rotational data
+    def get_data(self,
+                 snapshot: hoomd.data.SnapshotParticleData,
+                 timestep: int) -> pandas.DataFrame:
+        """Get translational and rotational data.
 
         Args:
             system (:class:`hoomd.data.SnapshotParticleData`): Hoomd system
@@ -110,17 +133,17 @@ class TimeDep(object):
         return data
 
     def get_all_data(self) -> pandas.DataFrame:
-        """Return all the data
+        """Return all the data.
 
         Returns:
             class:`pandas.DataFrame`: All the data
+
         """
         return self._data
 
 
 class TimeDep2dRigid(TimeDep):
-    """ Class to compute the time dependent characteristics of 2D rigid bodies
-    in a hoomd simulation.
+    """Compute the time dependent characteristics of 2D rigid bodies.
 
     This class extends on from :class:`TimeDep` computing rotational properties
     of the 2D rigid bodies in the system. The distinction of two dimensional
@@ -132,13 +155,16 @@ class TimeDep2dRigid(TimeDep):
         expected to get different translational quantities using the
         :class:`TimeDep` and the :class:`TimeDep2dRigid` classes.
 
-    Args:
-        snapshot (:class:`hoomd.data.SnapshotParticleData`): Hoomd snapshot
-            object at the initial time for the dyanamics computations
-
     """
 
     def __init__(self, snapshot, timestep):
+        """Initialise TimeDep2dRigid class.
+
+        Args:
+            snapshot (:class:`hoomd.data.SnapshotParticleData`): Hoomd snapshot
+                object at the initial time for the dyanamics computations
+
+        """
         super(TimeDep2dRigid, self).__init__(snapshot, timestep)
 
     def _init_snapshot(self, snapshot):
@@ -149,11 +175,11 @@ class TimeDep2dRigid(TimeDep):
 
     @staticmethod
     def array2quat(array):
-        """Convert a numpy array to an array of quaternions"""
+        """Convert a numpy array to an array of quaternions."""
         return quaternion.as_quat_array(array.astype(float))
 
     def _rotations(self, snapshot):
-        R""" Calculate the rotation for every rigid body in the system
+        r"""Calculate the rotation for every rigid body in the system.
 
         This calculates the angle rotated between the initial configuration and
         the current configuration. It doesn't take into accout multiple
@@ -175,7 +201,7 @@ class TimeDep2dRigid(TimeDep):
         return rot
 
     def _displacement(self, snapshot):
-        """ Calculate the squared displacement for all bodies in the system.
+        """Calculate the squared displacement for all bodies in the system.
 
         This is the function that computes the per body displacements for all
         the dynamic quantities. This is where the most computation takes place
@@ -187,12 +213,13 @@ class TimeDep2dRigid(TimeDep):
 
         Returns:
             :class:`numpy.array`: An array containing per body displacements
+
         """
         curr = self._unwrap(snapshot)[:self.bodies]
         return np.sqrt(np.power(curr - self.pos_init[:self.bodies], 2).sum(1))
 
     def _all_displacement(self, snapshot):
-        """ Calculate the squared displacement for all bodies in the system.
+        """Calculate the squared displacement for all bodies in the system.
 
         This is the function that computes the per body displacements for all
         the dynamic quantities. This is where the most computation takes place
@@ -204,22 +231,28 @@ class TimeDep2dRigid(TimeDep):
 
         Returns:
             :class:`numpy.array`: An array containing per body displacements
+
         """
         curr = self._unwrap(snapshot)
         return np.sqrt(np.power(curr - self.pos_init, 2).sum(1))
 
     def append(self, snapshot, timestep):
-        """Append measurement to data"""
+        """Append measurement to data."""
         self._data = self._data.append(self.get_data(snapshot, timestep))
 
-    def get_data(self, snapshot, timestep):
-        """ Get translational and rotational data
+    def get_data(self,
+                 snapshot: hoomd.data.SnapshotParticleData,
+                 timestep: int) -> pandas.DataFrame:
+        """Get translational and rotational data.
 
         Args:
             snapshot (:class:`hoomd.data.SnapshotParticleData`): Hoomd data
                 object
 
         Returns:
+            class:`pandas.DataFrame`: The displacements, rotations and time
+                difference as a pandas dataframe.
+
         """
         data = pandas.DataFrame({
             'displacement': self._displacement(snapshot),
@@ -229,30 +262,34 @@ class TimeDep2dRigid(TimeDep):
         data.bodies = self.bodies
         return data
 
-    def get_all_data(self):
-        """Get all the data"""
+    def get_all_data(self) -> List[pandas.DataFrame]:
+        """Get all the data."""
         return self._data
 
 
 class TimeDepMany(object):
-    """Class to hold many TimeDep instances"""
+    """Class to hold many TimeDep instances."""
 
     def __init__(self):
+        """Initialise TimeDepMany class."""
         self._snapshots = {}
         self._data = []
 
     def add_init(self, snapshot, index, timestep):
-        """Add an initial snapshot at index"""
+        """Add an initial snapshot at index."""
         self._snapshots[index] = TimeDep2dRigid(snapshot, timestep)
         self.append(snapshot, index, timestep)
 
-    def append(self, snapshot, index, timestep):
-        """Add a measurement to dataset
+    def append(self,
+               snapshot: hoomd.data.SnapshotParticleData,
+               index: int,
+               timestep: int) -> None:
+        """Add a measurement to dataset.
 
         Args:
-            snapshot: Hoomd snapshot
-            index: The index of the starting position
-            timestep: Current timestep
+            snapshot (class`hoomd.data.SnapshotParticleData`): Hoomd snapshot
+            index (int): The index of the starting position
+            timestep (int): Current timestep
         """
         try:
             data = self._snapshots[index].get_data(snapshot, timestep)
@@ -262,5 +299,5 @@ class TimeDepMany(object):
             self.add_init(snapshot, index, timestep)
 
     def get_all_data(self) -> pandas.DataFrame:
-        """Return all the data"""
+        """Return all the data."""
         return pandas.concat(self._data)
