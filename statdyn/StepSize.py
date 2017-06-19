@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+
 """A series of classes that specify various step size functions."""
 
-from typing import Iterable, Iterator, List
+from typing import Iterable, Iterator, List  # pylint: disable=unused-import
 
 
 def generate_steps(total_steps: int,
@@ -56,7 +57,7 @@ class GenerateStepSeries(Iterable):
         self.num_linear = num_linear
         self.gen_steps = gen_steps
         self.max_gen = max_gen
-        self.generators: List = []
+        self.generators = []  # type: List
         self.argmin = 0
         self.stop_iteration = False
 
