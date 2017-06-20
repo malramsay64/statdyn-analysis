@@ -108,12 +108,19 @@ def _set_integrator(kwargs):
 
 def _set_thermo(kwargs):
     if kwargs.get('thermo'):
+        default = ['N', 'volume', 'momentum', 'temperature', 'pressure',
+                   'potential_energy', 'kinetic_energy',
+                   'translational_kinetic_energy', 'rotational_kinetic_energy',
+                   'npt_thermostat_energy']
+        rigid = ['temperature_rigid', 'pressure_rigid', 'num_particles_rigid',
+                 'translational_ndof_rigid', 'rotational_ndof_rigid',
+                 'potential_energy_rigid', 'kinetic_energy_rigid',
+                 'translational_kinetic_energy_rigid', 'npt_thermostat_energy']
         hoomd.analyze.log(
             kwargs.get('thermo_dir') + '/' +
             'thermo-{press:.2f}-{temp:.2f}.log'.format(
                 press=kwargs.get('press'), temp=kwargs.get('temp')),
-            ['volume', 'potential_energy', 'kinetic_energy',
-             'rotational_kinetic_energy', 'temperature', 'pressure'],
+            default + rigid,
             period=kwargs.get('thermo_period'),
         )
 
