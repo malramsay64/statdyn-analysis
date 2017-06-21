@@ -197,7 +197,7 @@ class TimeDep2dRigid(TimeDep):
         rot_q = orient_final / self.orient_init
         rot = quaternion.as_rotation_vector(rot_q).sum(axis=1)
         rot[rot > np.pi] -= 2 * np.pi
-        rot[rot < -np.pi] += 2 * np.pi
+        rot[rot <= -np.pi] += 2 * np.pi
         return rot
 
     def _displacement(self, snapshot):

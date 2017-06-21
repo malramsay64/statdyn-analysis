@@ -14,8 +14,9 @@ import hoomd
 import hoomd.md as md
 import numpy as np
 import pandas
-from statdyn import TimeDep, initialise
-from statdyn.StepSize import GenerateStepSeries
+
+from . import TimeDep, initialise
+from .StepSize import GenerateStepSeries
 
 
 def set_defaults(kwargs):

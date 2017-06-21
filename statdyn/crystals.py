@@ -6,7 +6,8 @@ import math
 import hoomd
 import numpy as np
 import quaternion as qt
-from statdyn import molecule
+
+from . import molecule
 
 
 class Crystal(object):

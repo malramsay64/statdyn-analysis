@@ -16,7 +16,8 @@ config.
 import hoomd
 import hoomd.md as md
 import numpy as np
-from statdyn import molecule
+
+from . import molecule
 
 
 def set_defaults(kwargs):
