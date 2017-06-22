@@ -14,7 +14,7 @@ from pathlib import Path
 import pandas
 from statdyn import Simulation, crystals, initialise
 
-crystal_funcs = {
+CRYSTAL_FUNCS = {
     'p2': crystals.TrimerP2,
 }
 
@@ -44,7 +44,7 @@ def main():
     args.output = Path(args.output)
     args.output.mkdir(exist_ok=True)
     if args.init_crys:
-        crys = crystal_funcs.get(args.init_crys)
+        crys = CRYSTAL_FUNCS.get(args.init_crys)
         snapshot = initialise.init_from_crystal(
             crys(),
             cell_dimensions=args.lattice_lengths,
@@ -75,6 +75,7 @@ def main():
             args.steps,
             thermo=args.thermo,
             init_args=args.hoomd_args,
+            output=args.output,
         )
         outfile = args.output / initialise.get_fname(args.temp, 'hdf5')
         with pandas.HDFStore(outfile) as dst:

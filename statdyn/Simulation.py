@@ -21,16 +21,17 @@ from .StepSize import GenerateStepSeries
 
 def set_defaults(kwargs):
     """Set the default values for parameters."""
+    kwargs.setdefault('output', Path('.'))
     kwargs.setdefault('init_args', '')
     kwargs.setdefault('tau', 1.)
     kwargs.setdefault('press', 13.5)
     kwargs.setdefault('tauP', 1.)
     kwargs.setdefault('dt', 0.005)
     kwargs.setdefault('thermo', True)
-    kwargs.setdefault('thermo_dir', '.')
+    kwargs.setdefault('thermo_dir', Path(kwargs.get('output', '.')))
     kwargs.setdefault('thermo_period', 10000)
     kwargs.setdefault('dump', True)
-    kwargs.setdefault('dump_dir', '.')
+    kwargs.setdefault('dump_dir', Path(kwargs.get('output', '.')))
     kwargs.setdefault('dump_period', 50000)
     kwargs.setdefault('restart', True)
     kwargs.setdefault('dyn_many', True)
@@ -88,7 +89,7 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
 def _make_restart(kwargs):
     if kwargs.get('restart'):
         hoomd.dump.gsd(
-            initialise.get_fname(kwargs.get('temp')),
+            kwargs.get('output') / initialise.get_fname(kwargs.get('temp')),
             None,
             group=hoomd.group.all(),
             overwrite=True,
@@ -118,7 +119,7 @@ def _set_thermo(kwargs):
                  'potential_energy_rigid', 'kinetic_energy_rigid',
                  'translational_kinetic_energy_rigid', 'npt_thermostat_energy']
         hoomd.analyze.log(
-            kwargs.get('thermo_dir') + '/' +
+            kwargs.get('thermo_dir') /
             'thermo-{press:.2f}-{temp:.2f}.log'.format(
                 press=kwargs.get('press'), temp=kwargs.get('temp')),
             default + rigid,
@@ -129,8 +130,7 @@ def _set_thermo(kwargs):
 def _set_dump(kwargs):
     if kwargs.get('dump'):
         hoomd.dump.gsd(
-            kwargs.get('dump_dir') + '/' +
-            'dump-{press:.2f}-{temp:.2f}.gsd'.format(
+            kwargs.get('dump_dir') / 'dump-{press:.2f}-{temp:.2f}.gsd'.format(
                 press=kwargs.get('press'), temp=kwargs.get('temp')),
             period=kwargs.get('dump_period'),
             group=hoomd.group.all()
@@ -158,11 +158,11 @@ def read_snapshot(fname: str,
             return snapshot
 
 
-def iterate_random(directory: str,
+def iterate_random(directory: Path,
                    temp: float,
                    steps: int,
                    iterations: int=2,
-                   output: str='.',
+                   output: Path=Path('.'),
                    **kwargs) -> None:
     """Iterate over a configuration initialised with randomised momenta.
 
@@ -192,7 +192,7 @@ def iterate_random(directory: str,
         Default: 1.
 
     """
-    init_file = Path(directory) / "Trimer-{press:.2f}-{temp:.2f}.gsd".format(
+    init_file = directory / "Trimer-{press:.2f}-{temp:.2f}.gsd".format(
         press=kwargs.get('press', 13.5),
         temp=temp
     )
@@ -201,8 +201,10 @@ def iterate_random(directory: str,
             read_snapshot(str(init_file), rand=True),
             temp,
             steps,
+            output=output,
             **kwargs
         )
+
         outfile = Path(output) / (init_file.stem + '.hdf5')
         with pandas.HDFStore(outfile) as store:
             store['dyn{i}'.format(i=iteration)] = dynamics

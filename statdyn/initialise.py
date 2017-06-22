@@ -110,7 +110,7 @@ def init_from_crystal(crystal, **kwargs):
     context2 = kwargs.get('context',
                           hoomd.context.initialize(kwargs.get('init_args')))
     with context2:
-        snap = _make_orthorhombic(equil_snap)
+        snap = make_orthorhombic(equil_snap)
         sys = init_from_snapshot(snap, **kwargs)
     return sys
 
@@ -132,7 +132,7 @@ def get_fname(temp: float, ext: str='gsd') -> str:
     )
 
 
-def _make_orthorhombic(snapshot):
+def make_orthorhombic(snapshot):
     len_x = snapshot.box.Lx
     len_y = snapshot.box.Ly
     len_z = snapshot.box.Lz
