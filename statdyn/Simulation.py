@@ -114,10 +114,15 @@ def _set_thermo(kwargs):
                    'potential_energy', 'kinetic_energy',
                    'translational_kinetic_energy', 'rotational_kinetic_energy',
                    'npt_thermostat_energy']
-        rigid = ['temperature_rigid', 'pressure_rigid', 'num_particles_rigid',
-                 'translational_ndof_rigid', 'rotational_ndof_rigid',
-                 'potential_energy_rigid', 'kinetic_energy_rigid',
-                 'translational_kinetic_energy_rigid', 'npt_thermostat_energy']
+        rigid = ['temperature_rigid_center',
+                 'pressure_rigid_center',
+                 'num_particles_rigid_center',
+                 'translational_ndof_rigid_center',
+                 'rotational_ndof_rigid_center',
+                 'potential_energy_rigid_center',
+                 'kinetic_energy_rigid_center',
+                 'translational_kinetic_energy_rigid_center',
+                 ]
         hoomd.analyze.log(
             kwargs.get('thermo_dir') /
             'thermo-{press:.2f}-{temp:.2f}.log'.format(
