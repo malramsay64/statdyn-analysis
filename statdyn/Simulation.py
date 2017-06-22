@@ -89,7 +89,8 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
 def _make_restart(kwargs):
     if kwargs.get('restart'):
         hoomd.dump.gsd(
-            kwargs.get('output') / initialise.get_fname(kwargs.get('temp')),
+            str(kwargs.get('output') /
+                initialise.get_fname(kwargs.get('temp'))),
             None,
             group=hoomd.group.all(),
             overwrite=True,
@@ -124,9 +125,9 @@ def _set_thermo(kwargs):
                  'translational_kinetic_energy_rigid_center',
                  ]
         hoomd.analyze.log(
-            kwargs.get('thermo_dir') /
-            'thermo-{press:.2f}-{temp:.2f}.log'.format(
-                press=kwargs.get('press'), temp=kwargs.get('temp')),
+            str(kwargs.get('thermo_dir') /
+                'thermo-{press:.2f}-{temp:.2f}.log'.format(
+                press=kwargs.get('press'), temp=kwargs.get('temp'))),
             default + rigid,
             period=kwargs.get('thermo_period'),
         )
@@ -135,8 +136,9 @@ def _set_thermo(kwargs):
 def _set_dump(kwargs):
     if kwargs.get('dump'):
         hoomd.dump.gsd(
-            kwargs.get('dump_dir') / 'dump-{press:.2f}-{temp:.2f}.gsd'.format(
-                press=kwargs.get('press'), temp=kwargs.get('temp')),
+            str(kwargs.get('dump_dir') /
+                'dump-{press:.2f}-{temp:.2f}.gsd'.format(
+                press=kwargs.get('press'), temp=kwargs.get('temp'))),
             period=kwargs.get('dump_period'),
             group=hoomd.group.all()
         )

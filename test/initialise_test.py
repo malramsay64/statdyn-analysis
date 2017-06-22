@@ -91,7 +91,7 @@ def test_make_orthorhombic():
     with hoomd.context.initialize():
         snap = create_snapshot()
         assert np.all(
-            initialise._make_orthorhombic(snap).particles.position ==  # pylint: disable=protected-access
+            initialise.make_orthorhombic(snap).particles.position ==
             snap.particles.position)
         assert snap.box.xy == 0
         assert snap.box.xz == 0
@@ -101,8 +101,7 @@ def test_make_orthorhombic():
             unitcell=crystals.TrimerP2().get_unitcell(),
             n=(10, 10)
         ).take_snapshot()
-        snap_ortho = initialise._make_orthorhombic(  # pylint: disable=protected-access
-            snap_crys)
+        snap_ortho = initialise.make_orthorhombic(snap_crys)
         assert np.all(
             snap_ortho.particles.position[:, 0] < snap_ortho.box.Lx / 2.)
         assert np.all(

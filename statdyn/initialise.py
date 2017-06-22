@@ -35,7 +35,7 @@ def init_from_file(fname, **kwargs):
     set_defaults(kwargs)
     context = kwargs.get('context',
                          hoomd.context.initialize(kwargs.get('init_args')))
-    snapshot = hoomd.data.gsd_snapshot(fname, kwargs.get('timestep', 0))
+    snapshot = hoomd.data.gsd_snapshot(str(fname), kwargs.get('timestep', 0))
     sys = init_from_snapshot(snapshot, context=context, **kwargs)
     return sys
 
@@ -132,7 +132,22 @@ def get_fname(temp: float, ext: str='gsd') -> str:
     )
 
 
-def make_orthorhombic(snapshot):
+def make_orthorhombic(snapshot: hoomd.data.SnapshotParticleData
+                      ) -> hoomd.data.SnapshotParticleData:
+    """Create orthorhombic unit cell from snapshot.
+
+    This uses the periodic boundary conditions of the cell to generate an
+    orthorhombic simulation cell from the input simulation environment. This
+    is to ensure consistency within simulations and because it is simpler to
+    use an orthorhombic simulation cell in calculations.
+
+    Todo:
+        This function doesn't yet account for particles within a molecule
+        which are accross a simulation boundary. This needs to be fixed before
+        this function is truly general, otherwise it only works with special
+        cells.
+
+    """
     len_x = snapshot.box.Lx
     len_y = snapshot.box.Ly
     len_z = snapshot.box.Lz
