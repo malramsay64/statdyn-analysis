@@ -23,7 +23,7 @@ OUTDIR.mkdir(exist_ok=True)
 def test_run_npt():
     """Test an npt run."""
     snapshot = initialise.init_from_none().take_snapshot()
-    Simulation.run_npt(snapshot, 3.00, 100, dyn_many=False, output=OUTDIR)
+    Simulation.run_npt(snapshot, 3.00, 10, dyn_many=False, output=OUTDIR)
     assert True
 
 
@@ -32,7 +32,7 @@ def test_run_multiple_concurrent(dyn_many):
     """Test running multiple concurrent."""
     snapshot = initialise.init_from_file(
         'test/data/Trimer-13.50-3.00.gsd').take_snapshot()
-    Simulation.run_npt(snapshot, 3.00, 100, dyn_many=dyn_many, output=OUTDIR)
+    Simulation.run_npt(snapshot, 3.00, 10, dyn_many=dyn_many, output=OUTDIR)
     assert True
 
 
@@ -45,7 +45,7 @@ def test_thermo():
     output = Path('test/tmp')
     output.mkdir(exist_ok=True)
     snapshot = initialise.init_from_none().take_snapshot()
-    Simulation.run_npt(snapshot, 3.00, 100, thermo=True, thermo_period=1,
+    Simulation.run_npt(snapshot, 3.00, 10, thermo=True, thermo_period=1,
                        output=OUTDIR)
     assert True
 
