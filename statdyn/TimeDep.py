@@ -8,7 +8,8 @@
 
 """Used for computing the dynamic properties of a Hoomd MD simulation."""
 
-from typing import List
+from pathlib import Path
+from typing import Any, Dict, List  # pylint: disable=unused-import
 
 import hoomd
 import numpy as np
@@ -268,14 +269,27 @@ class TimeDep2dRigid(TimeDep):
 
 
 class TimeDepMany(object):
-    """Class to hold many TimeDep instances."""
+    """Class to hold many TimeDep instances.
 
-    def __init__(self):
+    The data at each analysis step is saved to an HDF5 file so that large
+    datasets can be analysed without having to deal with memory issues.
+    """
+
+    def __init__(self, filename: Path=None) -> None:
         """Initialise TimeDepMany class."""
-        self._snapshots = {}
-        self._data = []
+        if filename:
+            self._path = filename.with_suffix('.hdf5')
+        else:
+            self._path = Path('TimeDepMany.hdf5')
+        self._snapshots = {}  # type: Dict[int, Any]
+        self._check_files()
 
-    def add_init(self, snapshot, index, timestep):
+    def _check_files(self) -> None:
+        if self._path.exists():
+            self._path.rename(self._path.with_suffix('.hdf5.bak'))
+
+    def add_init(self, snapshot: hoomd.data.SnapshotParticleData,
+                 index: int, timestep: int) -> None:
         """Add an initial snapshot at index."""
         self._snapshots[index] = TimeDep2dRigid(snapshot, timestep)
         self.append(snapshot, index, timestep)
@@ -294,10 +308,15 @@ class TimeDepMany(object):
         try:
             data = self._snapshots[index].get_data(snapshot, timestep)
             data['index'] = index
-            self._data.append(data)
+            self._write_file(data)
         except (IndexError, KeyError):
             self.add_init(snapshot, index, timestep)
 
-    def get_all_data(self) -> pandas.DataFrame:
+    def _write_file(self, data: pandas.DataFrame) -> None:
+        """Write data to hdf5 file."""
+        with pandas.HDFStore(str(self._path)) as dst:
+            dst.append('dynamics', data)
+
+    def get_datafile(self) -> Path:
         """Return all the data."""
-        return pandas.concat(self._data)
+        return self._path

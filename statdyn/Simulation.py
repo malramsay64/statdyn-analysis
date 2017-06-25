@@ -40,7 +40,7 @@ def set_defaults(kwargs):
 def run_npt(snapshot: hoomd.data.SnapshotParticleData,
             temp: float,
             steps: int,
-            **kwargs) -> pandas.DataFrame:
+            **kwargs) -> Path:
     """Initialise and run a hoomd npt simulation.
 
     Args:
@@ -83,7 +83,7 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
             dynamics.append(system.take_snapshot(all=True),
                             iterator.get_index(), curr_step)
         _make_restart(kwargs)
-    return dynamics.get_all_data()
+    return dynamics.get_datafile()
 
 
 def _make_restart(kwargs):
@@ -211,7 +211,6 @@ def iterate_random(directory: Path,
             output=output,
             **kwargs
         )
-
-        outfile = Path(output) / (init_file.stem + '.hdf5')
-        with pandas.HDFStore(outfile) as store:
-            store['dyn{i}'.format(i=iteration)] = dynamics
+        with pandas.HDFStore(dynamics) as store:
+            store['dyn{i}'.format(i=iteration)] = store.get('dynamics')
+            store.remove('dynamics')

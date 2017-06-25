@@ -57,15 +57,12 @@ class GenerateStepSeries(Iterable):
         self.num_linear = num_linear
         self.gen_steps = gen_steps
         self.max_gen = max_gen
-        self.generators = []  # type: List
-        self.argmin = 0
-        self.stop_iteration = False
-
-    def __iter__(self):
         gen = generate_steps(self.total_steps, self.num_linear, 0)
         self.generators = [(next(gen), gen)]
         self.argmin = 0
         self.stop_iteration = False
+
+    def __iter__(self):
         return self
 
     def __next__(self) -> int:
@@ -74,7 +71,6 @@ class GenerateStepSeries(Iterable):
         self.argmin = min(enumerate(self.generators),
                           key=lambda x: x[1][0])[0]
         curr_step, gen = self.generators[self.argmin]
-        print(curr_step)
         try:
             self.generators[self.argmin] = (next(gen), gen)
             if (curr_step % self.gen_steps == 0
@@ -85,7 +81,6 @@ class GenerateStepSeries(Iterable):
                                     self.num_linear,
                                     curr_step))
                 )
-            print(curr_step)
             return curr_step
         except StopIteration:
             self.stop_iteration = True
