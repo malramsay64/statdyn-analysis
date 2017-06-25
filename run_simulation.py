@@ -11,7 +11,7 @@
 import argparse
 from pathlib import Path
 
-import pandas
+import hoomd
 from statdyn import Simulation, crystals, initialise
 
 CRYSTAL_FUNCS = {
@@ -37,29 +37,36 @@ def crystalline():
     Simulation.run_npt(snapshot, 0.1, 1)
 
 
+def get_initial_snapshot(**kwargs) -> hoomd.data.SnapshotParticleData:
+    """Create the appropriate initial snapshot based on kwargs."""
+    if kwargs.get('init_crys'):
+        crys = CRYSTAL_FUNCS.get(kwargs.get('init_crys'))
+        return initialise.init_from_crystal(
+            crys(),
+            cell_dimensions=kwargs.get('lattice_lengths'),
+            init_args=kwargs.get('hoomd_args'),
+        ).take_snapshot()
+
+    infile = kwargs.get('dir') / initialise.get_fname(kwargs.get('temp'))
+    if infile.is_file():
+        return initialise.init_from_file(
+            infile,
+            init_args=kwargs.get('hoomd_args'),
+        ).take_snapshot()
+    else:
+        return initialise.init_from_file(
+            kwargs.get('dir') / initialise.get_fname(
+                get_closest(kwargs.get('temp'), kwargs.get('dir')))
+        ).take_snapshot()
+
+
 def main():
     """Run main function."""
     args = _argument_parser().parse_args()
     args.dir = Path(args.dir)
     args.output = Path(args.output)
     args.output.mkdir(exist_ok=True)
-    if args.init_crys:
-        crys = CRYSTAL_FUNCS.get(args.init_crys)
-        snapshot = initialise.init_from_crystal(
-            crys(),
-            cell_dimensions=args.lattice_lengths,
-            init_args=args.hoomd_args,
-        ).take_snapshot()
-    elif (args.dir / initialise.get_fname(args.temp)).is_file():
-        snapshot = initialise.init_from_file(
-            args.dir / initialise.get_fname(args.temp),
-            init_args=args.hoomd_args,
-        ).take_snapshot()
-    else:
-        snapshot = initialise.init_from_file(
-            args.dir / initialise.get_fname(get_closest(args.temp, args.dir))
-        ).take_snapshot()
-    if args.iterations:
+    if args.iterations > 1:
         Simulation.iterate_random(
             args.dir,
             args.temp,
@@ -69,17 +76,14 @@ def main():
             init_args=args.hoomd_args,
         )
     else:
-        data = Simulation.run_npt(
-            snapshot,
+        Simulation.run_npt(
+            get_initial_snapshot(**args),
             args.temp,
             args.steps,
             thermo=args.thermo,
             init_args=args.hoomd_args,
             output=args.output,
         )
-        outfile = args.output / initialise.get_fname(args.temp, 'hdf5')
-        with pandas.HDFStore(outfile) as dst:
-            dst['dynamics'] = data
 
 
 def _argument_parser() -> argparse.ArgumentParser:
