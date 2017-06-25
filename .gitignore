@@ -1,2 +1,6 @@
 # Ignore sphinx build files
 sphinx/build
+
+# Ignore test output
+test/output
+test/tmp
