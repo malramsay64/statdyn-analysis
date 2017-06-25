@@ -26,7 +26,7 @@ def get_temp(fname: Path) -> float:
 
 def get_closest(temp: float, directory: Path) -> float:
     """Find the closet already equilibrated temperature."""
-    files = directory.glob('/*.gsd')
+    files = directory.glob('*.gsd')
     return temp + min(
         [get_temp(t) - temp for t in files if get_temp(t) > temp])
 
@@ -44,14 +44,14 @@ def get_initial_snapshot(**kwargs) -> hoomd.data.SnapshotParticleData:
         return initialise.init_from_crystal(
             crys(),
             cell_dimensions=kwargs.get('lattice_lengths'),
-            init_args=kwargs.get('hoomd_args'),
+            init_args=kwargs.get('init_args'),
         ).take_snapshot()
 
     infile = kwargs.get('dir') / initialise.get_fname(kwargs.get('temp'))
     if infile.is_file():
         return initialise.init_from_file(
             infile,
-            init_args=kwargs.get('hoomd_args'),
+            init_args=kwargs.get('init_args'),
         ).take_snapshot()
     else:
         return initialise.init_from_file(
@@ -66,24 +66,11 @@ def main():
     args.dir = Path(args.dir)
     args.output = Path(args.output)
     args.output.mkdir(exist_ok=True)
+    kwargs = {key: val for key, val in vars(args).items() if val is not None}
     if args.iterations > 1:
-        Simulation.iterate_random(
-            args.dir,
-            args.temp,
-            args.steps,
-            args.iterations,
-            args.output,
-            init_args=args.hoomd_args,
-        )
+        Simulation.iterate_random(**kwargs)
     else:
-        Simulation.run_npt(
-            get_initial_snapshot(**args),
-            args.temp,
-            args.steps,
-            thermo=args.thermo,
-            init_args=args.hoomd_args,
-            output=args.output,
-        )
+        Simulation.run_npt(get_initial_snapshot(**kwargs), **kwargs)
 
 
 def _argument_parser() -> argparse.ArgumentParser:
@@ -142,16 +129,39 @@ def _argument_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         '--iterations',
         type=int,
-        default=None,
+        default=1,
         help='Number of random iterations to run'
     )
     parser.add_argument(
         '--hoomd-args',
+        dest='init_args',
         type=str,
         default='',
         help='String of arguments to pass to hoomd on initialisation'
     )
+    parser.add_argument(
+        '--dyn-many',
+        dest='dyn_many',
+        action='store_true',
+        help='''Have many starting configurations for dynamics in a single
+        simulation'''
+    )
+    parser.add_argument(
+        '--dyn-single',
+        dest='dyn_many',
+        action='store_false',
+        help='Have only a single starting configuration for dynamics'
+    )
+    parser.add_argument(
+        '--thermo-period',
+        help='Period thermodynamic properties are dumped'
+    )
+    parser.add_argument(
+        '--dump-period',
+        help='Period trajectory is dumped'
+    )
     parser.set_defaults(thermo=True)
+    parser.set_defaults(dyn_many=True)
     return parser
 
 
