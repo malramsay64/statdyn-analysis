@@ -24,7 +24,7 @@ def compute_motion(filename: Path):
                                        num_linear=100,
                                        gen_steps=50000,
                                        max_gen=1000)
-        dynamics = TimeDepMany()
+        dynamics = TimeDepMany(filename.with_suffix('.hdf5'))
         curr_step = 0
         for frame in src:
             dynamics.append(frame,

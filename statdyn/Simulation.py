@@ -72,7 +72,9 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
         _set_integrator(kwargs)
         _set_thermo(kwargs)
         _set_dump(kwargs)
-        dynamics = TimeDep.TimeDepMany()
+        dynamics = TimeDep.TimeDepMany(
+            (kwargs.get('output') /
+             initialise.get_fname(kwargs.get('temp'))).with_suffix('.hdf5'))
         dynamics.append(system.take_snapshot(all=True), 0, 0)
         if kwargs.get('dyn_many'):
             iterator = GenerateStepSeries(steps)

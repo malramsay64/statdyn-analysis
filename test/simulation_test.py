@@ -61,9 +61,8 @@ def test_orthorhombic_sims(cell_dimensions):
     output.mkdir(exist_ok=True)
     snap = initialise.init_from_crystal(crystals.TrimerP2(),
                                         cell_dimensions=cell_dimensions,
-                                        output=OUTDIR,
                                         ).take_snapshot()
-    Simulation.run_npt(snap, 0.1, 10)
+    Simulation.run_npt(snap, 0.1, 10, output=OUTDIR)
     assert True
 
 
@@ -79,3 +78,4 @@ def test_file_placement():
     assert (outdir / 'Trimer-13.50-3.00.gsd').is_file()
     assert (outdir / 'dump-13.50-3.00.gsd').is_file()
     assert (outdir / 'thermo-13.50-3.00.log').is_file()
+    assert (outdir / 'Trimer-13.50-3.00.hdf5').is_file()
