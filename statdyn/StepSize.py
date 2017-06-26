@@ -73,7 +73,8 @@ class GenerateStepSeries(Iterable):
         curr_step, gen = self.generators[self.argmin]
         try:
             self.generators[self.argmin] = (next(gen), gen)
-            if (curr_step % self.gen_steps == 0
+            if (self.gen_steps > 0
+                    and curr_step % self.gen_steps == 0
                     and len(self.generators) < self.max_gen):
                 self.generators.append(
                     (curr_step,

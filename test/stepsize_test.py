@@ -55,3 +55,16 @@ def test_generate_step_series():
 def test_generate_step_series_many():
     """Test generation of a step series works."""
     list(GenerateStepSeries(10000, 10, 1000, 100))
+
+
+def test_next():
+    """Ensure next() works the same as __iter__."""
+    list_iter = list(GenerateStepSeries(1000, 10, 0))
+    next_iter = []
+    gen = GenerateStepSeries(1000, 10, 0)
+    try:
+        while True:
+            next_iter.append(gen.next())
+    except StopIteration:
+        pass
+    assert list_iter == next_iter
