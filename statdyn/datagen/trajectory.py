@@ -16,7 +16,7 @@ from ..StepSize import GenerateStepSeries
 from ..TimeDep import TimeDepMany
 
 
-def compute_motion(filename: Path):
+def compute_motion(filename: Path, outdir: Path=None):
     """Compute the translations and rotations of every molecule."""
     with gsd.hoomd.open(str(filename), 'rb') as src:
         num_steps = src[-1].configuration.step
@@ -24,7 +24,12 @@ def compute_motion(filename: Path):
                                        num_linear=100,
                                        gen_steps=50000,
                                        max_gen=1000)
-        dynamics = TimeDepMany(filename.with_suffix('.hdf5'))
+        if outdir:
+            outfile = outdir / filename.stem
+        else:
+            outfile = filename
+        outfile.with_suffix('.hdf5')
+        dynamics = TimeDepMany(outfile)
         curr_step = 0
         for frame in src:
             dynamics.append(frame,
