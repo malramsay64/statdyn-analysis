@@ -214,5 +214,4 @@ def iterate_random(directory: Path,
             **kwargs
         )
         with pandas.HDFStore(dynamics) as store:
-            store['dyn{i}'.format(i=iteration)] = store.get('dynamics')
-            store.remove('dynamics')
+            store.get_node('dynamics')._f_rename('dyn{i}'.format(i=iteration))

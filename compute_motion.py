@@ -10,8 +10,9 @@
 
 import argparse
 from pathlib import Path
+import logging
 
-from statdyn.datagen.trajectory import compute_motion
+from statdyn.datagen.trajectory import compute_motion, logger
 
 
 def main():
@@ -25,8 +26,23 @@ def main():
         help='''Directory to output files to. Default is to use the same
         directory as the input file'''
     )
+    parser.add_argument(
+        '-v',
+        '--verbose',
+        default=0,
+        action='count',
+        help='Increase logging level to debug'
+    )
     args = parser.parse_args()
-    compute_motion(Path(args.filename), Path(args.outdir))
+    if args.verbose:
+        logger.setLevel(logging.DEBUG)
+        logging.info('Setting log level to DEBUG')
+    else:
+        logger.setLevel(logging.WARNING)
+    if args.outdir:
+        compute_motion(Path(args.filename), Path(args.outdir))
+    else:
+        compute_motion(Path(args.filename))
 
 
 if __name__ == "__main__":

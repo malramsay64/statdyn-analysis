@@ -307,7 +307,7 @@ class TimeDepMany(object):
         """
         try:
             data = self._snapshots[index].get_data(snapshot, timestep)
-            data['index'] = index
+            data['start_index'] = index
             self._write_file(data)
         except (IndexError, KeyError):
             self.add_init(snapshot, index, timestep)
@@ -315,7 +315,8 @@ class TimeDepMany(object):
     def _write_file(self, data: pandas.DataFrame) -> None:
         """Write data to hdf5 file."""
         with pandas.HDFStore(str(self._path)) as dst:
-            dst.append('dynamics', data)
+            dst.append('dynamics', data,
+                       format='table', data_columns=['time', 'start_index'])
 
     def get_datafile(self) -> Path:
         """Return all the data."""
