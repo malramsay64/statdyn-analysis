@@ -16,9 +16,17 @@ from typing import Callable, List  # pylint: disable=unused-import
 
 import numpy as np
 import pandas
+from scipy.stats import spearmanr
 
 
-def transrot(trans: np.array, rot: np.array) -> float:
+def alpha(trans: np.array, rot: np.array) -> float:
+    """Compute alpha for a given array or translations and rotations."""
+    return (np.power(trans, 4).mean() /
+            (2 * (np.square(np.square(trans).mean())))
+            ) - 1
+
+
+def gamma(trans: np.array, rot: np.array) -> float:
     """Compute gamma for a given array or translations and rotations."""
     tmp = np.square(trans).mean() * np.square(rot).mean()
     if tmp:
@@ -26,37 +34,30 @@ def transrot(trans: np.array, rot: np.array) -> float:
     return 0
 
 
-def spearman_rank(trans: np.array, rot: np.array) -> float:
+def spearman_rank(trans: np.array, rot: np.array, fraction: float=0.1) -> float:
     """Compute the Spearman Rank coefficient for fast molecules.
 
     This takes the molecules with the fastest 10% of the translations or
     rotations and uses this subset to compute the Spearman rank coefficient.
     """
     t_order = np.argsort(trans)
-    r_order = np.argsort(rot)
-    num_elements = int(t_order.shape[0] / 10)
+    r_order = np.argsort(np.abs(rot))
+    num_elements = int(t_order.shape[0] * fraction)
     argmotion = np.union1d(t_order[:num_elements], r_order[:num_elements])
-    t_order_small = t_order[np.in1d(t_order, argmotion, assume_unique=True)]
-    r_order_small = r_order[np.in1d(r_order, argmotion, assume_unique=True)]
-    num_elements = len(t_order_small)
-    diff = np.zeros(num_elements)
-    for index, val in enumerate(r_order_small.index.values):
-        diff[index] = np.square(index - np.where(
-            t_order_small.index.values == val)[0][0])
-    return 1 - ((diff.sum() * 6) /
-                (num_elements * (np.square(num_elements) - 1)))
+    rho, phi = spearmanr(trans[argmotion], rot[argmotion])
+    return rho
 
 
 def allgroups(trans: pandas.DataFrame,
               rot: pandas.DataFrame=None,
-              func: Callable[[np.array, np.array], float]=transrot
+              func: Callable[[np.array, np.array], float]=gamma
               ) -> np.array:
     """Apply a function to all times independently."""
     tr_group = trans.groupby('time').displacement
     if rot:
         rot_group = rot.groupby('time').rotation
     else:
-        rot_group = trans.groupby('time').displacement
+        rot_group = trans.groupby('time').rotation
     res = []  # type: List[float]
     for trans, rot in zip(tr_group, rot_group):
         res.append(func(trans[1].values, rot[1].values))
