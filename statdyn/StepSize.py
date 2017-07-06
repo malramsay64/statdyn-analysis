@@ -3,12 +3,13 @@
 
 """A series of classes that specify various step size functions."""
 
-from typing import Iterable, Iterator, List  # pylint: disable=unused-import
-from collections import namedtuple
 import logging
+from typing import (Any, Iterable, Iterator,  # pylint: disable=unused-import
+                    List, Set)
 
 LOGGER = logging.getLogger('steps')
 LOGGER.setLevel(logging.WARNING)
+
 
 def generate_steps(total_steps: int,
                    num_linear: int=100,
@@ -51,7 +52,8 @@ def generate_steps(total_steps: int,
 
 class GenerateStepSeries(Iterable):
     """Generate a many sequences of steps with different starting values."""
-    _gen_tuple = namedtuple('gen_tuple', 'next_step generator')
+
+    # _gen_tuple: Callable[Any] = namedtuple('gen_tuple', ['next_step', 'generator'])
 
     def __init__(self,
                  total_steps: int,
@@ -63,10 +65,10 @@ class GenerateStepSeries(Iterable):
         self.gen_steps = gen_steps
         self.max_gen = max_gen
         gen = generate_steps(self.total_steps, self.num_linear, 0)
-        self.generators = [self._gen_tuple(next(gen), gen)]
+        self.generators = [(next(gen), gen)]
         self.argmin = 0
         self.stop_iteration = False
-        self.added = set()
+        self.added: Set[int] = set()
 
     def __iter__(self):
         return self
@@ -75,24 +77,24 @@ class GenerateStepSeries(Iterable):
         if self.stop_iteration:
             raise StopIteration
         self.argmin = min(enumerate(self.generators),
-                          key=lambda x: x[1].next_step)[0]
+                          key=lambda x: x[1][0])[0]
         curr_step, gen = self.generators[self.argmin]
         try:
-            self.generators[self.argmin] = self._gen_tuple(next(gen), gen)
+            self.generators[self.argmin] = (next(gen), gen)
             if (curr_step > 0
                     and self.gen_steps > 0
                     and curr_step % self.gen_steps == 0
                     and curr_step not in self.added
                     and len(self.generators) < self.max_gen):
                 gen = generate_steps(self.total_steps,
-                                    self.num_linear,
-                                    start=curr_step)
-                app = self._gen_tuple(next(gen), gen)
+                                     self.num_linear,
+                                     start=curr_step)
+                app = (next(gen), gen)
                 LOGGER.debug(
                     'Add generator: curr_step %s, gen steps %s, len(gen) %s'
                     + ' next step %s',
                     curr_step, self.gen_steps, len(self.generators),
-                    app.next_step
+                    app[0]
                 )
                 self.generators.append(app)
                 self.added.add(curr_step)

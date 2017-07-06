@@ -101,6 +101,8 @@ def _make_restart(kwargs):
 
 def _set_integrator(kwargs):
     md.update.enforce2d()
+    prime_interval = 33533
+    md.update.zero_momentum(period=prime_interval)
     md.integrate.mode_standard(kwargs.get('dt'))
     md.integrate.npt(
         group=hoomd.group.rigid_center(),
