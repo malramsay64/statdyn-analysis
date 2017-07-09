@@ -34,7 +34,10 @@ def gamma(trans: np.array, rot: np.array) -> float:
     return 0
 
 
-def spearman_rank(trans: np.array, rot: np.array, fraction: float=0.1) -> float:
+def spearman_rank(trans: np.array,
+                  rot: np.array,
+                  fraction: float=0.1
+                  ) -> float:
     """Compute the Spearman Rank coefficient for fast molecules.
 
     This takes the molecules with the fastest 10% of the translations or
@@ -44,7 +47,7 @@ def spearman_rank(trans: np.array, rot: np.array, fraction: float=0.1) -> float:
     r_order = np.argsort(np.abs(rot))
     num_elements = int(t_order.shape[0] * fraction)
     argmotion = np.union1d(t_order[:num_elements], r_order[:num_elements])
-    rho, phi = spearmanr(trans[argmotion], rot[argmotion])
+    rho, _ = spearmanr(trans[argmotion], rot[argmotion])
     return rho
 
 

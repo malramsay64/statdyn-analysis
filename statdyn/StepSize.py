@@ -53,8 +53,6 @@ def generate_steps(total_steps: int,
 class GenerateStepSeries(Iterable):
     """Generate a many sequences of steps with different starting values."""
 
-    # _gen_tuple: Callable[Any] = namedtuple('gen_tuple', ['next_step', 'generator'])
-
     def __init__(self,
                  total_steps: int,
                  num_linear: int=100,
