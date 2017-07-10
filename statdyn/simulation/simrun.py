@@ -34,8 +34,12 @@ def set_defaults(kwargs):
     kwargs.setdefault('dump_dir', Path(kwargs.get('output', '.')))
     kwargs.setdefault('dump_period', 50000)
     kwargs.setdefault('restart', True)
+    kwargs.setdefault('dynamics', True)
     kwargs.setdefault('dyn_many', True)
-    kwargs.setdefault('max_gen', 500)
+    if kwargs.get('dyn_many'):
+        kwargs.setdefault('max_gen', 500)
+    else:
+        kwargs['max_gen'] = 1
 
 
 def run_npt(snapshot: hoomd.data.SnapshotParticleData,
@@ -73,17 +77,17 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
         _set_integrator(kwargs)
         _set_thermo(kwargs)
         _set_dump(kwargs)
-        if kwargs.get('dyn_many'):
+        if kwargs.get('dynamics'):
             iterator = GenerateStepSeries(steps, kwargs.get('max_gen'))
+            prev_step = 0
+            for curr_step in iterator:
+                if curr_step == prev_step:
+                    continue
+                hoomd.run_upto(curr_step)
+                _dump_frame(kwargs, curr_step)
+                prev_step = curr_step
         else:
-            iterator = GenerateStepSeries(steps, max_gen=1)
-        prev_step = 0
-        for curr_step in iterator:
-            if curr_step == prev_step:
-                continue
-            hoomd.run_upto(curr_step)
-            _dump_frame(kwargs, curr_step)
-            prev_step = curr_step
+            hoomd.run(steps)
         _make_restart(kwargs)
 
 

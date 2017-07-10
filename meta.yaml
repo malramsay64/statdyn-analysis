@@ -1,0 +1,21 @@
+package:
+    name: statdyn
+
+source:
+    path: .
+
+requirements:
+    build:
+        - hoomd
+        - click
+        - python
+        - setuptools
+
+    run:
+        - python
+        - hoomd
+        - click
+
+build:
+    entry_points:
+        - sdrun = statdyn.sdrun.main:main
