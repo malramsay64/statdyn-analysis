@@ -12,7 +12,8 @@ import os
 from pathlib import Path
 
 import pytest
-from statdyn import Simulation, crystals, initialise
+from statdyn import crystals
+from statdyn.simulation import initialise, simrun
 
 from .crystal_test import CELL_DIMS
 
@@ -23,7 +24,7 @@ OUTDIR.mkdir(exist_ok=True)
 def test_run_npt():
     """Test an npt run."""
     snapshot = initialise.init_from_none().take_snapshot()
-    Simulation.run_npt(snapshot, 3.00, 10, dyn_many=False, output=OUTDIR)
+    simrun.run_npt(snapshot, 3.00, 10, dyn_many=False, output=OUTDIR)
     assert True
 
 
@@ -32,7 +33,7 @@ def test_run_multiple_concurrent(dyn_many):
     """Test running multiple concurrent."""
     snapshot = initialise.init_from_file(
         'test/data/Trimer-13.50-3.00.gsd').take_snapshot()
-    Simulation.run_npt(snapshot, 3.00, 10, dyn_many=dyn_many, output=OUTDIR)
+    simrun.run_npt(snapshot, 3.00, 10, dyn_many=dyn_many, output=OUTDIR)
     assert True
 
 
@@ -45,8 +46,8 @@ def test_thermo():
     output = Path('test/tmp')
     output.mkdir(exist_ok=True)
     snapshot = initialise.init_from_none().take_snapshot()
-    Simulation.run_npt(snapshot, 3.00, 10, thermo=True, thermo_period=1,
-                       output=OUTDIR)
+    simrun.run_npt(snapshot, 3.00, 10, thermo=True, thermo_period=1,
+                   output=OUTDIR)
     assert True
 
 
@@ -62,7 +63,7 @@ def test_orthorhombic_sims(cell_dimensions):
     snap = initialise.init_from_crystal(crystals.TrimerP2(),
                                         cell_dimensions=cell_dimensions,
                                         ).take_snapshot()
-    Simulation.run_npt(snap, 0.1, 10, output=OUTDIR)
+    simrun.run_npt(snap, 0.1, 10, output=OUTDIR)
     assert True
 
 
@@ -73,9 +74,9 @@ def test_file_placement():
     current = list(Path('.').glob('*'))
     _ = [os.remove(i) for i in outdir.glob('*')]
     snapshot = initialise.init_from_none().take_snapshot()
-    Simulation.run_npt(snapshot, 3.00, 10, dyn_many=False, output=outdir)
+    simrun.run_npt(snapshot, 3.00, 10, dyn_many=False, output=outdir)
     assert current == list(Path('.').glob('*'))
     assert (outdir / 'Trimer-13.50-3.00.gsd').is_file()
     assert (outdir / 'dump-13.50-3.00.gsd').is_file()
     assert (outdir / 'thermo-13.50-3.00.log').is_file()
-    assert (outdir / 'Trimer-13.50-3.00.hdf5').is_file()
+    assert (outdir / 'trajectory-13.50-3.00.gsd').is_file()

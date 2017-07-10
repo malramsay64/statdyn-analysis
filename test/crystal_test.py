@@ -11,7 +11,8 @@
 import hoomd
 import numpy as np
 import pytest
-from statdyn import crystals, initialise
+from statdyn import crystals
+from statdyn.simulation import initialise
 
 TEST_CLASSES = [
     crystals.Crystal,
@@ -40,23 +41,21 @@ def test_get_orientations(crys_class):
 
 @pytest.mark.parametrize("crys_class", TEST_CLASSES)
 def test_get_unitcell(crys_class):
-    """Test that the return type is correct"""
+    """Test the return type is correct."""
     crys = crys_class()
     assert isinstance(crys.get_unitcell(), hoomd.lattice.unitcell)
 
 
 @pytest.mark.parametrize("crys_class", TEST_CLASSES)
 def test_compute_volume(crys_class):
-    """Test the return type of the volume computation"""
+    """Test the return type of the volume computation."""
     crys = crys_class()
     assert isinstance(crys.compute_volume(), float)
 
 
 @pytest.mark.parametrize("crys_class", TEST_CLASSES)
 def test_abs_positions(crys_class):
-    """Check that the absolute positions function returns a matrix of the
-    correct shape
-    """
+    """Check the absolute positions function return corectly shaped matrix."""
     crys = crys_class()
     assert crys.get_abs_positions().shape == np.array(crys.positions).shape
 

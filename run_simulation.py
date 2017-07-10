@@ -12,7 +12,8 @@ import argparse
 from pathlib import Path
 
 import hoomd
-from statdyn import Simulation, crystals, initialise
+from statdyn import crystals
+from statdyn.simulation import initialise, simrun
 
 CRYSTAL_FUNCS = {
     'p2': crystals.TrimerP2,
@@ -34,7 +35,7 @@ def get_closest(temp: float, directory: Path) -> float:
 def crystalline():
     """Run a crystalline simulation."""
     snapshot = initialise.init_from_crystal(crystals.TrimerP2).take_snapshot()
-    Simulation.run_npt(snapshot, 0.1, 1)
+    simrun.run_npt(snapshot, 0.1, 1)
 
 
 def get_initial_snapshot(**kwargs) -> hoomd.data.SnapshotParticleData:
@@ -68,9 +69,9 @@ def main():
     args.output.mkdir(exist_ok=True)
     kwargs = {key: val for key, val in vars(args).items() if val is not None}
     if args.iterations > 1:
-        Simulation.iterate_random(**kwargs)
+        simrun.iterate_random(**kwargs)
     else:
-        Simulation.run_npt(get_initial_snapshot(**kwargs), **kwargs)
+        simrun.run_npt(get_initial_snapshot(**kwargs), **kwargs)
 
 
 def _argument_parser() -> argparse.ArgumentParser:

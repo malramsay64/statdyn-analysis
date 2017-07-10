@@ -15,8 +15,8 @@ import hoomd.md as md
 import numpy as np
 import pandas
 
-from . import TimeDep, initialise
-from .StepSize import GenerateStepSeries
+from . import initialise
+from ..StepSize import GenerateStepSeries
 
 
 def set_defaults(kwargs):
@@ -69,24 +69,22 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
     kwargs['context'] = context
     kwargs['temp'] = temp
     with context:
-        system = initialise.init_from_snapshot(snapshot, **kwargs)
+        initialise.init_from_snapshot(snapshot, **kwargs)
         _set_integrator(kwargs)
         _set_thermo(kwargs)
         _set_dump(kwargs)
-        dynamics = TimeDep.TimeDepMany(
-            (kwargs.get('output') /
-             initialise.get_fname(kwargs.get('temp'))).with_suffix('.hdf5'))
-        dynamics.append(system.take_snapshot(all=True), 0, 0)
         if kwargs.get('dyn_many'):
             iterator = GenerateStepSeries(steps, kwargs.get('max_gen'))
         else:
             iterator = GenerateStepSeries(steps, max_gen=1)
+        prev_step = 0
         for curr_step in iterator:
+            if curr_step == prev_step:
+                continue
             hoomd.run_upto(curr_step)
-            dynamics.append(system.take_snapshot(all=True),
-                            iterator.get_index(), curr_step)
+            _dump_frame(kwargs, curr_step)
+            prev_step = curr_step
         _make_restart(kwargs)
-    return dynamics.get_datafile()
 
 
 def _make_restart(kwargs):
@@ -143,10 +141,24 @@ def _set_dump(kwargs):
         hoomd.dump.gsd(
             str(kwargs.get('dump_dir') /
                 'dump-{press:.2f}-{temp:.2f}.gsd'.format(
-                press=kwargs.get('press'), temp=kwargs.get('temp'))),
+                press=kwargs.get('press'), temp=kwargs.get('temp'))
+                ),
             period=kwargs.get('dump_period'),
             group=hoomd.group.all()
         )
+
+
+def _dump_frame(kwargs, timestep):
+    hoomd.dump.gsd(
+        str(kwargs.get('output') /
+            'trajectory-{press:.2f}-{temp:.2f}.gsd'.format(
+            press=kwargs.get('press'), temp=kwargs.get('temp'))
+            ),
+        period=None,
+        time_step=timestep,
+        group=hoomd.group.rigid_center(),
+        static=['topology', 'attribute']
+    )
 
 
 def read_snapshot(fname: str,

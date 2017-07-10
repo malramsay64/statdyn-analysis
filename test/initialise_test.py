@@ -13,13 +13,14 @@ import tempfile
 import hoomd
 import numpy as np
 import pytest
-from statdyn import crystals, initialise
+from statdyn import crystals
+from statdyn.simulation import initialise
 
 from .crystal_test import CELL_DIMS, get_distance
 
 
 def create_snapshot():
-    """Function to easily create a snapshot for later use in testing."""
+    """Easily create a snapshot for later use in testing."""
     return initialise.init_from_none().take_snapshot()
 
 

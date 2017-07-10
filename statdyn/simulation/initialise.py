@@ -6,22 +6,26 @@
 #
 # Distributed under terms of the MIT license.
 
-"""
-Module for initialisation of a hoomd simulation environment
+"""Module for initialisation of a hoomd simulation environment.
 
 This module allows the initialisation from a number of different starting
 configurations, whether that is a file, a crystal lattice, or no predefined
 config.
 """
+import logging
+
 import hoomd
 import hoomd.md as md
 import numpy as np
 
-from . import molecule
+from .. import molecule
+
+
+logger = logging.getLogger(__name__)
 
 
 def set_defaults(kwargs):
-    """Set the argument defaults"""
+    """Set the argument defaults."""
     kwargs.setdefault('mol', molecule.Trimer())
     kwargs.setdefault('cell_len', 4)
     kwargs.setdefault('cell_dimensions', (10, 10))
@@ -30,8 +34,7 @@ def set_defaults(kwargs):
 
 
 def init_from_file(fname, **kwargs):
-    """Initialise a hoomd simulation from an input file
-    """
+    """Initialise a hoomd simulation from an input file."""
     set_defaults(kwargs)
     context = kwargs.get('context',
                          hoomd.context.initialize(kwargs.get('init_args')))
@@ -41,7 +44,7 @@ def init_from_file(fname, **kwargs):
 
 
 def init_from_none(**kwargs):
-    """Initialise a system from no inputs
+    """Initialise a system from no inputs.
 
     This creates a simulation with a large unit cell lattice such that there
     is no chance of molecules overlapping and places molecules on the lattice.
@@ -59,7 +62,7 @@ def init_from_none(**kwargs):
 
 
 def init_from_snapshot(snapshot, **kwargs):
-    """Initialise the configuration from a snapshot
+    """Initialise the configuration from a snapshot.
 
     In this function it is checked that the data in the snapshot and the
     passed arguments are in agreement with each other, and rectified if not.
@@ -84,11 +87,13 @@ def init_from_snapshot(snapshot, **kwargs):
     mol.define_dimensions()
     rigid = mol.define_rigid()
     rigid.create_bodies(create=create_bodies)
+    if create_bodies:
+        logger.info('Rigid bodies created')
     return sys
 
 
 def init_from_crystal(crystal, **kwargs):
-    """Initialise a hoomd simulation from a crystal lattice
+    """Initialise a hoomd simulation from a crystal lattice.
 
     Args:
         crystal (class:`statdyn.crystals.Crystal`): The crystal lattice to
@@ -116,13 +121,14 @@ def init_from_crystal(crystal, **kwargs):
 
 
 def get_fname(temp: float, ext: str='gsd') -> str:
-    """A constructor for the filename of based on the temperature
+    """Construct filename of based on the temperature.
 
     Args:
         temp (float): The temperature of the simulation
 
     Returns:
         str: The standard filename for my simulations
+
     """
     return '{mol}-{press:.2f}-{temp:.2f}.{ext}'.format(
         mol='Trimer',
@@ -163,8 +169,16 @@ def make_orthorhombic(snapshot: hoomd.data.SnapshotParticleData
 
 
 def _check_properties(snapshot, mol):
-    num_atoms = snapshot.particles.N
-    snapshot.particles.types = mol.get_types()
-    snapshot.particles.moment_inertia[:num_atoms + 1] = np.array(
-        [mol.moment_inertia] * num_atoms)
+    try:
+        nbodies = max(snapshot.particles.body) + 1
+        snapshot.particles.types = mol.get_types()
+        snapshot.particles.moment_inertia[:nbodies] = np.array(
+            [mol.moment_inertia] * nbodies)
+    except (AttributeError, ValueError):
+        num_atoms = len(snapshot.particles.position)
+        logger.debug(f'num_atoms: {num_atoms}')
+        if num_atoms > 0:
+            snapshot.particles.types = mol.get_types()
+            snapshot.particles.moment_inertia[:] = np.array(
+                [mol.moment_inertia] * num_atoms)
     return snapshot
