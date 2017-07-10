@@ -37,17 +37,32 @@ def compute_motion(filename: Path, outdir: Path=None):
         dynamics = TimeDepMany(outfile)
         curr_step = 0
         for frame in src:
-            assert curr_step == frame.configuration.step, logger.error(
-                'current step %s, frame step %s, step index %s',
-                curr_step, frame.configuration.step, step_iter.get_index())
-            dynamics.append(frame,
-                            step_iter.get_index(), curr_step)
-            curr_step = step_iter.next()
-            while curr_step == frame.configuration.step:
-                assert curr_step == frame.configuration.step, logger.error(
-                    'current step %s, frame step %s',
-                    curr_step, frame.configuration.step)
+            if curr_step == frame.configuration.step:
                 dynamics.append(frame,
                                 step_iter.get_index(), curr_step)
                 curr_step = step_iter.next()
+            elif curr_step > frame.configuration.step:
+                logger.warning(
+                    'Frame step index missing for current frame, skipping' +
+                    ' current step %s, frame step %s, step index %s',
+                    curr_step, frame.configuration.step, step_iter.get_index())
+            elif curr_step < frame.configuration.step:
+                logger.warning(
+                    'Current step is behind for current frame, incrementing'
+                    ' current step %s, frame step %s, step index %s',
+                    curr_step, frame.configuration.step, step_iter.get_index())
+                curr_step = step_iter.next()
+            # Deal with case where there are multiple generators with the same
+            # step in the sequence.
+            repeat_counter = 0
+            log_step = 0
+            while curr_step == frame.configuration.step:
+                dynamics.append(frame,
+                                step_iter.get_index(), curr_step)
+                repeat_counter += 1
+                log_step = curr_step
+                curr_step = step_iter.next()
+            if repeat_counter:
+                logger.info('Repeating step %s; %s repetitions',
+                            log_step, repeat_counter)
     return dynamics.get_datafile()

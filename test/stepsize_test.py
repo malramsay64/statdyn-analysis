@@ -59,9 +59,9 @@ def test_generate_step_series_many():
 
 def test_next():
     """Ensure next() works the same as __iter__."""
-    list_iter = list(GenerateStepSeries(1000, 10, 0))
+    list_iter = list(GenerateStepSeries(1000, 10, 1))
     next_iter = []
-    gen = GenerateStepSeries(1000, 10, 0)
+    gen = GenerateStepSeries(1000, 10, 1)
     try:
         while True:
             next_iter.append(gen.next())

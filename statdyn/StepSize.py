@@ -61,12 +61,13 @@ class GenerateStepSeries(Iterable):
         self.total_steps = total_steps
         self.num_linear = num_linear
         self.gen_steps = gen_steps
+        assert max_gen > 0, 'Number of generators has to be greater than 0'
         self.max_gen = max_gen
         gen = generate_steps(self.total_steps, self.num_linear, 0)
         self.generators = [(next(gen), gen)]
         self.argmin = 0
         self.stop_iteration = False
-        self.added: Set[int] = set()
+        self.added = 0
 
     def __iter__(self):
         return self
@@ -79,11 +80,10 @@ class GenerateStepSeries(Iterable):
         curr_step, gen = self.generators[self.argmin]
         try:
             self.generators[self.argmin] = (next(gen), gen)
-            if (curr_step > 0
-                    and self.gen_steps > 0
+            if (curr_step > self.added
                     and curr_step % self.gen_steps == 0
-                    and curr_step not in self.added
                     and len(self.generators) < self.max_gen):
+                self.added = curr_step
                 gen = generate_steps(self.total_steps,
                                      self.num_linear,
                                      start=curr_step)
@@ -95,7 +95,6 @@ class GenerateStepSeries(Iterable):
                     app[0]
                 )
                 self.generators.append(app)
-                self.added.add(curr_step)
             return curr_step
         except StopIteration:
             self.stop_iteration = True

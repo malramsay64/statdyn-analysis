@@ -35,6 +35,7 @@ def set_defaults(kwargs):
     kwargs.setdefault('dump_period', 50000)
     kwargs.setdefault('restart', True)
     kwargs.setdefault('dyn_many', True)
+    kwargs.setdefault('max_gen', 500)
 
 
 def run_npt(snapshot: hoomd.data.SnapshotParticleData,
@@ -77,7 +78,7 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
              initialise.get_fname(kwargs.get('temp'))).with_suffix('.hdf5'))
         dynamics.append(system.take_snapshot(all=True), 0, 0)
         if kwargs.get('dyn_many'):
-            iterator = GenerateStepSeries(steps)
+            iterator = GenerateStepSeries(steps, kwargs.get('max_gen'))
         else:
             iterator = GenerateStepSeries(steps, max_gen=1)
         for curr_step in iterator:
