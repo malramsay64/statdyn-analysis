@@ -1,21 +1,25 @@
 package:
     name: statdyn
+    version: '0.1.0'
 
 source:
     path: .
 
 requirements:
     build:
-        - hoomd
         - click
         - python
         - setuptools
+        - pandas
 
     run:
         - python
         - hoomd
         - click
+        - pandas
 
 build:
     entry_points:
         - sdrun = statdyn.sdrun.main:main
+    preserve_egg_dir: True
+    script: python setup.py install

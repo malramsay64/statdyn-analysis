@@ -4,3 +4,6 @@ sphinx/build
 # Ignore test output
 test/output
 test/tmp
+
+# Ignore conda build directories
+dist
