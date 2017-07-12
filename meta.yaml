@@ -1,16 +1,15 @@
 package:
     name: statdyn
-    version: '0.1.0'
+    version: GIT_DESCRIBE_TAG
 
 source:
-    path: .
+    git_url: https:github.com/malramsay64/MD-Molecules-Hoomd.git
 
 requirements:
     build:
         - click
         - python
         - setuptools
-        - pandas
 
     run:
         - python
@@ -23,3 +22,12 @@ build:
         - sdrun = statdyn.sdrun.main:main
     preserve_egg_dir: True
     script: python setup.py install
+    number: GIT_DESCRIBE_NUMBER
+
+test:
+    imports:
+        - statdyn
+    requires:
+        - pytest
+    commands:
+        - python -m pytest

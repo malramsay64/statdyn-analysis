@@ -17,8 +17,6 @@ setup(
     py_modules=['statdyn'],
     install_requires=[
         'Click',
-        'numpy',
-        'pandas',
     ],
     entry_points="""
         [console_scripts]
