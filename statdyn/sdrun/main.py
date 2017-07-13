@@ -112,9 +112,9 @@ def main(ctx, configurations, output, dynamics, steps, temperature):
               default='p2',
               type=click.Choice(crystals.CRYSTAL_FUNCS.keys()))
 @click.option('--lattice-lengths',
-              nargs=2, default=(30, 40), type=(int, int)
+              nargs=2, default=(30, 40), type=(int, int),
               help='Number of repetitiions in the a and b lattice vectors')
-def crystal(ctx, space_group):
+def crystal(ctx, space_group, lattice_lengths):
     """Run simulations on crystals."""
     snapshot = initialise.init_from_crystal(
         crystals.CRYSTAL_FUNCS.get(space_group)()
