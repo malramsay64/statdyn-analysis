@@ -4,13 +4,13 @@ package:
 
 source:
     path: .
-    #git_url: https://github.com/malramsay64/MD-Molecules-Hoomd.git
 
 requirements:
     build:
         - click
         - python
         - setuptools
+        - setuptools_scm
 
     run:
         - python

@@ -35,6 +35,8 @@ def set_defaults(kwargs):
 
 def init_from_file(fname, **kwargs):
     """Initialise a hoomd simulation from an input file."""
+    if not Path(infile).is_file:
+        raise FileNotFoundError
     set_defaults(kwargs)
     return hoomd.data.gsd_snapshot(str(fname), kwargs.get('timestep', 0))
 
