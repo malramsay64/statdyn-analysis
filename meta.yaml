@@ -36,3 +36,4 @@ test:
         - test/*
     commands:
         - python -c "import statdyn"
+        - pytest
