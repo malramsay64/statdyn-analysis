@@ -70,10 +70,11 @@ def init_from_snapshot(snapshot, **kwargs):
     set_defaults(kwargs)
     if not kwargs.get('context'):
         hoomd.context.initialize('')
-    num_particles = snapshot.particles.N
     try:
+        num_particles = snapshot.particles.N
         num_mols = max(snapshot.particles.bodies)
     except AttributeError:
+        num_particles = len(snapshot.particles.position)
         num_mols = num_particles
     logger.debug(f'Number of molecules: {num_mols}')
     mol = kwargs.get('mol')
@@ -115,10 +116,10 @@ def init_from_crystal(crystal, **kwargs):
         md.integrate.mode_minimize_fire(hoomd.group.rigid_center(), dt=0.005)
         hoomd.run(1000)
         equil_snap = sys.take_snapshot(all=True)
+        snap = make_orthorhombic(equil_snap)
     context2 = kwargs.get('context',
                           hoomd.context.initialize(kwargs.get('init_args')))
     with context2:
-        snap = make_orthorhombic(equil_snap)
         sys = init_from_snapshot(snap, **kwargs)
     return sys
 

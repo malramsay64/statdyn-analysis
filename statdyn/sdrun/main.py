@@ -77,29 +77,85 @@ def _verbosity(ctx, param, count):
         logging.basicConfig(level=logging.DEBUG)
 
 
+opt_space_group = click.option(
+    '--space-group',
+    default='p2',
+    type=click.Choice(crystals.CRYSTAL_FUNCS.keys())
+)
+
+
+opt_lattice_lengths = click.option(
+    '--lattice-lengths',
+    nargs=2,
+    default=(30, 40),
+    type=(int, int),
+    help='Number of repetitiions in the a and b lattice vectors'
+)
+
+
+opt_configurations = click.option(
+    '-c',
+    '--configurations',
+    default='.',
+    type=click.Path(exists=True),
+    help='location of configurations directory',
+)
+
+
+opt_output = click.option(
+    '-o',
+    '--output',
+    type=click.Path(file_okay=False, writable=True,),
+    callback=_mkdir_ifempty,
+    default='.'
+)
+
+
+opt_verbose = click.option(
+    '-v',
+    '--verbose',
+    count=True,
+    expose_value=False,
+    callback=_verbosity
+)
+
+
+opt_dynamics = click.option(
+    '--dynamics/--no-dynamics',
+    default=True
+)
+
+
+opt_steps = click.option(
+    '-s',
+    '--steps',
+    type=click.IntRange(min=0, max=1e12),
+    required=True,
+    help='Number of steps to run simulation for'
+)
+
+
+opt_temperature = click.option(
+    '-t',
+    '--temperature',
+    type=float,
+    required=True,
+    help='Temperature for simulation'
+)
+
+
 @click.group(name='sdrun')
-@click.option('-c', '--configurations', type=click.Path(exists=True),
-              help='location of configurations directory', default='.')
-@click.option('-o', '--output',
-              type=click.Path(file_okay=False, writable=True,),
-              callback=_mkdir_ifempty, default='.')
-@click.option('-v', '--verbose', count=True,
-              expose_value=False, callback=_verbosity)
-@click.option('--dynamics/--no-dynamics', default=True)
-@click.option('-s', '--steps', type=click.IntRange(min=0, max=1e12),
-              required=True, help='Number of steps to run simulation for')
-@click.option('-t', '--temperature', type=float,
-              required=True, help='Temperature for simulation')
 @click.pass_context
-def main(ctx, configurations, output, dynamics, steps, temperature):
+def main(ctx):
     """Run main function."""
-    logging.debug(f"output: {output}")
-    configurations = Path(configurations)
-    kwargs = {}
-    kwargs['output'] = output
-    kwargs['configurations'] = configurations
-    kwargs['dynamics'] = dynamics
-    kwargs = {key: val for key, val in kwargs.items() if val is not None}
+    logging.debug('Running main function')
+    # logging.debug(f"output: {output}")
+    # configurations = Path(configurations)
+    # kwargs = {}
+    # kwargs['output'] = output
+    # kwargs['configurations'] = configurations
+    # kwargs['dynamics'] = dynamics
+    # kwargs = {key: val for key, val in kwargs.items() if val is not None}
     # if args.iterations > 1:
     #    simrun.iterate_random(**kwargs)
     # else:
@@ -107,25 +163,27 @@ def main(ctx, configurations, output, dynamics, steps, temperature):
 
 
 @main.command()
+@opt_space_group
+@opt_lattice_lengths
+@opt_steps
+@opt_temperature
+@opt_dynamics
+@opt_output
+@opt_verbose
 @click.pass_context
-@click.option('--space-group',
-              default='p2',
-              type=click.Choice(crystals.CRYSTAL_FUNCS.keys()))
-@click.option('--lattice-lengths',
-              nargs=2, default=(30, 40), type=(int, int),
-              help='Number of repetitiions in the a and b lattice vectors')
-def crystal(ctx, space_group, lattice_lengths):
+def crystal(ctx, space_group, lattice_lengths, steps,
+            temperature, dynamics, output):
     """Run simulations on crystals."""
     snapshot = initialise.init_from_crystal(
         crystals.CRYSTAL_FUNCS.get(space_group)(),
         cell_dimensions=lattice_lengths
-    )
-    sim.run_npt(
+    ).take_snapshot()
+    simrun.run_npt(
         snapshot,
-        temp=ctx.temperature,
-        steps=ctx.steps,
-        dynamics=ctx.dynamics,
-        output=ctx.output,
+        temp=temperature,
+        steps=steps,
+        dynamics=dynamics,
+        output=output,
     )
 
 
