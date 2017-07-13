@@ -36,11 +36,7 @@ def set_defaults(kwargs):
 def init_from_file(fname, **kwargs):
     """Initialise a hoomd simulation from an input file."""
     set_defaults(kwargs)
-    context = kwargs.get('context',
-                         hoomd.context.initialize(kwargs.get('init_args')))
-    snapshot = hoomd.data.gsd_snapshot(str(fname), kwargs.get('timestep', 0))
-    sys = init_from_snapshot(snapshot, context=context, **kwargs)
-    return sys
+    return hoomd.data.gsd_snapshot(str(fname), kwargs.get('timestep', 0))
 
 
 def init_from_none(**kwargs):
@@ -57,11 +53,10 @@ def init_from_none(**kwargs):
             unitcell=hoomd.lattice.sq(a=kwargs.get('cell_len')),
             n=kwargs.get('cell_dimensions')
         )
-        snap = sys.take_snapshot(all=True)
-    return init_from_snapshot(snap, **kwargs)
+        return sys.take_snapshot(all=True)
 
 
-def init_from_snapshot(snapshot, **kwargs):
+def initialise_snapshot(snapshot, **kwargs):
     """Initialise the configuration from a snapshot.
 
     In this function it is checked that the data in the snapshot and the
@@ -112,16 +107,11 @@ def init_from_crystal(crystal, **kwargs):
             n=kwargs.get('cell_dimensions')
         )
         snap = sys.take_snapshot(all=True)
-        sys = init_from_snapshot(snap, **kwargs)
+        sys = initialise_snapshot(snap, **kwargs)
         md.integrate.mode_minimize_fire(hoomd.group.rigid_center(), dt=0.005)
         hoomd.run(1000)
         equil_snap = sys.take_snapshot(all=True)
-        snap = make_orthorhombic(equil_snap)
-    context2 = kwargs.get('context',
-                          hoomd.context.initialize(kwargs.get('init_args')))
-    with context2:
-        sys = init_from_snapshot(snap, **kwargs)
-    return sys
+        return make_orthorhombic(equil_snap)
 
 
 def get_fname(temp: float, ext: str='gsd') -> str:
@@ -158,6 +148,7 @@ def make_orthorhombic(snapshot: hoomd.data.SnapshotParticleData
         cells.
 
     """
+    logger.debug(f'Snapshot type: {snapshot}')
     len_x = snapshot.box.Lx
     len_y = snapshot.box.Ly
     len_z = snapshot.box.Lz

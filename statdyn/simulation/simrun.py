@@ -73,7 +73,7 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
     kwargs['context'] = context
     kwargs['temp'] = temp
     with context:
-        initialise.init_from_snapshot(snapshot, **kwargs)
+        initialise.initialise_snapshot(snapshot, **kwargs)
         _set_integrator(kwargs)
         _set_thermo(kwargs)
         _set_dump(kwargs)

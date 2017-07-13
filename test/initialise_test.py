@@ -21,7 +21,7 @@ from .crystal_test import CELL_DIMS, get_distance
 
 def create_snapshot():
     """Easily create a snapshot for later use in testing."""
-    return initialise.init_from_none().take_snapshot()
+    return initialise.init_from_none()
 
 
 def create_file():
@@ -39,7 +39,6 @@ def create_file():
 
 INIT_TEST_PARAMS = [
     (initialise.init_from_none, None, {}),
-    (initialise.init_from_snapshot, [create_snapshot()], {}),
     (initialise.init_from_file, [create_file()], {}),
     (initialise.init_from_crystal, [
         crystals.TrimerP2()], {'cell_dimensions': (10, 5)}),
@@ -48,26 +47,24 @@ INIT_TEST_PARAMS = [
 
 def test_init_from_none():
     """Ensure init_from_none has the correct type and number of particles."""
-    sys = initialise.init_from_none()
-    snap = sys.take_snapshot()
-    assert isinstance(sys, hoomd.data.system_data)
-    assert snap.particles.N == 300
+    snap = initialise.init_from_none()
+    assert snap.particles.N == 100
 
 
-def test_init_from_snapshot():
+def test_initialise_snapshot():
     """Test initialisation from a snapshot works."""
-    sys = initialise.init_from_snapshot(create_snapshot())
-    assert isinstance(sys, hoomd.data.system_data)
+    initialise.initialise_snapshot(create_snapshot())
+    assert True
 
 
 @pytest.mark.parametrize("init_func, args, kwargs", INIT_TEST_PARAMS)
 def test_init_all(init_func, args, kwargs):
     """Test the initialisation of all init functions."""
     if args:
-        sys = init_func(*args, **kwargs)
+        init_func(*args, **kwargs)
     else:
-        sys = init_func()
-        assert isinstance(sys, hoomd.data.system_data)
+        init_func()
+    assert True
 
 
 @pytest.mark.parametrize("init_func, args, kwargs", INIT_TEST_PARAMS)
@@ -130,7 +127,7 @@ def test_orthorhombic_init(cell_dimensions):
     snap = initialise.init_from_crystal(
         crystals.TrimerP2(),
         cell_dimensions=cell_dimensions
-    ).take_snapshot()
+    )
     snap_ortho = initialise.make_orthorhombic(snap)
     assert np.all(snap_ortho.particles.position ==
                   snap.particles.position)

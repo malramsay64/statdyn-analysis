@@ -23,7 +23,7 @@ OUTDIR.mkdir(exist_ok=True)
 
 def test_run_npt():
     """Test an npt run."""
-    snapshot = initialise.init_from_none().take_snapshot()
+    snapshot = initialise.init_from_none()
     simrun.run_npt(snapshot, 3.00, 10, dyn_many=False, output=OUTDIR)
     assert True
 
@@ -32,7 +32,7 @@ def test_run_npt():
 def test_run_multiple_concurrent(dyn_many):
     """Test running multiple concurrent."""
     snapshot = initialise.init_from_file(
-        'test/data/Trimer-13.50-3.00.gsd').take_snapshot()
+        'test/data/Trimer-13.50-3.00.gsd')
     simrun.run_npt(snapshot, 3.00, 10, dyn_many=dyn_many, output=OUTDIR)
     assert True
 
@@ -45,7 +45,7 @@ def test_thermo():
     """
     output = Path('test/tmp')
     output.mkdir(exist_ok=True)
-    snapshot = initialise.init_from_none().take_snapshot()
+    snapshot = initialise.init_from_none()
     simrun.run_npt(snapshot, 3.00, 10, thermo=True, thermo_period=1,
                    output=OUTDIR)
     assert True
@@ -62,7 +62,7 @@ def test_orthorhombic_sims(cell_dimensions):
     output.mkdir(exist_ok=True)
     snap = initialise.init_from_crystal(crystals.TrimerP2(),
                                         cell_dimensions=cell_dimensions,
-                                        ).take_snapshot()
+                                        )
     simrun.run_npt(snap, 0.1, 10, output=OUTDIR)
     assert True
 
@@ -73,7 +73,7 @@ def test_file_placement():
     outdir.mkdir(exist_ok=True)
     current = list(Path('.').glob('*'))
     _ = [os.remove(i) for i in outdir.glob('*')]
-    snapshot = initialise.init_from_none().take_snapshot()
+    snapshot = initialise.init_from_none()
     simrun.run_npt(snapshot, 3.00, 10, dyn_many=False, output=outdir)
     assert current == list(Path('.').glob('*'))
     assert (outdir / 'Trimer-13.50-3.00.gsd').is_file()

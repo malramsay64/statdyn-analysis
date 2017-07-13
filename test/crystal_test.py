@@ -74,7 +74,7 @@ def test_cell_dimensions(cell_dimensions):
     """Test cell paramters work properly."""
     snap = initialise.init_from_crystal(crystals.TrimerP2(),
                                         cell_dimensions=cell_dimensions
-                                        ).take_snapshot()
+                                        )
     for i in snap.particles.position:
         distances = get_distance(i, snap.particles.position, snap.box) < 1.1
         assert np.sum(distances) <= 3
