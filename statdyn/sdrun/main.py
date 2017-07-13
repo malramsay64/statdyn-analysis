@@ -117,8 +117,9 @@ def main(ctx, configurations, output, dynamics, steps, temperature):
 def crystal(ctx, space_group, lattice_lengths):
     """Run simulations on crystals."""
     snapshot = initialise.init_from_crystal(
-        crystals.CRYSTAL_FUNCS.get(space_group)()
-    ).take_snapshot()
+        crystals.CRYSTAL_FUNCS.get(space_group)(),
+        cell_dimensions=lattice_lengths
+    )
     sim.run_npt(
         snapshot,
         temp=ctx.temperature,

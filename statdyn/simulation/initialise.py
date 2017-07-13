@@ -75,9 +75,11 @@ def init_from_snapshot(snapshot, **kwargs):
         num_mols = max(snapshot.particles.bodies)
     except AttributeError:
         num_mols = num_particles
+    logger.debug(f'Number of molecules: {num_mols}')
     mol = kwargs.get('mol')
     create_bodies = False
     if num_particles == num_mols:
+        logger.info('Creating rigid bodies')
         create_bodies = True
     else:
         assert num_particles % mol.num_particles == 0
@@ -103,6 +105,7 @@ def init_from_crystal(crystal, **kwargs):
     set_defaults(kwargs)
     context1 = hoomd.context.initialize(kwargs.get('init_args'))
     with context1:
+        logger.debug(f"Creating {crystal} cell of size {kwargs.get('cell_dimensions')}")
         sys = hoomd.init.create_lattice(
             unitcell=crystal.get_unitcell(),
             n=kwargs.get('cell_dimensions')
@@ -170,7 +173,8 @@ def make_orthorhombic(snapshot: hoomd.data.SnapshotParticleData
 
 def _check_properties(snapshot, mol):
     try:
-        nbodies = max(snapshot.particles.body) + 1
+        nbodies = len(snapshot.particles.body)
+        logger.debug(f'number of rigid bodies: {nbodies}')
         snapshot.particles.types = mol.get_types()
         snapshot.particles.moment_inertia[:nbodies] = np.array(
             [mol.moment_inertia] * nbodies)
