@@ -8,8 +8,8 @@
 
 """Run simulation with boilerplate taken care of by the statdyn library."""
 
-from pathlib import Path
 import logging
+from pathlib import Path
 
 import click
 import hoomd
@@ -17,9 +17,7 @@ import hoomd
 from .. import crystals
 from ..simulation import initialise, simrun
 
-CRYSTAL_FUNCS = {
-    'p2': crystals.TrimerP2,
-}
+logger = logging.getLogger(__name__)
 
 
 def get_temp(fname: Path) -> float:
@@ -66,7 +64,10 @@ def get_initial_snapshot(**kwargs) -> hoomd.data.SnapshotParticleData:
 def _mkdir_ifempty(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    Path(value).mkdir(exist_ok=True)
+    chkpath = Path(value)
+    logging.debug(f"Directory {value}, {chkpath}")
+    chkpath.mkdir(exist_ok=True)
+    return chkpath
 
 
 def _verbosity(ctx, param, count):
@@ -76,28 +77,55 @@ def _verbosity(ctx, param, count):
         logging.basicConfig(level=logging.DEBUG)
 
 
-@click.command()
+@click.group(name='sdrun')
 @click.option('-c', '--configurations', type=click.Path(exists=True),
-              required=True, help='location of configurations directory')
+              help='location of configurations directory', default='.')
 @click.option('-o', '--output',
               type=click.Path(file_okay=False, writable=True,),
               callback=_mkdir_ifempty, default='.')
 @click.option('-v', '--verbose', count=True,
               expose_value=False, callback=_verbosity)
 @click.option('--dynamics/--no-dynamics', default=True)
-def main(configurations, output, dynamics):
+@click.option('-s', '--steps', type=click.IntRange(min=0, max=1e12),
+              required=True, help='Number of steps to run simulation for')
+@click.option('-t', '--temperature', type=float,
+              required=True, help='Temperature for simulation')
+@click.pass_context
+def main(ctx, configurations, output, dynamics, steps, temperature):
     """Run main function."""
+    logging.debug(f"output: {output}")
     configurations = Path(configurations)
-    output = Path(output)
     kwargs = {}
     kwargs['output'] = output
     kwargs['configurations'] = configurations
     kwargs['dynamics'] = dynamics
-    kwargs = {key: val for key, val in vars(args).items() if val is not None}
-    if args.iterations > 1:
-        simrun.iterate_random(**kwargs)
-    else:
-        simrun.run_npt(get_initial_snapshot(**kwargs), **kwargs)
+    kwargs = {key: val for key, val in kwargs.items() if val is not None}
+    # if args.iterations > 1:
+    #    simrun.iterate_random(**kwargs)
+    # else:
+    #    simrun.run_npt(get_initial_snapshot(**kwargs), **kwargs)
+
+
+@main.command()
+@click.pass_context
+@click.option('--space-group',
+              default='p2',
+              type=click.Choice(crystals.CRYSTAL_FUNCS.keys()))
+@click.option('--lattice-lengths',
+              nargs=2, default=(30, 40), type=(int, int)
+              help='Number of repetitiions in the a and b lattice vectors')
+def crystal(ctx, space_group):
+    """Run simulations on crystals."""
+    snapshot = initialise.init_from_crystal(
+        crystals.CRYSTAL_FUNCS.get(space_group)()
+    ).take_snapshot()
+    sim.run_npt(
+        snapshot,
+        temp=ctx.temperature,
+        steps=ctx.steps,
+        dynamics=ctx.dynamics,
+        output=ctx.output,
+    )
 
 
 if __name__ == "__main__":
