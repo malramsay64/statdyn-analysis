@@ -177,7 +177,7 @@ def crystal(ctx, space_group, lattice_lengths, steps,
     snapshot = initialise.init_from_crystal(
         crystals.CRYSTAL_FUNCS.get(space_group)(),
         cell_dimensions=lattice_lengths
-    ).take_snapshot()
+    )
     simrun.run_npt(
         snapshot,
         temp=temperature,
