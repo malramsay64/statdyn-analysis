@@ -117,6 +117,30 @@ def init_from_crystal(crystal, **kwargs):
         return make_orthorhombic(equil_snap)
 
 
+def init_slab(crystal, **kwargs):
+    """Initialise a crystal slab in a liquid."""
+    snapshot = init_from_crystal(crystal, **kwargs)
+    sys = initialise_snapshot(snapshot, **kwargs)
+    md.update.enforce2d()
+    prime_interval = 307
+    md.update.zero_momentum(period=prime_interval)
+    md.integrate.mode_standard(kwargs.get('dt'))
+    group = hoomd.group.intersection(
+        'rigid_stationary',
+        hoomd.group.cuboid(xmin=-sys.box.Lx/4, xmax=sys.box.Lx/4),
+        hoomd.group.rigid_center()
+    )
+    md.integrate.npt(
+        group=group,
+        kT=2.50,
+        tau=kwargs.get('tau'),
+        P=kwargs.get('press'),
+        tauP=kwargs.get('tauP')
+    )
+    hoomd.run(20000)
+    return sys.take_snapshot(all=True)
+
+
 def get_fname(temp: float, ext: str='gsd') -> str:
     """Construct filename of based on the temperature.
 
