@@ -12,6 +12,7 @@ import logging
 from pathlib import Path
 
 import click
+import hoomd.context
 
 from . import options
 from .. import crystals
@@ -28,17 +29,6 @@ logging.basicConfig(level=logging.INFO)
 def sdrun(ctx):
     """Run main function."""
     logging.debug('Running main function')
-    # logging.debug(f"output: {output}")
-    # configurations = Path(configurations)
-    # kwargs = {}
-    # kwargs['output'] = output
-    # kwargs['configurations'] = configurations
-    # kwargs['dynamics'] = dynamics
-    # kwargs = {key: val for key, val in kwargs.items() if val is not None}
-    # if args.iterations > 1:
-    #    simrun.iterate_random(**kwargs)
-    # else:
-    #    simrun.run_npt(get_initial_snapshot(**kwargs), **kwargs)
 
 
 @sdrun.command()
@@ -54,12 +44,15 @@ def crystal(space_group, lattice_lengths, steps,
             temperature, dynamics, output, hoomd_args):
     """Run simulations on crystals."""
     snapshot = initialise.init_from_crystal(
-        crystals.CRYSTAL_FUNCS.get(space_group)(),
+        crystal=crystals.CRYSTAL_FUNCS.get(space_group)(),
+        hoomd_args=hoomd_args,
         cell_dimensions=lattice_lengths
     )
+    sim_context = hoomd.context.initialize(hoomd_args)
     simrun.run_npt(
-        snapshot,
-        temp=temperature,
+        snapshot=snapshot,
+        context=sim_context,
+        temperature=temperature,
         steps=steps,
         dynamics=dynamics,
         output=output,
@@ -79,12 +72,15 @@ def liquid(steps, temperature, output, configurations, dynamics, hoomd_args):
     logger.debug(f'running liquid')
     infile = Path(configurations) / initialise.get_fname(temperature)
     logger.debug(f'Reading {infile}')
-    snapshot = initialise.init_from_file(infile)
+    snapshot = initialise.init_from_file(infile,
+                                         hoomd_args=hoomd_args)
     logger.debug(f'Snapshot initialised')
+    sim_context = hoomd.context.initialize(hoomd_args)
     simrun.run_npt(
-        snapshot,
+        snapshot=snapshot,
+        context=sim_context,
         steps=steps,
-        temp=temperature,
+        temperature=temperature,
         dynamics=dynamics,
         output=output,
     )

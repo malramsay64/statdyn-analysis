@@ -9,11 +9,13 @@
 """Module for testing the initialisation."""
 
 import tempfile
+from pathlib import Path
 
 import hoomd
 import numpy as np
 import pytest
-from statdyn import crystals
+
+from statdyn import crystals, molecule
 from statdyn.simulation import initialise
 
 from .crystal_test import CELL_DIMS, get_distance
@@ -21,12 +23,14 @@ from .crystal_test import CELL_DIMS, get_distance
 
 def create_snapshot():
     """Easily create a snapshot for later use in testing."""
-    return initialise.init_from_none()
+    return initialise.init_from_none(hoomd_args='',
+                                     cell_dimensions=(10, 10),
+                                     )
 
 
 def create_file():
     """Ease of use function for creating a file for use in testing."""
-    initialise.init_from_none()
+    initialise.init_from_none(hoomd_args='')
     with tempfile.NamedTemporaryFile(delete=False) as tmp:
         hoomd.dump.gsd(
             tmp.name,
@@ -34,26 +38,29 @@ def create_file():
             overwrite=True,
             group=hoomd.group.all()
         )
-        return tmp.name
+        return Path(tmp.name)
 
 
 INIT_TEST_PARAMS = [
-    (initialise.init_from_none, None, {}),
-    (initialise.init_from_file, [create_file()], {}),
+    (initialise.init_from_none, '', {}),
+    (initialise.init_from_file, [create_file(), ''], {}),
     (initialise.init_from_crystal, [
-        crystals.TrimerP2()], {'cell_dimensions': (10, 5)}),
+        crystals.TrimerP2(), ''], {'cell_dimensions': (10, 5)}),
 ]
 
 
 def test_init_from_none():
     """Ensure init_from_none has the correct type and number of particles."""
-    snap = initialise.init_from_none()
+    snap = initialise.init_from_none(cell_dimensions=(10, 10))
     assert snap.particles.N == 100
 
 
 def test_initialise_snapshot():
     """Test initialisation from a snapshot works."""
-    initialise.initialise_snapshot(create_snapshot())
+    initialise.initialise_snapshot(create_snapshot(),
+                                   hoomd.context.initialize(''),
+                                   molecule.Trimer(),
+                                   )
     assert True
 
 

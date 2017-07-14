@@ -8,44 +8,35 @@
 
 """Module for setting up and running a hoomd simulation."""
 
+import logging
 from pathlib import Path
 
 import hoomd
 import hoomd.md as md
 import numpy as np
-import pandas
 
 from . import initialise
 from ..StepSize import GenerateStepSeries
+from .. import molecule
 
 
-def set_defaults(kwargs):
-    """Set the default values for parameters."""
-    kwargs.setdefault('output', Path('.'))
-    kwargs.setdefault('init_args', '')
-    kwargs.setdefault('tau', 1.)
-    kwargs.setdefault('press', 13.5)
-    kwargs.setdefault('tauP', 1.)
-    kwargs.setdefault('dt', 0.005)
-    kwargs.setdefault('thermo', True)
-    kwargs.setdefault('thermo_dir', Path(kwargs.get('output', '.')))
-    kwargs.setdefault('thermo_period', 10000)
-    kwargs.setdefault('dump', True)
-    kwargs.setdefault('dump_dir', Path(kwargs.get('output', '.')))
-    kwargs.setdefault('dump_period', 50000)
-    kwargs.setdefault('restart', True)
-    kwargs.setdefault('dynamics', True)
-    kwargs.setdefault('dyn_many', True)
-    if kwargs.get('dyn_many'):
-        kwargs.setdefault('max_gen', 500)
-    else:
-        kwargs['max_gen'] = 1
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logging.basicConfig(level=logging.WARNING)
 
 
 def run_npt(snapshot: hoomd.data.SnapshotParticleData,
-            temp: float,
+            context: hoomd.context.SimulationContext,
+            output: Path,
             steps: int,
-            **kwargs) -> Path:
+            temperature: float,
+            pressure: float=13.50,
+            dynamics: bool=True,
+            max_initial: int=500,
+            dump_period: int=10000,
+            thermo_period: int=10000,
+            mol: molecule.Molecule=molecule.Trimer(),
+            ) -> None:
     """Initialise and run a hoomd npt simulation.
 
     Args:
@@ -68,96 +59,116 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
             Default: 1.
 
     """
-    set_defaults(kwargs)
-    context = hoomd.context.initialize(kwargs.get('init_args'))
-    kwargs['context'] = context
-    kwargs['temp'] = temp
     with context:
-        initialise.initialise_snapshot(snapshot, **kwargs)
-        _set_integrator(kwargs)
-        _set_thermo(kwargs)
-        _set_dump(kwargs)
-        if kwargs.get('dynamics'):
-            iterator = GenerateStepSeries(steps, kwargs.get('max_gen'))
+        initialise.initialise_snapshot(
+            snapshot=snapshot,
+            context=context,
+            mol=mol,
+        )
+        _set_integrator(temperature=temperature)
+        _set_thermo(temperature=temperature,
+                    pressure=pressure,
+                    output=output,
+                    thermo_period=thermo_period,
+                    )
+        _set_dump(temperature=temperature,
+                  pressure=pressure,
+                  output=output,
+                  dump_period=dump_period,
+                  )
+        if dynamics:
+            iterator = GenerateStepSeries(steps, max_initial)
             prev_step = 0
             for curr_step in iterator:
                 if curr_step == prev_step:
                     continue
                 hoomd.run_upto(curr_step)
-                _dump_frame(kwargs, curr_step)
+                _dump_frame(temperature=temperature,
+                            pressure=pressure,
+                            output=output,
+                            timestep=curr_step)
                 prev_step = curr_step
         else:
             hoomd.run(steps)
-        _make_restart(kwargs)
+        _make_restart(temperature, pressure, output)
 
 
-def _make_restart(kwargs):
-    if kwargs.get('restart'):
-        hoomd.dump.gsd(
-            str(kwargs.get('output') /
-                initialise.get_fname(kwargs.get('temp'))),
-            None,
-            group=hoomd.group.all(),
-            overwrite=True,
+def _make_restart(temperature: float,
+                  pressure: float,
+                  output: Path
+                  ) -> None:
+    hoomd.dump.gsd(
+        str(output / initialise.get_fname(temperature)),
+        None,
+        group=hoomd.group.all(),
+        overwrite=True,
         )
 
 
-def _set_integrator(kwargs):
+def _set_integrator(temperature: float,
+                    tau: float=1.,
+                    pressure: float=13.50,
+                    tauP: float=1.,
+                    step_size: float=0.005,
+                    prime_interval: int=33533
+                    ) -> None:
     md.update.enforce2d()
-    prime_interval = 33533
-    md.update.zero_momentum(period=prime_interval)
-    md.integrate.mode_standard(kwargs.get('dt'))
+    if prime_interval:
+        md.update.zero_momentum(period=prime_interval)
+    md.integrate.mode_standard(step_size)
     md.integrate.npt(
         group=hoomd.group.rigid_center(),
-        kT=kwargs.get('temp'),
-        tau=kwargs.get('tau'),
-        P=kwargs.get('press'),
-        tauP=kwargs.get('tauP')
+        kT=temperature,
+        tau=tau,
+        P=pressure,
+        tauP=tauP,
     )
 
 
-def _set_thermo(kwargs):
-    if kwargs.get('thermo'):
-        default = ['N', 'volume', 'momentum', 'temperature', 'pressure',
-                   'potential_energy', 'kinetic_energy',
-                   'translational_kinetic_energy', 'rotational_kinetic_energy',
-                   'npt_thermostat_energy']
-        rigid = ['temperature_rigid_center',
-                 'pressure_rigid_center',
-                 'num_particles_rigid_center',
-                 'translational_ndof_rigid_center',
-                 'rotational_ndof_rigid_center',
-                 'potential_energy_rigid_center',
-                 'kinetic_energy_rigid_center',
-                 'translational_kinetic_energy_rigid_center',
-                 ]
-        hoomd.analyze.log(
-            str(kwargs.get('thermo_dir') /
-                'thermo-{press:.2f}-{temp:.2f}.log'.format(
-                press=kwargs.get('press'), temp=kwargs.get('temp'))),
-            default + rigid,
-            period=kwargs.get('thermo_period'),
-        )
+def _set_thermo(temperature: float,
+                pressure: float,
+                output: Path,
+                thermo_period: int=10000
+                ) -> None:
+    default = ['N', 'volume', 'momentum', 'temperature', 'pressure',
+               'potential_energy', 'kinetic_energy',
+               'translational_kinetic_energy', 'rotational_kinetic_energy',
+               'npt_thermostat_energy']
+    rigid = ['temperature_rigid_center',
+             'pressure_rigid_center',
+             'num_particles_rigid_center',
+             'translational_ndof_rigid_center',
+             'rotational_ndof_rigid_center',
+             'potential_energy_rigid_center',
+             'kinetic_energy_rigid_center',
+             'translational_kinetic_energy_rigid_center',
+             ]
+    hoomd.analyze.log(
+        str(output / f'thermo-{pressure:.2f}-{temperature:.2f}.log'),
+        default + rigid,
+        period=thermo_period,
+    )
 
 
-def _set_dump(kwargs):
-    if kwargs.get('dump'):
-        hoomd.dump.gsd(
-            str(kwargs.get('dump_dir') /
-                'dump-{press:.2f}-{temp:.2f}.gsd'.format(
-                press=kwargs.get('press'), temp=kwargs.get('temp'))
-                ),
-            period=kwargs.get('dump_period'),
-            group=hoomd.group.all()
-        )
-
-
-def _dump_frame(kwargs, timestep):
+def _set_dump(temperature: float,
+              pressure: float,
+              output: Path,
+              dump_period: int,
+              ) -> None:
     hoomd.dump.gsd(
-        str(kwargs.get('output') /
-            'trajectory-{press:.2f}-{temp:.2f}.gsd'.format(
-            press=kwargs.get('press'), temp=kwargs.get('temp'))
-            ),
+        str(output / f'dump-{pressure:.2f}-{temperature:.2f}.gsd'),
+        period=dump_period,
+        group=hoomd.group.all()
+    )
+
+
+def _dump_frame(temperature: float,
+                pressure: float,
+                output: Path,
+                timestep: int,
+                ) -> None:
+    hoomd.dump.gsd(
+        str(output / f'trajectory-{pressure:.2f}-{temperature:.2f}.gsd'),
         period=None,
         time_step=timestep,
         group=hoomd.group.rigid_center(),
@@ -165,72 +176,24 @@ def _dump_frame(kwargs, timestep):
     )
 
 
-def read_snapshot(fname: str,
-                  rand: bool=False) -> hoomd.data.SnapshotParticleData:
+def read_snapshot(context: hoomd.context.SimulationContext,
+                  fname: str,
+                  rand: bool=False
+                  ) -> hoomd.data.SnapshotParticleData:
     """Read a hoomd snapshot from a hoomd gsd file.
 
     Args:
-        fname (string): Filename of GSD file to read in
-        rand (bool): Whether to randomise the momenta of all the particles
+    fname (string): Filename of GSD file to read in
+    rand (bool): Whether to randomise the momenta of all the particles
 
     Returns:
-        class:`hoomd.data.SnapshotParticleData`: Hoomd snapshot
+    class:`hoomd.data.SnapshotParticleData`: Hoomd snapshot
 
     """
-    with hoomd.context.initialize(''):
+    with context:
         snapshot = hoomd.data.gsd_snapshot(fname)
         if rand:
             nbodies = snapshot.particles.body.max() + 1
             np.random.shuffle(snapshot.particles.velocity[:nbodies])
             np.random.shuffle(snapshot.particles.angmom[:nbodies])
             return snapshot
-
-
-def iterate_random(directory: Path,
-                   temp: float,
-                   steps: int,
-                   iterations: int=2,
-                   output: Path=Path('.'),
-                   **kwargs) -> None:
-    """Iterate over a configuration initialised with randomised momenta.
-
-    This function will take a single configuration and then run `iterations`
-    iterations initialising each with a different random momenta for both
-    translations and rotations.
-
-    Args:
-        directory (str): dir of input files
-        temp (float): temp of simulation
-        steps (int): number of steps to run simulation
-        iterations(int): number of iterations of length steps to run
-        output (str): directory to output data
-
-    Keyword Args:
-        init_args (str): Args with which to initialise the hoomd context.
-        Default: ''
-        mol (class:`statdyn.Molecule`): Molecule to use in the simulation
-        Default: class:`statdyn.Molecule.Trimer()`
-        dt (float): size of each timestep in the simulation
-        Default: 0.005
-        tau (float): Restoring mass for the temperature integrator
-        Default: 1.
-        press (float): the pressure of the simulation
-        Default: 13.5
-        tauP (float): The restoring mass for the pressure integrator
-        Default: 1.
-
-    """
-    init_file = directory / "Trimer-{press:.2f}-{temp:.2f}.gsd".format(
-        press=kwargs.get('press', 13.5),
-        temp=temp
-    )
-    for iteration in range(iterations):
-        dynamics = run_npt(
-            read_snapshot(str(init_file), rand=True),
-            temp,
-            steps,
-            output=output,
-            **kwargs
-        )
-        with pandas.HDFStore(dynamics) as store:
-            store.get_node('dynamics')._f_rename('dyn{i}'.format(i=iteration))

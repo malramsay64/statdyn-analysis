@@ -5,3 +5,8 @@
         entry: python -m pylint -r n
         language: system
         files: \.py$
+      - id: mypy
+        name: mypy
+        entry: python -m mypy --ignore-missing-imports
+        language: system
+        files: \.py$

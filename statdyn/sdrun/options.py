@@ -8,6 +8,8 @@
 
 """Options for sdrun."""
 
+# type: ignore
+
 import logging
 from pathlib import Path
 
@@ -48,7 +50,7 @@ opt_lattice_lengths = click.option(
     '--lattice-lengths',
     nargs=2,
     default=(30, 40),
-    type=(int, int),
+    type=click.Tuple([int, int]),
     help='Number of repetitiions in the a and b lattice vectors',
 )
 
@@ -94,16 +96,16 @@ scale.
 )
 
 
-opt_steps = click.option(
+opt_steps = click.option(  # type: ignore
     '-s',
     '--steps',
-    type=click.IntRange(min=0, max=1e12),
+    type=click.IntRange(min=0, max=int(1e12)),
     required=True,
     help='Number of steps to run simulation for.'
 )
 
 
-opt_temperature = click.option(
+opt_temperature = click.option(  # type: ignore
     '-t',
     '--temperature',
     type=float,

@@ -14,136 +14,159 @@ config.
 """
 import logging
 from pathlib import Path
+from typing import Tuple
 
 import hoomd
 import hoomd.md as md
 import numpy as np
 
-from .. import molecule
-
+from .. import molecule, crystals
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
-def set_defaults(kwargs):
-    """Set the argument defaults."""
-    kwargs.setdefault('mol', molecule.Trimer())
-    kwargs.setdefault('cell_len', 4)
-    kwargs.setdefault('cell_dimensions', (10, 10))
-    kwargs.setdefault('timesep', 0)
-    kwargs.setdefault('init_args', '')
-
-
-def init_from_file(fname):
+def init_from_file(fname: Path,
+                   hoomd_args: str='',
+                   ) -> hoomd.data.SnapshotParticleData:
     """Initialise a hoomd simulation from an input file."""
     logger.debug(f'Initialising from file {fname}')
-    if not Path(fname).is_file():
+    if not fname.is_file():
         logger.debug(f'File {fname} is not found')
         raise FileNotFoundError
     logger.debug(f'File {fname} found')
     # Hoomd context needs to be initialised before calling gsd_snapshot
-    with hoomd.context.initialize(''):
+    temp_context = hoomd.context.initialize(hoomd_args)
+    with temp_context:
         return hoomd.data.gsd_snapshot(str(fname), frame=0)
 
 
-def init_from_none(**kwargs):
+def init_from_none(hoomd_args: str='',
+                   cell_len: float=4,
+                   cell_dimensions: Tuple[int, int]=(20, 30),
+                   ) -> hoomd.data.SnapshotParticleData:
     """Initialise a system from no inputs.
 
     This creates a simulation with a large unit cell lattice such that there
     is no chance of molecules overlapping and places molecules on the lattice.
     """
-    set_defaults(kwargs)
-    context = kwargs.get(
-        'context', hoomd.context.initialize(kwargs.get('init_args')))
-    with context:
+    with hoomd.context.initialize(hoomd_args):
         sys = hoomd.init.create_lattice(
-            unitcell=hoomd.lattice.sq(a=kwargs.get('cell_len')),
-            n=kwargs.get('cell_dimensions')
+            unitcell=hoomd.lattice.sq(a=cell_len),
+            n=cell_dimensions
         )
         return sys.take_snapshot(all=True)
 
 
-def initialise_snapshot(snapshot, **kwargs):
+def initialise_snapshot(snapshot: hoomd.data.SnapshotParticleData,
+                        context: hoomd.context.SimulationContext,
+                        mol: molecule.Molecule,
+                        ) -> hoomd.data.system_data:
     """Initialise the configuration from a snapshot.
 
     In this function it is checked that the data in the snapshot and the
     passed arguments are in agreement with each other, and rectified if not.
     """
-    set_defaults(kwargs)
-    if not kwargs.get('context'):
-        hoomd.context.initialize('')
-    try:
-        num_particles = snapshot.particles.N
-        num_mols = max(snapshot.particles.bodies)
-    except AttributeError:
-        num_particles = len(snapshot.particles.position)
-        num_mols = num_particles
-    logger.debug(f'Number of molecules: {num_mols}')
-    mol = kwargs.get('mol')
-    create_bodies = False
-    if num_particles == num_mols:
-        logger.info('Creating rigid bodies')
-        create_bodies = True
-    else:
-        assert num_particles % mol.num_particles == 0
-    snapshot = _check_properties(snapshot, mol)
-    sys = hoomd.init.read_snapshot(snapshot)
-    mol.define_potential()
-    mol.define_dimensions()
-    rigid = mol.define_rigid()
-    rigid.create_bodies(create=create_bodies)
-    if create_bodies:
-        logger.info('Rigid bodies created')
-    return sys
+    with context:
+        try:
+            num_particles = snapshot.particles.N
+            num_mols = max(snapshot.particles.bodies)
+        except AttributeError:
+            num_particles = len(snapshot.particles.position)
+            num_mols = num_particles
+        logger.debug(f'Number of molecules: {num_mols}')
+        create_bodies = False
+        if num_particles == num_mols:
+            logger.info('Creating rigid bodies')
+            create_bodies = True
+        else:
+            assert num_particles % mol.num_particles == 0
+        snapshot = _check_properties(snapshot, mol)
+        sys = hoomd.init.read_snapshot(snapshot)
+        mol.define_potential()
+        mol.define_dimensions()
+        rigid = mol.define_rigid()
+        rigid.create_bodies(create=create_bodies)
+        if create_bodies:
+            logger.info('Rigid bodies created')
+        return sys
 
 
-def init_from_crystal(crystal, **kwargs):
+def init_from_crystal(crystal: crystals.Crystal,
+                      hoomd_args: str='',
+                      cell_dimensions: Tuple[int, int]=(30, 40),
+                      step_size: float=0.005,
+                      optimise_steps: int=1000,
+                      ) -> hoomd.data.SnapshotParticleData:
     """Initialise a hoomd simulation from a crystal lattice.
 
     Args:
         crystal (class:`statdyn.crystals.Crystal`): The crystal lattice to
             generate the simulation from.
     """
-    kwargs.setdefault('mol', crystal.molecule)
-    set_defaults(kwargs)
-    context1 = hoomd.context.initialize(kwargs.get('init_args'))
-    with context1:
-        logger.debug(f"Creating {crystal} cell of size {kwargs.get('cell_dimensions')}")
+    temp_context = hoomd.context.initialize(hoomd_args)
+    with temp_context:
+        logger.debug(
+            f"Creating {crystal} cell of size {cell_dimensions}"
+        )
         sys = hoomd.init.create_lattice(
             unitcell=crystal.get_unitcell(),
-            n=kwargs.get('cell_dimensions')
+            n=cell_dimensions
         )
         snap = sys.take_snapshot(all=True)
-        sys = initialise_snapshot(snap, **kwargs)
-        md.integrate.mode_minimize_fire(hoomd.group.rigid_center(), dt=0.005)
-        hoomd.run(1000)
+    temp_context = hoomd.context.initialize(hoomd_args)
+    with temp_context:
+        sys = initialise_snapshot(snap, temp_context, crystal.molecule)
+        md.integrate.mode_minimize_fire(
+            group=hoomd.group.rigid_center(),
+            dt=step_size)
+        hoomd.run(optimise_steps)
         equil_snap = sys.take_snapshot(all=True)
-        return make_orthorhombic(equil_snap)
+    return make_orthorhombic(equil_snap)
 
 
-def init_slab(crystal, **kwargs):
+def init_slab(crystal: crystals.Crystal,
+              hoomd_args: str='',
+              cell_dimensions: Tuple[int, int]=(30, 40),
+              melt_temp: float=2.50,
+              melt_steps: int=20000,
+              tau: float=1.,
+              pressure: float=13.50,
+              tauP: float=1.,
+              step_size: float=0.005,
+              ) -> hoomd.data.SnapshotParticleData:
     """Initialise a crystal slab in a liquid."""
-    snapshot = init_from_crystal(crystal, **kwargs)
-    sys = initialise_snapshot(snapshot, **kwargs)
-    md.update.enforce2d()
-    prime_interval = 307
-    md.update.zero_momentum(period=prime_interval)
-    md.integrate.mode_standard(kwargs.get('dt'))
-    group = hoomd.group.intersection(
-        'rigid_stationary',
-        hoomd.group.cuboid(xmin=-sys.box.Lx/4, xmax=sys.box.Lx/4),
-        hoomd.group.rigid_center()
+    snapshot = init_from_crystal(
+        crystal=crystal,
+        hoomd_args=hoomd_args,
+        cell_dimensions=cell_dimensions,
+        step_size=step_size,
     )
-    md.integrate.npt(
-        group=group,
-        kT=2.50,
-        tau=kwargs.get('tau'),
-        P=kwargs.get('press'),
-        tauP=kwargs.get('tauP')
+    temp_context = hoomd.context.initialize(hoomd_args)
+    sys = initialise_snapshot(
+        snapshot=snapshot,
+        context=temp_context,
+        mol=crystal.molecule,
     )
-    hoomd.run(20000)
-    return sys.take_snapshot(all=True)
+    with temp_context:
+        md.update.enforce2d()
+        prime_interval = 307
+        md.update.zero_momentum(period=prime_interval)
+        md.integrate.mode_standard(dt=step_size)
+        group = hoomd.group.intersection(
+            'rigid_stationary',
+            hoomd.group.cuboid(xmin=-sys.box.Lx/4, xmax=sys.box.Lx/4),
+            hoomd.group.rigid_center()
+        )
+        md.integrate.npt(
+            group=group,
+            kT=2.50,
+            tau=tau,
+            P=pressure,
+            tauP=tauP
+        )
+        hoomd.run(melt_steps)
+        return sys.take_snapshot(all=True)
 
 
 def get_fname(temp: float, ext: str='gsd') -> str:

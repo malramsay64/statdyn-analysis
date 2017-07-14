@@ -11,7 +11,9 @@
 import os
 from pathlib import Path
 
+import hoomd
 import pytest
+
 from statdyn import crystals
 from statdyn.simulation import initialise, simrun
 
@@ -24,16 +26,29 @@ OUTDIR.mkdir(exist_ok=True)
 def test_run_npt():
     """Test an npt run."""
     snapshot = initialise.init_from_none()
-    simrun.run_npt(snapshot, 3.00, 10, dyn_many=False, output=OUTDIR)
+    simrun.run_npt(snapshot,
+                   context=hoomd.context.initialize(''),
+                   temperature=3.00,
+                   steps=10,
+                   dynamics=False,
+                   output=OUTDIR
+                   )
     assert True
 
 
-@pytest.mark.parametrize("dyn_many", [True, False])
-def test_run_multiple_concurrent(dyn_many):
+@pytest.mark.parametrize("max_initial", [1, 2])
+def test_run_multiple_concurrent(max_initial):
     """Test running multiple concurrent."""
     snapshot = initialise.init_from_file(
-        'test/data/Trimer-13.50-3.00.gsd')
-    simrun.run_npt(snapshot, 3.00, 10, dyn_many=dyn_many, output=OUTDIR)
+        Path('test/data/Trimer-13.50-3.00.gsd')
+    )
+    simrun.run_npt(snapshot,
+                   context=hoomd.context.initialize(''),
+                   temperature=3.00,
+                   steps=10,
+                   max_initial=max_initial,
+                   output=OUTDIR,
+                   )
     assert True
 
 
@@ -46,8 +61,13 @@ def test_thermo():
     output = Path('test/tmp')
     output.mkdir(exist_ok=True)
     snapshot = initialise.init_from_none()
-    simrun.run_npt(snapshot, 3.00, 10, thermo=True, thermo_period=1,
-                   output=OUTDIR)
+    simrun.run_npt(snapshot,
+                   context=hoomd.context.initialize(''),
+                   temperature=3.00,
+                   steps=10,
+                   thermo_period=1,
+                   output=OUTDIR
+                   )
     assert True
 
 
@@ -63,7 +83,13 @@ def test_orthorhombic_sims(cell_dimensions):
     snap = initialise.init_from_crystal(crystals.TrimerP2(),
                                         cell_dimensions=cell_dimensions,
                                         )
-    simrun.run_npt(snap, 0.1, 10, output=OUTDIR)
+    simrun.run_npt(snap,
+                   context=hoomd.context.initialize(''),
+                   temperature=0.1,
+                   steps=10,
+                   dynamics=False,
+                   output=OUTDIR
+                   )
     assert True
 
 
@@ -74,7 +100,14 @@ def test_file_placement():
     current = list(Path('.').glob('*'))
     _ = [os.remove(i) for i in outdir.glob('*')]
     snapshot = initialise.init_from_none()
-    simrun.run_npt(snapshot, 3.00, 10, dyn_many=False, output=outdir)
+    simrun.run_npt(snapshot,
+                   hoomd.context.initialize(''),
+                   temperature=3.00,
+                   steps=10,
+                   dynamics=True,
+                   max_initial=1,
+                   output=outdir
+                   )
     assert current == list(Path('.').glob('*'))
     assert (outdir / 'Trimer-13.50-3.00.gsd').is_file()
     assert (outdir / 'dump-13.50-3.00.gsd').is_file()
