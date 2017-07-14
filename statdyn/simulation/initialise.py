@@ -23,6 +23,7 @@ from .. import molecule
 
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 def set_defaults(kwargs):
@@ -34,12 +35,16 @@ def set_defaults(kwargs):
     kwargs.setdefault('init_args', '')
 
 
-def init_from_file(fname, **kwargs):
+def init_from_file(fname):
     """Initialise a hoomd simulation from an input file."""
-    if not Path(fname).is_file:
+    logger.debug(f'Initialising from file {fname}')
+    if not Path(fname).is_file():
+        logger.debug(f'File {fname} is not found')
         raise FileNotFoundError
-    set_defaults(kwargs)
-    return hoomd.data.gsd_snapshot(str(fname), kwargs.get('timestep', 0))
+    logger.debug(f'File {fname} found')
+    # Hoomd context needs to be initialised before calling gsd_snapshot
+    with hoomd.context.initialize(''):
+        return hoomd.data.gsd_snapshot(str(fname), frame=0)
 
 
 def init_from_none(**kwargs):

@@ -18,6 +18,8 @@ from .. import crystals
 from ..simulation import initialise, simrun
 
 logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 
 def get_temp(fname: Path) -> float:
@@ -71,9 +73,8 @@ def _mkdir_ifempty(ctx, param, value):
 
 
 def _verbosity(ctx, param, count):
-    if not count or ctx.resilient_parsing:
-        return
     if count:
+        logger.info('Setting log level to DEBUG')
         logging.basicConfig(level=logging.DEBUG)
 
 
@@ -171,8 +172,7 @@ def sdrun(ctx):
 @opt_dynamics
 @opt_output
 @opt_verbose
-@click.pass_context
-def crystal(ctx, space_group, lattice_lengths, steps,
+def crystal(space_group, lattice_lengths, steps,
             temperature, dynamics, output):
     """Run simulations on crystals."""
     snapshot = initialise.init_from_crystal(
@@ -195,11 +195,13 @@ def crystal(ctx, space_group, lattice_lengths, steps,
 @opt_configurations
 @opt_verbose
 @opt_dynamics
-@click.pass_context
-def liquid(ctx, steps, temperature, output, configurations, dynamics):
+def liquid(steps, temperature, output, configurations, dynamics):
     """Run simulations on liquid."""
+    logger.debug(f'running liquid')
     infile = Path(configurations) / initialise.get_fname(temperature)
+    logger.debug(f'Reading {infile}')
     snapshot = initialise.init_from_file(infile)
+    logger.debug(f'Snapshot initialised')
     simrun.run_npt(
         snapshot,
         steps=steps,
