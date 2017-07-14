@@ -24,7 +24,7 @@ requirements:
 
 build:
     entry_points:
-        - sdrun = statdyn.sdrun.main:main
+        - sdrun = statdyn.sdrun.main:sdrun
     preserve_egg_dir: True
     script: python setup.py install
     number: {{ GIT_DESCRIBE_NUMBER }}

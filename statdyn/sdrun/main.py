@@ -147,7 +147,7 @@ opt_temperature = click.option(
 @click.group(name='sdrun')
 @click.version_option()
 @click.pass_context
-def main(ctx):
+def sdrun(ctx):
     """Run main function."""
     logging.debug('Running main function')
     # logging.debug(f"output: {output}")
@@ -163,7 +163,7 @@ def main(ctx):
     #    simrun.run_npt(get_initial_snapshot(**kwargs), **kwargs)
 
 
-@main.command
+@sdrun.command()
 @opt_space_group
 @opt_lattice_lengths
 @opt_steps
@@ -188,7 +188,7 @@ def crystal(ctx, space_group, lattice_lengths, steps,
     )
 
 
-@main.command
+@sdrun.command()
 @opt_steps
 @opt_temperature
 @opt_output
@@ -198,7 +198,7 @@ def crystal(ctx, space_group, lattice_lengths, steps,
 @click.pass_context
 def liquid(ctx, steps, temperature, output, configurations, dynamics):
     """Run simulations on liquid."""
-    infile = configurations / initialise.get_fname(temperature)
+    infile = Path(configurations) / initialise.get_fname(temperature)
     snapshot = initialise.init_from_file(infile)
     simrun.run_npt(
         snapshot,

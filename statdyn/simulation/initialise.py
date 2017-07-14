@@ -13,6 +13,7 @@ configurations, whether that is a file, a crystal lattice, or no predefined
 config.
 """
 import logging
+from pathlib import Path
 
 import hoomd
 import hoomd.md as md
@@ -35,7 +36,7 @@ def set_defaults(kwargs):
 
 def init_from_file(fname, **kwargs):
     """Initialise a hoomd simulation from an input file."""
-    if not Path(infile).is_file:
+    if not Path(fname).is_file:
         raise FileNotFoundError
     set_defaults(kwargs)
     return hoomd.data.gsd_snapshot(str(fname), kwargs.get('timestep', 0))
