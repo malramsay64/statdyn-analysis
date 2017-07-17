@@ -8,20 +8,24 @@
 
 """Options for sdrun."""
 
-# type: ignore
-
 import logging
 import os
 from pathlib import Path
 
 import click
 
+from ..simulation import equilibrate
 from ..crystals import CRYSTAL_FUNCS
 from ..molecule import Trimer
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logging.basicConfig(level=logging.INFO)
+
+EQUIL_OPTIONS = {
+    'interface': equilibrate.equil_interface,
+    'liquid': equilibrate.equil_liquid
+}
 
 
 def _mkdir_ifempty(ctx, param, value):
@@ -167,6 +171,11 @@ opt_molecule = click.option(
     callback=_get_molecule
 )
 
+opt_equil = click.option(
+    '--equil-type',
+    default='liquid',
+    type=click.Choice(EQUIL_OPTIONS.keys()),
+)
 
 arg_infile = click.argument('infile', type=str, callback=_input_file)
 

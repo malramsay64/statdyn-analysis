@@ -21,18 +21,12 @@ logger.setLevel(logging.DEBUG)
 logging.basicConfig(level=logging.WARNING)
 
 
-@sdrun.group(name='create')
-def create():
-    """Group for the creation of stuff."""
-    logger.info('Running create')
-
-
-@create.command()
+@sdrun.command()
 @options.opt_space_group
 @options.opt_lattice_lengths
 @options.hoomd_args
 @click.argument('outfile', type=click.File('wb'))
-def crystal(space_group, lattice_lengths, hoomd_args, outfile):
+def create_crystal(space_group, lattice_lengths, hoomd_args, outfile):
     """Generate a crystal configuration."""
     initialise.init_from_crystal(
         crystal=space_group,
@@ -42,15 +36,15 @@ def crystal(space_group, lattice_lengths, hoomd_args, outfile):
     )
 
 
-@create.command()
+@sdrun.command()
 @options.opt_space_group
 @options.opt_lattice_lengths
 @options.opt_temperature
 @options.opt_steps
 @options.opt_hoomd_args
 @click.argument('outfile', type=click.File('wb'))
-def interface(space_group, lattice_lengths, temperature,
-              steps, outfile, hoomd_args):
+def create_interface(space_group, lattice_lengths, temperature,
+                     steps, outfile, hoomd_args):
     """TODO: Docstring for interface.
 
     Args:
