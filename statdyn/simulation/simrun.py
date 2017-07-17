@@ -12,12 +12,12 @@ import logging
 from pathlib import Path
 
 import hoomd
-import hoomd.md as md
 import numpy as np
 
 from . import initialise
 from ..StepSize import GenerateStepSeries
 from .. import molecule
+from .helper import set_integrator
 
 
 logger = logging.getLogger(__name__)
@@ -65,7 +65,7 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
             context=context,
             mol=mol,
         )
-        _set_integrator(temperature=temperature)
+        set_integrator(temperature=temperature)
         _set_thermo(temperature=temperature,
                     pressure=pressure,
                     output=output,
@@ -103,26 +103,6 @@ def _make_restart(temperature: float,
         group=hoomd.group.all(),
         overwrite=True,
         )
-
-
-def _set_integrator(temperature: float,
-                    tau: float=1.,
-                    pressure: float=13.50,
-                    tauP: float=1.,
-                    step_size: float=0.005,
-                    prime_interval: int=33533
-                    ) -> None:
-    md.update.enforce2d()
-    if prime_interval:
-        md.update.zero_momentum(period=prime_interval)
-    md.integrate.mode_standard(step_size)
-    md.integrate.npt(
-        group=hoomd.group.rigid_center(),
-        kT=temperature,
-        tau=tau,
-        P=pressure,
-        tauP=tauP,
-    )
 
 
 def _set_thermo(temperature: float,

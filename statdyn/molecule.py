@@ -46,7 +46,8 @@ class Molecule(object):
         a 2D molecule can only be a 2D molecule, since there will be no
         rotations in that 3rd dimension anyway.
         """
-        hoomd.md.update.enforce2d()
+        if self.dimensions == 2:
+            hoomd.md.update.enforce2d()
 
     def define_potential(self):
         r"""Define the potential in the simulation context.

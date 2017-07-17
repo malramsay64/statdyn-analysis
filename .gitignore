@@ -7,3 +7,4 @@ test/tmp
 
 # Ignore conda build directories
 dist
+build

@@ -15,7 +15,6 @@ import click
 import hoomd.context
 
 from . import options
-from .. import crystals
 from ..simulation import initialise, simrun
 
 logger = logging.getLogger(__name__)
@@ -44,7 +43,7 @@ def crystal(space_group, lattice_lengths, steps,
             temperature, dynamics, output, hoomd_args):
     """Run simulations on crystals."""
     snapshot = initialise.init_from_crystal(
-        crystal=crystals.CRYSTAL_FUNCS.get(space_group)(),
+        crystal=space_group,
         hoomd_args=hoomd_args,
         cell_dimensions=lattice_lengths
     )
@@ -83,6 +82,29 @@ def liquid(steps, temperature, output, configurations, dynamics, hoomd_args):
         temperature=temperature,
         dynamics=dynamics,
         output=output,
+    )
+
+
+@sdrun.command()
+@options.opt_steps
+@options.opt_temperature
+@options.opt_space_group
+@options.opt_lattice_lengths
+@options.opt_output
+@options.opt_verbose
+@options.opt_hoomd_args
+def create_slab(steps, temperature, space_group, lattice_lengths, output,
+                hoomd_args):
+    """Create a slab of crystal in a liquid."""
+    logger.debug('Running create_slab')
+    initialise.init_slab(
+        crystal=space_group,
+        hoomd_args=hoomd_args,
+        equil_temp=temperature,
+        equil_steps=steps,
+        melt_temp=1.5*temperature,
+        melt_steps=steps,
+        cell_dimensions=lattice_lengths,
     )
 
 

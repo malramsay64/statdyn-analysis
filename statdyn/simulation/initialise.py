@@ -20,7 +20,8 @@ import hoomd
 import hoomd.md as md
 import numpy as np
 
-from .. import molecule, crystals
+from .. import crystals, molecule
+from .helper import dump_frame
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -97,6 +98,7 @@ def init_from_crystal(crystal: crystals.Crystal,
                       cell_dimensions: Tuple[int, int]=(30, 40),
                       step_size: float=0.005,
                       optimise_steps: int=1000,
+                      outfile: Path=None,
                       ) -> hoomd.data.SnapshotParticleData:
     """Initialise a hoomd simulation from a crystal lattice.
 
@@ -117,15 +119,18 @@ def init_from_crystal(crystal: crystals.Crystal,
     temp_context = hoomd.context.initialize(hoomd_args)
     with temp_context:
         sys = initialise_snapshot(snap, temp_context, crystal.molecule)
-        md.integrate.mode_minimize_fire(
-            group=hoomd.group.rigid_center(),
-            dt=step_size)
+        md.integrate.mode_standard(dt=step_size)
+        md.integrate.nvt(group=hoomd.group.rigid_center(), kT=0.1, tau=5)
         hoomd.run(optimise_steps)
         equil_snap = sys.take_snapshot(all=True)
+        if outfile:
+            dump_frame(outfile, group=hoomd.group.all())
     return make_orthorhombic(equil_snap)
 
 
 def init_slab(crystal: crystals.Crystal,
+              equil_temp: float,
+              equil_steps: int,
               hoomd_args: str='',
               cell_dimensions: Tuple[int, int]=(30, 40),
               melt_temp: float=2.50,
@@ -140,7 +145,8 @@ def init_slab(crystal: crystals.Crystal,
         crystal=crystal,
         hoomd_args=hoomd_args,
         cell_dimensions=cell_dimensions,
-        step_size=step_size,
+        step_size=step_size/5,
+        optimise_steps=5000,
     )
     temp_context = hoomd.context.initialize(hoomd_args)
     sys = initialise_snapshot(
@@ -152,20 +158,26 @@ def init_slab(crystal: crystals.Crystal,
         md.update.enforce2d()
         prime_interval = 307
         md.update.zero_momentum(period=prime_interval)
-        md.integrate.mode_standard(dt=step_size)
+        md.integrate.mode_standard(dt=step_size/5)
         group = hoomd.group.intersection(
             'rigid_stationary',
-            hoomd.group.cuboid(xmin=-sys.box.Lx/4, xmax=sys.box.Lx/4),
+            hoomd.group.cuboid(name='stationary',
+                               xmin=-sys.box.Lx/4,
+                               xmax=sys.box.Lx/4),
             hoomd.group.rigid_center()
         )
-        md.integrate.npt(
+        thermostat = md.integrate.npt(
             group=group,
-            kT=2.50,
+            kT=melt_temp,
             tau=tau,
             P=pressure,
             tauP=tauP
         )
+        hoomd.run(melt_steps/10)
+        md.integrate.mode_standard(dt=step_size/5)
         hoomd.run(melt_steps)
+        thermostat.set_params(kt=equil_temp)
+        hoomd.run(equil_steps)
         return sys.take_snapshot(all=True)
 
 

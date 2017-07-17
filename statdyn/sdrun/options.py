@@ -11,11 +11,13 @@
 # type: ignore
 
 import logging
+import os
 from pathlib import Path
 
 import click
 
 from ..crystals import CRYSTAL_FUNCS
+from ..molecule import Trimer
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -38,10 +40,47 @@ def _verbosity(ctx, param, count):
     logging.basicConfig(level=logging.DEBUG)
 
 
+def _create_crystal(ctx, param, crys):
+    if not crys or ctx.resilient_parsing:
+        return
+    return CRYSTAL_FUNCS.get(crys)()
+
+
+def _get_molecule(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    return Trimer()
+
+
+def _output_file(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    filename = Path(value)
+    if filename.exists():
+        if click.confirm(f'{filename} exists; Delete?'):
+            os.remove(filename)
+            logger.info(f'{filename} deleted and continuing execution')
+        else:
+            raise FileExistsError(filename)
+    _mkdir_ifempty(ctx, param, filename.parent)
+    return filename
+
+
+def _input_file(ctx, param, value):
+    if not value or ctx.resilient_parsing:
+        return
+    filename = Path(value)
+    if not filename.exists():
+        raise FileNotFoundError(filename)
+    _mkdir_ifempty(ctx, param, filename.parent)
+    return filename
+
+
 opt_space_group = click.option(
     '--space-group',
     default='p2',
     type=click.Choice(CRYSTAL_FUNCS.keys()),
+    callback=_create_crystal,
     help='Space group of initial crystal.',
 )
 
@@ -120,3 +159,15 @@ opt_hoomd_args = click.option(
     default='',
     help='Arguments to pass to hoomd on context.initialize',
 )
+
+opt_molecule = click.option(
+    '--molecule',
+    default='trimer',
+    type=click.Choice(['trimer']),
+    callback=_get_molecule
+)
+
+
+arg_infile = click.argument('infile', type=str, callback=_input_file)
+
+arg_outfile = click.argument('outfile', type=str, callback=_output_file)
