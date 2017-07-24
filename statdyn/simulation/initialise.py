@@ -120,9 +120,12 @@ def init_from_crystal(crystal: crystals.Crystal,
     with temp_context:
         sys = initialise_snapshot(snap, temp_context, crystal.molecule)
         md.integrate.mode_standard(dt=step_size)
-        md.integrate.nvt(group=hoomd.group.rigid_center(), kT=0.1, tau=5)
+        nvt = md.integrate.nvt(group=hoomd.group.rigid_center(), kT=0.1, tau=5)
         hoomd.run(optimise_steps)
-        equil_snap = sys.take_snapshot(all=True)
+        nvt.disable()
+        md.integrate.npt(group=hoomd.group.rigid_center(), kT=0.8, P=13.5, tau=5, tauP=5)
+        hoomd.run(optimise_steps)
+        equil_snap = sys.take_snapshot()
         if outfile:
             dump_frame(outfile, group=hoomd.group.all())
     return make_orthorhombic(equil_snap)
@@ -176,7 +179,7 @@ def init_slab(crystal: crystals.Crystal,
         hoomd.run(melt_steps/10)
         md.integrate.mode_standard(dt=step_size/5)
         hoomd.run(melt_steps)
-        thermostat.set_params(kt=equil_temp)
+        thermostat.set_params(kT=equil_temp)
         hoomd.run(equil_steps)
         return sys.take_snapshot(all=True)
 

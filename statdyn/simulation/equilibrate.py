@@ -11,10 +11,46 @@
 from pathlib import Path
 
 import hoomd
+import hoomd.md
 
 from ..molecule import Trimer
 from .helper import dump_frame, set_integrator
 from .initialise import initialise_snapshot
+
+
+def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
+                  equil_temp: float=0.4,
+                  equil_steps: int=5000,
+                  hoomd_args: str='',
+                  tau: float=1.,
+                  pressure: float=13.50,
+                  tauP: float=1.,
+                  step_size: float=0.005,
+                  molecule=Trimer(),
+                  outfile: Path=None,
+                  ) -> hoomd.data.SnapshotParticleData:
+    """Equilbrate crystal."""
+    temp_context = hoomd.context.initialize(hoomd_args)
+    sys = initialise_snapshot(
+        snapshot=snapshot,
+        context=temp_context,
+        mol=molecule
+    )
+    with temp_context:
+        temperature = 0.4
+        integrator = set_integrator(
+            temperature=temperature,
+            step_size=step_size/2,
+            prime_interval=307,
+            group=None,
+            pressure=pressure,
+            tauP=tauP/5, tau=tau/5,
+        )
+        while temperature < equil_temp:
+            hoomd.run(equil_steps)
+            temperature += 0.05
+            integrator.set_params(kT=temperature)
+        return sys.take_snapshot()
 
 
 def create_interface(snapshot: hoomd.data.SnapshotParticleData,
@@ -33,17 +69,31 @@ def create_interface(snapshot: hoomd.data.SnapshotParticleData,
     sys = initialise_snapshot(
         snapshot=snapshot,
         context=temp_context,
-        mol=Trimer()
+        mol=molecule
     )
     with temp_context:
-        set_integrator(temperature=melt_temp,
-                       step_size=step_size,
-                       prime_interval=307,
-                       group=_interface_group(sys),
-                       pressure=pressure,
-                       tauP=tauP, tau=tau,
-                       )
-        hoomd.run(melt_steps)
+        temperature = 0.6
+        hoomd.md.update.enforce2d()
+        hoomd.md.integrate.mode_standard(step_size)
+        integrator = hoomd.md.integrate.nvt(
+            group=_interface_group(sys),
+            kT=temperature,
+            tau=tau/5,
+        )
+        integrator.set_params(kT=temperature)
+        thermo = hoomd.analyze.log(None, quantities=['pressure'], period=1)
+        while temperature < melt_temp:
+            while thermo.query('pressure') > pressure:
+                hoomd.update.box_resize(
+                    Lx=sys.box.Lx*1.05,
+                    Ly=sys.box.Ly*1.05,
+                    period=None
+                )
+                hoomd.run(melt_steps)
+            hoomd.run(melt_steps)
+            temperature += 0.2
+            integrator.set_params(kT=temperature)
+
         if outfile is not None:
             dump_frame(outfile, group=hoomd.group.all())
         return sys.take_snapshot(all=True)

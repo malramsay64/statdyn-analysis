@@ -9,14 +9,13 @@
 """Options for sdrun."""
 
 import logging
-import os
 from pathlib import Path
 
 import click
 
-from ..simulation import equilibrate
 from ..crystals import CRYSTAL_FUNCS
 from ..molecule import Trimer
+from ..simulation import equilibrate
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -54,30 +53,6 @@ def _get_molecule(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
     return Trimer()
-
-
-def _output_file(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    filename = Path(value)
-    if filename.exists():
-        if click.confirm(f'{filename} exists; Delete?'):
-            os.remove(filename)
-            logger.info(f'{filename} deleted and continuing execution')
-        else:
-            raise FileExistsError(filename)
-    _mkdir_ifempty(ctx, param, filename.parent)
-    return filename
-
-
-def _input_file(ctx, param, value):
-    if not value or ctx.resilient_parsing:
-        return
-    filename = Path(value)
-    if not filename.exists():
-        raise FileNotFoundError(filename)
-    _mkdir_ifempty(ctx, param, filename.parent)
-    return filename
 
 
 opt_space_group = click.option(
@@ -139,20 +114,18 @@ scale.
 )
 
 
-opt_steps = click.option(  # type: ignore
+opt_steps = click.option(
     '-s',
     '--steps',
     type=click.IntRange(min=0, max=int(1e12)),
-    required=True,
     help='Number of steps to run simulation for.'
 )
 
 
-opt_temperature = click.option(  # type: ignore
+opt_temperature = click.option(
     '-t',
     '--temperature',
     type=float,
-    required=True,
     help='Temperature for simulation',
 )
 
@@ -177,6 +150,12 @@ opt_equil = click.option(
     type=click.Choice(EQUIL_OPTIONS.keys()),
 )
 
-arg_infile = click.argument('infile', type=str, callback=_input_file)
+arg_infile = click.argument(
+    'infile',
+    type=click.Path(exists=True, dir_okay=False, readable=True),
+)
 
-arg_outfile = click.argument('outfile', type=str, callback=_output_file)
+arg_outfile = click.argument(
+    'outfile',
+    type=click.Path(exists=False, dir_okay=False, writable=True),
+)

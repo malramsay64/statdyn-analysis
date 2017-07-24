@@ -14,7 +14,7 @@ import click
 import hoomd.context
 
 from . import options
-from ..simulation import initialise, simrun
+from ..simulation import initialise, simrun, equilibrate
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -90,7 +90,8 @@ def liquid(infile, steps, temperature, output, dynamics, hoomd_args):
 @options.opt_equil
 @options.arg_infile
 @options.arg_outfile
-def equil(infile, outfile, molecule, temperature, steps, hoomd_args, equil_type):
+def equil(infile, outfile, molecule, temperature, steps,
+          hoomd_args, equil_type):
     """Command group for the equilibration of configurations."""
     logger.info('Run equil')
     snapshot = initialise.init_from_file(infile)
@@ -122,8 +123,41 @@ def dynamics(infile, temperature, molecule, steps, hoomd_args, output,
                    temperature=temperature,
                    steps=steps,
                    hoomd_args=hoomd_args,
-                   mol=molecule
+                   mol=molecule,
+                   output=output,
                    )
+
+
+@sdrun.command()
+@options.opt_space_group
+@options.opt_lattice_lengths
+@options.opt_temperature
+@options.opt_steps
+@options.opt_hoomd_args
+@options.arg_outfile
+@click.option('--interface', type=bool)
+def create(space_group, lattice_lengths, temperature, steps,
+           outfile, interface, hoomd_args):
+    """Create things."""
+    if interface:
+        crys_out = None
+    else:
+        crys_out = outfile
+
+    snapshot = initialise.init_from_crystal(
+        crystal=space_group,
+        hoomd_args=hoomd_args,
+        cell_dimensions=lattice_lengths,
+        outfile=crys_out,
+    )
+
+    if interface:
+        equilibrate.create_interface(
+            snapshot=snapshot,
+            melt_temp=temperature,
+            melt_steps=steps,
+            outfile=outfile,
+        )
 
 
 if __name__ == "__main__":
