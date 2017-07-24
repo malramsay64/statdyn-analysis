@@ -32,10 +32,6 @@ def init_from_file(fname: Path,
                    ) -> hoomd.data.SnapshotParticleData:
     """Initialise a hoomd simulation from an input file."""
     logger.debug(f'Initialising from file {fname}')
-    if not fname.is_file():
-        logger.debug(f'File {fname} is not found')
-        raise FileNotFoundError
-    logger.debug(f'File {fname} found')
     # Hoomd context needs to be initialised before calling gsd_snapshot
     temp_context = hoomd.context.initialize(hoomd_args)
     with temp_context:

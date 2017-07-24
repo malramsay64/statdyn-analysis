@@ -26,6 +26,7 @@ def set_integrator(temperature: float,
                    step_size: float=0.005,
                    prime_interval: int=33533,
                    group: hoomd.group.group=None,
+                   crystal: bool=False,
                    ) -> hoomd.md.integrate.npt:
     """Hoomd integrate method."""
     if group is None:
@@ -41,6 +42,11 @@ def set_integrator(temperature: float,
         P=pressure,
         tauP=tauP,
     )
+    if crystal:
+        integrator.set_params(
+            rescale_all=True,
+            couple='none',
+        )
     return integrator
 
 

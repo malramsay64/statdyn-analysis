@@ -14,7 +14,7 @@ import click
 import hoomd.context
 
 from . import options
-from ..simulation import initialise, simrun, equilibrate
+from ..simulation import equilibrate, initialise, simrun
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -139,25 +139,20 @@ def dynamics(infile, temperature, molecule, steps, hoomd_args, output,
 def create(space_group, lattice_lengths, temperature, steps,
            outfile, interface, hoomd_args):
     """Create things."""
-    if interface:
-        crys_out = None
-    else:
-        crys_out = outfile
-
     snapshot = initialise.init_from_crystal(
         crystal=space_group,
         hoomd_args=hoomd_args,
         cell_dimensions=lattice_lengths,
-        outfile=crys_out,
+        outfile=None,
     )
 
-    if interface:
-        equilibrate.create_interface(
-            snapshot=snapshot,
-            melt_temp=temperature,
-            melt_steps=steps,
-            outfile=outfile,
-        )
+    equilibrate.equil_crystal(
+        snapshot=snapshot,
+        melt_temp=temperature,
+        melt_steps=steps,
+        outfile=outfile,
+        interface=interface
+    )
 
 
 if __name__ == "__main__":
