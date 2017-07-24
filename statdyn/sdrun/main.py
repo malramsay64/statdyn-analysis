@@ -135,7 +135,7 @@ def dynamics(infile, temperature, molecule, steps, hoomd_args, output,
 @options.opt_steps
 @options.opt_hoomd_args
 @options.arg_outfile
-@click.option('--interface', type=bool)
+@click.option('--interface', is_flag=True)
 def create(space_group, lattice_lengths, temperature, steps,
            outfile, interface, hoomd_args):
     """Create things."""
@@ -148,8 +148,8 @@ def create(space_group, lattice_lengths, temperature, steps,
 
     equilibrate.equil_crystal(
         snapshot=snapshot,
-        melt_temp=temperature,
-        melt_steps=steps,
+        equil_temp=temperature,
+        equil_steps=steps,
         outfile=outfile,
         interface=interface
     )

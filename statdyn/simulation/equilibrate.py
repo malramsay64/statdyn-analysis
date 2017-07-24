@@ -58,8 +58,10 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
         # Gradually increase temperature from inital to equil_temp
         integrator.set_params(kT=hoomd.variant.linear_interp([
             (0, temperature),
-            (equil_steps, equil_temp)
+            (int(equil_steps*0.75), equil_temp),
+            (equil_steps, equil_temp),
         ], zero='now'))
+        hoomd.run(equil_steps)
 
         if outfile is not None:
             dump_frame(outfile, group=hoomd.group.all())

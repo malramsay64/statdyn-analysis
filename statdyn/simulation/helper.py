@@ -31,21 +31,29 @@ def set_integrator(temperature: float,
     """Hoomd integrate method."""
     if group is None:
         group = hoomd.group.rigid_center()
+
     md.update.enforce2d()
     if prime_interval:
         md.update.zero_momentum(period=prime_interval, phase=-1)
+
     md.integrate.mode_standard(step_size)
-    integrator = md.integrate.npt(
-        group=group,
-        kT=temperature,
-        tau=tau,
-        P=pressure,
-        tauP=tauP,
-    )
     if crystal:
-        integrator.set_params(
+        integrator = md.integrate.npt(
+            group=group,
+            kT=temperature,
+            tau=tau,
+            P=pressure,
+            tauP=tauP,
             rescale_all=True,
             couple='none',
+        )
+    else:
+        integrator = md.integrate.npt(
+            group=group,
+            kT=temperature,
+            tau=tau,
+            P=pressure,
+            tauP=tauP,
         )
     return integrator
 
@@ -62,5 +70,6 @@ def dump_frame(outfile: Path,
         period=None,
         time_step=timestep,
         group=group,
+        overwrite=True,
         static=['topology', 'attribute']
     )
