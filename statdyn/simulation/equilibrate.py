@@ -72,6 +72,7 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
 def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
                     equil_temp: float,
                     equil_steps: int,
+                    init_temp: float=2.50,
                     hoomd_args: str='',
                     tau: float=1.,
                     pressure: float=13.50,
@@ -93,19 +94,34 @@ def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
     )
     with temp_context:
         # Equilibrate crystal
-        set_integrator(temperature=equil_temp,
-                       step_size=step_size,
-                       group=_interface_group(sys, stationary=True),
-                       pressure=pressure,
-                       tauP=tauP, tau=tau,
-                       )
-        hoomd.run(5000)
+        temperature = hoomd.variant.linear_interp([
+            (0, init_temp),
+            (equil_steps/20, equil_temp),
+            (equil_steps/10, equil_temp)
+        ])
+        integrator = set_integrator(
+            temperature=temperature,
+            step_size=step_size,
+            group=_interface_group(sys, stationary=True),
+            pressure=pressure,
+            tauP=tauP, tau=tau,
+            crystal=True,
+        )
+        hoomd.run(equil_steps/10)
+        integrator.disable()
         # Equilibrate liquid
+        temperature = hoomd.variant.linear_interp([
+            (0, init_temp),
+            (equil_steps/2, equil_temp),
+            (equil_steps, equil_temp)
+        ])
         set_integrator(temperature=equil_temp,
                        step_size=step_size,
                        group=_interface_group(sys, stationary=False),
                        pressure=pressure,
                        tauP=tauP, tau=tau,
+                       crystal=True,
+                       create=False,
                        )
         hoomd.run(equil_steps)
         if outfile is not None:

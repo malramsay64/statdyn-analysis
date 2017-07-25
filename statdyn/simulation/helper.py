@@ -27,16 +27,18 @@ def set_integrator(temperature: float,
                    prime_interval: int=33533,
                    group: hoomd.group.group=None,
                    crystal: bool=False,
+                   create: bool=True,
                    ) -> hoomd.md.integrate.npt:
     """Hoomd integrate method."""
     if group is None:
         group = hoomd.group.rigid_center()
 
-    md.update.enforce2d()
-    if prime_interval:
-        md.update.zero_momentum(period=prime_interval, phase=-1)
+    if create:
+        md.update.enforce2d()
+        md.integrate.mode_standard(step_size)
+        if prime_interval:
+            md.update.zero_momentum(period=prime_interval, phase=-1)
 
-    md.integrate.mode_standard(step_size)
     if crystal:
         integrator = md.integrate.npt(
             group=group,
