@@ -9,6 +9,7 @@
 """Run simulation with boilerplate taken care of by the statdyn library."""
 
 import logging
+from pathlib import Path
 
 import click
 import hoomd.context
@@ -94,6 +95,10 @@ def equil(infile, outfile, molecule, temperature, steps,
           hoomd_args, equil_type):
     """Command group for the equilibration of configurations."""
     logger.info('Run equil')
+
+    # Ensure parent directory exists
+    Path(outfile).parent.mkdir(exist_ok=True)
+
     snapshot = initialise.init_from_file(infile)
     options.EQUIL_OPTIONS.get(equil_type)(
         snapshot,
@@ -139,6 +144,9 @@ def dynamics(infile, temperature, molecule, steps, hoomd_args, output,
 def create(space_group, lattice_lengths, temperature, steps,
            outfile, interface, hoomd_args):
     """Create things."""
+    # Ensure parent directory exists
+    Path(outfile).parent.mkdir(exist_ok=True)
+
     snapshot = initialise.init_from_crystal(
         crystal=space_group,
         hoomd_args=hoomd_args,
