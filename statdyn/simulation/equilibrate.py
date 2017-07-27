@@ -72,7 +72,7 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
 def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
                     equil_temp: float,
                     equil_steps: int,
-                    init_temp: float=2.50,
+                    init_temp: float=4.00,
                     hoomd_args: str='',
                     tau: float=1.,
                     pressure: float=13.50,
@@ -138,6 +138,7 @@ def equil_liquid(snapshot: hoomd.data.SnapshotParticleData,
                  tauP: float=1.,
                  step_size: float=0.005,
                  molecule=Trimer(),
+                 init_temp: float=None,
                  outfile: Path=None,
                  ) -> hoomd.data.SnapshotParticleData:
     """Equilibrate a liquid configuration."""
@@ -148,12 +149,20 @@ def equil_liquid(snapshot: hoomd.data.SnapshotParticleData,
         mol=molecule
     )
     with temp_context:
-        set_integrator(temperature=equil_temp,
-                       step_size=step_size,
-                       group=_interface_group(sys, stationary=True),
-                       pressure=pressure,
-                       tauP=tauP, tau=tau,
-                       )
+        integrator = set_integrator(
+            temperature=equil_temp,
+            step_size=step_size,
+            group=_interface_group(sys, stationary=True),
+            pressure=pressure,
+            tauP=tauP, tau=tau,
+        )
+        if init_temp:
+            temperature = hoomd.variant.linear_interp([
+                (0, init_temp),
+                (equil_steps/2, equil_temp),
+                (equil_steps, equil_temp)
+            ])
+            integrator.set_params(kT=temperature)
         hoomd.run(equil_steps)
         if outfile is not None:
             dump_frame(outfile, group=hoomd.group.all())

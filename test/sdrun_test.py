@@ -30,7 +30,7 @@ def test_liquid():
     """Ensure sdrun liquid works."""
     subprocess.run(['ls', 'test/data'])
     command = ['sdrun',
-               'equilibrium',
+               'prod',
                'test/data/Trimer-13.50-3.00.gsd',
                '-v',
                '-t', '3.00',
@@ -58,7 +58,7 @@ def test_create():
 
 
 def test_interface():
-    """Ensure sdrun liquid works."""
+    """Ensure sdrun interface works."""
     subprocess.run(['ls', 'test/data'])
     command = ['sdrun',
                'interface',

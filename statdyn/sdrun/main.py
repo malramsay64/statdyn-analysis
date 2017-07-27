@@ -81,10 +81,10 @@ def crystal(space_group, lattice_lengths, steps,
 @options.opt_dynamics
 @options.opt_hoomd_args
 @options.arg_infile
-def equilibrium(infile, steps, temperature, molecule, output,
-                dynamics, hoomd_args):
+def prod(infile, steps, temperature, molecule, output,
+         dynamics, hoomd_args):
     """Run simulations on equilibrated phase."""
-    logger.debug(f'running liquid')
+    logger.debug(f'running prod')
     logger.debug(f'Reading {infile}')
 
     snapshot = initialise.init_from_file(infile, hoomd_args=hoomd_args)
@@ -107,10 +107,11 @@ def equilibrium(infile, steps, temperature, molecule, output,
 @options.opt_hoomd_args
 @options.opt_molecule
 @options.opt_equil
+@options.opt_init_temp
 @options.arg_infile
 @options.arg_outfile
 def equil(infile, outfile, molecule, temperature, steps,
-          hoomd_args, equil_type):
+          init_temp, hoomd_args, equil_type):
     """Command group for the equilibration of configurations."""
     logger.info('Run equil')
 
@@ -124,6 +125,7 @@ def equil(infile, outfile, molecule, temperature, steps,
         equil_steps=steps,
         hoomd_args=hoomd_args,
         molecule=molecule,
+        init_temp=init_temp,
         outfile=outfile,
     )
 
@@ -167,19 +169,22 @@ def create(space_group, lattice_lengths, temperature, steps,
 @options.opt_output
 @options.opt_hoomd_args
 @options.opt_dynamics
+@options.opt_init_temp
 @options.arg_infile
 def interface(infile, temperature, steps, dynamics, molecule,
-              output, hoomd_args):
+              init_temp, output, hoomd_args):
     """Create things."""
     # Initialise
     snapshot = initialise.init_from_file(infile, hoomd_args=hoomd_args)
 
+    if init_temp is None:
+        init_temp = 4.00
     # Equilibrate
     snapshot = equilibrate.equil_interface(
         snapshot=snapshot,
         equil_temp=temperature,
         equil_steps=steps,
-        init_temp=2.50,
+        init_temp=init_temp,
     )
 
     # Production

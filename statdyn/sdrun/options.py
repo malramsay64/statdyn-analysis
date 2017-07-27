@@ -150,6 +150,13 @@ opt_equil = click.option(
     type=click.Choice(EQUIL_OPTIONS.keys()),
 )
 
+opt_init_temp = click.option(
+    '--init-temp',
+    default=None,
+    type=float,
+    help='Temperature to start equilibration from if differnt from the target.'
+)
+
 arg_infile = click.argument(
     'infile',
     type=click.Path(exists=True, dir_okay=False, readable=True),
