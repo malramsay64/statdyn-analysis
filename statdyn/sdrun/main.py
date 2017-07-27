@@ -31,47 +31,6 @@ def sdrun(ctx):
 
 
 @sdrun.command()
-@options.opt_space_group
-@options.opt_lattice_lengths
-@options.opt_steps
-@options.opt_temperature
-@options.opt_dynamics
-@options.opt_output
-@options.opt_verbose
-@options.opt_hoomd_args
-def crystal(space_group, lattice_lengths, steps,
-            temperature, dynamics, output, hoomd_args):
-    """Run simulations on crystals."""
-    # Create crystal
-    snapshot = initialise.init_from_crystal(
-        crystal=space_group,
-        hoomd_args=hoomd_args,
-        cell_dimensions=lattice_lengths
-    )
-    molecule = space_group.molecule
-
-    # Equilibrate Crystal
-    equilibrate.equil_crystal(
-        snapshot,
-        equil_temp=temperature,
-        equil_steps=steps,
-        hoomd_args=hoomd_args,
-        molecule=molecule,
-    )
-
-    # Run simulation
-    sim_context = hoomd.context.initialize(hoomd_args)
-    simrun.run_npt(
-        snapshot=snapshot,
-        context=sim_context,
-        temperature=temperature,
-        steps=steps,
-        dynamics=dynamics,
-        output=output,
-    )
-
-
-@sdrun.command()
 @options.opt_verbose
 @options.opt_steps
 @options.opt_temperature
@@ -158,44 +117,6 @@ def create(space_group, lattice_lengths, temperature, steps,
         equil_steps=steps,
         outfile=outfile,
         interface=interface
-    )
-
-
-@sdrun.command()
-@options.opt_verbose
-@options.opt_temperature
-@options.opt_steps
-@options.opt_molecule
-@options.opt_output
-@options.opt_hoomd_args
-@options.opt_dynamics
-@options.opt_init_temp
-@options.arg_infile
-def interface(infile, temperature, steps, dynamics, molecule,
-              init_temp, output, hoomd_args):
-    """Create things."""
-    # Initialise
-    snapshot = initialise.init_from_file(infile, hoomd_args=hoomd_args)
-
-    if init_temp is None:
-        init_temp = 4.00
-    # Equilibrate
-    snapshot = equilibrate.equil_interface(
-        snapshot=snapshot,
-        equil_temp=temperature,
-        equil_steps=steps,
-        init_temp=init_temp,
-    )
-
-    # Production
-    context = hoomd.context.initialize(hoomd_args)
-    simrun.run_npt(
-        snapshot,
-        context=context,
-        output=output,
-        steps=steps,
-        temperature=temperature,
-        dynamics=dynamics,
     )
 
 
