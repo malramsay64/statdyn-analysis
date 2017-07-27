@@ -12,22 +12,8 @@
 import subprocess
 
 
-def test_crystal():
-    """Ensure command line tools work."""
-    command = ['sdrun',
-               'crystal',
-               '-v',
-               '-s', '100',
-               '-t', '1.50',
-               '--no-dynamics',
-               '-o', 'test/output',
-               ]
-    ret = subprocess.run(command)
-    assert ret.returncode == 0
-
-
-def test_liquid():
-    """Ensure sdrun liquid works."""
+def test_prod():
+    """Ensure sdrun prod works."""
     subprocess.run(['ls', 'test/data'])
     command = ['sdrun',
                'prod',
@@ -43,7 +29,7 @@ def test_liquid():
 
 
 def test_create():
-    """Ensure sdrun liquid works."""
+    """Ensure sdrun create works."""
     command = ['sdrun',
                'create',
                '-v',
@@ -57,17 +43,17 @@ def test_create():
     assert ret.returncode == 0
 
 
-def test_interface():
-    """Ensure sdrun interface works."""
-    subprocess.run(['ls', 'test/data'])
+def test_equil():
+    """Ensure sdrun create works."""
     command = ['sdrun',
-               'interface',
-               'test/data/Trimer-13.50-3.00.gsd',
+               'equil',
                '-v',
-               '-t', '1.50',
-               '--no-dynamics',
+               '-t', '2.50',
                '-s', '100',
-               '-o', 'test/output',
+               'test/output/test_create.gsd',
+               'test/output/test_create.gsd',
                ]
     ret = subprocess.run(command)
+    assert ret.returncode == 0
+    ret = subprocess.run(command + ['--equil-type', 'interface'])
     assert ret.returncode == 0

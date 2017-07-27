@@ -61,6 +61,7 @@ def prod(infile, steps, temperature, molecule, output,
 
 
 @sdrun.command()
+@options.opt_verbose
 @options.opt_temperature
 @options.opt_steps
 @options.opt_hoomd_args

@@ -94,11 +94,14 @@ def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
     )
     with temp_context:
         # Equilibrate crystal
-        temperature = hoomd.variant.linear_interp([
-            (0, init_temp),
-            (equil_steps/20, equil_temp),
-            (equil_steps/10, equil_temp)
-        ])
+        if init_temp:
+            temperature = hoomd.variant.linear_interp([
+                (0, init_temp),
+                (equil_steps/20, equil_temp),
+                (equil_steps/10, equil_temp)
+            ])
+        else:
+            temperature = equil_temp
         integrator = set_integrator(
             temperature=temperature,
             step_size=step_size,
@@ -110,12 +113,15 @@ def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
         hoomd.run(equil_steps/10)
         integrator.disable()
         # Equilibrate liquid
-        temperature = hoomd.variant.linear_interp([
-            (0, init_temp),
-            (equil_steps/2, equil_temp),
-            (equil_steps, equil_temp)
-        ])
-        set_integrator(temperature=equil_temp,
+        if init_temp:
+            temperature = hoomd.variant.linear_interp([
+                (0, init_temp),
+                (equil_steps/2, equil_temp),
+                (equil_steps, equil_temp)
+            ])
+        else:
+            temperature = equil_temp
+        set_integrator(temperature=temperature,
                        step_size=step_size,
                        group=_interface_group(sys, stationary=False),
                        pressure=pressure,
@@ -149,20 +155,21 @@ def equil_liquid(snapshot: hoomd.data.SnapshotParticleData,
         mol=molecule
     )
     with temp_context:
-        integrator = set_integrator(
-            temperature=equil_temp,
-            step_size=step_size,
-            group=_interface_group(sys, stationary=True),
-            pressure=pressure,
-            tauP=tauP, tau=tau,
-        )
         if init_temp:
             temperature = hoomd.variant.linear_interp([
                 (0, init_temp),
                 (equil_steps/2, equil_temp),
                 (equil_steps, equil_temp)
             ])
-            integrator.set_params(kT=temperature)
+        else:
+            temperature = equil_temp
+        set_integrator(
+            temperature=temperature,
+            step_size=step_size,
+            group=None,
+            pressure=pressure,
+            tauP=tauP, tau=tau,
+        )
         hoomd.run(equil_steps)
         if outfile is not None:
             dump_frame(outfile, group=hoomd.group.all())
