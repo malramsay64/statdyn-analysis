@@ -76,7 +76,8 @@ def equil(infile, outfile, molecule, temperature, steps,
     logger.info('Run equil')
 
     # Ensure parent directory exists
-    Path(outfile).parent.mkdir(exist_ok=True)
+    outfile = Path(outfile)
+    outfile.parent.mkdir(exist_ok=True)
 
     snapshot = initialise.init_from_file(infile)
     options.EQUIL_OPTIONS.get(equil_type)(
@@ -102,8 +103,9 @@ def equil(infile, outfile, molecule, temperature, steps,
 def create(space_group, lattice_lengths, temperature, steps,
            outfile, interface, hoomd_args):
     """Create things."""
+    outfile = Path(outfile)
     # Ensure parent directory exists
-    Path(outfile).parent.mkdir(exist_ok=True)
+    outfile.parent.mkdir(exist_ok=True)
 
     snapshot = initialise.init_from_crystal(
         crystal=space_group,

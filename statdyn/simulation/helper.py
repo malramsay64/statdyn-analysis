@@ -75,3 +75,35 @@ def dump_frame(outfile: Path,
         overwrite=True,
         static=['topology', 'attribute']
     )
+
+
+def set_dump(outfile: Path,
+             dump_period: int=10000,
+             ) -> None:
+    """Initialise dumping configuration to a file."""
+    hoomd.dump.gsd(
+        str(outfile),
+        period=dump_period,
+        group=hoomd.group.all()
+    )
+
+
+def set_thermo(outfile: Path,
+               thermo_period: int=10000
+               ) -> None:
+    """Set the thermodynamic quantities for a simulation."""
+    default = ['N', 'volume', 'momentum', 'temperature', 'pressure',
+               'potential_energy', 'kinetic_energy',
+               'translational_kinetic_energy', 'rotational_kinetic_energy',
+               'npt_thermostat_energy']
+    rigid = ['temperature_rigid_center',
+             'pressure_rigid_center',
+             'potential_energy_rigid_center',
+             'kinetic_energy_rigid_center',
+             'translational_kinetic_energy_rigid_center',
+             ]
+    hoomd.analyze.log(
+        str(outfile),
+        quantities=default + rigid,
+        period=thermo_period,
+    )

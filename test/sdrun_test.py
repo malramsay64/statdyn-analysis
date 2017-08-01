@@ -50,8 +50,8 @@ def test_equil():
                '-v',
                '-t', '2.50',
                '-s', '100',
-               'test/output/test_create.gsd',
-               'test/output/test_create.gsd',
+               'test/data/Trimer-13.50-3.00.gsd',
+               'test/output/test_equil.gsd',
                ]
     ret = subprocess.run(command)
     assert ret.returncode == 0

@@ -14,7 +14,7 @@ import hoomd
 import hoomd.md
 
 from ..molecule import Trimer
-from .helper import dump_frame, set_integrator
+from .helper import dump_frame, set_integrator, set_thermo, set_dump
 from .initialise import initialise_snapshot
 
 
@@ -44,8 +44,13 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
         group = None
 
     with temp_context:
-        temperature = 0.4
-        integrator = set_integrator(
+        init_temp = 0.4
+        temperature = hoomd.variant.linear_interp([
+            (0, init_temp),
+            (int(equil_steps*0.75), equil_temp),
+            (equil_steps, equil_temp),
+        ], zero='now')
+        set_integrator(
             temperature=temperature,
             step_size=step_size,
             prime_interval=307,
@@ -55,12 +60,9 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
             tauP=tauP, tau=tau,
         )
 
-        # Gradually increase temperature from inital to equil_temp
-        integrator.set_params(kT=hoomd.variant.linear_interp([
-            (0, temperature),
-            (int(equil_steps*0.75), equil_temp),
-            (equil_steps, equil_temp),
-        ], zero='now'))
+        if outfile is not None:
+            set_dump(outfile.parent / ('dump-' + outfile.name))
+
         hoomd.run(equil_steps)
 
         if outfile is not None:
@@ -163,6 +165,7 @@ def equil_liquid(snapshot: hoomd.data.SnapshotParticleData,
             ])
         else:
             temperature = equil_temp
+
         set_integrator(
             temperature=temperature,
             step_size=step_size,
@@ -170,6 +173,8 @@ def equil_liquid(snapshot: hoomd.data.SnapshotParticleData,
             pressure=pressure,
             tauP=tauP, tau=tau,
         )
+        if outfile is not None:
+            set_thermo(outfile.parent / 'thermo-{temperature:.2f}.log')
         hoomd.run(equil_steps)
         if outfile is not None:
             dump_frame(outfile, group=hoomd.group.all())

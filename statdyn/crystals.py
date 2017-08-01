@@ -56,8 +56,8 @@ class Crystal(object):
             orientation=self.get_orientations(),
             type_name=['A'] * self.get_num_molecules(),
             mass=[1.0] * self.get_num_molecules(),
-            moment_inertia=[self.molecule.moment_inertia] *
-            self.get_num_molecules()
+            moment_inertia=([self.molecule.moment_inertia]
+                            * self.get_num_molecules())
         )
 
     def compute_volume(self):
