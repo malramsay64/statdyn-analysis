@@ -10,6 +10,7 @@
 
 import logging
 from pathlib import Path
+from subprocess import run
 
 import click
 import hoomd.context
@@ -121,6 +122,17 @@ def create(space_group, lattice_lengths, temperature, steps,
         outfile=outfile,
         interface=interface
     )
+
+
+@sdrun.command()
+@options.opt_verbose
+@options.arg_infile
+def figure(infile):
+    """Start bokeh server with the file passed."""
+    try:
+        run(['bokeh', 'serve', infile])
+    except ProcessLookupError:
+        pass
 
 
 if __name__ == "__main__":
