@@ -13,6 +13,10 @@ import numpy as np
 import pytest
 from statdyn import crystals
 from statdyn.simulation import initialise
+from hypothesis.strategies import floats
+from hypothesis.extra.numpy import arrays
+from hypothesis import given
+
 
 TEST_CLASSES = [
     crystals.Crystal,
@@ -67,6 +71,20 @@ def get_distance(pos_a, pos_b, box):
     delta_x -= ortho_box * (delta_x > ortho_box * 0.5)
     delta_x += ortho_box * (delta_x <= -ortho_box * 0.5)
     return np.sqrt(np.square(delta_x).sum(axis=1))
+
+class mybox(object):
+    def __init__(self):
+        self.Lx = 1.
+        self.Ly = 1.
+        self.Lz = 1.
+
+@given(arrays(np.float, 3, elements=floats(min_value=-1, max_value=1)),
+       arrays(np.float, 3, elements=floats(min_value=-1, max_value=1)))
+def test_get_distance(pos_a, pos_b):
+    box = mybox()
+    diff = get_distance(np.array([pos_a]), np.array([pos_b]), box)
+    print(diff, diff-np.sqrt(2))
+    assert get_distance(np.array([pos_a]), np.array([pos_b]), box) <= np.sqrt(3)
 
 
 @pytest.mark.parametrize("cell_dimensions", CELL_DIMS)

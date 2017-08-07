@@ -4,6 +4,7 @@ sphinx/build
 # Ignore test output
 test/output
 test/tmp
+.hypothesis
 
 # Ignore conda build directories
 dist
