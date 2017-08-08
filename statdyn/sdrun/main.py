@@ -132,7 +132,7 @@ def figure(infile):
     try:
         run(['bokeh', 'serve', infile])
     except ProcessLookupError:
-        pass
+        logger.info('Bokeh server terminated.')
 
 
 if __name__ == "__main__":
