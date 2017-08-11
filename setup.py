@@ -8,13 +8,11 @@
 
 """Command line tool to run simulations."""
 
-from setuptools import setup, find_packages
-
+from setuptools import find_packages, setup
 
 setup(
     name='statdyn',
-    use_scm_version=True,
-    setup_requires=['setuptools_scm'],
+    setup_requires=[ "setuptools_git >= 0.3", ],
     packages=find_packages(),
     include_package_data=True,
     entry_points="""
