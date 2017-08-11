@@ -12,7 +12,8 @@ from setuptools import find_packages, setup
 
 setup(
     name='statdyn',
-    setup_requires=[ "setuptools_git >= 0.3", ],
+    use_scm_version={'version_scheme':'post-release'},
+    setup_requires=[ "setuptools_scm", ],
     packages=find_packages(),
     include_package_data=True,
     entry_points="""
