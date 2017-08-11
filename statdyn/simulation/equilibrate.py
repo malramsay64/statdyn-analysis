@@ -14,7 +14,7 @@ import hoomd
 import hoomd.md
 
 from ..molecule import Trimer
-from .helper import dump_frame, set_integrator, set_thermo, set_dump
+from .helper import dump_frame, set_dump, set_integrator, set_thermo
 from .initialise import initialise_snapshot
 
 
@@ -95,25 +95,6 @@ def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
         mol=molecule,
     )
     with temp_context:
-        # Equilibrate crystal
-        if init_temp:
-            temperature = hoomd.variant.linear_interp([
-                (0, init_temp),
-                (equil_steps/20, equil_temp),
-                (equil_steps/10, equil_temp)
-            ])
-        else:
-            temperature = equil_temp
-        integrator = set_integrator(
-            temperature=temperature,
-            step_size=step_size,
-            group=_interface_group(sys, stationary=True),
-            pressure=pressure,
-            tauP=tauP, tau=tau,
-            crystal=True,
-        )
-        hoomd.run(equil_steps/10)
-        integrator.disable()
         # Equilibrate liquid
         if init_temp:
             temperature = hoomd.variant.linear_interp([
