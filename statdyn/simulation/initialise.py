@@ -91,7 +91,7 @@ def initialise_snapshot(snapshot: hoomd.data.SnapshotParticleData,
 
 def init_from_crystal(crystal: crystals.Crystal,
                       hoomd_args: str='',
-                      cell_dimensions: Tuple[int, int]=(30, 40),
+                      cell_dimensions: Tuple[int, int]=(30, 34),
                       step_size: float=0.005,
                       optimise_steps: int=1000,
                       outfile: Path=None,
@@ -107,6 +107,7 @@ def init_from_crystal(crystal: crystals.Crystal,
         logger.debug(
             f"Creating {crystal} cell of size {cell_dimensions}"
         )
+
         sys = hoomd.init.create_lattice(
             unitcell=crystal.get_unitcell(),
             n=cell_dimensions
@@ -116,14 +117,20 @@ def init_from_crystal(crystal: crystals.Crystal,
     with temp_context:
         sys = initialise_snapshot(snap, temp_context, crystal.molecule)
         md.integrate.mode_standard(dt=step_size)
-        nvt = md.integrate.nvt(group=hoomd.group.rigid_center(), kT=0.1, tau=5)
-        hoomd.run(optimise_steps)
-        nvt.disable()
-        md.integrate.npt(group=hoomd.group.rigid_center(), kT=0.8, P=13.5, tau=5, tauP=5)
-        hoomd.run(optimise_steps)
-        equil_snap = sys.take_snapshot()
+        temperature = hoomd.variant.linear_interp([
+            (0, 0),
+            (optimise_steps, 0.5),
+        ])
+        md.integrate.npt(group=hoomd.group.rigid_center(),
+                         kT=temperature,
+                         xy=True, couple='none',
+                         P=13.5, tau=1, tauP=1,
+                         )
+
+        equil_snap = sys.take_snapshot(all=True)
         if outfile:
             dump_frame(outfile, group=hoomd.group.all())
+    return equil_snap
     return make_orthorhombic(equil_snap)
 
 
@@ -219,11 +226,11 @@ def make_orthorhombic(snapshot: hoomd.data.SnapshotParticleData
     len_y = snapshot.box.Ly
     len_z = snapshot.box.Lz
     xlen = len_x + snapshot.box.xy * len_y
-    pos = snapshot.particles.position
-    pos += np.array([xlen / 2., len_y / 2., len_z / 2.])
-    pos = pos % np.array([len_x, len_y, len_z])
-    pos -= np.array([len_x / 2., len_y / 2., len_z / 2.])
-    snapshot.particles.position[:] = pos
+    snapshot.particles.position[:, 0] += xlen/2.
+    snapshot.particles.position[:, 0] %= len_x
+    snapshot.particles.position[:, 0] -= len_x/2.
+
+    logger.debug(f"Updated positions: \n{snapshot.particles.position}")
     box = hoomd.data.boxdim(len_x, len_y, len_z, 0, 0, 0, dimensions=2)
     hoomd.data.set_snapshot_box(snapshot, box)
     return snapshot

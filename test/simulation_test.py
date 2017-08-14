@@ -13,42 +13,47 @@ from pathlib import Path
 
 import hoomd
 import pytest
+from hypothesis import given, settings
+from hypothesis.strategies import integers, tuples
 
 from statdyn import crystals
-from statdyn.simulation import initialise, simrun
-
-from .crystal_test import CELL_DIMS
+from statdyn.simulation import equilibrate, initialise, simrun
 
 OUTDIR = Path('test/tmp')
 OUTDIR.mkdir(exist_ok=True)
 
 
+@pytest.mark.simulation
 def test_run_npt():
     """Test an npt run."""
     snapshot = initialise.init_from_none()
-    simrun.run_npt(snapshot,
-                   context=hoomd.context.initialize(''),
-                   temperature=3.00,
-                   steps=10,
-                   dynamics=False,
-                   output=OUTDIR
-                   )
+    simrun.run_npt(
+        snapshot,
+        context=hoomd.context.initialize(''),
+        temperature=3.00,
+        steps=100,
+        dynamics=False,
+        output=OUTDIR
+    )
     assert True
 
 
-@pytest.mark.parametrize("max_initial", [1, 2])
+@given(integers(max_value=10, min_value=1))
+@settings(max_examples=5, timeout=0)
+@pytest.mark.hypothesis
 def test_run_multiple_concurrent(max_initial):
     """Test running multiple concurrent."""
     snapshot = initialise.init_from_file(
         Path('test/data/Trimer-13.50-3.00.gsd')
     )
-    simrun.run_npt(snapshot,
-                   context=hoomd.context.initialize(''),
-                   temperature=3.00,
-                   steps=10,
-                   max_initial=max_initial,
-                   output=OUTDIR,
-                   )
+    simrun.run_npt(
+        snapshot,
+        context=hoomd.context.initialize(''),
+        temperature=3.00,
+        steps=1000,
+        max_initial=max_initial,
+        output=OUTDIR,
+    )
     assert True
 
 
@@ -61,17 +66,20 @@ def test_thermo():
     output = Path('test/tmp')
     output.mkdir(exist_ok=True)
     snapshot = initialise.init_from_none()
-    simrun.run_npt(snapshot,
-                   context=hoomd.context.initialize(''),
-                   temperature=3.00,
-                   steps=10,
-                   thermo_period=1,
-                   output=OUTDIR
-                   )
+    simrun.run_npt(
+        snapshot,
+        context=hoomd.context.initialize(''),
+        temperature=3.00,
+        steps=100,
+        thermo_period=1,
+        output=OUTDIR
+    )
     assert True
 
 
-@pytest.mark.parametrize("cell_dimensions", CELL_DIMS)
+@given(tuples(integers(max_value=30, min_value=5),
+              integers(max_value=30, min_value=5)))
+@settings(max_examples=10, timeout=0)
 def test_orthorhombic_sims(cell_dimensions):
     """Test the initialisation from a crystal unit cell.
 
@@ -80,16 +88,23 @@ def test_orthorhombic_sims(cell_dimensions):
     """
     output = Path('test/tmp')
     output.mkdir(exist_ok=True)
-    snap = initialise.init_from_crystal(crystals.TrimerP2(),
-                                        cell_dimensions=cell_dimensions,
-                                        )
-    simrun.run_npt(snap,
-                   context=hoomd.context.initialize(''),
-                   temperature=0.1,
-                   steps=10,
-                   dynamics=False,
-                   output=OUTDIR
-                   )
+    snap = initialise.init_from_crystal(
+        crystals.TrimerP2(),
+        cell_dimensions=cell_dimensions,
+    )
+    snap = equilibrate.equil_crystal(
+        snap,
+        equil_temp=0.5,
+        equil_steps=100,
+    )
+    simrun.run_npt(
+        snap,
+        context=hoomd.context.initialize(''),
+        temperature=0.5,
+        steps=100,
+        dynamics=False,
+        output=OUTDIR
+    )
     assert True
 
 

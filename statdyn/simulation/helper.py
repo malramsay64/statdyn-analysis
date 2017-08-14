@@ -94,7 +94,10 @@ def set_thermo(outfile: Path,
     default = ['N', 'volume', 'momentum', 'temperature', 'pressure',
                'potential_energy', 'kinetic_energy',
                'translational_kinetic_energy', 'rotational_kinetic_energy',
-               'npt_thermostat_energy']
+               'npt_thermostat_energy',
+               'lx', 'ly', 'lz',
+               'xy', 'xz', 'yz',
+               ]
     rigid = ['temperature_rigid_center',
              'pressure_rigid_center',
              'potential_energy_rigid_center',

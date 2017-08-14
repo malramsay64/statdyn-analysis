@@ -103,6 +103,7 @@ def equil(infile, outfile, molecule, temperature, steps,
 def create(space_group, lattice_lengths, temperature, steps,
            outfile, interface, hoomd_args):
     """Create things."""
+    logger.debug('Interface flag: {interface}')
     outfile = Path(outfile)
     # Ensure parent directory exists
     outfile.parent.mkdir(exist_ok=True)

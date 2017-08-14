@@ -14,11 +14,13 @@ from pathlib import Path
 import hoomd
 import numpy as np
 import pytest
+from hypothesis import given, settings
+from hypothesis.strategies import integers, tuples
 
 from statdyn import crystals, molecule
 from statdyn.simulation import initialise
 
-from .crystal_test import CELL_DIMS, get_distance
+from .crystal_test import get_distance
 
 
 def create_snapshot():
@@ -100,7 +102,9 @@ def test_orthorhombic_null():
         assert snap.box.yz == 0
 
 
-@pytest.mark.parametrize("cell_dimensions", CELL_DIMS)
+@given(tuples(integers(max_value=30, min_value=5),
+              integers(max_value=30, min_value=5)))
+@settings(max_examples=10, timeout=0)
 def test_make_orthorhombic(cell_dimensions):
     """Ensure that a conversion to an orthorhombic cell goes smoothly.
 
@@ -128,7 +132,9 @@ def test_make_orthorhombic(cell_dimensions):
         assert snap_ortho.box.yz == 0
 
 
-@pytest.mark.parametrize("cell_dimensions", CELL_DIMS)
+@given(tuples(integers(max_value=30, min_value=5),
+              integers(max_value=30, min_value=5)))
+@settings(max_examples=10, timeout=0)
 def test_orthorhombic_init(cell_dimensions):
     """Ensure orthorhombic cell initialises correctly."""
     snap = initialise.init_from_crystal(
