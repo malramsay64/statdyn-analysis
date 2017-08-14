@@ -126,11 +126,16 @@ def create(space_group, lattice_lengths, temperature, steps,
 
 @sdrun.command()
 @options.opt_verbose
-@options.arg_infile
-def figure(infile):
+# @options.arg_infile
+@click.option('--show-fig', type=click.Choice(['interactive']),
+              default='interactive')
+def figure(show_fig):
     """Start bokeh server with the file passed."""
+    lookup = {
+        'interactive': Path(__file__).parents[1] / 'figures/interactive_config.py',
+    }
     try:
-        run(['bokeh', 'serve', infile])
+        run(['bokeh', 'serve', '--show', lookup.get(show_fig)])
     except ProcessLookupError:
         logger.info('Bokeh server terminated.')
 
