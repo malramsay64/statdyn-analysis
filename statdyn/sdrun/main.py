@@ -20,7 +20,6 @@ from ..simulation import equilibrate, initialise, simrun
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-logging.basicConfig(level=logging.WARN)
 
 
 @click.group(name='sdrun')

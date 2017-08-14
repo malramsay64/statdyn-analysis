@@ -15,14 +15,12 @@ import hoomd
 import numpy as np
 
 from . import initialise
-from ..StepSize import GenerateStepSeries
 from .. import molecule
+from ..StepSize import GenerateStepSeries
 from .helper import set_integrator
-
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-logging.basicConfig(level=logging.WARNING)
 
 
 def run_npt(snapshot: hoomd.data.SnapshotParticleData,

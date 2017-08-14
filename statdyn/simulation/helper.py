@@ -16,7 +16,6 @@ import hoomd.md as md
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-logging.basicConfig(level=logging.WARNING)
 
 
 def set_integrator(temperature: float,

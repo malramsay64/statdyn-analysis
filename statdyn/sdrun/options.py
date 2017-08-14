@@ -19,7 +19,6 @@ from ..simulation import equilibrate
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-logging.basicConfig(level=logging.INFO)
 
 EQUIL_OPTIONS = {
     'interface': equilibrate.equil_interface,
@@ -40,7 +39,7 @@ def _verbosity(ctx, param, count):
     if not count or ctx.resilient_parsing:
         return
     logger.info('Setting log level to DEBUG')
-    logging.basicConfig(level=logging.DEBUG)
+    # logging.basicConfig(level=logging.DEBUG)
 
 
 def _create_crystal(ctx, param, crys):

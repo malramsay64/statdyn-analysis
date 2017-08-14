@@ -7,38 +7,21 @@
 # Distributed under terms of the MIT license.
 """Create an interactive view of a configuration."""
 
+import logging
 from pathlib import Path
 
 import gsd.hoomd
-import numpy as np
-import quaternion
 from bokeh.layouts import row, widgetbox
 from bokeh.models import Button, ColumnDataSource, Select, Slider, TextInput
 from bokeh.plotting import curdoc, figure
-from statdyn.figures.colour import colour_orientation
-import logging
 
-logging.basicConfig(level=logging.WARNING)
+from statdyn.figures.colour import clean_orientation, colour_orientation
+
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 
 
 DEFAULT_DIR = '.'
-
-
-def clean_orientation(snapshot):
-    orientation = quaternion.as_rotation_vector(
-        quaternion.as_quat_array(snapshot.particles.orientation.astype(float))).sum(axis=1)
-    orientation[orientation <= -np.pi] += 2*np.pi
-    orientation[orientation > np.pi] -= 2*np.pi
-    return orientation
-    nmol = max(snapshot.particles.body)+1
-    o_dict = {body: orient for body, orient in zip(
-         snapshot.particles.body[:nmol],
-         orientation[:nmol]
-    )}
-    orientation = np.array([o_dict[body] for body in snapshot.particles.body])
-    return orientation
 
 
 def update_trj(attr, old, new):

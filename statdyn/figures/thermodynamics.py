@@ -12,7 +12,6 @@ import logging
 from pathlib import Path
 
 import click
-
 import numpy as np
 import pandas
 from bkcharts import TimeSeries, show
@@ -23,7 +22,6 @@ from bokeh.plotting import curdoc, figure
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
-logging.basicConfig(level=logging.WARNING)
 
 def read_file(source):
     """Read a file into a pandas dataframe."""
