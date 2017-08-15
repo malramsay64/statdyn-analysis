@@ -8,6 +8,7 @@
 
 """Test the simulation module."""
 
+import gc
 import os
 from pathlib import Path
 
@@ -55,6 +56,7 @@ def test_run_multiple_concurrent(max_initial):
         output=OUTDIR,
     )
     assert True
+    gc.collect()
 
 
 def test_thermo():
@@ -106,6 +108,7 @@ def test_orthorhombic_sims(cell_dimensions):
         output=OUTDIR
     )
     assert True
+    gc.collect()
 
 
 def test_file_placement():
