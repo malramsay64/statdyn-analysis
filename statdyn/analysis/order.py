@@ -67,10 +67,14 @@ def orientational_order(snapshot):
     order_parameter = np.zeros_like(angles)
     for mol_index, neighbours in enumerate(neighbourlist):
         mol_orientation = angles[mol_index]
+        num_neighbours = len(neighbours)
         for neighbour in neighbours:
             order_parameter[mol_index] += np.abs(np.cos(
                 mol_orientation - angles[neighbour]))
-        order_parameter[mol_index] /= len(neighbours)
+        if num_neighbours > 1:
+            order_parameter[mol_index] /= len(neighbours)
+        else:
+            order_parameter[mol_index] = 0
     return order_parameter
 
 
