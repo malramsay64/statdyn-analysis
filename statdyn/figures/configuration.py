@@ -8,12 +8,37 @@
 
 """Plot configuration."""
 
+import numpy as np
 from bokeh.plotting import figure
 
-from .colour import clean_orientation, colour_orientation
+from .colour import colour_orientation
+from .order import get_z_orientation, orientational_order
 
 
-def plot(snapshot, repeat=False, offset=False):
+def trimer_figure(mol_plot, xpos, ypos, orientations, mol_colours):
+    """Add the points to a bokeh figure to render the trimer molecule.
+
+    This enables the trimer molecules to be drawn on the figure using only
+    the position and the orientations of the central molecule.
+
+    """
+    mol_plot.circle(xpos, ypos, radius=1,
+                    fill_alpha=1, color=mol_colours,
+                    line_color=None)
+    atom1_x = xpos - np.sin(orientations - np.pi/3)
+    atom1_y = ypos + np.cos(orientations - np.pi/3)
+    mol_plot.circle(atom1_x, atom1_y, radius=0.64,
+                    fill_alpha=1, color=mol_colours,
+                    line_color=None)
+    atom2_x = xpos - np.sin(orientations + np.pi/3)
+    atom2_y = ypos + np.cos(orientations + np.pi/3)
+    mol_plot.circle(atom2_x, atom2_y, radius=0.64,
+                    fill_alpha=1, color=mol_colours,
+                    line_color=None)
+    return mol_plot
+
+
+def plot(snapshot, repeat=False, offset=False, order=False):
     """Plot snapshot using bokeh."""
     try:
         Lx, Ly = snapshot.configuration.box[:2]
@@ -21,30 +46,29 @@ def plot(snapshot, repeat=False, offset=False):
         Lx, Ly = snapshot.box.Lx, snapshot.box.Ly
 
     plot_range = (-Ly/2, Ly/2)
-    x = snapshot.particles.position[:, 0]
-    y = snapshot.particles.position[:, 1]
+    nmols = np.max(snapshot.particles.body) + 1
+    x = snapshot.particles.position[:nmols, 0]
+    y = snapshot.particles.position[:nmols, 1]
     if offset:
         x = x % Lx
         y = y % Ly
         plot_range = (0, Ly)
 
-    radius = (snapshot.particles.typeid * -0.362444) + 1
-    orientation = colour_orientation(clean_orientation(snapshot))
+    orientations = get_z_orientation(snapshot.particles.orientation[:nmols])
+    mol_colours = colour_orientation(orientations)
+
+    if order:
+        order = orientational_order(snapshot)
+        mol_colours[order < 0.9] = colour_orientation(
+            orientations[order < 0.9], light_colours=True)
 
     p = figure(x_range=plot_range, y_range=plot_range,
-               active_scroll='wheel_zoom', width=800, height=800,
-               output_backend='webgl')
-    p.scatter(x, y, radius=radius*0.95,
-              fill_alpha=1, color=orientation,
-              line_color=None)
+               active_scroll='wheel_zoom', width=800, height=800)
+    trimer_figure(p, x, y, orientations, mol_colours)
     if repeat:
         for dx, dy in [(0, 1), (1, 0), (1, 1), (1, -1)]:
             dx *= Lx
             dy *= Ly
-            p.scatter(x+dx, y+dy, radius=radius*0.95,
-                      fill_alpha=1, color=orientation,
-                      line_color=None)
-            p.scatter(x-dx, y-dy, radius=radius*0.95,
-                      fill_alpha=1, color=orientation,
-                      line_color=None)
+            trimer_figure(p, x+dx, y+dy, orientations, mol_colours)
+            trimer_figure(p, x-dx, y-dy, orientations, mol_colours)
     return p
