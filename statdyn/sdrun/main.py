@@ -16,6 +16,7 @@ import click
 import hoomd.context
 
 from . import options
+from ..analysis.run_analysis import order
 from ..simulation import equilibrate, initialise, simrun
 
 logger = logging.getLogger(__name__)
@@ -135,10 +136,12 @@ def figure(show_fig):
         'interactive': Path(__file__).parents[1] / 'figures/interactive_config.py',
     }
     try:
-        run(['bokeh', 'serve', '--show', lookup.get(show_fig)])
+        run(['bokeh', 'serve', '--show', str(lookup.get(show_fig))])
     except ProcessLookupError:
         logger.info('Bokeh server terminated.')
 
+
+sdrun.add_command(order)
 
 if __name__ == "__main__":
     sdrun()
