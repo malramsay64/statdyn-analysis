@@ -24,6 +24,8 @@ requirements:
         - quaternion 2017.06.28*
         - bokeh 0.12.6
         - hsluv 0.0.2
+        - freud 0.6.2
+        - gsd 1.2.0
 
 build:
     noarch: python
