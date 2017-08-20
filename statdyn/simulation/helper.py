@@ -83,7 +83,7 @@ def set_dump(outfile: Path,
     hoomd.dump.gsd(
         str(outfile),
         period=dump_period,
-        group=hoomd.group.all()
+        group=hoomd.group.rigid_center()
     )
 
 
