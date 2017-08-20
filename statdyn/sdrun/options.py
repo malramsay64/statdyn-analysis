@@ -156,6 +156,13 @@ opt_init_temp = click.option(
     help='Temperature to start equilibration from if differnt from the target.'
 )
 
+opt_output_interval = click.option(
+    '--output-interval',
+    default=10000,
+    type=click.IntRange(min=0),
+    help='Steps between output of dump and thermodynamic quantities.'
+)
+
 arg_infile = click.argument(
     'infile',
     type=click.Path(exists=True, dir_okay=False, readable=True),

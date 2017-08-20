@@ -40,9 +40,10 @@ def sdrun(ctx):
 @options.opt_verbose
 @options.opt_dynamics
 @options.opt_hoomd_args
+@options.opt_output_interval
 @options.arg_infile
 def prod(infile, steps, temperature, molecule, output,
-         dynamics, hoomd_args):
+         dynamics, hoomd_args, output_interval):
     """Run simulations on equilibrated phase."""
     logger.debug(f'running prod')
     logger.debug(f'Reading {infile}')
@@ -58,6 +59,8 @@ def prod(infile, steps, temperature, molecule, output,
         temperature=temperature,
         dynamics=dynamics,
         output=output,
+        dump_period=output_interval,
+        thermo_period=output_interval,
     )
 
 
