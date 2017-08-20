@@ -11,8 +11,8 @@
 import numpy as np
 from bokeh.plotting import figure
 
+from ..analysis.order import get_z_orientation, orientational_order
 from .colour import colour_orientation
-from .order import get_z_orientation, orientational_order
 
 
 def trimer_figure(mol_plot, xpos, ypos, orientations, mol_colours):
