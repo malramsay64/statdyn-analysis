@@ -77,8 +77,12 @@ def orientational_order(snapshot):
 def compute_neighbours(snapshot, max_radius=2.2, max_neighbours=7
                        ) -> List[Set[int]]:
     """Compute the neighbour list for a snapshot."""
-    simulation_box = Box(*snapshot.configuration.box,
-                         is2D=snapshot.configuration.dimensions == 2)
+    ndim = snapshot.configuration.dimensions
+    if ndim == 2:
+        simulation_box = Box(*snapshot.configuration.box[:ndim], is2D=True)
+    else:
+        simulation_box = Box(*snapshot.configuration.box, is2D=False)
+
     nn = NearestNeighbors(rmax=max_radius,
                           n_neigh=max_neighbours,
                           strict_cut=True)

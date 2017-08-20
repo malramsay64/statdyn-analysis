@@ -19,6 +19,7 @@ from .order import orientational_order
 @click.command()
 @options.arg_infile
 def order(infile):
+    """Compute the orientational order for each frame of a trajectory."""
     trajectory = gsd.hoomd.open(infile, 'rb')
     for snapshot in trajectory:
         order = orientational_order(snapshot)
