@@ -10,6 +10,7 @@
 
 import logging
 from pathlib import Path
+from typing import Any
 
 import hoomd
 import numpy as np
@@ -75,17 +76,24 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
                   dump_period=dump_period,
                   )
         if dynamics:
-            iterator = GenerateStepSeries(steps, max_initial)
+            iterator = GenerateStepSeries(steps,
+                                          num_linear=100,
+                                          max_gen=max_initial,
+                                          gen_steps=1000,
+                                          )
             prev_step = 0
+            dumpfile = _dump_frame(temperature=temperature,
+                                   pressure=pressure,
+                                   output=output,
+                                   timestep=0,
+                                   period=steps)
             for curr_step in iterator:
                 if curr_step == prev_step:
                     continue
-                hoomd.run_upto(curr_step)
-                _dump_frame(temperature=temperature,
-                            pressure=pressure,
-                            output=output,
-                            timestep=curr_step)
+                hoomd.run_upto(curr_step, quiet=True)
                 prev_step = curr_step
+                logger.debug(f'Write traj on step : {prev_step}')
+                dumpfile.write_restart()
         else:
             hoomd.run(steps)
         _make_restart(temperature, pressure, output)
@@ -144,14 +152,16 @@ def _dump_frame(temperature: float,
                 pressure: float,
                 output: Path,
                 timestep: int,
-                ) -> None:
-    hoomd.dump.gsd(
+                period: int=None,
+                ) -> Any:
+    dumpfile = hoomd.dump.gsd(
         str(output / f'trajectory-{pressure:.2f}-{temperature:.2f}.gsd'),
-        period=None,
+        period=period,
         time_step=timestep,
         group=hoomd.group.rigid_center(),
         static=['topology', 'attribute']
     )
+    return dumpfile
 
 
 def read_snapshot(context: hoomd.context.SimulationContext,

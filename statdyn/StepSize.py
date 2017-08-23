@@ -4,11 +4,16 @@
 """A series of classes that specify various step size functions."""
 
 import logging
-from typing import (Any, Iterable, Iterator,  # pylint: disable=unused-import
-                    List, Set)
+from typing import Iterable, Iterator, List, Tuple
 
 LOGGER = logging.getLogger('steps')
 LOGGER.setLevel(logging.WARNING)
+
+
+def generate_descriptor(total_steps: int,
+                        num_linear: int=100,
+                        start: int=0) -> List[Tuple[int, int]]:
+    """Generate a list of tuples that can be used for linear interpolation."""
 
 
 def generate_steps(total_steps: int,

@@ -8,14 +8,13 @@
 
 """Series of functions for manipulating data from MD trajectories."""
 
-from pathlib import Path
 import logging
+from pathlib import Path
 
 import gsd.hoomd
 
 from ..StepSize import GenerateStepSeries
 from ..TimeDep import TimeDepMany
-
 
 logger = logging.getLogger('motion')
 logger.setLevel(logging.DEBUG)
@@ -26,8 +25,8 @@ def compute_motion(filename: Path, outdir: Path=None):
     with gsd.hoomd.open(str(filename), 'rb') as src:
         num_steps = src[-1].configuration.step
         step_iter = GenerateStepSeries(num_steps+1,
-                                       num_linear=10,
-                                       gen_steps=20000,
+                                       num_linear=100,
+                                       gen_steps=1000,
                                        max_gen=1000)
         if outdir:
             outfile = outdir / filename.name

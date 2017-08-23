@@ -38,8 +38,8 @@ def _mkdir_ifempty(ctx, param, value):
 def _verbosity(ctx, param, count):
     if not count or ctx.resilient_parsing:
         return
+    logging.basicConfig(level=logging.DEBUG)
     logger.info('Setting log level to DEBUG')
-    # logging.basicConfig(level=logging.DEBUG)
 
 
 def _create_crystal(ctx, param, crys):
@@ -96,6 +96,7 @@ opt_verbose = click.option(
     '--verbose',
     count=True,
     expose_value=False,
+    is_eager=True,
     callback=_verbosity,
     help='Enable debug logging flags.',
 )
