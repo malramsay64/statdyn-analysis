@@ -25,7 +25,7 @@ def compute_motion(filename: Path, outdir: Path=None):
         num_steps = src[-1].configuration.step
         step_iter = GenerateStepSeries(num_steps+1,
                                        num_linear=100,
-                                       gen_steps=1000,
+                                       gen_steps=20000,
                                        max_gen=1000)
         if outdir:
             outfile = outdir / filename.name
