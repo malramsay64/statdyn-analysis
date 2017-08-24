@@ -5,11 +5,15 @@
 #
 """Module to define a molecule to use for simulation."""
 
-import sys
+import logging
+from typing import Any, Dict, List, Tuple
 
 import hoomd
 import hoomd.md
 import numpy as np
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class Molecule(object):
@@ -22,24 +26,27 @@ class Molecule(object):
     The Molecule class is a template class that defines a number of functions
     subclasses can use to set these variables however it generates no sensible
     molecule itself.
+
     """
 
-    def __init__(self):
-        self.moment_inertia = (0, 0, 0)
+    def __init__(self) -> None:
+        """Initialise defualt properties."""
+        self.moment_inertia: Tuple[float, float, float] = (0., 0., 0.)
         self.potential = hoomd.md.pair.lj
-        self.potential_args = dict()
+        self.potential_args: Dict[Any, Any] = dict()
         self.particles = ['A']
         self.dimensions = 3
 
     @property
-    def num_particles(self):
+    def num_particles(self) -> int:
+        """Count of particles in the molecule."""
         return len(self.particles)
 
-    def get_types(self):
+    def get_types(self) -> List[str]:
         """Get the types of particles present in a molecule."""
         return sorted(list(set(self.particles)))
 
-    def define_dimensions(self):
+    def define_dimensions(self) -> None:
         """Set the number of dimensions for the simulation.
 
         This takes into accout the number of dimensions of the molecule,
@@ -49,7 +56,7 @@ class Molecule(object):
         if self.dimensions == 2:
             hoomd.md.update.enforce2d()
 
-    def define_potential(self):
+    def define_potential(self) -> hoomd.md.pair.pair:
         r"""Define the potential in the simulation context.
 
         A helper function that defines the potential to be used by the  hoomd
@@ -70,7 +77,8 @@ class Molecule(object):
         potential.pair_coeff.set('A', 'A', epsilon=1, sigma=2.0)
         return potential
 
-    def define_rigid(self, params=None):
+    def define_rigid(self, params: Dict[Any, Any]=None
+                     ) -> hoomd.md.constrain.rigid:
         """Define the rigid constraints of the molecule.
 
         This is a helper function to define the rigid body constraints of the
@@ -90,7 +98,7 @@ class Molecule(object):
 
         """
         if len(self.particles) <= 1:
-            print("Not enough particles for a rigid body", file=sys.stderr)
+            logger.info("Not enough particles for a rigid body")
             return
         if not params:
             params = dict()
@@ -111,27 +119,34 @@ class Trimer(Molecule):
     type `'A'` particle. The angle between the two type `'B'` particles,
     subtended by the type `'A'` particle is the other degree of freedom.
 
-    Args:
-        radius (float): Radius of the small particles. Default is 0.637556
-        distance (float): Distance of the outer particles from the central
-            one. Default is 1.0
-        angle (float): Angle between the two outer particles in degrees.
-            Default is 120
 
     TODO:
         Compute the moment of inertia
     """
 
-    def __init__(self, radius=0.637556, distance=1.0, angle=120):
+    def __init__(self,
+                 radius: float=0.637556,
+                 distance: float=1.0,
+                 angle: float=120) -> None:
+        """Initialise trimer molecule.
+
+        Args:
+            radius (float): Radius of the small particles. Default is 0.637556
+            distance (float): Distance of the outer particles from the central
+                one. Default is 1.0
+            angle (float): Angle between the two outer particles in degrees.
+                Default is 120
+
+        """
         super(Trimer, self).__init__()
         self.radius = radius
         self.distance = distance
         self.angle = angle
         self.particles = ['A', 'B', 'B']
-        self.moment_inertia = (0, 0, 1.65)
+        self.moment_inertia = (0., 0., 1.65)
         self.dimensions = 2
 
-    def define_potential(self):
+    def define_potential(self) -> hoomd.md.pair.pair:
         r"""Define the potential in the simulation context.
 
         A helper function that defines the potential to be used by the  hoomd
@@ -148,7 +163,8 @@ class Trimer(Molecule):
         potential.pair_coeff.set('A', 'B', epsilon=1, sigma=1.0 + self.radius)
         return potential
 
-    def define_rigid(self, params=None):
+    def define_rigid(self, params: Dict[Any, Any]=None
+                     ) -> hoomd.md.constrain.rigid:
         """Define the rigid constraints of the Trimer molecule.
 
         This is a helper function to define the rigid body constraints of the
@@ -185,15 +201,19 @@ class Dimer(Molecule):
     type `'A'` particle. The angle between the two type `'B'` particles,
     subtended by the type `'A'` particle is the other degree of freedom.
 
-    Args:
-        radius (float): Radius of the small particles. Default is 0.637556
-        distance (float): Distance of the outer particles from the central
-            one. Default is 1.0
-        angle (float): Angle between the two outer particles in degrees.
-            Default is 120
     """
 
-    def __init__(self, radius=0.637556, distance=1.0):
+    def __init__(self, radius: float=0.637556, distance: float=1.0) -> None:
+        """Intialise Dimer molecule.
+
+        Args:
+            radius (float): Radius of the small particles. Default is 0.637556
+            distance (float): Distance of the outer particles from the central
+                one. Default is 1.0
+            angle (float): Angle between the two outer particles in degrees.
+                Default is 120
+
+        """
         super(Dimer, self).__init__()
         self.radius = radius
         self.distance = distance
@@ -201,11 +221,11 @@ class Dimer(Molecule):
         self.moment_inertia = self.compute_moment_intertia()
         self.dimensions = 2
 
-    def compute_moment_intertia(self):
+    def compute_moment_intertia(self) -> Tuple[float, float, float]:
         """Compute the moment of inertia from the particle paramters."""
-        return (0, 0, 2 * (self.distance / 2)**2)
+        return (0., 0., 2 * (self.distance / 2)**2)
 
-    def define_potential(self):
+    def define_potential(self) -> hoomd.md.pair.pair:
         r"""Define the potential in the simulation context.
 
         A helper function that defines the potential to be used by the  hoomd
@@ -222,7 +242,8 @@ class Dimer(Molecule):
         potential.pair_coeff.set('A', 'B', epsilon=1, sigma=1.0 + self.radius)
         return potential
 
-    def define_rigid(self, params=None):
+    def define_rigid(self, params: Dict[Any, Any]=None
+                     ) -> hoomd.md.constrain.rigid:
         """Define the rigid constraints of the molecule.
 
         This is a helper function to define the rigid body constraints of the
