@@ -109,6 +109,23 @@ class Molecule(object):
         return rigid
 
 
+class Disc(Molecule):
+    """Defines a 2D particle."""
+
+    def __init__(self) -> None:
+        """Initialise 2D disc particle."""
+        super().__init__()
+        self.dimensions = 2
+
+
+class Sphere(Molecule):
+    """Define a 3D sphere."""
+
+    def __init__(self) -> None:
+        """Initialise Spherical particle."""
+        super().__init__()
+
+
 class Trimer(Molecule):
     """Defines a Trimer molecule for initialisation within a hoomd context.
 
