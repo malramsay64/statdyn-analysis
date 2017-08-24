@@ -14,7 +14,7 @@ from pathlib import Path
 import click
 
 from ..crystals import CRYSTAL_FUNCS
-from ..molecule import Trimer
+from ..molecule import Dimer, Disc, Sphere, Trimer
 from ..simulation import equilibrate
 
 logger = logging.getLogger(__name__)
@@ -23,6 +23,13 @@ logger.setLevel(logging.DEBUG)
 EQUIL_OPTIONS = {
     'interface': equilibrate.equil_interface,
     'liquid': equilibrate.equil_liquid
+}
+
+MOLECULE_OPTIONS = {
+    'trimer': Trimer,
+    'disc': Disc,
+    'sphere': Sphere,
+    'dimer': Dimer,
 }
 
 
@@ -37,9 +44,14 @@ def _mkdir_ifempty(ctx, param, value):
 
 def _verbosity(ctx, param, count):
     if not count or ctx.resilient_parsing:
+        logging.basicConfig(level=logging.WARNING)
         return
-    logging.basicConfig(level=logging.DEBUG)
-    logger.info('Setting log level to DEBUG')
+    if count == 1:
+        logging.basicConfig(level=logging.INFO)
+        logger.info('Set log level to INFO')
+    if count > 1:
+        logging.basicConfig(level=logging.DEBUG)
+        logger.info('Setting log level to DEBUG')
 
 
 def _create_crystal(ctx, param, crys):
@@ -51,7 +63,7 @@ def _create_crystal(ctx, param, crys):
 def _get_molecule(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    return Trimer()
+    return MOLECULE_OPTIONS[value]
 
 
 opt_space_group = click.option(
@@ -95,6 +107,7 @@ opt_verbose = click.option(
     '-v',
     '--verbose',
     count=True,
+    default=0,
     expose_value=False,
     is_eager=True,
     callback=_verbosity,
@@ -140,7 +153,7 @@ opt_hoomd_args = click.option(
 opt_molecule = click.option(
     '--molecule',
     default='trimer',
-    type=click.Choice(['trimer']),
+    type=click.Choice(MOLECULE_OPTIONS.keys()),
     callback=_get_molecule
 )
 
