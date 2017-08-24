@@ -17,6 +17,7 @@ import hoomd.context
 
 from . import options
 from ..analysis.run_analysis import order
+from ..datagen.summary import dynamics, motion
 from ..simulation import equilibrate, initialise, simrun
 
 logger = logging.getLogger(__name__)
@@ -144,7 +145,8 @@ def figure(show_fig):
         logger.info('Bokeh server terminated.')
 
 
-sdrun.add_command(order)
+for ext_command in [order, dynamics, motion]:
+    sdrun.add_command(ext_command)
 
 if __name__ == "__main__":
     sdrun()

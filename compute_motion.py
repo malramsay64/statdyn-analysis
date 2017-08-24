@@ -9,10 +9,10 @@
 """Compute motion from a trajectory."""
 
 import argparse
-from pathlib import Path
 import logging
+from pathlib import Path
 
-from statdyn.datagen.trajectory import compute_motion, logger
+from statdyn.datagen.trajectory import compute_motion
 
 
 def main():

@@ -12,7 +12,7 @@ This is a series of functions to collate data from many thermodynamic
 properties and then be able to present it in a meaningful manner.
 """
 
-from typing import Callable, List  # pylint: disable=unused-import
+from typing import Callable, List
 
 import numpy as np
 import pandas
@@ -46,22 +46,35 @@ def spearman_rank(trans: np.array,
     t_order = np.argsort(trans)
     r_order = np.argsort(np.abs(rot))
     num_elements = int(t_order.shape[0] * fraction)
-    argmotion = np.union1d(t_order[:num_elements], r_order[:num_elements])
+    argmotion = np.union1d(t_order[:-num_elements], r_order[:-num_elements])
     rho, _ = spearmanr(trans[argmotion], rot[argmotion])
     return rho
+
+
+def overlap(trans: np.array,
+            rot: np.array,
+            fraction: float=0.1,
+            ) -> float:
+    """Compute the overlap of the top translators and rotators."""
+    t_order = np.argsort(trans)
+    r_order = np.argsort(np.abs(rot))
+    num_elements = int(t_order.shape[0] * fraction)
+    return len(np.intersect1d(t_order[:-num_elements],
+                              r_order[:-num_elements])
+               )/num_elements
 
 
 def allgroups(trans: pandas.DataFrame,
               rot: pandas.DataFrame=None,
               func: Callable[[np.array, np.array], float]=gamma
-              ) -> np.array:
+              ) -> pandas.Series:
     """Apply a function to all times independently."""
     tr_group = trans.groupby('time').displacement
     if rot:
         rot_group = rot.groupby('time').rotation
     else:
         rot_group = trans.groupby('time').rotation
-    res = []  # type: List[float]
+    res: List[float] = []
     for trans, rot in zip(tr_group, rot_group):
         res.append(func(trans[1].values, rot[1].values))
-    return np.array(res)
+    return pandas.Series(res, index=tr_group.groups.keys())
