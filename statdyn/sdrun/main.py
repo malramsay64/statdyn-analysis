@@ -11,6 +11,7 @@
 import logging
 from pathlib import Path
 from subprocess import run
+from typing import Tuple
 
 import click
 import hoomd.context
@@ -18,6 +19,7 @@ import hoomd.context
 from . import options
 from ..analysis.run_analysis import order
 from ..datagen.summary import dynamics, motion
+from ..molecule import Molecule
 from ..simulation import equilibrate, initialise, simrun
 
 logger = logging.getLogger(__name__)
@@ -43,8 +45,15 @@ def sdrun(ctx):
 @options.opt_hoomd_args
 @options.opt_output_interval
 @options.arg_infile
-def prod(infile, steps, temperature, molecule, output,
-         dynamics, hoomd_args, output_interval):
+def prod(infile: str,
+         steps: int,
+         temperature: float,
+         molecule: Molecule,
+         output: str,
+         dynamics: bool,
+         hoomd_args: str,
+         output_interval: int,
+         ) -> None:
     """Run simulations on equilibrated phase."""
     logger.debug(f'running prod')
     logger.debug(f'Reading {infile}')
@@ -75,14 +84,21 @@ def prod(infile, steps, temperature, molecule, output,
 @options.opt_init_temp
 @options.arg_infile
 @options.arg_outfile
-def equil(infile, outfile, molecule, temperature, steps,
-          init_temp, hoomd_args, equil_type):
+def equil(infile: str,
+          outfile: str,
+          molecule: Molecule,
+          temperature: float,
+          steps: int,
+          init_temp: float,
+          hoomd_args: str,
+          equil_type: str,
+          ) -> None:
     """Command group for the equilibration of configurations."""
     logger.info('Run equil')
 
     # Ensure parent directory exists
-    outfile = Path(outfile)
-    outfile.parent.mkdir(exist_ok=True)
+    outfile_path = Path(outfile)
+    outfile_path.parent.mkdir(exist_ok=True)
 
     snapshot = initialise.init_from_file(infile)
     options.EQUIL_OPTIONS.get(equil_type)(
@@ -92,7 +108,7 @@ def equil(infile, outfile, molecule, temperature, steps,
         hoomd_args=hoomd_args,
         molecule=molecule,
         init_temp=init_temp,
-        outfile=outfile,
+        outfile=outfile_path,
     )
 
 
@@ -100,18 +116,26 @@ def equil(infile, outfile, molecule, temperature, steps,
 @options.opt_verbose
 @options.opt_space_group
 @options.opt_lattice_lengths
+@options.opt_molecule
 @options.opt_temperature
 @options.opt_steps
 @options.opt_hoomd_args
 @options.arg_outfile
 @click.option('--interface', is_flag=True)
-def create(space_group, lattice_lengths, temperature, steps,
-           outfile, interface, hoomd_args):
+def create(space_group: str,
+           lattice_lengths: Tuple[int, int],
+           molecule: Molecule,
+           temperature: float,
+           steps: int,
+           outfile: str,
+           interface: bool,
+           hoomd_args: str,
+           ) -> None:
     """Create things."""
     logger.debug('Interface flag: {interface}')
-    outfile = Path(outfile)
+    outfile_path = Path(outfile)
     # Ensure parent directory exists
-    outfile.parent.mkdir(exist_ok=True)
+    outfile_path.parent.mkdir(exist_ok=True)
 
     snapshot = initialise.init_from_crystal(
         crystal=space_group,
@@ -131,10 +155,9 @@ def create(space_group, lattice_lengths, temperature, steps,
 
 @sdrun.command()
 @options.opt_verbose
-# @options.arg_infile
 @click.option('--show-fig', type=click.Choice(['interactive']),
               default='interactive')
-def figure(show_fig):
+def figure(show_fig: str) -> None:
     """Start bokeh server with the file passed."""
     lookup = {
         'interactive': Path(__file__).parents[1] / 'figures/interactive_config.py',
