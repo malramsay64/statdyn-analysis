@@ -15,9 +15,10 @@ class Crystal(object):
 
     def __init__(self):
         super().__init__()
-        self.a1 = [1, 0, 0]  # pylint: disable=invalid-name
-        self.a2 = [0, 1, 0]  # pylint: disable=invalid-name
-        self.a3 = [0, 0, 1]  # pylint: disable=invalid-name
+        # Hoomd requires that the cell length parameters are a list rather than a tuple.
+        self.a1 = [1., 0., 0.]  # pylint: disable=invalid-name
+        self.a2 = [0., 1., 0.]  # pylint: disable=invalid-name
+        self.a3 = [0., 0., 1.]  # pylint: disable=invalid-name
         self.dimensions = 2
         self._orientations = np.zeros(1)
         self.positions = [[0, 0, 0]]
@@ -56,8 +57,7 @@ class Crystal(object):
             orientation=self.get_orientations(),
             type_name=['A'] * self.get_num_molecules(),
             mass=[1.0] * self.get_num_molecules(),
-            moment_inertia=([self.molecule.moment_inertia]
-                            * self.get_num_molecules())
+            moment_inertia=([self.molecule.moment_inertia] * self.get_num_molecules())
         )
 
     def compute_volume(self):
@@ -124,12 +124,51 @@ class TrimerP2(CrysTrimer):
     def __init__(self):
         super().__init__()
         self.a1 = [3.82, 0, 0]
-        self.a2 = [0.68, 2.53, 0]
+        self.a2 = [0.63, 2.55, 0]
         self.a3 = [0, 0, 1]
         self.positions = [[0.3, 0.32, 0], [0.7, 0.68, 0]]
-        self._orientations = np.array([40, -140])
+        self._orientations = np.array([50, 230])
+
+
+class TrimerP2gg(CrysTrimer):
+    """Unit cell of p2gg trimer.
+
+    The positions are given in fractional coordinates.
+
+    """
+
+    def __init__(self):
+        super().__init__()
+        self.a1 = [2.63, 0, 0]
+        self.a2 = [0, 7.38, 0]
+        self.a3 = [0, 0, 1]
+        self.positions = [
+            [0.061, 0.14, 0],
+            [0.561, 0.36, 0],
+            [0.439, 0.64, 0],
+            [0.939, 0.86, 0],
+        ]
+        self._orientations = np.array([156, 24., -156, -24])
+
+
+class TrimerPg(CrysTrimer):
+    """Unit Cell of pg Trimer.
+
+    """
+    def __init__(self):
+        super().__init__()
+        self.a1 = [2.71, 0, 0]
+        self.a2 = [0, 3.63, 0]
+        self.a3 = [0, 0, 1]
+        self.positions = [
+            [0.35, 0.45, 0],
+            [0.65, 0.95, 0],
+        ]
+        self._orientations = np.array([-21, 21])
 
 
 CRYSTAL_FUNCS = {
     'p2': TrimerP2,
+    'p2gg': TrimerP2gg,
+    'pg': TrimerPg,
 }
