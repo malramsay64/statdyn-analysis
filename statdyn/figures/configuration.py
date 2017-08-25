@@ -15,7 +15,8 @@ from ..analysis.order import get_z_orientation, orientational_order
 from .colour import colour_orientation
 
 
-def trimer_figure(mol_plot, xpos, ypos, orientations, mol_colours):
+def trimer_figure(mol_plot, xpos, ypos, orientations, mol_colours,
+                  extra_particles=True):
     """Add the points to a bokeh figure to render the trimer molecule.
 
     This enables the trimer molecules to be drawn on the figure using only
@@ -25,20 +26,21 @@ def trimer_figure(mol_plot, xpos, ypos, orientations, mol_colours):
     mol_plot.circle(xpos, ypos, radius=1,
                     fill_alpha=1, color=mol_colours,
                     line_color=None)
-    atom1_x = xpos - np.sin(orientations - np.pi/3)
-    atom1_y = ypos + np.cos(orientations - np.pi/3)
-    mol_plot.circle(atom1_x, atom1_y, radius=0.64,
-                    fill_alpha=1, color=mol_colours,
-                    line_color=None)
-    atom2_x = xpos - np.sin(orientations + np.pi/3)
-    atom2_y = ypos + np.cos(orientations + np.pi/3)
-    mol_plot.circle(atom2_x, atom2_y, radius=0.64,
-                    fill_alpha=1, color=mol_colours,
-                    line_color=None)
+    if extra_particles:
+        atom1_x = xpos - np.sin(orientations - np.pi/3)
+        atom1_y = ypos + np.cos(orientations - np.pi/3)
+        mol_plot.circle(atom1_x, atom1_y, radius=0.64,
+                        fill_alpha=1, color=mol_colours,
+                        line_color=None)
+        atom2_x = xpos - np.sin(orientations + np.pi/3)
+        atom2_y = ypos + np.cos(orientations + np.pi/3)
+        mol_plot.circle(atom2_x, atom2_y, radius=0.64,
+                        fill_alpha=1, color=mol_colours,
+                        line_color=None)
     return mol_plot
 
 
-def plot(snapshot, repeat=False, offset=False, order=False):
+def plot(snapshot, repeat=False, offset=False, order=False, extra_particles=True):
     """Plot snapshot using bokeh."""
     try:
         Lx, Ly = snapshot.configuration.box[:2]
@@ -64,7 +66,7 @@ def plot(snapshot, repeat=False, offset=False, order=False):
 
     p = figure(x_range=plot_range, y_range=plot_range,
                active_scroll='wheel_zoom', width=800, height=800)
-    trimer_figure(p, x, y, orientations, mol_colours)
+    trimer_figure(p, x, y, orientations, mol_colours, extra_particles=extra_particles)
     if repeat:
         for dx, dy in [(0, 1), (1, 0), (1, 1), (1, -1)]:
             dx *= Lx
