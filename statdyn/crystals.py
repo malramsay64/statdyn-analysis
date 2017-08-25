@@ -143,12 +143,12 @@ class TrimerP2gg(CrysTrimer):
         self.a2 = [0, 7.38, 0]
         self.a3 = [0, 0, 1]
         self.positions = [
-            [0.061, 0.14, 0],
-            [0.561, 0.36, 0],
-            [0.439, 0.64, 0],
-            [0.939, 0.86, 0],
+            [0.061, 0.853, 0],
+            [0.561, 0.647, 0],
+            [0.439, 0.353, 0],
+            [0.939, 0.147, 0],
         ]
-        self._orientations = np.array([156, 24., -156, -24])
+        self._orientations = np.array([24, 156, -24, 204])
 
 
 class TrimerPg(CrysTrimer):
