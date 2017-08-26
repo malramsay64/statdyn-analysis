@@ -63,7 +63,7 @@ def _create_crystal(ctx, param, crys):
 def _get_molecule(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    return MOLECULE_OPTIONS[value]
+    return MOLECULE_OPTIONS[value]()
 
 
 opt_space_group = click.option(

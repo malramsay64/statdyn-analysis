@@ -11,6 +11,8 @@
 
 import subprocess
 
+import pytest
+
 
 def test_prod():
     """Ensure sdrun prod works."""
@@ -28,13 +30,15 @@ def test_prod():
     assert ret.returncode == 0
 
 
-def test_create():
+@pytest.mark.parametrize('space_group', ['p2', 'p2gg', 'pg'])
+def test_create(space_group):
     """Ensure sdrun create works."""
     command = ['sdrun',
                'create',
                '-v',
                '-t', '2.50',
                '-s', '100',
+               '--space-group', space_group,
                'test/output/test_create.gsd',
                ]
     ret = subprocess.run(command)

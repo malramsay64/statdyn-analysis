@@ -66,17 +66,14 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
 
         if outfile is not None:
             set_dump(outfile.parent / ('dump-' + outfile.name))
-
         logger.debug(f'Running crystal equilibration for {equil_steps} steps.')
         set_thermo(Path('equil.log'), thermo_period=1)
         hoomd.run(equil_steps)
         logger.debug(f'Crystal equilibration completed')
 
-        return sys.take_snapshot()
         if outfile is not None:
             dump_frame(outfile, group=hoomd.group.all())
 
-        return make_orthorhombic(equil_snap)
         return sys.take_snapshot()
 
 
