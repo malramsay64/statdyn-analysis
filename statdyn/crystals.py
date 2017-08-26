@@ -152,9 +152,8 @@ class TrimerP2gg(CrysTrimer):
 
 
 class TrimerPg(CrysTrimer):
-    """Unit Cell of pg Trimer.
+    """Unit Cell of pg Trimer."""
 
-    """
     def __init__(self):
         super().__init__()
         self.a1 = [2.71, 0, 0]
@@ -167,8 +166,36 @@ class TrimerPg(CrysTrimer):
         self._orientations = np.array([-21, 21])
 
 
+class CubicSphere(Crystal):
+    """Create a simple cubic lattice."""
+
+    def __init__(self):
+        super().__init__()
+        self.a = 2.
+        self.cell_dimensions = 3
+        self.molecule = molecule.Sphere()
+
+    def get_unitcell(self):
+        return hoomd.lattice.sc(self.a)
+
+
+class SquareCircle(Crystal):
+    """Create a square latttice."""
+
+    def __init__(self):
+        super().__init__()
+        self.a = 2.
+        self.cell_dimensions = 2
+        self.molecule = molecule.Disc()
+
+    def get_unitcell(self):
+        return hoomd.lattice.sq(self.a)
+
+
 CRYSTAL_FUNCS = {
     'p2': TrimerP2,
     'p2gg': TrimerP2gg,
     'pg': TrimerPg,
+    'CubicSphere': CubicSphere,
+    'SquareCircle': SquareCircle,
 }

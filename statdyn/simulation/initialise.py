@@ -83,7 +83,8 @@ def initialise_snapshot(snapshot: hoomd.data.SnapshotParticleData,
         mol.define_potential()
         mol.define_dimensions()
         rigid = mol.define_rigid()
-        rigid.create_bodies(create=create_bodies)
+        if rigid:
+            rigid.create_bodies(create=create_bodies)
         if create_bodies:
             logger.info('Rigid bodies created')
         return sys
