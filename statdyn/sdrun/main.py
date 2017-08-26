@@ -18,6 +18,7 @@ import hoomd.context
 
 from . import options
 from ..analysis.run_analysis import order
+from ..crystals import Crystal
 from ..datagen.summary import dynamics, motion
 from ..molecule import Molecule
 from ..simulation import equilibrate, initialise, simrun
@@ -28,10 +29,11 @@ logger.setLevel(logging.DEBUG)
 
 @click.group(name='sdrun')
 @click.version_option()
+@options.opt_verbose
 @click.pass_context
 def sdrun(ctx):
     """Run main function."""
-    logging.debug('Running main function')
+    # logging.debug('Running main function')
 
 
 @sdrun.command()
@@ -58,7 +60,7 @@ def prod(infile: str,
     logger.debug(f'running prod')
     logger.debug(f'Reading {infile}')
 
-    snapshot = initialise.init_from_file(infile, hoomd_args=hoomd_args)
+    snapshot = initialise.init_from_file(Path(infile), hoomd_args=hoomd_args)
     logger.debug(f'Snapshot initialised')
 
     sim_context = hoomd.context.initialize(hoomd_args)
@@ -68,7 +70,7 @@ def prod(infile: str,
         steps=steps,
         temperature=temperature,
         dynamics=dynamics,
-        output=output,
+        output=Path(output),
         dump_period=output_interval,
         thermo_period=output_interval,
     )
@@ -100,7 +102,7 @@ def equil(infile: str,
     outfile_path = Path(outfile)
     outfile_path.parent.mkdir(exist_ok=True)
 
-    snapshot = initialise.init_from_file(infile)
+    snapshot = initialise.init_from_file(Path(infile))
     options.EQUIL_OPTIONS.get(equil_type)(
         snapshot,
         equil_temp=temperature,
@@ -122,7 +124,7 @@ def equil(infile: str,
 @options.opt_hoomd_args
 @options.arg_outfile
 @click.option('--interface', is_flag=True)
-def create(space_group: str,
+def create(space_group: Crystal,
            lattice_lengths: Tuple[int, int],
            molecule: Molecule,
            temperature: float,
@@ -148,8 +150,9 @@ def create(space_group: str,
         snapshot=snapshot,
         equil_temp=temperature,
         equil_steps=steps,
-        outfile=outfile,
-        interface=interface
+        outfile=Path(outfile),
+        interface=interface,
+        molecule=molecule,
     )
 
 

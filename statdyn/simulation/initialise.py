@@ -236,7 +236,9 @@ def make_orthorhombic(snapshot: hoomd.data.SnapshotParticleData
     return snapshot
 
 
-def _check_properties(snapshot, mol):
+def _check_properties(snapshot: hoomd.data.SnapshotParticleData,
+                      mol: molecule.Molecule
+                      ) -> hoomd.data.SnapshotParticleData:
     try:
         nbodies = len(snapshot.particles.body)
         logger.debug(f'number of rigid bodies: {nbodies}')

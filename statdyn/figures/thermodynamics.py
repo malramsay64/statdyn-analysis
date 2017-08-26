@@ -33,10 +33,6 @@ def read_file(source):
     return data
 
 
-def update_datacolumns(attr, old, new):
-    datacolumns.data['y'] = dataframe[new]
-
-
 def update_file_list(attr, old, new):
     old_file = fname.value
     fname.options = [filename.name for filename in Path(new).glob('thermo*')]
