@@ -84,8 +84,8 @@ def initialise_snapshot(snapshot: hoomd.data.SnapshotParticleData,
         rigid = mol.define_rigid()
         if rigid:
             rigid.create_bodies(create=create_bodies)
-        if create_bodies:
-            logger.info('Rigid bodies created')
+            if create_bodies:
+                logger.info('Rigid bodies created')
         return sys
 
 
@@ -121,7 +121,11 @@ def init_from_crystal(crystal: crystals.Crystal,
             (0, 0),
             (optimise_steps, 0.5),
         ])
-        md.integrate.npt(group=hoomd.group.rigid_center(),
+        if crystal.molecule.num_particles == 1:
+            group = hoomd.group.all()
+        else:
+            group = hoomd.group.rigid_center()
+        md.integrate.npt(group=group,
                          kT=temperature,
                          xy=True, couple='none',
                          P=13.5, tau=1, tauP=1,
@@ -129,7 +133,7 @@ def init_from_crystal(crystal: crystals.Crystal,
 
         equil_snap = sys.take_snapshot(all=True)
         if outfile:
-            dump_frame(outfile, group=hoomd.group.all())
+            dump_frame(outfile, group=group)
     return make_orthorhombic(equil_snap)
 
 

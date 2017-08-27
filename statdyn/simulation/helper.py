@@ -78,12 +78,15 @@ def dump_frame(outfile: Path,
 
 def set_dump(outfile: Path,
              dump_period: int=10000,
+             group: hoomd.group.group=None,
              ) -> None:
     """Initialise dumping configuration to a file."""
+    if group is None:
+        group = hoomd.group.rigid_center()
     hoomd.dump.gsd(
         str(outfile),
         period=dump_period,
-        group=hoomd.group.rigid_center()
+        group=group,
     )
 
 

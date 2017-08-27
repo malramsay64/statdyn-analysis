@@ -43,6 +43,8 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
 
     if interface:
         group = _interface_group(sys)
+    elif molecule.num_particles == 1:
+        group = hoomd.group.all()
     else:
         group = None
 
@@ -64,7 +66,7 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
         )
 
         if outfile is not None:
-            set_dump(outfile.parent / ('dump-' + outfile.name))
+            set_dump(outfile.parent / ('dump-' + outfile.name), group=group)
         logger.debug(f'Running crystal equilibration for {equil_steps} steps.')
         set_thermo(Path('equil.log'), thermo_period=100, rigid=False)
         hoomd.run(equil_steps)
@@ -152,10 +154,14 @@ def equil_liquid(snapshot: hoomd.data.SnapshotParticleData,
         else:
             temperature = equil_temp
 
+        if molecule.num_particles == 1:
+            group = hoomd.group.all()
+        else:
+            group = hoomd.group.rigid_center()
         set_integrator(
             temperature=temperature,
             step_size=step_size,
-            group=None,
+            group=group,
             pressure=pressure,
             tauP=tauP, tau=tau,
         )
