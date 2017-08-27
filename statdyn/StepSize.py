@@ -7,7 +7,6 @@ import logging
 from typing import Iterable, Iterator, List, Tuple
 
 LOGGER = logging.getLogger('steps')
-LOGGER.setLevel(logging.WARNING)
 
 
 def generate_descriptor(total_steps: int,

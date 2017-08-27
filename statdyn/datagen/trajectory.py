@@ -17,7 +17,6 @@ from ..StepSize import GenerateStepSeries
 from ..TimeDep import TimeDepMany
 
 logger = logging.getLogger('motion')
-logger.setLevel(logging.DEBUG)
 
 
 def compute_motion(filename: Path, outdir: Path=None):

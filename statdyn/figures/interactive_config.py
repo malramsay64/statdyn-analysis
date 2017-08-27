@@ -18,7 +18,6 @@ from bokeh.plotting import curdoc, figure
 from statdyn.figures.colour import clean_orientation, colour_orientation
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 DEFAULT_DIR = '.'

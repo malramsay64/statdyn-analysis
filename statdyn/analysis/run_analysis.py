@@ -18,7 +18,6 @@ from ..sdrun import options
 from .order import orientational_order
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 @click.command()

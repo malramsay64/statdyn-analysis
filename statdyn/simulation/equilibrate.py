@@ -19,7 +19,6 @@ from .helper import dump_frame, set_dump, set_integrator, set_thermo
 from .initialise import initialise_snapshot, make_orthorhombic
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,

@@ -21,7 +21,6 @@ from ..StepSize import GenerateStepSeries
 from .helper import set_integrator
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 def run_npt(snapshot: hoomd.data.SnapshotParticleData,
@@ -108,7 +107,7 @@ def _make_restart(temperature: float,
         None,
         group=hoomd.group.all(),
         overwrite=True,
-        )
+    )
 
 
 def _set_thermo(temperature: float,

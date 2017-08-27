@@ -24,7 +24,6 @@ from ..molecule import Molecule
 from ..simulation import equilibrate, initialise, simrun
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 @click.group(name='sdrun')
@@ -33,7 +32,7 @@ logger.setLevel(logging.DEBUG)
 @click.pass_context
 def sdrun(ctx):
     """Run main function."""
-    # logging.debug('Running main function')
+    logging.debug('Running main function')
 
 
 @sdrun.command()
@@ -96,7 +95,7 @@ def equil(infile: str,
           equil_type: str,
           ) -> None:
     """Command group for the equilibration of configurations."""
-    logger.info('Run equil')
+    logger.debug('Running equil')
 
     # Ensure parent directory exists
     outfile_path = Path(outfile)
@@ -134,7 +133,8 @@ def create(space_group: Crystal,
            hoomd_args: str,
            ) -> None:
     """Create things."""
-    logger.debug('Interface flag: {interface}')
+    logger.debug('Running create.')
+    logger.debug(f'Interface flag: {interface}')
     outfile_path = Path(outfile)
     # Ensure parent directory exists
     outfile_path.parent.mkdir(exist_ok=True)

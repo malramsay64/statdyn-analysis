@@ -18,7 +18,6 @@ from ..molecule import Dimer, Disc, Sphere, Trimer
 from ..simulation import equilibrate
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 EQUIL_OPTIONS = {
     'interface': equilibrate.equil_interface,
@@ -37,21 +36,26 @@ def _mkdir_ifempty(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
     chkpath = Path(value)
-    logging.debug(f"Directory {value}, {chkpath}")
+    logger.debug(f"Directory {value}, {chkpath}")
     chkpath.mkdir(exist_ok=True)
     return chkpath
 
 
 def _verbosity(ctx, param, count):
+    root_logger = logging.getLogger('statdyn')
     if not count or ctx.resilient_parsing:
         logging.basicConfig(level=logging.WARNING)
+        root_logger.setLevel(logging.WARNING)
         return
     if count == 1:
         logging.basicConfig(level=logging.INFO)
+        root_logger.setLevel(logging.INFO)
         logger.info('Set log level to INFO')
     if count > 1:
         logging.basicConfig(level=logging.DEBUG)
+        root_logger.setLevel(logging.DEBUG)
         logger.info('Setting log level to DEBUG')
+    root_logger.debug('Logging set for root')
 
 
 def _create_crystal(ctx, param, crys):

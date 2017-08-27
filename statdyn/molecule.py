@@ -13,7 +13,6 @@ import hoomd.md
 import numpy as np
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 class Molecule(object):

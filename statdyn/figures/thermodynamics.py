@@ -21,7 +21,6 @@ from bokeh.models import (CheckboxButtonGroup, ColumnDataSource, MultiSelect,
 from bokeh.plotting import curdoc, figure
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 def read_file(source):
     """Read a file into a pandas dataframe."""

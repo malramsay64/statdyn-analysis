@@ -16,7 +16,6 @@ from hsluv import hpluv_to_hex
 from ..analysis.order import get_z_orientation
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 HEX_VALUES_DARK = np.array([hpluv_to_hex((value, 85, 65)) for value in range(360)])
 HEX_VALUES_LIGHT = np.array([hpluv_to_hex((value, 85, 85)) for value in range(360)])

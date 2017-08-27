@@ -24,7 +24,6 @@ from .. import crystals, molecule
 from .helper import dump_frame
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 
 def init_from_file(fname: Path,
