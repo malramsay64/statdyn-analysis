@@ -71,7 +71,7 @@ def initialise_snapshot(snapshot: hoomd.data.SnapshotParticleData,
         except AttributeError:
             num_particles = len(snapshot.particles.position)
             num_mols = num_particles
-        logger.debug(f'Number of molecules: {num_mols}')
+        logger.debug(f'Number of particles: {num_particles}, Number of molecules: {num_mols}')
         create_bodies = False
         if num_particles == num_mols:
             logger.info('Creating rigid bodies')
@@ -131,7 +131,6 @@ def init_from_crystal(crystal: crystals.Crystal,
         equil_snap = sys.take_snapshot(all=True)
         if outfile:
             dump_frame(outfile, group=hoomd.group.all())
-    return equil_snap
     return make_orthorhombic(equil_snap)
 
 

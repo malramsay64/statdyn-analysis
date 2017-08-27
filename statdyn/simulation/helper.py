@@ -10,6 +10,7 @@
 
 import logging
 from pathlib import Path
+from typing import List
 
 import hoomd
 import hoomd.md as md
@@ -88,7 +89,8 @@ def set_dump(outfile: Path,
 
 
 def set_thermo(outfile: Path,
-               thermo_period: int=10000
+               thermo_period: int=10000,
+               rigid=True,
                ) -> None:
     """Set the thermodynamic quantities for a simulation."""
     default = ['N', 'volume', 'momentum', 'temperature', 'pressure',
@@ -98,14 +100,16 @@ def set_thermo(outfile: Path,
                'lx', 'ly', 'lz',
                'xy', 'xz', 'yz',
                ]
-    rigid = ['temperature_rigid_center',
-             'pressure_rigid_center',
-             'potential_energy_rigid_center',
-             'kinetic_energy_rigid_center',
-             'translational_kinetic_energy_rigid_center',
-             ]
+    rigid_thermo: List[str] = []
+    if rigid:
+        rigid_thermo = ['temperature_rigid_center',
+                        'pressure_rigid_center',
+                        'potential_energy_rigid_center',
+                        'kinetic_energy_rigid_center',
+                        'translational_kinetic_energy_rigid_center',
+                        ]
     hoomd.analyze.log(
         str(outfile),
-        quantities=default + rigid,
+        quantities=default + rigid_thermo,
         period=thermo_period,
     )
