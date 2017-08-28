@@ -80,7 +80,7 @@ def test_thermo():
 
 
 @given(tuples(integers(max_value=30, min_value=5),
-              integers(max_value=30, min_value=5)))
+              integers(max_value=5, min_value=1)))
 @settings(max_examples=10, timeout=0)
 def test_orthorhombic_sims(cell_dimensions):
     """Test the initialisation from a crystal unit cell.
@@ -88,6 +88,7 @@ def test_orthorhombic_sims(cell_dimensions):
     This also ensures there is no unusual things going on with the calculation
     of the orthorhombic unit cell.
     """
+    cell_dimensions = cell_dimensions[0], cell_dimensions[1]*6
     output = Path('test/tmp')
     output.mkdir(exist_ok=True)
     snap = initialise.init_from_crystal(
@@ -116,7 +117,8 @@ def test_file_placement():
     outdir = Path('test/output')
     outdir.mkdir(exist_ok=True)
     current = list(Path('.').glob('*'))
-    _ = [os.remove(i) for i in outdir.glob('*')]
+    for i in outdir.glob('*'):
+        os.remove(str(i))
     snapshot = initialise.init_from_none()
     simrun.run_npt(snapshot,
                    hoomd.context.initialize(''),

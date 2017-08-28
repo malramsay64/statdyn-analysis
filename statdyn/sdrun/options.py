@@ -82,7 +82,7 @@ opt_space_group = click.option(
 opt_lattice_lengths = click.option(
     '--lattice-lengths',
     nargs=2,
-    default=(30, 40),
+    default=(30, 42),
     type=click.Tuple([int, int]),
     help='Number of repetitiions in the a and b lattice vectors',
 )
