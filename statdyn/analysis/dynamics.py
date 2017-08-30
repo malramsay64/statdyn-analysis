@@ -8,7 +8,13 @@
 
 """Compute dynamic properties."""
 
+import logging
+
 import numpy as np
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 
 class dynamics(object):
@@ -76,8 +82,15 @@ def rotationalDisplacement(initial: np.ndarray,
                            final: np.ndarray,
                            result: np.ndarray
                            ) -> None:
-    """Compute the rotational displacement."""
-    result[:] = np.arccos(2*np.square(np.einsum('ij,ij->i', initial, final)) - 1)
+    """Compute the rotational displacement.
+
+    Input vectors are normalised before computing the angle betweeen them.
+
+    """
+    norm_init = initial / np.linalg.norm(initial, axis=1)
+    norm_final = final / np.linalg.norm(final, axis=1)
+    result[:] = np.arccos(2*np.square(np.einsum('ij,ij->i', norm_final, norm_init)) - 1)
+    np.nan_to_num(result, copy=False)
 
 
 def squaredDisplacment(box: np.ndarray,
@@ -92,9 +105,10 @@ def squaredDisplacment(box: np.ndarray,
     since the path
     """
     box_sq = np.square(box)
-    result = np.square(initial - final)
-    periodic = np.where(box_sq > result)
-    # Periodic returns 2 numpy arrays, one indexing each dimension. Here I am
+    temp = np.square(initial - final)
+    periodic = np.where(box_sq < temp)
+    # Periodic contains 2 numpy arrays, one indexing each dimension. Here I am
     # taking the position in the second dimension which indicates the box
     # dimension and subtracting from the result to give the periodic distance.
-    result[periodic] -= box_sq[periodic[1]]
+    temp[periodic] -= box_sq[periodic[1]]
+    result[:] = temp.sum(axis=1)
