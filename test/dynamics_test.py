@@ -46,11 +46,13 @@ def test_mean_sq_displacement_periodicity(init, final):
        arrays(np.float64, (1, 4), elements=floats(-1, 1)
               ).filter(lambda x: np.linalg.norm(x) > 0.5),)
 def test_rotationalDisplacement(init, final):
+    init = init / np.linalg.norm(init, axis=1)
+    final = final / np.linalg.norm(final, axis=1)
     init_quat = as_quat_array(init)
     final_quat = as_quat_array(final)
     result = np.zeros(len(init))
     dynamics.rotationalDisplacement(init, final, result)
     quat_res = []
     for i, f in zip(init_quat, final_quat):
-        quat_res.append(rotation_intrinsic_distance(i.normalized(), f.normalized()))
-    assert np.allclose(result, np.array(quat_res), equal_nan=True, atol=5e-2)
+        quat_res.append(rotation_intrinsic_distance(i, f))
+    assert np.allclose(result, np.array(quat_res), equal_nan=True, atol=5e-6)

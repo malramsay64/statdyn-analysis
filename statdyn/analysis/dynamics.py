@@ -84,12 +84,29 @@ def rotationalDisplacement(initial: np.ndarray,
                            ) -> None:
     """Compute the rotational displacement.
 
-    Input vectors are normalised before computing the angle betweeen them.
+    Args:
+        initial (py:class:`numpy.ndarray`): Initial orientation.
+        final (py:class:`numpy.ndarray`): final orientation.
+        result (py:class:`numpy.ndarray`): array in which to store result
+
+    The rotational displacment is computed using a slightly modified formula
+    from [@Huynh2009]_ specifically the formula for :math:`\phi_3`. Since we
+    are interested in angles of the range :math:`[0, 2\pi]`, the result of
+    :math:`\phi_3` is multiplied by 2, which is shown by Huynh to be equal
+    to :math:`phi_6`.
+
+    This imlementation was chosen for speed and accuracy, being tested against
+    a number of other possibilities. Another notable formulation was by [Jim
+    Belk] on Stack Exchange, however this equation was both slower to compute
+    in addition to being more prone to unusual bnehaviour.
+
+    .. [@Hunyh2009]: 1. Huynh, D. Q. Metrics for 3D rotations: Comparison and
+        analysis.  J. Math. Imaging Vis. 35, 155–164 (2009).
+    .. [Jim Belk]: https://math.stackexchange.com/questions/90081/quaternion-distance
 
     """
-    norm_init = initial / np.linalg.norm(initial, axis=1)
-    norm_final = final / np.linalg.norm(final, axis=1)
-    result[:] = np.arccos(2*np.square(np.einsum('ij,ij->i', norm_final, norm_init)) - 1)
+    with np.errstate(invalid='ignore'):
+        result[:] = 2*np.arccos(np.abs(np.einsum('ij,ij->i', initial, final)))
     np.nan_to_num(result, copy=False)
 
 
