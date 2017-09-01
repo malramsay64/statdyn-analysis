@@ -45,6 +45,7 @@ def sdrun(ctx):
 @options.opt_dynamics
 @options.opt_hoomd_args
 @options.opt_output_interval
+@options.opt_pressure
 @options.arg_infile
 def prod(infile: str,
          steps: int,
@@ -53,6 +54,7 @@ def prod(infile: str,
          output: str,
          dynamics: bool,
          hoomd_args: str,
+         pressure: float,
          output_interval: int,
          ) -> None:
     """Run simulations on equilibrated phase."""
@@ -68,6 +70,7 @@ def prod(infile: str,
         context=sim_context,
         steps=steps,
         temperature=temperature,
+        pressure=pressure,
         dynamics=dynamics,
         output=Path(output),
         dump_period=output_interval,
@@ -83,6 +86,7 @@ def prod(infile: str,
 @options.opt_molecule
 @options.opt_equil
 @options.opt_init_temp
+@options.opt_pressure
 @options.arg_infile
 @options.arg_outfile
 def equil(infile: str,
@@ -93,6 +97,7 @@ def equil(infile: str,
           init_temp: float,
           hoomd_args: str,
           equil_type: str,
+          pressure: float,
           ) -> None:
     """Command group for the equilibration of configurations."""
     logger.debug('Running equil')
@@ -109,6 +114,7 @@ def equil(infile: str,
         hoomd_args=hoomd_args,
         molecule=molecule,
         init_temp=init_temp,
+        pressure=pressure,
         outfile=outfile_path,
     )
 
@@ -121,6 +127,7 @@ def equil(infile: str,
 @options.opt_temperature
 @options.opt_steps
 @options.opt_hoomd_args
+@options.opt_pressure
 @options.arg_outfile
 @click.option('--interface', is_flag=True)
 def create(space_group: Crystal,
@@ -131,6 +138,7 @@ def create(space_group: Crystal,
            outfile: str,
            interface: bool,
            hoomd_args: str,
+           pressure: float,
            ) -> None:
     """Create things."""
     logger.debug('Running create.')
@@ -153,6 +161,7 @@ def create(space_group: Crystal,
         outfile=Path(outfile),
         interface=interface,
         molecule=molecule,
+        pressure=pressure,
     )
 
 

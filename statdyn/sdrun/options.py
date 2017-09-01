@@ -135,6 +135,7 @@ opt_steps = click.option(
     '-s',
     '--steps',
     type=click.IntRange(min=0, max=int(1e12)),
+    default=1000,
     help='Number of steps to run simulation for.'
 )
 
@@ -146,6 +147,12 @@ opt_temperature = click.option(
     help='Temperature for simulation',
 )
 
+opt_pressure = click.option(
+    '--pressure',
+    type=float,
+    default=13.5,
+    help='Pressure for simulation',
+)
 
 opt_hoomd_args = click.option(
     '--hoomd-args',
