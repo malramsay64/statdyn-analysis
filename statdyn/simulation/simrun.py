@@ -78,7 +78,7 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
             iterator = GenerateStepSeries(steps,
                                           num_linear=100,
                                           max_gen=max_initial,
-                                          gen_steps=1000,
+                                          gen_steps=20000,
                                           )
             prev_step = 0
             dumpfile = _dump_frame(temperature=temperature,
