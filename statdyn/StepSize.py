@@ -4,15 +4,14 @@
 """A series of classes that specify various step size functions."""
 
 import logging
-from typing import Iterable, Iterator, List, Tuple
+from collections import namedtuple
+from itertools import takewhile
+from queue import PriorityQueue
+from typing import Dict, Iterable, Iterator, List
 
-LOGGER = logging.getLogger('steps')
+logger = logging.getLogger(__name__)
 
-
-def generate_descriptor(total_steps: int,
-                        num_linear: int=100,
-                        start: int=0) -> List[Tuple[int, int]]:
-    """Generate a list of tuples that can be used for linear interpolation."""
+iterindex = namedtuple('iterindex', ['index', 'iterator'])
 
 
 def generate_steps(total_steps: int,
@@ -34,24 +33,61 @@ def generate_steps(total_steps: int,
             of the steps by a power of 10. There is always an extra step in the
             first sequence, this is to make the patterns nicer.
             The default value of 99 gives dense data across the plot.
-        start int): The starting value (default is 0) if the data capture is
+        start (int): The starting value (default is 0) if the data capture is
             commenced at a timestep after (or before) 0.
 
     Example:
 
         >>> [s for s in generate_steps(100, 10)]
-        [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
+        [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]
 
     """
-    curr_step = start
-    step_size = 1
-    curr_step += step_size
-    while curr_step < total_steps:
-        if curr_step - start == step_size * num_linear:
-            step_size *= 10
-        yield curr_step
-        curr_step += step_size
+    yield from takewhile(
+        lambda x: x < total_steps,
+        exp_sequence(start, num_linear, initial_step_size=1, base=10)
+    )
     yield total_steps
+
+
+def exp_sequence(start: int=0,
+                 num_linear: int=100,
+                 initial_step_size: int=1,
+                 base: int=10) -> Iterator[int]:
+    """Sequence of integers in an exponential like sequence.
+
+    This function generates integers in a sequence consisting of two components,
+    a linear sequence, which is interspersed with an exponential increase in
+    the size of each linear step. This sequence is designed to be useful for
+    selecting points to plot on a logrithmic scale.
+
+    The default values represent a good mix between fewer points and having good
+    coverage of the scale on a logrithmic plot.
+
+    Note that the first value returned by this function will always be the
+    `start` argument.
+
+    Args:
+        start (int): The starting value of the sequence. This only shifts the
+            seuqence, the difference between points is the same regarless of the
+            start value. (default = 0)
+        num_linear (int): The number of linear steps before increasing the size
+            of each linear step. (default = 100)
+        initial_step_size (int): The size of the first set of linear steps.
+            (default = 1)
+        base (int): The base of the exponent of which the initial_step_size is
+            incresed. (default = 10)
+    """
+    step_size = initial_step_size
+    curr_step = start
+    yield curr_step
+    curr_step += 1
+    while True:
+        for step in (start + (i)*step_size for i in range(num_linear)):
+            if step >= curr_step:
+                yield step
+        curr_step = start + num_linear*step_size
+        logger.debug(f'Current step {curr_step}')
+        step_size *= base
 
 
 class GenerateStepSeries(Iterable):
@@ -60,54 +96,71 @@ class GenerateStepSeries(Iterable):
     def __init__(self,
                  total_steps: int,
                  num_linear: int=100,
-                 gen_steps: int=300000,
+                 gen_steps: int=200000,
                  max_gen: int=500) -> None:
+        """Init."""
         self.total_steps = total_steps
         self.num_linear = num_linear
         self.gen_steps = gen_steps
         assert max_gen > 0, 'Number of generators has to be greater than 0'
         self.max_gen = max_gen
-        gen = generate_steps(self.total_steps, self.num_linear, 0)
-        self.generators = [(next(gen), gen)]
-        self.argmin = 0
-        self.stop_iteration = False
-        self.added = 0
+        self._curr_step = 0
+        self._num_generators = 0
+
+        self.values: Dict[int, List[iterindex]] = {}
+        self.queue = PriorityQueue()
+
+        self._add_generator()
+
+    def _enqueue(self, iindex: iterindex) -> None:
+        step = next(iindex.iterator)
+        tlist = self.values.get(step)
+        if tlist is None:
+            self.values[step] = [iindex]
+            logger.debug(f'Creating new list at step {step}')
+        else:
+            tlist.append(iindex)
+        logger.debug(f'Adding {step} to queue')
+        self.queue.put(step)
+
+    def _add_generator(self) -> None:
+        if self._num_generators < self.max_gen:
+            new_gen = generate_steps(self.total_steps, self.num_linear, self._curr_step)
+            self._enqueue(iterindex(self._num_generators, new_gen))
+            logger.debug(f'Generator added with index {self._num_generators}')
+            self._num_generators += 1
 
     def __iter__(self):
         return self
 
     def __next__(self) -> int:
-        if self.stop_iteration:
-            raise StopIteration
-        self.argmin = min(enumerate(self.generators),
-                          key=lambda x: x[1][0])[0]
-        curr_step, gen = self.generators[self.argmin]
-        try:
-            self.generators[self.argmin] = (next(gen), gen)
-            if (curr_step > self.added
-                    and curr_step % self.gen_steps == 0
-                    and len(self.generators) < self.max_gen):
-                self.added = curr_step
-                gen = generate_steps(self.total_steps,
-                                     self.num_linear,
-                                     start=curr_step)
-                app = (next(gen), gen)
-                LOGGER.debug(
-                    'Add generator: curr_step %s, gen steps %s, len(gen) %s'
-                    + ' next step %s',
-                    curr_step, self.gen_steps, len(self.generators),
-                    app[0]
-                )
-                self.generators.append(app)
-            return curr_step
-        except StopIteration:
-            self.stop_iteration = True
-            return curr_step
-        return self.total_steps
+        # Dequeue
+        previous_step = self._curr_step
+        self._curr_step = self.queue.get()
 
-    def get_index(self) -> int:
-        """Return the index from which the previous step was returned."""
-        return self.argmin
+        # Cleanup from previous step
+        if self._curr_step != previous_step:
+            del self.values[previous_step]
+
+        # Check for new indexes
+        if self._curr_step % self.gen_steps == 0 and self._curr_step > 0:
+            self._add_generator()
+            self._curr_step = self.queue.get()
+
+        # Get list of indexes
+        iterindexes = self.values.get(self._curr_step)
+        logger.debug(f'Value of iterindexes: {iterindexes} at step {self._curr_step}')
+
+        # Add interators back onto queue
+        for iindex in iterindexes:
+            self._enqueue(iindex)
+
+        # Return
+        return self._curr_step
+
+    def get_index(self) -> List[int]:
+        """Return the indexes from which the previous step was returned."""
+        return [i.index for i in self.values.get(self._curr_step, [])]
 
     def next(self) -> int:
         """Return the next value of the iterator."""
