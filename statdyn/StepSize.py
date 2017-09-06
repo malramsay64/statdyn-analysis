@@ -6,7 +6,7 @@
 import logging
 from collections import namedtuple
 from itertools import takewhile
-from queue import PriorityQueue
+from queue import Empty, PriorityQueue
 from typing import Dict, Iterable, Iterator, List
 
 logger = logging.getLogger(__name__)
@@ -80,10 +80,9 @@ def exp_sequence(start: int=0,
     step_size = initial_step_size
     curr_step = start
     yield curr_step
-    curr_step += 1
     while True:
-        for step in (start + (i)*step_size for i in range(num_linear)):
-            if step >= curr_step:
+        for step in (start + (i)*step_size for i in range(num_linear+1)):
+            if step > curr_step:
                 yield step
         curr_step = start + num_linear*step_size
         logger.debug(f'Current step {curr_step}')
@@ -98,7 +97,7 @@ class GenerateStepSeries(Iterable):
                  num_linear: int=100,
                  gen_steps: int=200000,
                  max_gen: int=500) -> None:
-        """Init."""
+        """"""
         self.total_steps = total_steps
         self.num_linear = num_linear
         self.gen_steps = gen_steps
@@ -113,22 +112,22 @@ class GenerateStepSeries(Iterable):
         self._add_generator()
 
     def _enqueue(self, iindex: iterindex) -> None:
-        step = next(iindex.iterator)
-        tlist = self.values.get(step)
-        if tlist is None:
-            self.values[step] = [iindex]
-            logger.debug(f'Creating new list at step {step}')
+        try:
+            step = next(iindex.iterator)
+        except StopIteration as e:
+            return
+
+        if step in self.values:
+            self.values.get(step).append(iindex)
         else:
-            tlist.append(iindex)
-        logger.debug(f'Adding {step} to queue')
+            self.values[step] = [iindex]
         self.queue.put(step)
 
     def _add_generator(self) -> None:
-        if self._num_generators < self.max_gen:
-            new_gen = generate_steps(self.total_steps, self.num_linear, self._curr_step)
-            self._enqueue(iterindex(self._num_generators, new_gen))
-            logger.debug(f'Generator added with index {self._num_generators}')
-            self._num_generators += 1
+        new_gen = generate_steps(self.total_steps, self.num_linear, self._curr_step)
+        self._enqueue(iterindex(self._num_generators, new_gen))
+        logger.debug('Generator added with index %d', self._num_generators)
+        self._num_generators += 1
 
     def __iter__(self):
         return self
@@ -136,7 +135,10 @@ class GenerateStepSeries(Iterable):
     def __next__(self) -> int:
         # Dequeue
         previous_step = self._curr_step
-        self._curr_step = self.queue.get()
+        try:
+            self._curr_step = self.queue.get(block=False)
+        except Empty:
+            raise StopIteration
 
         # Cleanup from previous step
         if self._curr_step != previous_step:
@@ -144,12 +146,13 @@ class GenerateStepSeries(Iterable):
 
         # Check for new indexes
         if self._curr_step % self.gen_steps == 0 and self._curr_step > 0:
-            self._add_generator()
-            self._curr_step = self.queue.get()
+            if self._num_generators < self.max_gen:
+                self._add_generator()
+                self._curr_step = self.queue.get()
 
         # Get list of indexes
         iterindexes = self.values.get(self._curr_step)
-        logger.debug(f'Value of iterindexes: {iterindexes} at step {self._curr_step}')
+        logger.debug('Value of iterindexes: %s at step %d', iterindexes, self._curr_step)
 
         # Add interators back onto queue
         for iindex in iterindexes:
