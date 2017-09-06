@@ -102,7 +102,6 @@ class GenerateStepSeries(Iterable):
         self.total_steps = total_steps
         self.num_linear = num_linear
         self.gen_steps = gen_steps
-        assert max_gen > 0, 'Number of generators has to be greater than 0'
         self.max_gen = max_gen
         self._curr_step = 0
         self._num_generators = 0

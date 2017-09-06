@@ -8,8 +8,9 @@
 
 """Testing for the stepsize module."""
 
+import numpy as np
 import pytest
-from hypothesis import given
+from hypothesis import given, settings
 from hypothesis.strategies import integers
 
 from statdyn.StepSize import GenerateStepSeries, generate_steps
@@ -85,6 +86,18 @@ def test_num_linear(num_linear):
     """Test a range of values of num_linear will work."""
     gen_list = list(generate_steps(total_steps=1e7, num_linear=num_linear))
     assert gen_list[:num_linear+1] == list(range(num_linear+1))
+
+
+@given(integers(min_value=1, max_value=500))
+@settings(max_examples=10)
+def test_get_index(max_gen):
+    gen_steps = 100
+    g = GenerateStepSeries(50000, gen_steps=gen_steps, max_gen=max_gen)
+    for _ in g:
+        assert len(g.get_index()) <= max_gen
+        assert len(g.get_index()) <= g._num_generators
+        assert np.all(np.array(g.get_index()) <= max_gen)
+        assert np.all(np.array(g.get_index()) <= g._num_generators)
 
 
 def test_generate_step_series_many():
