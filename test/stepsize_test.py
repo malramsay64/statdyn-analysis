@@ -48,7 +48,7 @@ def test_initial_start_series(initial):
     assert next(gen) == 0
 
 
-@given(integers(min_value=0, max_value=10000))
+@given(integers(min_value=0))
 def test_final_total(final):
     """Ensure the final value produced is the final value."""
     genlist = list(generate_steps(total_steps=final))
@@ -68,7 +68,7 @@ def test_generate_steps(steps):  # pylint: disable=redefined-outer-name
     assert steps['gen'] == steps['def']
 
 
-@given(integers(min_value=0, max_value=100), integers(min_value=1, max_value=100))
+@given(integers(min_value=0), integers(min_value=1, max_value=200))
 def test_generate_step_series(total_steps, num_linear):
     """Test generate_steps and generate_step_series.
 
@@ -80,16 +80,16 @@ def test_generate_step_series(total_steps, num_linear):
     assert single == series
 
 
-@given(integers(min_value=1, max_value=200))
+@given(integers(min_value=1, max_value=300))
 def test_num_linear(num_linear):
     """Test a range of values of num_linear will work."""
-    gen_list = list(generate_steps(total_steps=1e5, num_linear=num_linear))
+    gen_list = list(generate_steps(total_steps=1e7, num_linear=num_linear))
     assert gen_list[:num_linear+1] == list(range(num_linear+1))
 
 
 def test_generate_step_series_many():
     """Test generation of a step series works."""
-    total_steps = 2000
+    total_steps = 1000000
     num_linear = 10
     many_gens = list(GenerateStepSeries(
         total_steps=total_steps,
@@ -106,7 +106,7 @@ def test_generate_step_series_many():
     assert len(many_gens) > len(single_gen)
 
 
-@given(integers(min_value=0, max_value=1e6), integers(min_value=1, max_value=200))
+@given(integers(min_value=0), integers(min_value=1, max_value=300))
 def test_no_duplicates(total_steps, num_linear):
     """Test generation of a step series works."""
     series_list = list(generate_steps(total_steps=total_steps, num_linear=num_linear))
@@ -114,12 +114,11 @@ def test_no_duplicates(total_steps, num_linear):
     assert len(series_list) == len(series_set)
 
 
-@given(integers(min_value=0, max_value=1e6), integers(min_value=1, max_value=200))
+@given(integers(min_value=0), integers(min_value=1, max_value=300))
 def test_no_duplicates_series(total_steps, num_linear):
     """Test generation of a step series works."""
     series_list = list(GenerateStepSeries(total_steps=total_steps, num_linear=num_linear,
-                                          gen_steps=1000,
-                                          max_gen=10))
+                                          gen_steps=1000, max_gen=10))
     series_set = set(series_list)
     assert len(series_list) == len(series_set)
 

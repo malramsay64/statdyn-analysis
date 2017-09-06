@@ -12,6 +12,7 @@ from typing import Dict, Iterable, Iterator, List
 logger = logging.getLogger(__name__)
 
 iterindex = namedtuple('iterindex', ['index', 'iterator'])
+stepiterindex = namedtuple('stepiterindex', ['step', 'index', 'iterator'])
 
 
 def generate_steps(total_steps: int,
@@ -114,14 +115,14 @@ class GenerateStepSeries(Iterable):
     def _enqueue(self, iindex: iterindex) -> None:
         try:
             step = next(iindex.iterator)
-        except StopIteration as e:
+        except StopIteration:
             return
 
         if step in self.values:
             self.values.get(step).append(iindex)
         else:
             self.values[step] = [iindex]
-        self.queue.put(step)
+            self.queue.put(step)
 
     def _add_generator(self) -> None:
         new_gen = generate_steps(self.total_steps, self.num_linear, self._curr_step)
@@ -143,12 +144,14 @@ class GenerateStepSeries(Iterable):
         # Cleanup from previous step
         if self._curr_step != previous_step:
             del self.values[previous_step]
+        elif previous_step != 0:
+            pass
 
         # Check for new indexes
         if self._curr_step % self.gen_steps == 0 and self._curr_step > 0:
             if self._num_generators < self.max_gen:
                 self._add_generator()
-                self._curr_step = self.queue.get()
+                # self._curr_step = self.queue.get()
 
         # Get list of indexes
         iterindexes = self.values.get(self._curr_step)
