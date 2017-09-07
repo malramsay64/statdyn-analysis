@@ -103,11 +103,11 @@ class GenerateStepSeries(Iterable):
         self.num_linear = num_linear
         self.gen_steps = gen_steps
         self.max_gen = max_gen
-        self._curr_step = 0
+        self.curr_step = 0
         self._num_generators = 0
 
         self.values: Dict[int, List[iterindex]] = {}
-        self.queue = PriorityQueue()
+        self._queue = PriorityQueue()
 
         self._add_generator()
 
@@ -121,10 +121,10 @@ class GenerateStepSeries(Iterable):
             self.values.get(step).append(iindex)
         else:
             self.values[step] = [iindex]
-            self.queue.put(step)
+            self._queue.put(step)
 
     def _add_generator(self) -> None:
-        new_gen = generate_steps(self.total_steps, self.num_linear, self._curr_step)
+        new_gen = generate_steps(self.total_steps, self.num_linear, self.curr_step)
         self._enqueue(iterindex(self._num_generators, new_gen))
         logger.debug('Generator added with index %d', self._num_generators)
         self._num_generators += 1
@@ -134,38 +134,38 @@ class GenerateStepSeries(Iterable):
 
     def __next__(self) -> int:
         # Dequeue
-        previous_step = self._curr_step
+        previous_step = self.curr_step
         try:
-            self._curr_step = self.queue.get(block=False)
+            self.curr_step = self._queue.get(block=False)
         except Empty:
             raise StopIteration
 
         # Cleanup from previous step
-        if self._curr_step != previous_step:
+        if self.curr_step != previous_step:
             del self.values[previous_step]
         elif previous_step != 0:
             pass
 
         # Check for new indexes
-        if self._curr_step % self.gen_steps == 0 and self._curr_step > 0:
+        if self.curr_step % self.gen_steps == 0 and self.curr_step > 0:
             if self._num_generators < self.max_gen:
                 self._add_generator()
-                # self._curr_step = self.queue.get()
 
         # Get list of indexes
-        iterindexes = self.values.get(self._curr_step)
-        logger.debug('Value of iterindexes: %s at step %d', iterindexes, self._curr_step)
+        iterindexes = self.values.get(self.curr_step)
+        logger.debug('Value of iterindexes: %s at step %d',
+                     iterindexes, self.curr_step)
 
         # Add interators back onto queue
         for iindex in iterindexes:
             self._enqueue(iindex)
 
         # Return
-        return self._curr_step
+        return self.curr_step
 
     def get_index(self) -> List[int]:
         """Return the indexes from which the previous step was returned."""
-        return [i.index for i in self.values.get(self._curr_step, [])]
+        return [i.index for i in self.values.get(self.curr_step, [])]
 
     def next(self) -> int:
         """Return the next value of the iterator."""
