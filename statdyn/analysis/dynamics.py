@@ -37,12 +37,14 @@ class dynamics(object):
                 calculated.
 
         """
+        Lx, Ly, Lz, *_ = box
         self.timestep = timestep
-        self.box = box
+        # self.box = np.ndarray([Lx, Ly, Lz], dtype=float)
+        self.box = box[:3]
         self.position = position
         self.num_particles = len(position)
         # use the quaternion library for quaternion calculations
-        self.orientaion = orientation
+        self.orientation = orientation
 
     def computeMSD(self, position: np.ndarray) -> float:
         """Compute the mean squared displacement."""
@@ -68,12 +70,30 @@ class dynamics(object):
         squaredDisplacment(self.box, self.position, position, disp2)
         return (np.square(disp2).mean() / (2*np.square(disp2).mean())) - 1
 
+    def computeTimeDelta(self, timestep: float) -> float:
+        return timestep - self.timestep
+
     def computeRotation(self, orientation: np.ndarray) -> float:
         """Compute the rotation of the moleule."""
         result = np.zeros(self.num_particles)
-        if self.orientaion:
-            rotationalDisplacement(self.orientaion, orientation, result)
+        if self.orientation:
+            rotationalDisplacement(self.orientation, orientation, result)
         return result
+
+    def get_rotations(self, orientation: np.ndarray) -> np.ndarray:
+        """Get all the rotations."""
+        result = np.zeros(self.num_particles)
+        rotationalDisplacement(self.orientation, orientation, result)
+        return result
+
+    def get_displacements(self, position: np.ndarray) -> np.ndarray:
+        """Get all the displacements."""
+        result = np.zeros(self.num_particles)
+        squaredDisplacment(self.box, self.position, position, result)
+        return np.sqrt(result)
+
+    def get_molid(self):
+        return np.arange(self.num_particles)
 
 
 def rotationalDisplacement(initial: np.ndarray,

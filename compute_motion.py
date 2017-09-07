@@ -14,6 +14,8 @@ from pathlib import Path
 
 from statdyn.datagen.trajectory import compute_motion
 
+logger = logging.getLogger(__name__)
+
 
 def main():
     """Run from command line."""

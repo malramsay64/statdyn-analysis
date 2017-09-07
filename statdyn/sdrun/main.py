@@ -17,7 +17,7 @@ import click
 import hoomd.context
 
 from . import options
-from ..analysis.run_analysis import order
+from ..analysis.run_analysis import comp_dynamics, order
 from ..crystals import Crystal
 from ..datagen.summary import dynamics, motion
 from ..molecule import Molecule
@@ -180,7 +180,7 @@ def figure(show_fig: str) -> None:
         logger.info('Bokeh server terminated.')
 
 
-for ext_command in [order, dynamics, motion]:
+for ext_command in [order, dynamics, motion, comp_dynamics]:
     sdrun.add_command(ext_command)
 
 if __name__ == "__main__":

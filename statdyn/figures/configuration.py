@@ -8,11 +8,15 @@
 
 """Plot configuration."""
 
+import logging
+
 import numpy as np
 from bokeh.plotting import figure
 
 from ..analysis.order import get_z_orientation, orientational_order
 from .colour import colour_orientation
+
+logger = logging.getLogger(__name__)
 
 
 def trimer_figure(mol_plot, xpos, ypos, orientations, mol_colours,
@@ -48,7 +52,7 @@ def plot(snapshot, repeat=False, offset=False, order=False, extra_particles=True
         Lx, Ly = snapshot.box.Lx, snapshot.box.Ly
 
     plot_range = (-Ly/2, Ly/2)
-    nmols = np.max(snapshot.particles.body) + 1
+    nmols = snapshot.particles.N
     x = snapshot.particles.position[:nmols, 0]
     y = snapshot.particles.position[:nmols, 1]
     if offset:
@@ -57,7 +61,10 @@ def plot(snapshot, repeat=False, offset=False, order=False, extra_particles=True
         plot_range = (0, Ly)
 
     orientations = get_z_orientation(snapshot.particles.orientation[:nmols])
+    logger.debug(f"Orientations: {orientations}")
     mol_colours = colour_orientation(orientations)
+    mol_colours = colour_orientation(orientations)
+    logger.debug(f"Molecule Colours: {mol_colours}")
 
     if order:
         order = orientational_order(snapshot)
