@@ -15,7 +15,7 @@ from bokeh.layouts import row, widgetbox
 from bokeh.models import Button, ColumnDataSource, Select, Slider, TextInput
 from bokeh.plotting import curdoc, figure
 
-from statdyn.figures.configuration import plot_circles, snapshot2data
+from statdyn.figures.configuration import plot, plot_circles, snapshot2data
 from statdyn.molecule import Trimer
 
 logger = logging.getLogger(__name__)
@@ -82,9 +82,9 @@ radius_scale.on_change('value', update_data)
 
 
 # When using webgl as the backend the save option doesn't work for some reason.
-p = figure(active_scroll='wheel_zoom', width=920, height=800,
-           aspect_scale=1, match_aspect=True,
-           title=f'Timestep: {timestep:.2g}')
+p = figure(width=920, height=800, aspect_scale=1, match_aspect=True,
+           title=f'Timestep: {timestep:.2g}',
+           active_scroll='wheel_zoom')
 
 update_directory(None, None, default_dir)
 

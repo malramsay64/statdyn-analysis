@@ -11,7 +11,7 @@
 import logging
 
 import numpy as np
-from bokeh.models import ColumnDataSource
+from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.plotting import figure
 
 from ..analysis.order import get_z_orientation
@@ -36,6 +36,7 @@ def plot_circles(mol_plot, source):
         ('x:', '@x'),
         ('y:', '@y'),
     ]))
+    mol_plot.toolbar.active_inspect = None
     return mol_plot
 
 
@@ -72,11 +73,15 @@ def snapshot2data(snapshot, molecule: Molecule=Trimer(), extra_particles=True):
     return data
 
 
-def plot(snapshot, repeat=False, offset=False, order=False, extra_particles=True):
+def plot(snapshot, repeat=False, offset=False, order=False,
+         extra_particles=True, source=None):
     """Plot snapshot using bokeh."""
     data = snapshot2data(snapshot, molecule=Trimer(), extra_particles=extra_particles)
-    p = figure(aspect_scale=1, match_aspect=True,
-               active_scroll='wheel_zoom', width=800, height=800)x_range=plot_range, y_range=plot_range,
-    source = ColumnDataSource(data=data)
+    p = figure(aspect_scale=1, match_aspect=True, width=920, height=800,
+               active_scroll='wheel_zoom')
+    if source:
+        source.data=data
+    else:
+        source = ColumnDataSource(data=data)
     plot_circles(p, source)
     return p
