@@ -107,6 +107,32 @@ class Molecule(object):
         rigid.set_param(**params)
         return rigid
 
+    def orientation2positions(self,
+                              position: np.ndarray,
+                              orientation: np.ndarray
+                              ) -> np.ndarray:
+        r"""Convert from orientation representation to all positions.
+
+        One representation of the moleucles is as a single position representing
+        the center of the central molecule and a rotation angle. This function
+        converts that representation to one where each particle has a position.
+        The resulting array consists of a single array of length
+        :math:`n\times np` where :math:`n` is the length of the input array
+        and :math:`np` is the number of particles in the molecule. The positions
+        of each particle are grouped together.
+
+        Args:
+            position: (class:`numpy.ndarray`): The position of the central
+                particle
+            orientation: (class:`numpy.ndarray`): The orientation of the molecule
+                in radians
+
+        Returns:
+            class:`numpy.ndarray`: The position of each particle.
+
+        """
+        pass
+
 
 class Disc(Molecule):
     """Defines a 2D particle."""
@@ -154,7 +180,8 @@ class Trimer(Molecule):
                 Default is 120
 
         """
-        super(Trimer, self).__init__()
+        # super(Trimer, self).__init__()
+        super().__init__()
         self.radius = radius
         self.distance = distance
         self.angle = angle
@@ -205,6 +232,44 @@ class Trimer(Molecule):
         ])
         rigid = super(Trimer, self).define_rigid(params)
         return rigid
+
+    def orientation2positions(self,
+                              position: np.ndarray,
+                              orientation: np.ndarray
+                              ) -> np.ndarray:
+        r"""Convert from orientation representation to all positions.
+
+        One representation of the moleucles is as a single position representing
+        the center of the central molecule and a rotation angle. This function
+        converts that representation to one where each particle has a position.
+        The resulting array consists of a single array of length
+        :math:`n\times np` where :math:`n` is the length of the input array
+        and :math:`np` is the number of particles in the molecule. The positions
+        of each particle are grouped together.
+
+        Args:
+            position: (class:`numpy.ndarray`): The position of the central
+                particle
+            orientation: (class:`numpy.ndarray`): The orientation of the molecule
+                in radians
+
+        Returns:
+            class:`numpy.ndarray`: The position of each particle.
+
+        """
+        logger.debug('Position shape: %s, dype: %s',
+                     position.shape, position.dtype)
+        pos1 = position
+        pos2 = np.array([position[:, 0] - np.sin(orientation - np.pi/3),
+                           position[:, 1] + np.cos(orientation - np.pi/3),
+                           position[:, 2]]).T
+        pos3 = np.array([position[:, 0] - np.sin(orientation + np.pi/3),
+                           position[:, 1] + np.cos(orientation + np.pi/3),
+                           position[:, 2]]).T
+        return np.append(pos1, np.append(pos2, pos3, axis=0), axis=0)
+
+    def get_radii(self) -> np.ndarray:
+        return np.array([1., 0.637556, 0.637556])
 
 
 class Dimer(Molecule):

@@ -11,37 +11,60 @@
 import logging
 
 import numpy as np
+from bokeh.models import ColumnDataSource
 from bokeh.plotting import figure
 
-from ..analysis.order import get_z_orientation, orientational_order
+from ..analysis.order import get_z_orientation
+from ..molecule import Molecule, Trimer
 from .colour import colour_orientation
 
 logger = logging.getLogger(__name__)
 
 
-def trimer_figure(mol_plot, xpos, ypos, orientations, mol_colours,
-                  extra_particles=True):
+def plot_circles(mol_plot, source):
     """Add the points to a bokeh figure to render the trimer molecule.
 
     This enables the trimer molecules to be drawn on the figure using only
     the position and the orientations of the central molecule.
 
     """
-    mol_plot.circle(xpos, ypos, radius=1,
-                    fill_alpha=1, color=mol_colours,
-                    line_color=None)
-    if extra_particles:
-        atom1_x = xpos - np.sin(orientations - np.pi/3)
-        atom1_y = ypos + np.cos(orientations - np.pi/3)
-        mol_plot.circle(atom1_x, atom1_y, radius=0.64,
-                        fill_alpha=1, color=mol_colours,
-                        line_color=None)
-        atom2_x = xpos - np.sin(orientations + np.pi/3)
-        atom2_y = ypos + np.cos(orientations + np.pi/3)
-        mol_plot.circle(atom2_x, atom2_y, radius=0.64,
-                        fill_alpha=1, color=mol_colours,
-                        line_color=None)
+    mol_plot.circle('x', 'y', radius='radius',
+                    fill_alpha=1, fill_color='colour',
+                    line_color=None, source=source)
     return mol_plot
+
+
+def snapshot2data(snapshot, molecule: Molecule=Trimer(), extra_particles=True):
+    radii = np.ones(snapshot.particles.N)
+    orientation = get_z_orientation(snapshot.particles.orientation)
+    position = snapshot.particles.position
+
+    nmols = max(snapshot.particles.body) + 1
+    if snapshot.particles.N > nmols:
+        orientation = orientation[: nmols]
+        position = position[: nmols]
+        radii = radii[: nmols]
+
+    if extra_particles:
+        position = molecule.orientation2positions(
+            position,
+            orientation,
+        )
+
+        logger.debug('Position shape: %s', position.shape)
+        radii = np.append([], [radii*r for r in molecule.get_radii()])
+    else:
+        position = snapshot.particles.position
+
+    data = {
+        'x': position[:, 0],
+        'y': position[:, 1],
+        'radius': radii,
+    }
+    data['colour'] = colour_orientation(orientation)
+    if extra_particles:
+        data['colour'] = np.append([], [data['colour']]*molecule.num_particles)
+    return data
 
 
 def plot(snapshot, repeat=False, offset=False, order=False, extra_particles=True):
@@ -52,32 +75,10 @@ def plot(snapshot, repeat=False, offset=False, order=False, extra_particles=True
         Lx, Ly = snapshot.box.Lx, snapshot.box.Ly
 
     plot_range = (-Ly/2, Ly/2)
-    nmols = snapshot.particles.N
-    x = snapshot.particles.position[:nmols, 0]
-    y = snapshot.particles.position[:nmols, 1]
-    if offset:
-        x = x % Lx
-        y = y % Ly
-        plot_range = (0, Ly)
 
-    orientations = get_z_orientation(snapshot.particles.orientation[:nmols])
-    logger.debug(f"Orientations: {orientations}")
-    mol_colours = colour_orientation(orientations)
-    mol_colours = colour_orientation(orientations)
-    logger.debug(f"Molecule Colours: {mol_colours}")
-
-    if order:
-        order = orientational_order(snapshot)
-        mol_colours[order < 0.9] = colour_orientation(
-            orientations[order < 0.9], light_colours=True)
-
+    data = snapshot2data(snapshot, molecule=Trimer(), extra_particles=extra_particles)
     p = figure(x_range=plot_range, y_range=plot_range,
                active_scroll='wheel_zoom', width=800, height=800)
-    trimer_figure(p, x, y, orientations, mol_colours, extra_particles=extra_particles)
-    if repeat:
-        for dx, dy in [(0, 1), (1, 0), (1, 1), (1, -1)]:
-            dx *= Lx
-            dy *= Ly
-            trimer_figure(p, x+dx, y+dy, orientations, mol_colours)
-            trimer_figure(p, x-dx, y-dy, orientations, mol_colours)
+    source = ColumnDataSource(data=data)
+    plot_circles(p, source)
     return p

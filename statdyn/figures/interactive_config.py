@@ -15,95 +15,82 @@ from bokeh.layouts import row, widgetbox
 from bokeh.models import Button, ColumnDataSource, Select, Slider, TextInput
 from bokeh.plotting import curdoc, figure
 
-from statdyn.figures.colour import clean_orientation, colour_orientation
+from statdyn.figures.configuration import plot_circles, snapshot2data
+from statdyn.molecule import Trimer
 
 logger = logging.getLogger(__name__)
 
-
-DEFAULT_DIR = '.'
-
-
-def update_trj(attr, old, new):
-    global trj
-    trj = gsd.hoomd.open(
-        str(Path(directory.value) / fname.value), 'rb')
-    index.end = len(trj) - 1
-    if index.value > len(trj) - 1:
-        index.value = len(trj) - 1
-    update_data(attr, old, new)
-
-
-def update_data(attr, old, new):
-    snap = trj[int(index.value)]
-    p.title.text = f'Timestep: {snap.configuration.step:.3g}'
-    data = {
-        'x': snap.particles.position[:, 0],
-        'y': snap.particles.position[:, 1],
-        'radius': ((snap.particles.typeid * -0.362444) + 1)*radius_scale.value,
-    }
-    try:
-        data['orientation'] = colour_orientation(clean_orientation(snap))
-    except AttributeError:
-        data['orientation'] = data['radius']
-
-    source.data = data
-
+# Definition of initial state
+trj = None
+snapshot = None
+extra_particles = True
+molecule = Trimer()
+default_dir = '.'
+timestep = 0
+Lx, Ly = (60, 60)
+source = ColumnDataSource(data={})
 
 def update_files(attr, old, new):
-    global files
-    files = sorted([filename.name for filename in Path(directory.value).glob('dump*.gsd')])
-    fname.options = files
-    if files:
-        fname.value = files[0]
+    fname.options = new
+    if new:
+        fname.value = new[0]
+    update_trajectory(None, None, fname.value)
+
+def update_trajectory(attr, old, new):
+    global trj
+    trj = gsd.hoomd.open(
+        str(Path(directory.value) / new), 'rb')
+    index.end = len(trj) - 1
+    if index.value > len(trj) - 1:
+        update_index(None, None, len(trj)-1)
+    else:
+        update_index(None, None, index.value)
+
+def update_index(attr, old, new):
+    update_snapshot(attr, old, int(new))
+
+def update_snapshot(attr, old, new):
+    if old != new:
+        global snapshot
+        snapshot = trj[new]
+        update_data(None, None, None)
+
+def update_data(attr, old, new):
+    p.title.text = f'Timestep: {snapshot.configuration.step:.3g}'
+
+    source.data = snapshot2data(snapshot,
+                                molecule=molecule,
+                                extra_particles=extra_particles)
 
 
-def update_all():
-    curr_file = None
-    if fname:
-        curr_file = fname.value
-    update_files(None, None, None)
-    if curr_file in files:
-        fname.value = curr_file
-    update_trj(None, None, None)
-    update_data(None, None, None)
+def update_directory(attr, old, new):
+    files = sorted([filename.name for filename in Path(new).glob('dump*.gsd')])
+    update_files(None, None, files)
 
 
-directory = TextInput(
-    value=DEFAULT_DIR,
-    title='Source directory',
-    width=300,
-)
-directory.on_change('value', update_files)
+directory = TextInput( value=default_dir, title='Source directory', width=300,)
+directory.on_change('value', update_directory)
 
 fname = Select(title='File', value='', options=[])
-fname.on_change('value', update_trj)
+fname.on_change('value', update_trajectory)
 
 index = Slider(title='Index', value=0, start=0, end=1, step=1)
-index.on_change('value', update_data)
+index.on_change('value', update_index)
 
 radius_scale = Slider(title='Particle Radius', value=1, start=0.1, end=2, step=0.05)
 radius_scale.on_change('value', update_data)
 
-refresh = Button(label='Refresh')
-refresh.on_click(update_all)
-
-timestep = 0
-Lx, Ly = (60, 60)
-
-source = ColumnDataSource(data={})
 
 # When using webgl as the backend the save option doesn't work for some reason.
 p = figure(x_range=(-Ly/2, Ly/2), y_range=(-Ly/2, Ly/2),
            active_scroll='wheel_zoom', width=800, height=800,
            title=f'Timestep: {timestep:.2g}')
 
-update_all()
+update_directory(None, None, default_dir)
 
-p.circle('x', 'y', radius='radius',
-         fill_alpha=1, fill_color='orientation',
-         line_color=None, source=source)
+plot_circles(p, source)
 
-controls = widgetbox([directory, fname, index, radius_scale, refresh], width=300)
+controls = widgetbox([directory, fname, index, radius_scale], width=300)
 layout = row(controls, p)
 
 curdoc().add_root(layout)
