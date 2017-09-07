@@ -31,6 +31,11 @@ def plot_circles(mol_plot, source):
     mol_plot.circle('x', 'y', radius='radius',
                     fill_alpha=1, fill_color='colour',
                     line_color=None, source=source)
+    mol_plot.add_tools(HoverTool(tooltips=[
+        ('index', '$index'),
+        ('x:', '@x'),
+        ('y:', '@y'),
+    ]))
     return mol_plot
 
 
@@ -69,16 +74,9 @@ def snapshot2data(snapshot, molecule: Molecule=Trimer(), extra_particles=True):
 
 def plot(snapshot, repeat=False, offset=False, order=False, extra_particles=True):
     """Plot snapshot using bokeh."""
-    try:
-        Lx, Ly = snapshot.configuration.box[:2]
-    except AttributeError:
-        Lx, Ly = snapshot.box.Lx, snapshot.box.Ly
-
-    plot_range = (-Ly/2, Ly/2)
-
     data = snapshot2data(snapshot, molecule=Trimer(), extra_particles=extra_particles)
-    p = figure(x_range=plot_range, y_range=plot_range,
-               active_scroll='wheel_zoom', width=800, height=800)
+    p = figure(aspect_scale=1, match_aspect=True,
+               active_scroll='wheel_zoom', width=800, height=800)x_range=plot_range, y_range=plot_range,
     source = ColumnDataSource(data=data)
     plot_circles(p, source)
     return p

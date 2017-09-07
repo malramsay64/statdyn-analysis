@@ -82,8 +82,8 @@ radius_scale.on_change('value', update_data)
 
 
 # When using webgl as the backend the save option doesn't work for some reason.
-p = figure(x_range=(-Ly/2, Ly/2), y_range=(-Ly/2, Ly/2),
-           active_scroll='wheel_zoom', width=800, height=800,
+p = figure(active_scroll='wheel_zoom', width=920, height=800,
+           aspect_scale=1, match_aspect=True,
            title=f'Timestep: {timestep:.2g}')
 
 update_directory(None, None, default_dir)
