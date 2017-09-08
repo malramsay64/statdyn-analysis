@@ -21,7 +21,8 @@ logger = logging.getLogger(__name__)
 
 EQUIL_OPTIONS = {
     'interface': equilibrate.equil_interface,
-    'liquid': equilibrate.equil_liquid
+    'liquid': equilibrate.equil_liquid,
+    'crystal': equilibrate.equil_crystal,
 }
 
 MOLECULE_OPTIONS = {

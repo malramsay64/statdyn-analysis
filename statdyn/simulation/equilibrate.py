@@ -13,6 +13,7 @@ from pathlib import Path
 
 import hoomd
 import hoomd.md
+import numpy as np
 
 from ..molecule import Trimer
 from .helper import dump_frame, set_dump, set_integrator, set_thermo
@@ -32,6 +33,8 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
                   interface: bool=False,
                   molecule=Trimer(),
                   outfile: Path=None,
+                  init_temp: float=0.4,
+                  output_interval: int=10000,
                   ) -> hoomd.data.SnapshotParticleData:
     """Equilbrate crystal."""
     temp_context = hoomd.context.initialize(hoomd_args)
@@ -49,7 +52,6 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
         group = None
 
     with temp_context:
-        init_temp = 0.4
         temperature = hoomd.variant.linear_interp([
             (0, init_temp),
             (int(equil_steps*0.75), equil_temp),
@@ -66,11 +68,17 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
         )
 
         if outfile is not None:
-            set_dump(outfile.parent / ('dump-' + outfile.name), group=group)
-        logger.debug(f'Running crystal equilibration for {equil_steps} steps.')
-        set_thermo(Path('equil.log'), thermo_period=100, rigid=False)
+            set_dump(outfile.parent / ('dump-' + outfile.name),
+                     dump_period=output_interval,
+                     group=group)
+
+        set_thermo(Path('equil.log'),
+                   thermo_period=int(np.ceil(output_interval/10)),
+                   rigid=False,)
+
+        logger.debug('Running crystal equilibration for %d steps.', equil_steps)
         hoomd.run(equil_steps)
-        logger.debug(f'Crystal equilibration completed')
+        logger.debug('Crystal equilibration completed')
 
         if outfile is not None:
             dump_frame(outfile, group=hoomd.group.all())
@@ -89,6 +97,7 @@ def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
                     step_size: float=0.005,
                     molecule=Trimer(),
                     outfile: Path=None,
+                    output_interval: int=10000,
                     ) -> hoomd.data.SnapshotParticleData:
     """Equilbrate an interface at the desired temperature.
 
@@ -121,7 +130,9 @@ def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
                        )
         hoomd.run(equil_steps)
         if outfile is not None:
-            dump_frame(outfile, group=hoomd.group.all())
+            dump_frame(outfile,
+                       dump_period=output_interval,
+                       group=hoomd.group.all())
         return sys.take_snapshot(all=True)
 
 
@@ -136,6 +147,7 @@ def equil_liquid(snapshot: hoomd.data.SnapshotParticleData,
                  molecule=Trimer(),
                  init_temp: float=None,
                  outfile: Path=None,
+                 output_interval: int=10000,
                  ) -> hoomd.data.SnapshotParticleData:
     """Equilibrate a liquid configuration."""
     temp_context = hoomd.context.initialize(hoomd_args)
@@ -166,7 +178,8 @@ def equil_liquid(snapshot: hoomd.data.SnapshotParticleData,
             tauP=tauP, tau=tau,
         )
         if outfile is not None:
-            set_thermo(outfile.parent / 'thermo-{temperature:.2f}.log')
+            set_thermo(outfile.parent / f'thermo-{temperature:.2f}.log',
+                       thermo_period=output_interval)
         hoomd.run(equil_steps)
         if outfile is not None:
             dump_frame(outfile, group=hoomd.group.all())

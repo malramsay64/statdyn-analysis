@@ -87,6 +87,7 @@ def prod(infile: str,
 @options.opt_equil
 @options.opt_init_temp
 @options.opt_pressure
+@options.opt_output_interval
 @options.arg_infile
 @options.arg_outfile
 def equil(infile: str,
@@ -98,6 +99,7 @@ def equil(infile: str,
           hoomd_args: str,
           equil_type: str,
           pressure: float,
+          output_interval: int,
           ) -> None:
     """Command group for the equilibration of configurations."""
     logger.debug('Running equil')
@@ -116,6 +118,7 @@ def equil(infile: str,
         init_temp=init_temp,
         pressure=pressure,
         outfile=outfile_path,
+        output_interval=output_interval,
     )
 
 
