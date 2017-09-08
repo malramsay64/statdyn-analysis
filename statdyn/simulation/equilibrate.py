@@ -68,7 +68,9 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
         )
 
         if outfile is not None:
-            set_dump(outfile.parent / ('dump-' + outfile.name),
+            dumpfile = outfile.parent / ('dump-' + outfile.name)
+            logger.debug('Dumpting to %s every %d steps', dumpfile, output_interval)
+            set_dump(dumpfile,
                      dump_period=output_interval,
                      group=group)
 
@@ -130,9 +132,7 @@ def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
                        )
         hoomd.run(equil_steps)
         if outfile is not None:
-            dump_frame(outfile,
-                       dump_period=output_interval,
-                       group=hoomd.group.all())
+            dump_frame(outfile, group=hoomd.group.all())
         return sys.take_snapshot(all=True)
 
 
@@ -178,7 +178,7 @@ def equil_liquid(snapshot: hoomd.data.SnapshotParticleData,
             tauP=tauP, tau=tau,
         )
         if outfile is not None:
-            set_thermo(outfile.parent / f'thermo-{temperature:.2f}.log',
+            set_thermo(outfile.parent / f'thermo-{equil_temp:.2f}.log',
                        thermo_period=output_interval)
         hoomd.run(equil_steps)
         if outfile is not None:
