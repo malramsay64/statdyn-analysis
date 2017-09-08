@@ -133,6 +133,9 @@ class Molecule(object):
         """
         pass
 
+    def identify_bodies(self, indexes: np.ndarray) -> np.ndarray:
+        return np.append(indexes, [indexes]*(self.num_particles-1))
+
 
 class Disc(Molecule):
     """Defines a 2D particle."""
