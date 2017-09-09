@@ -23,6 +23,8 @@ logger = logging.getLogger(__name__)
 def process_gsd(infile: str,
                 gen_steps: int=20000,
                 step_limit: int=None,
+                outfile: str=None,
+                buffer_size: int=8192,
                 ) -> pandas.DataFrame:
     """Read a gsd file and compute the dynamics quantities.
 
@@ -36,7 +38,15 @@ def process_gsd(infile: str,
         gen_steps (int): The value of the parameter `gen_steps` used when
             running the dynamics simulation. (default: 20000)
         step_limit (int): Limit the timescale of the processing. A value of
-            ``None`` (default) will process all the files.
+            ``None`` (default) will process all steps in the file.
+        outfile (str): When present write the results to a file rather than
+            returning from the function. The hdf5 file is written throughout the
+            analysis allowing for results that are too large to completely
+            fit in memory. The write process is buffered to improve performance.
+        buffer_size (int): When writing a file the number of dataframes to
+            buffer before writing. This is more a guide than an absolute limit,
+            there are cases where this number can be exceeded, specifically
+            when there are multiple values of a step.
 
     Returns:
         (py:class:`pandas.DataFrame`): DataFrame with the dynamics quantities.
@@ -44,6 +54,7 @@ def process_gsd(infile: str,
     """
     dataframes: List[pandas.DataFrame] = []
     keyframes: List[dynamics] = []
+    append_file = False
 
     curr_step = 0
     with gsd.hoomd.open(infile, 'rb') as src:
@@ -96,5 +107,26 @@ def process_gsd(infile: str,
                         'start_index': index,
                     }))
                 curr_step = next(step_iter)
+                if outfile and len(dataframes) >= buffer_size:
+                    pandas.concat(dataframes).to_hdf(
+                        outfile,
+                        'dynamics',
+                        format='table',
+                        append=append_file,
+                    )
+                    dataframes.clear()
+                    # Once we have written to the file once, append to the
+                    # existing file.
+                    if not append_file:
+                        append_file = True
+
+    if outfile:
+        pandas.concat(dataframes).to_hdf(
+            outfile,
+            'dynamics',
+            format='table',
+            append=append_file,
+        )
+        return
 
     return pandas.concat(dataframes)

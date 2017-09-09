@@ -51,7 +51,8 @@ def order(infile, outfile):
 def comp_dynamics(infile, output, gen_steps, steps):
     """Compute dynamic properties."""
     outfile = str(output / Path(infile).with_suffix('.hdf5').name)
-    dynamics_data = process_gsd(infile, gen_steps=gen_steps, step_limit=steps)
-    with pandas.HDFStore(outfile) as dst:
-        dst.put('dynamics', dynamics_data, format='table')
-        logger.debug('Output written to %d', outfile)
+    dynamics_data = process_gsd(infile,
+                                gen_steps=gen_steps,
+                                step_limit=steps,
+                                outfile=outfile,
+                                )

@@ -37,9 +37,7 @@ class dynamics(object):
                 calculated.
 
         """
-        Lx, Ly, Lz, *_ = box
         self.timestep = timestep
-        # self.box = np.ndarray([Lx, Ly, Lz], dtype=float)
         self.box = box[:3]
         self.position = position
         self.num_particles = len(position)
