@@ -60,6 +60,19 @@ def process_gsd(infile: str,
         for frame in src:
             logger.debug('Step %d with index %s',
                          curr_step, step_iter.get_index())
+
+            # This handles when the generators don't match up
+            if curr_step > frame.configuration.step:
+                logger.warning('Step missing in iterator: current %d, frame %d',
+                               curr_step, frame.configuration.step)
+                continue
+
+            elif curr_step < frame.configuration.step:
+                logger.warning('Step missing in frame: current %d, frame %d',
+                               curr_step, frame.configuration.step)
+                while curr_step < frame.configuration:
+                    curr_step = next(step_iter)
+
             if curr_step == frame.configuration.step:
                 indexes = step_iter.get_index()
                 for index in indexes:
@@ -82,17 +95,6 @@ def process_gsd(infile: str,
                         'molid': mydyn.get_molid(),
                         'start_index': index,
                     }))
-                curr_step = next(step_iter)
-
-            # This handles when the generators don't match up
-            elif curr_step > frame.configuration.step:
-                logger.warning('Step missing in iterator: current %d, frame %d',
-                               curr_step, frame.configuration.step)
-                continue
-
-            elif curr_step < frame.configuration.step:
-                logger.warning('Step missing in frame: current %d, frame %d',
-                               curr_step, frame.configuration.step)
                 curr_step = next(step_iter)
 
     return pandas.concat(dataframes)
