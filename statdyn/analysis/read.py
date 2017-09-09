@@ -22,9 +22,11 @@ logger = logging.getLogger(__name__)
 
 def process_gsd(infile: str,
                 gen_steps: int=20000,
+                max_gen: int=1000,
+                num_linear: int=100,
                 step_limit: int=None,
                 outfile: str=None,
-                buffer_size: int=8192,
+                buffer_multiplier: int=1,
                 ) -> pandas.DataFrame:
     """Read a gsd file and compute the dynamics quantities.
 
@@ -43,10 +45,10 @@ def process_gsd(infile: str,
             returning from the function. The hdf5 file is written throughout the
             analysis allowing for results that are too large to completely
             fit in memory. The write process is buffered to improve performance.
-        buffer_size (int): When writing a file the number of dataframes to
-            buffer before writing. This is more a guide than an absolute limit,
-            there are cases where this number can be exceeded, specifically
-            when there are multiple values of a step.
+        buffer_multiplier (int): When writing a file this is a multiplier for
+            the number of dataframes to buffer before writing. This should be
+            tailored to the specific memory requirements of the machine being
+            used. A multiplier of 1 (default) uses about 150 MB of RAM.
 
     Returns:
         (py:class:`pandas.DataFrame`): DataFrame with the dynamics quantities.
@@ -55,6 +57,7 @@ def process_gsd(infile: str,
     dataframes: List[pandas.DataFrame] = []
     keyframes: List[dynamics] = []
     append_file = False
+    buffer_size = int(buffer_multiplier * 8192)
 
     curr_step = 0
     with gsd.hoomd.open(infile, 'rb') as src:
@@ -64,9 +67,9 @@ def process_gsd(infile: str,
             num_steps = src[-1].configuration.step
         logger.debug('Infile: %s contains %d steps', infile, num_steps)
         step_iter = GenerateStepSeries(num_steps,
-                                       num_linear=100,
+                                       num_linear=num_linear,
                                        gen_steps=gen_steps,
-                                       max_gen=1000)
+                                       max_gen=max_gen)
         curr_step = next(step_iter)
         for frame in src:
             logger.debug('Step %d with index %s',
@@ -79,7 +82,7 @@ def process_gsd(infile: str,
                 continue
 
             elif curr_step < frame.configuration.step:
-                logger.warning('Step missing in frame: current %d, frame %d',
+                logger.warning('Step missing in gsd trajectory: current %d, frame %d',
                                curr_step, frame.configuration.step)
                 while curr_step < frame.configuration.step:
                     curr_step = next(step_iter)

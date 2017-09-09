@@ -14,7 +14,6 @@ from pathlib import Path
 import click
 import gsd.hoomd
 import numpy as np
-import pandas
 
 from ..sdrun import options
 from .order import orientational_order
@@ -47,12 +46,14 @@ def order(infile, outfile):
 @options.opt_output
 @options.opt_verbose
 @click.option('--gen-steps', default=20000, type=click.IntRange(min=0))
+@click.option('--max-gen', default=500, type=click.IntRange(min=1))
 @options.opt_steps
-def comp_dynamics(infile, output, gen_steps, steps):
+def comp_dynamics(infile, output, gen_steps, steps, max_gen):
     """Compute dynamic properties."""
     outfile = str(output / Path(infile).with_suffix('.hdf5').name)
     dynamics_data = process_gsd(infile,
                                 gen_steps=gen_steps,
+                                max_gen=max_gen,
                                 step_limit=steps,
                                 outfile=outfile,
                                 )
