@@ -81,7 +81,7 @@ def process_gsd(infile: str,
             elif curr_step < frame.configuration.step:
                 logger.warning('Step missing in frame: current %d, frame %d',
                                curr_step, frame.configuration.step)
-                while curr_step < frame.configuration:
+                while curr_step < frame.configuration.step:
                     curr_step = next(step_iter)
 
             if curr_step == frame.configuration.step:
