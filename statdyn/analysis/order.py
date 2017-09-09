@@ -15,6 +15,8 @@ from freud.box import Box
 from freud.locality import NearestNeighbors
 from quaternion import as_quat_array, as_rotation_vector
 
+from ..molecule import Molecule, Trimer
+
 
 def get_z_orientation(orientations: np.ndarray) -> np.ndarray:
     r"""Get the z component of the molecular orientation.
@@ -40,7 +42,11 @@ def get_z_orientation(orientations: np.ndarray) -> np.ndarray:
     return orientation
 
 
-def orientational_order(snapshot):
+def orientational_order(box: np.ndarray,
+                        position: np.ndarray,
+                        orientation: np.ndarray,
+                        molecule: Molecule=Trimer()
+                        ) -> np.ndarray:
     """Compute the orientational order of a snapshot.
 
     The orientational order is a number in the range $[0, 1]$ indicating the
@@ -53,24 +59,27 @@ def orientational_order(snapshot):
     0.
 
     Args:
-        snapshot: Snapshot of the system
+        box: Snapshot of the system
+        position:
+        orientation: Quaternions
+        molecule:
 
     Returns:
         py:class:`numpy.ndarray`: Array of the orientational order for each
             molecule.
 
     """
-    neighbourlist = compute_neighbours(snapshot)
-    nmols = max(snapshot.particles.body) + 1
-    angles = get_z_orientation(snapshot.particles.orientation[:nmols])
+    particle_positions = molecule.orientation2positions(position, orientation)
+    bodies = molecule.identify_bodies(range(len(position)))
+    neighbourlist = compute_neighbours(box, particle_positions, bodies)
+    angles = get_z_orientation(orientation)
 
     order_parameter = np.zeros_like(angles)
     for mol_index, neighbours in enumerate(neighbourlist):
         mol_orientation = angles[mol_index]
         num_neighbours = len(neighbours)
         for neighbour in neighbours:
-            order_parameter[mol_index] += np.abs(np.cos(
-                mol_orientation - angles[neighbour]))
+            order_parameter[mol_index] += np.abs(np.cos(mol_orientation - angles[neighbour]))
         if num_neighbours > 1:
             order_parameter[mol_index] /= len(neighbours)
         else:
@@ -78,23 +87,22 @@ def orientational_order(snapshot):
     return order_parameter
 
 
-def compute_neighbours(snapshot, max_radius=2.2, max_neighbours=7
+def compute_neighbours(box: np.ndarray,
+                       position: np.ndarray,
+                       bodies: np.ndarray,
+                       max_radius=2.2,
+                       max_neighbours=7
                        ) -> List[Set[int]]:
-    """Compute the neighbour list for a snapshot."""
-    ndim = snapshot.configuration.dimensions
-    if ndim == 2:
-        simulation_box = Box(*snapshot.configuration.box[:ndim], is2D=True)
-    else:
-        simulation_box = Box(*snapshot.configuration.box, is2D=False)
+    """Compute the neighbour list."""
+    ndim = 2
+    simulation_box = Box(*box[:ndim], is2D=True)
 
     nn = NearestNeighbors(rmax=max_radius,
                           n_neigh=max_neighbours,
                           strict_cut=True)
-    nn.compute(simulation_box,
-               snapshot.particles.position,
-               snapshot.particles.position)
-    return compute_mol_neighbours(nn.getNeighborList(),
-                                  snapshot.particles.body)
+    nn.compute(simulation_box, position, position)
+
+    return compute_mol_neighbours(nn.getNeighborList(), bodies)
 
 
 def compute_mol_neighbours(neighbourlist, bodies) -> List[Set[int]]:
