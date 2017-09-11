@@ -15,7 +15,7 @@ import gsd.hoomd
 import pandas
 
 from ..StepSize import GenerateStepSeries
-from .dynamics import dynamics
+from .dynamics import compute_all_from_transrot, dynamics
 
 logger = logging.getLogger(__name__)
 
@@ -133,3 +133,8 @@ def process_gsd(infile: str,
         return
 
     return pandas.concat(dataframes)
+
+def process_hdf(infile: str):
+    src = pandas.read_hdf(infile, 'dynamics')
+    values = src.groupby(['temperature', 'time', 'start_index']).transform(compute_all_from_transrot)
+

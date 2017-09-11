@@ -11,6 +11,7 @@
 import logging
 
 import numpy as np
+import pandas
 
 logger = logging.getLogger(__name__)
 
@@ -94,11 +95,44 @@ class dynamics(object):
         return np.arange(self.num_particles)
 
 
+def compute_all_from_transrot(translations: np.ndarray,
+                              rotations: np.ndarray=None,
+                              structural_threshold: float=0.3,
+                              ) -> pandas.Series:
+    """Compute all dynamics quantities from the base quantites.
+
+    This computes all the possible dynamic quantities from the input arrays
+    taking into account the presence of rotational data.
+
+    Args:
+        translations: (:class:`numpy.ndarray`): An array of the translational
+            motion. Note that this is the distance moved, rather than the motion
+            vector.
+        rotations: (:class:`numpy.ndarray`): An array of the rotaional motion of
+            molecules. Again note that this is the rotational displacment.
+
+    """
+    dynamic_quantities = {
+        'mean_displacement': np.mean(translations),
+        'msd': np.mean(np.square(translations)),
+        'mfd': np.mean(np.power(translations, 4)),
+        'strutural_relaxation': np.sum(translations > structural_threshold)
+    }
+    if rotations is not None:
+        dynamic_quantities.update(
+            mean_rotation=np.mean(rotations),
+            squared_rotation=np.mean(np.square(rotations)),
+            d_trans_d_rot=np.mean(rotations*translations),
+            d_trans2_drot2=np.mean(np.square(rotations*translations)),
+        )
+    return pandas.Series(dynamic_quantities)
+
+
 def rotationalDisplacement(initial: np.ndarray,
                            final: np.ndarray,
                            result: np.ndarray
                            ) -> None:
-    """Compute the rotational displacement.
+    r"""Compute the rotational displacement.
 
     Args:
         initial (py:class:`numpy.ndarray`): Initial orientation.
