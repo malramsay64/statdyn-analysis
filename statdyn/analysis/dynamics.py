@@ -9,9 +9,11 @@
 """Compute dynamic properties."""
 
 import logging
+from itertools import count
 
 import numpy as np
 import pandas
+from numba import jit
 from scipy.stats import spearmanr
 
 np.seterr(divide='raise', invalid='raise')
@@ -181,8 +183,11 @@ def alpha_non_gaussian(displacement_squared: np.ndarray) -> float:
     Return:
         float: The non-gaussian parameter :math:`\alpha`
     """
-    return (np.square(displacement_squared).mean() /
-            (2 * np.square(displacement_squared.mean()) - 1))
+    try:
+        return (np.square(displacement_squared).mean() /
+                (2 * np.square(displacement_squared.mean()))) - 1
+    except FloatingPointError:
+        return 0
 
 
 def structural_relax(displacement_squared: np.ndarray,
@@ -267,8 +272,8 @@ def mobile_overlap(displacment_squared: np.ndarray,
     num_elements = int(len(displacment_squared) * fraction)
     # np.argsort will sort from smallest to largest, we are interested in the
     # largest elements so we will take from the end of the array.
-    trans_order = np.argsort(displacment_squared)[:-num_elements]
-    rot_order = np.argsort(np.abs(rotation))[:-num_elements]
+    trans_order = np.argsort(displacment_squared)[-num_elements:]
+    rot_order = np.argsort(np.abs(rotation))[-num_elements:]
     return len(np.intersect1d(trans_order, rot_order)) / num_elements
 
 
@@ -283,11 +288,11 @@ def spearman_rank(displacment_squared: np.ndarray,
     num_elements = int(len(displacment_squared) * fraction)
     # np.argsort will sort from smallest to largest, we are interested in the
     # largest elements so we will take from the end of the array.
-    trans_order = np.argsort(displacment_squared)[:-num_elements]
-    rot_order = np.argsort(np.abs(rotation))[:-num_elements]
+    trans_order = np.argsort(displacment_squared)[:-num_elements-1:-1]
+    rot_order = np.argsort(np.abs(rotation))[:-num_elements-1:-1]
     rho, _ = spearmanr(trans_order, rot_order)
     # Elements are in reverse order, smallest to largest so negate spearman value
-    return -rho
+    return rho
 
 
 def all_dynamics(timediff: int,
@@ -366,15 +371,20 @@ def squaredDisplacement(box: np.ndarray,
                         ) -> None:
     """Optimised function for computing the squared displacement.
 
-    This computes the displacment using the shortest path from the original
+    This computes the displacement using the shortest path from the original
     position to the final position. This is a reasonable assumption to make
     since the path
+
+    This assumes there is no more than a single image between molecules,
+    which breaks slightly when the frame size changes. I am assuming this is
+    negligible so not including it.
     """
-    box_sq = np.square(box)
-    temp = np.square(initial - final)
-    periodic = np.where(box_sq < temp)
-    # Periodic contains 2 numpy arrays, one indexing each dimension. Here I am
+    temp = initial - final
+    gt = np.where(temp > box/2)
+    lt = np.where(temp < -box/2)
+    # gt and lt contain 2 numpy arrays, one indexing each dimension. Here I am
     # taking the position in the second dimension which indicates the box
     # dimension and subtracting from the result to give the periodic distance.
-    temp[periodic] -= box_sq[periodic[1]]
-    result[:] = temp.sum(axis=1)
+    temp[lt] += box[lt[1]]
+    temp[gt] -= box[gt[1]]
+    result[:] = np.square(temp).sum(axis=1)
