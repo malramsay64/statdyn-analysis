@@ -71,7 +71,7 @@ class dynamics(object):
         squaredDisplacement(self.box, self.position, position, disp2)
         return alpha_non_gaussian(disp2)
 
-    def computeTimeDelta(self, timestep: float) -> float:
+    def computeTimeDelta(self, timestep: int) -> int:
         """Time difference between keyframe and timestep."""
         return timestep - self.timestep
 
@@ -103,9 +103,11 @@ class dynamics(object):
         rotationalDisplacement(self.orientation, orientation, delta_rotation)
         delta_displacementSq = np.empty(self.num_particles)
         squaredDisplacement(self.box, self.position, position, delta_displacementSq)
-        dyn_values = all_dynamics(delta_displacementSq, delta_rotation)
-        dyn_values['time'] = self.computeTimeDelta(timestep)
-        return dyn_values
+        return all_dynamics(
+            self.computeTimeDelta(timestep),
+            delta_displacementSq,
+            delta_rotation,
+        )
 
     def get_molid(self):
         """Molecule ids of each of the values."""
@@ -288,10 +290,11 @@ def spearman_rank(displacment_squared: np.ndarray,
     return -rho
 
 
-def all_dynamics(displacement_squared: np.ndarray,
+def all_dynamics(timediff: int,
+                 displacement_squared: np.ndarray,
                  rotation: np.ndarray=None,
                  structural_threshold: float=0.3,
-                 ) -> pandas.Series:
+                 ) -> pandas.DataFrame:
     """Compute all dynamics quantities from the base quantites.
 
     This computes all the possible dynamic quantities from the input arrays
@@ -306,6 +309,7 @@ def all_dynamics(displacement_squared: np.ndarray,
 
     """
     dynamic_quantities = {
+        'time': timediff,
         'mean_displacement': mean_displacement(displacement_squared),
         'msd': mean_squared_displacement(displacement_squared),
         'mfd': mean_fourth_displacement(displacement_squared),
@@ -320,7 +324,7 @@ def all_dynamics(displacement_squared: np.ndarray,
             'spearman_rank': spearman_rank(displacement_squared, rotation, fraction=0.1),
             'overlap': mobile_overlap(displacement_squared, rotation),
         })
-    return pandas.Series(dynamic_quantities)
+    return pandas.DataFrame(dynamic_quantities, index=[timediff])
 
 
 def rotationalDisplacement(initial: np.ndarray,
