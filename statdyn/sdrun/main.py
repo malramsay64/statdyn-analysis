@@ -19,7 +19,6 @@ import hoomd.context
 from . import options
 from ..analysis.run_analysis import comp_dynamics, order
 from ..crystals import Crystal
-from ..datagen.summary import dynamics, motion
 from ..molecule import Molecule
 from ..simulation import equilibrate, initialise, simrun
 
@@ -183,7 +182,7 @@ def figure(show_fig: str) -> None:
         logger.info('Bokeh server terminated.')
 
 
-for ext_command in [order, dynamics, motion, comp_dynamics]:
+for ext_command in [order, comp_dynamics]:
     sdrun.add_command(ext_command)
 
 if __name__ == "__main__":

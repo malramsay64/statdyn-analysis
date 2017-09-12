@@ -23,21 +23,21 @@ MAX_BOX = 20.
 
 @given(arrays(np.float64, (10, 3), elements=floats(-MAX_BOX/4, MAX_BOX/4)),
        arrays(np.float64, (10, 3), elements=floats(-MAX_BOX/4, MAX_BOX/4)))
-def test_mean_sq_displacement(init, final):
+def test_sq_displacement(init, final):
     box = np.array([MAX_BOX, MAX_BOX, MAX_BOX])
     result = np.zeros(len(init))
     np_res = np.square(np.linalg.norm(init-final, axis=1))
-    dynamics.squaredDisplacment(box, init, final, result)
+    dynamics.squaredDisplacement(box, init, final, result)
     assert np.allclose(result, np_res)
 
 
 @given(arrays(np.float64, (10, 3), elements=floats(-MAX_BOX, -MAX_BOX/2-1e-5)),
        arrays(np.float64, (10, 3), elements=floats(MAX_BOX/2, MAX_BOX)))
-def test_mean_sq_displacement_periodicity(init, final):
+def test_sq_displacement_periodicity(init, final):
     box = np.array([MAX_BOX, MAX_BOX, MAX_BOX])
     result = np.zeros(len(init))
     np_res = np.square(np.linalg.norm(init-final, axis=1))
-    dynamics.squaredDisplacment(box, init, final, result)
+    dynamics.squaredDisplacement(box, init, final, result)
     assert np.all(np.logical_not(np.isclose(result, np_res)))
 
 
