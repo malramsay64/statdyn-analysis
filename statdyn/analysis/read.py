@@ -70,7 +70,10 @@ def process_gsd(infile: str,
                                        num_linear=num_linear,
                                        gen_steps=gen_steps,
                                        max_gen=max_gen)
-        curr_step = next(step_iter)
+        try:
+            curr_step = step_iter.next()
+        except StopIteration:
+            return
         for frame in src:
             logger.debug('Step %d with index %s',
                          curr_step, step_iter.get_index())
@@ -84,8 +87,11 @@ def process_gsd(infile: str,
             elif curr_step < frame.configuration.step:
                 logger.warning('Step missing in gsd trajectory: current %d, frame %d',
                                curr_step, frame.configuration.step)
-                while curr_step < frame.configuration.step:
-                    curr_step = next(step_iter)
+                try:
+                    while curr_step < frame.configuration.step:
+                        curr_step = step_iter.next()
+                except StopIteration:
+                    break
 
             if curr_step == frame.configuration.step:
                 indexes = step_iter.get_index()
@@ -111,7 +117,10 @@ def process_gsd(infile: str,
                     dynamics_series['start_index'] = index
                     dataframes.append(dynamics_series)
 
-                curr_step = next(step_iter)
+                try:
+                    curr_step = step_iter.next()
+                except StopIteration:
+                    break
 
                 if outfile and len(dataframes) >= buffer_size:
                     pandas.concat(dataframes).to_hdf(

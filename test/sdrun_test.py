@@ -8,7 +8,6 @@
 
 """Test the sdrun command line tools."""
 
-
 import subprocess
 
 import pytest
