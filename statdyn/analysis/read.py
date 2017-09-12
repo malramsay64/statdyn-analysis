@@ -15,7 +15,7 @@ import gsd.hoomd
 import pandas
 
 from ..StepSize import GenerateStepSeries
-from .dynamics import compute_all_from_transrot, dynamics
+from .dynamics import dynamics
 
 logger = logging.getLogger(__name__)
 
@@ -102,14 +102,17 @@ def process_gsd(infile: str,
                         ))
                         mydyn = keyframes[index]
 
-                    dataframes.append(pandas.DataFrame({
-                        'time': mydyn.computeTimeDelta(curr_step),
-                        'rotation': mydyn.get_rotations(frame.particles.orientation),
-                        'translation': mydyn.get_displacements(frame.particles.position),
-                        'molid': mydyn.get_molid(),
-                        'start_index': index,
-                    }))
+                    dynamics_series = mydyn.computeAll(
+                        curr_step,
+                        frame.particles.position,
+                        frame.particles.orientation
+                    )
+                    logger.debug("Dynamics values %s", dynamics_series)
+                    dynamics_series['start_index'] = index
+                    dataframes.append(dynamics_series)
+
                 curr_step = next(step_iter)
+
                 if outfile and len(dataframes) >= buffer_size:
                     pandas.concat(dataframes).to_hdf(
                         outfile,
@@ -133,8 +136,3 @@ def process_gsd(infile: str,
         return
 
     return pandas.concat(dataframes)
-
-def process_hdf(infile: str):
-    src = pandas.read_hdf(infile, 'dynamics')
-    values = src.groupby(['temperature', 'time', 'start_index']).transform(compute_all_from_transrot)
-
