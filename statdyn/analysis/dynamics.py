@@ -9,11 +9,9 @@
 """Compute dynamic properties."""
 
 import logging
-from itertools import count
 
 import numpy as np
 import pandas
-from numba import jit
 from scipy.stats import spearmanr
 
 np.seterr(divide='raise', invalid='raise')
@@ -52,13 +50,13 @@ class dynamics(object):
     def computeMSD(self, position: np.ndarray) -> float:
         """Compute the mean squared displacement."""
         result = np.zeros(self.num_particles)
-        squaredDisplacement(self.box, self.position, position, result)
+        translationalDisplacement(self.box, self.position, position, result)
         return mean_squared_displacement(result)
 
     def comptuteMFD(self, position: np.ndarray) -> float:
         """Comptute the fourth power of displacement."""
         result = np.zeros(self.num_particles)
-        squaredDisplacement(self.box, self.position, position, result)
+        translationalDisplacement(self.box, self.position, position, result)
         return mean_fourth_displacement(result)
 
     def computeAlpha(self, position: np.ndarray) -> float:
@@ -70,7 +68,7 @@ class dynamics(object):
 
         """
         disp2 = np.empty(self.num_particles)
-        squaredDisplacement(self.box, self.position, position, disp2)
+        translationalDisplacement(self.box, self.position, position, disp2)
         return alpha_non_gaussian(disp2)
 
     def computeTimeDelta(self, timestep: int) -> int:
@@ -92,7 +90,7 @@ class dynamics(object):
     def get_displacements(self, position: np.ndarray) -> np.ndarray:
         """Get all the displacements."""
         result = np.empty(self.num_particles)
-        squaredDisplacement(self.box, self.position, position, result)
+        translationalDisplacement(self.box, self.position, position, result)
         return mean_displacement(result)
 
     def computeAll(self,
@@ -103,11 +101,12 @@ class dynamics(object):
         """Compute all dynamics quantities of interest."""
         delta_rotation = np.empty(self.num_particles)
         rotationalDisplacement(self.orientation, orientation, delta_rotation)
-        delta_displacementSq = np.empty(self.num_particles)
-        squaredDisplacement(self.box, self.position, position, delta_displacementSq)
+
+        delta_displacement = np.empty(self.num_particles)
+        translationalDisplacement(self.box, self.position, position, delta_displacement)
         return all_dynamics(
             self.computeTimeDelta(timestep),
-            delta_displacementSq,
+            delta_displacement,
             delta_rotation,
         )
 
@@ -116,46 +115,46 @@ class dynamics(object):
         return np.arange(self.num_particles)
 
 
-def mean_squared_displacement(displacment_squared: np.ndarray) -> float:
+def mean_squared_displacement(displacement: np.ndarray) -> float:
     """Mean value of the squared displacment.
 
     Args:
-        displacement_squared (class:`numpy.ndarray`): vector of squared
+        displacement (class:`numpy.ndarray`): vector of squared
             displacements.
 
     Returns:
         float: Mean value
 
     """
-    return displacment_squared.mean()
+    return np.square(displacement).mean()
 
 
-def mean_fourth_displacement(displacment_squared: np.ndarray) -> float:
+def mean_fourth_displacement(displacement: np.ndarray) -> float:
     """Mean value of the fourth power of displacment.
 
     Args:
-        displacement_squared (class:`numpy.ndarray`): vector of squared
+        displacement (class:`numpy.ndarray`): vector of squared
             displacements.
 
     Returns:
         float: Mean value of the fourth power
 
     """
-    return np.square(displacment_squared).mean()
+    return np.power(displacement, 4).mean()
 
 
-def mean_displacement(displacment_squared: np.ndarray) -> float:
+def mean_displacement(displacement: np.ndarray) -> float:
     """Mean value of the displacment.
 
     Args:
-        displacement_squared (class:`numpy.ndarray`): vector of squared
+        displacement (class:`numpy.ndarray`): vector of squared
             displacements.
 
     Returns:
         float: Mean value of the displacement
 
     """
-    return np.sqrt(displacment_squared).mean()
+    return displacement.mean()
 
 
 def mean_rotation(rotation: np.ndarray) -> float:
@@ -171,7 +170,7 @@ def mean_rotation(rotation: np.ndarray) -> float:
     return rotation.mean()
 
 
-def alpha_non_gaussian(displacement_squared: np.ndarray) -> float:
+def alpha_non_gaussian(displacement: np.ndarray) -> float:
     r"""Compute the non-gaussian parameter :math:`\alpha`.
 
     The non-gaussian parameter is given as
@@ -184,13 +183,13 @@ def alpha_non_gaussian(displacement_squared: np.ndarray) -> float:
         float: The non-gaussian parameter :math:`\alpha`
     """
     try:
-        return (np.square(displacement_squared).mean() /
-                (2 * np.square(displacement_squared.mean()))) - 1
+        return (np.power(displacement, 4).mean() /
+                (2 * np.square(np.square(displacement).mean()))) - 1
     except FloatingPointError:
         return 0
 
 
-def structural_relax(displacement_squared: np.ndarray,
+def structural_relax(displacement: np.ndarray,
                      dist: float=0.3) -> float:
     r"""Compute the structural relaxation.
 
@@ -199,16 +198,17 @@ def structural_relax(displacement_squared: np.ndarray,
     initial positions.
 
     Args:
+        displacement: displacements
         dist (float): The distance cutoff for considering relaxation.
         (defualt: 0.3)
 
     Return:
         float: The structural relaxation of the configuration
     """
-    return np.mean(displacement_squared < np.square(dist))
+    return np.mean(displacement < dist)
 
 
-def gamma(displacement_squared: np.ndarray,
+def gamma(displacement: np.ndarray,
           rotation: np.ndarray) -> float:
     r"""Calculate the second order coupling of translations and rotations.
 
@@ -223,7 +223,7 @@ def gamma(displacement_squared: np.ndarray,
 
     """
     rot2 = np.square(rotation)
-    disp2 = displacement_squared
+    disp2 = np.square(displacement)
     disp2m_rot2m = disp2.mean() * rot2.mean()
     try:
         return ((disp2 * rot2).mean() - disp2m_rot2m) / disp2m_rot2m
@@ -260,7 +260,7 @@ def rotational_relax2(rotation: np.ndarray) -> float:
     return np.mean(2 * np.square(np.cos(rotation)) - 1)
 
 
-def mobile_overlap(displacment_squared: np.ndarray,
+def mobile_overlap(displacement: np.ndarray,
                    rotation: np.ndarray,
                    fraction: float=0.1) -> float:
     """Find the overlap of the most mobile translators and rotators.
@@ -269,15 +269,15 @@ def mobile_overlap(displacment_squared: np.ndarray,
     of both the rotational and translational motion.
 
     """
-    num_elements = int(len(displacment_squared) * fraction)
+    num_elements = int(len(displacement) * fraction)
     # np.argsort will sort from smallest to largest, we are interested in the
     # largest elements so we will take from the end of the array.
-    trans_order = np.argsort(displacment_squared)[-num_elements:]
+    trans_order = np.argsort(displacement)[-num_elements:]
     rot_order = np.argsort(np.abs(rotation))[-num_elements:]
     return len(np.intersect1d(trans_order, rot_order)) / num_elements
 
 
-def spearman_rank(displacment_squared: np.ndarray,
+def spearman_rank(displacement: np.ndarray,
                   rotation: np.ndarray,
                   fraction: float=0.1) -> float:
     """Compute the Spearman Rank coefficient for fast molecules.
@@ -285,10 +285,10 @@ def spearman_rank(displacment_squared: np.ndarray,
     This takes the molecules with the fastest 10% of the translations or
     rotations and uses this subset to compute the Spearman rank coefficient.
     """
-    num_elements = int(len(displacment_squared) * fraction)
+    num_elements = int(len(displacement) * fraction)
     # np.argsort will sort from smallest to largest, we are interested in the
     # largest elements so we will take from the end of the array.
-    trans_order = np.argsort(displacment_squared)[:-num_elements-1:-1]
+    trans_order = np.argsort(displacement)[:-num_elements-1:-1]
     rot_order = np.argsort(np.abs(rotation))[:-num_elements-1:-1]
     rho, _ = spearmanr(trans_order, rot_order)
     # Elements are in reverse order, smallest to largest so negate spearman value
@@ -296,7 +296,7 @@ def spearman_rank(displacment_squared: np.ndarray,
 
 
 def all_dynamics(timediff: int,
-                 displacement_squared: np.ndarray,
+                 displacement: np.ndarray,
                  rotation: np.ndarray=None,
                  structural_threshold: float=0.3,
                  ) -> pandas.DataFrame:
@@ -306,7 +306,8 @@ def all_dynamics(timediff: int,
     taking into account the presence of rotational data.
 
     Args:
-        translations: (:class:`numpy.ndarray`): An array of the translational
+        timediff (int): Time difference described by the displacement and rotation.
+        displacement: (:class:`numpy.ndarray`): An array of the translational
             motion. Note that this is the distance moved, rather than the motion
             vector.
         rotations: (:class:`numpy.ndarray`): An array of the rotaional motion of
@@ -315,19 +316,19 @@ def all_dynamics(timediff: int,
     """
     dynamic_quantities = {
         'time': timediff,
-        'mean_displacement': mean_displacement(displacement_squared),
-        'msd': mean_squared_displacement(displacement_squared),
-        'mfd': mean_fourth_displacement(displacement_squared),
-        'alpha': alpha_non_gaussian(displacement_squared),
+        'mean_displacement': mean_displacement(displacement),
+        'msd': mean_squared_displacement(displacement),
+        'mfd': mean_fourth_displacement(displacement),
+        'alpha': alpha_non_gaussian(displacement),
     }
     if rotation is not None:
         dynamic_quantities.update({
             'mean_rotation': mean_rotation(rotation),
             'rot1': rotational_relax1(rotation),
             'rot2': rotational_relax2(rotation),
-            'gamma': gamma(displacement_squared, rotation),
-            'spearman_rank': spearman_rank(displacement_squared, rotation, fraction=0.1),
-            'overlap': mobile_overlap(displacement_squared, rotation),
+            'gamma': gamma(displacement, rotation),
+            'spearman_rank': spearman_rank(displacement, rotation, fraction=0.1),
+            'overlap': mobile_overlap(displacement, rotation),
         })
     return pandas.DataFrame(dynamic_quantities, index=[timediff])
 
@@ -364,12 +365,12 @@ def rotationalDisplacement(initial: np.ndarray,
     np.nan_to_num(result, copy=False)
 
 
-def squaredDisplacement(box: np.ndarray,
-                        initial: np.ndarray,
-                        final: np.ndarray,
-                        result: np.ndarray
-                        ) -> None:
-    """Optimised function for computing the squared displacement.
+def translationalDisplacement(box: np.ndarray,
+                              initial: np.ndarray,
+                              final: np.ndarray,
+                              result: np.ndarray
+                              ) -> None:
+    """Optimised function for computing the displacement.
 
     This computes the displacement using the shortest path from the original
     position to the final position. This is a reasonable assumption to make
@@ -387,4 +388,4 @@ def squaredDisplacement(box: np.ndarray,
     # dimension and subtracting from the result to give the periodic distance.
     temp[lt] += box[lt[1]]
     temp[gt] -= box[gt[1]]
-    result[:] = np.square(temp).sum(axis=1)
+    result[:] = np.linalg.norm(temp, axis=1)

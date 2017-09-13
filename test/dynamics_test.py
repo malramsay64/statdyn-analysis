@@ -13,23 +13,23 @@ import pytest
 from hypothesis import given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
-from quaternion import (as_float_array, as_quat_array,
-                        rotation_intrinsic_distance)
+from quaternion import as_quat_array, rotation_intrinsic_distance
 
 from statdyn.analysis import dynamics
 
 MAX_BOX = 20.
 
-def squaredDisplacement_reference(box: np.ndarray,
-                                  initial: np.ndarray,
-                                  final: np.ndarray,
-                                  result: np.ndarray
-                                  ) -> None:
-    """Simple implementation of function for computing the squared displacement.
+
+def translationalDisplacement_reference(box: np.ndarray,
+                                        initial: np.ndarray,
+                                        final: np.ndarray,
+                                        result: np.ndarray
+                                        ) -> None:
+    """Simplified reference implementation for computing the displacement.
 
     This computes the displacment using the shortest path from the original
-    position to the final position. This is a reasonable assumption to make
-    since the path
+    position to the final position.
+
     """
     for index in range(len(result)):
         temp = initial[index] - final[index]
@@ -38,12 +38,22 @@ def squaredDisplacement_reference(box: np.ndarray,
                 temp[i] -= box[i]
             if temp[i] < -box[i]/2:
                 temp[i] += box[i]
-        result[index] = np.square(temp).sum()
+        result[index] = np.linalg.norm(temp)
+
+
+def rotationalDisplacement_reference(initial: np.ndarray,
+                                     final: np.ndarray,
+                                     result: np.ndarray,
+                                     ) -> None:
+    """Simplified reference implementation of the rotational displacement."""
+    for index in range(len(result)):
+        result[index] = 2*np.arccos(np.abs(np.dot(initial[index], final[index])))
+
 
 @given(arrays(np.float64, (10, 3), elements=floats(-MAX_BOX/4, MAX_BOX/4)),
        arrays(np.float64, (10, 3), elements=floats(-MAX_BOX/4, MAX_BOX/4)))
-def test_sq_displacement(init, final):
-    """Test calculation of the squared displacement.
+def test_translationalDisplacement_noperiod(init, final):
+    """Test calculation of the translational displacement.
 
     This test ensures that the result is close to the numpy.linalg.norm
     function in the case where there is no periodic boundaries to worry
@@ -52,16 +62,16 @@ def test_sq_displacement(init, final):
     box = np.array([MAX_BOX, MAX_BOX, MAX_BOX])
     result = np.zeros(len(init))
     ref_res = np.zeros(len(init))
-    np_res = np.square(np.linalg.norm(init-final, axis=1))
-    dynamics.squaredDisplacement(box, init, final, result)
-    squaredDisplacement_reference(box, init, final, ref_res)
+    np_res = np.linalg.norm(init-final, axis=1)
+    dynamics.translationalDisplacement(box, init, final, result)
+    translationalDisplacement_reference(box, init, final, ref_res)
     assert np.allclose(result, np_res)
     assert np.allclose(result, ref_res)
 
 
-@given(arrays(np.float64, (10, 3), elements=floats(-MAX_BOX, -MAX_BOX/2-1e-5)),
-       arrays(np.float64, (10, 3), elements=floats(MAX_BOX/2, MAX_BOX)))
-def test_sq_displacement_periodicity(init, final):
+@given(arrays(np.float64, (10, 3), elements=floats(-MAX_BOX/2, -MAX_BOX/4-1e-5)),
+       arrays(np.float64, (10, 3), elements=floats(MAX_BOX/4, MAX_BOX/2)))
+def test_translationalDisplacement_periodicity(init, final):
     """Ensure the periodicity is calulated appropriately.
 
     This is testing that periodic boundaries are identified appropriately.
@@ -70,9 +80,24 @@ def test_sq_displacement_periodicity(init, final):
     result = np.empty(len(init))
     ref_res = np.empty(len(init))
     np_res = np.square(np.linalg.norm(init-final, axis=1))
-    dynamics.squaredDisplacement(box, init, final, result)
-    squaredDisplacement_reference(box, init, final, ref_res)
+    dynamics.translationalDisplacement(box, init, final, result)
+    translationalDisplacement_reference(box, init, final, ref_res)
     assert np.all(np.logical_not(np.isclose(result, np_res)))
+    assert np.allclose(result, ref_res)
+
+
+@given(arrays(np.float64, (10, 3), elements=floats(-MAX_BOX/2, MAX_BOX/2)),
+       arrays(np.float64, (10, 3), elements=floats(-MAX_BOX/2, MAX_BOX/2)))
+def test_translationalDisplacement(init, final):
+    """Ensure the periodicity is calulated appropriately.
+
+    This is testing that periodic boundaries are identified appropriately.
+    """
+    box = np.array([MAX_BOX, MAX_BOX, MAX_BOX])
+    result = np.empty(len(init))
+    ref_res = np.empty(len(init))
+    dynamics.translationalDisplacement(box, init, final, result)
+    translationalDisplacement_reference(box, init, final, ref_res)
     assert np.allclose(result, ref_res)
 
 
@@ -91,34 +116,37 @@ def test_rotationalDisplacement(init, final):
     init_quat = as_quat_array(init)
     final_quat = as_quat_array(final)
     result = np.zeros(len(init))
+    ref_res = np.empty(len(init))
     dynamics.rotationalDisplacement(init, final, result)
+    rotationalDisplacement_reference(init, final, ref_res)
     quat_res = []
     for i, f in zip(init_quat, final_quat):
         quat_res.append(rotation_intrinsic_distance(i, f))
     assert np.allclose(result, np.array(quat_res), equal_nan=True, atol=5e-6)
+    assert np.allclose(result, ref_res, equal_nan=True)
 
 
 @given(arrays(np.float64, (100), elements=floats(0, 10)))
-def test_alpha(displacement_squared):
+def test_alpha(displacement):
     """Test the computation of the non-gaussian parameter."""
-    alpha = dynamics.alpha_non_gaussian(displacement_squared)
+    alpha = dynamics.alpha_non_gaussian(displacement)
     assert alpha >= -1
 
 
 @given(arrays(np.float64, (100), elements=floats(0, 10)),
        arrays(np.float64, (100), elements=floats(0, 2*np.pi)))
-def test_overlap(displacement_squared, rotation):
+def test_overlap(displacement, rotation):
     """Test the computation of the overlap of the largest values."""
     overlap_same = dynamics.mobile_overlap(rotation, rotation)
     assert np.isclose(overlap_same, 1)
-    overlap = dynamics.mobile_overlap(displacement_squared, rotation)
+    overlap = dynamics.mobile_overlap(displacement, rotation)
     assert overlap <= 1.
     assert overlap >= 0.
 
 
 @given(arrays(np.float64, (100), elements=floats(0, 10)),
        arrays(np.float64, (100), elements=floats(0, 2*np.pi)))
-def test_spearman_rank(displacement_squared, rotation):
+def test_spearman_rank(displacement, rotation):
     """Test the spearman ranking coefficient."""
     spearman_same = dynamics.spearman_rank(rotation, rotation)
     assert np.isclose(spearman_same, 1)
