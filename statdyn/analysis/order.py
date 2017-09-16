@@ -69,10 +69,10 @@ def orientational_order(box: np.ndarray,
             molecule.
 
     """
-    particle_positions = molecule.orientation2positions(position, orientation)
+    angles = get_z_orientation(orientation)
+    particle_positions = molecule.orientation2positions(position, angles)
     bodies = molecule.identify_bodies(range(len(position)))
     neighbourlist = compute_neighbours(box, particle_positions, bodies)
-    angles = get_z_orientation(orientation)
 
     order_parameter = np.zeros_like(angles)
     for mol_index, neighbours in enumerate(neighbourlist):

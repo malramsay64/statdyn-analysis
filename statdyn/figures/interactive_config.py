@@ -75,12 +75,18 @@ def update_source(data):
 def update_data(attr, old, new):
     p.title.text = f'Timestep: {snapshot.configuration.step:.5g}'
 
-    data = snapshot2data(snapshot, molecule=molecule, extra_particles=extra_particles)
+    data = snapshot2data(snapshot,
+                         molecule=molecule,
+                         extra_particles=extra_particles,
+                         ordering=ordered.active,
+                         )
     try:
         doc.add_next_tick_callback(partial(update_source, data=data))
     except ValueError:
         pass
 
+def update_data_now(arg):
+    update_data(None, None, None)
 
 def update_directory(attr, old, new):
     files = sorted([filename.name for filename in Path(new).glob('dump*.gsd')])
@@ -100,6 +106,9 @@ fname.on_change('value', update_trajectory)
 
 index = Slider(title='Index', value=0, start=0, end=1, step=1)
 index.on_change('value', update_index)
+
+ordered = Toggle(name='order', label='Colour Order')
+ordered.on_click(update_data_now)
 
 radius_scale = Slider(title='Particle Radius', value=1, start=0.1, end=2, step=0.05)
 radius_scale.on_change('value', update_data)
@@ -128,7 +137,7 @@ update_directory(None, None, default_dir)
 
 plot_circles(p, source)
 
-controls = widgetbox([directory, fname, index], width=300)
+controls = widgetbox([directory, fname, index, ordered], width=300)
 layout = row(column(controls, media), p)
 
 doc.add_root(layout)

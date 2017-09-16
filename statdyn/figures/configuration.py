@@ -14,7 +14,7 @@ import numpy as np
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.plotting import figure
 
-from ..analysis.order import get_z_orientation
+from ..analysis.order import get_z_orientation, orientational_order
 from ..molecules import Molecule, Trimer
 from .colour import colour_orientation
 
@@ -40,7 +40,11 @@ def plot_circles(mol_plot, source):
     return mol_plot
 
 
-def snapshot2data(snapshot, molecule: Molecule=Trimer(), extra_particles=True):
+def snapshot2data(snapshot,
+                  molecule: Molecule=Trimer(),
+                  extra_particles=True,
+                  ordering=False,
+                  ):
     radii = np.ones(snapshot.particles.N)
     orientation = get_z_orientation(snapshot.particles.orientation)
     position = snapshot.particles.position
@@ -68,6 +72,11 @@ def snapshot2data(snapshot, molecule: Molecule=Trimer(), extra_particles=True):
         'radius': radii,
     }
     data['colour'] = colour_orientation(orientation)
+    if ordering:
+        ordered = orientational_order(snapshot.configuration.box,
+                                      snapshot.particles.position,
+                                      snapshot.particles.orientation) > 0.85
+        data['colour'][ordered] = colour_orientation(orientation, light_colours=True)[ordered]
     if extra_particles:
         data['colour'] = np.append([], [data['colour']]*molecule.num_particles)
     return data
@@ -80,7 +89,7 @@ def plot(snapshot, repeat=False, offset=False, order=False,
     p = figure(aspect_scale=1, match_aspect=True, width=920, height=800,
                active_scroll='wheel_zoom')
     if source:
-        source.data=data
+        source.data = data
     else:
         source = ColumnDataSource(data=data)
     plot_circles(p, source)
