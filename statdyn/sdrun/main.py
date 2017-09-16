@@ -42,6 +42,7 @@ def sdrun(ctx):
 @options.opt_molecule
 @options.opt_verbose
 @options.opt_dynamics
+@options.opt_moment_inertia_scale
 @options.opt_hoomd_args
 @options.opt_output_interval
 @options.opt_pressure
@@ -74,6 +75,7 @@ def prod(infile: str,
         output=Path(output),
         dump_period=output_interval,
         thermo_period=output_interval,
+        molecule=molecule,
     )
 
 
@@ -86,6 +88,7 @@ def prod(infile: str,
 @options.opt_equil
 @options.opt_init_temp
 @options.opt_pressure
+@options.opt_moment_inertia_scale
 @options.opt_output_interval
 @options.arg_infile
 @options.arg_outfile
@@ -130,6 +133,7 @@ def equil(infile: str,
 @options.opt_steps
 @options.opt_hoomd_args
 @options.opt_pressure
+@options.opt_moment_inertia_scale
 @options.arg_outfile
 @click.option('--interface', is_flag=True)
 def create(space_group: Crystal,

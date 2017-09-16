@@ -33,7 +33,7 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
             max_initial: int=500,
             dump_period: int=10000,
             thermo_period: int=10000,
-            mol: molecule.Molecule=molecule.Trimer(),
+            molecule: molecule.Molecule=molecule.Trimer(),
             ) -> None:
     """Initialise and run a hoomd npt simulation.
 

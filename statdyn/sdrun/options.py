@@ -68,7 +68,9 @@ def _create_crystal(ctx, param, crys):
 def _get_molecule(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
-    return MOLECULE_OPTIONS[value]()
+    return MOLECULE_OPTIONS[value](
+        moment_inertia_scale=ctx.params.get('moment_inertia_scale'),
+    )
 
 
 opt_space_group = click.option(
@@ -187,6 +189,15 @@ opt_output_interval = click.option(
     default=10000,
     type=click.IntRange(min=0),
     help='Steps between output of dump and thermodynamic quantities.'
+)
+
+opt_moment_inertia_scale = click.option(
+    '--moment-inertia-scale',
+    default=1.0,
+    type=float,
+    help='Scaling factor for the moment of inertia.',
+    is_eager=True,
+    expose_value=False,
 )
 
 arg_infile = click.argument(

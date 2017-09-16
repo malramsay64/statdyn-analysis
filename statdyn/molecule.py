@@ -1,8 +1,11 @@
 #!/bin/env python3
 # -*- coding: utf-8 -*-
+# vim:fenc=utf-8
 #
-# copyright Malcolm Ramsay
+# Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
+# Distributed under terms of the MIT license.
+
 """Module to define a molecule to use for simulation."""
 
 import logging
@@ -172,7 +175,8 @@ class Trimer(Molecule):
     def __init__(self,
                  radius: float=0.637556,
                  distance: float=1.0,
-                 angle: float=120) -> None:
+                 angle: float=120,
+                 moment_inertia_scale: float=1.) -> None:
         """Initialise trimer molecule.
 
         Args:
@@ -181,6 +185,8 @@ class Trimer(Molecule):
                 one. Default is 1.0
             angle (float): Angle between the two outer particles in degrees.
                 Default is 120
+            moment_inertia_scale(float): Scale the moment of intertia by this
+                factor.
 
         """
         # super(Trimer, self).__init__()
@@ -189,7 +195,7 @@ class Trimer(Molecule):
         self.distance = distance
         self.angle = angle
         self.particles = ['A', 'B', 'B']
-        self.moment_inertia = (0., 0., 1.65)
+        self.moment_inertia = tuple(np.ndarray((0., 0., 1.65))*moment_inertia_scale)
         self.dimensions = 2
 
     def define_potential(self) -> hoomd.md.pair.pair:
