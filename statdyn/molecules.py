@@ -137,6 +137,7 @@ class Molecule(object):
         pass
 
     def identify_bodies(self, indexes: np.ndarray) -> np.ndarray:
+        """Convert an index of molecules into an index of particles."""
         return np.append(indexes, [indexes]*(self.num_particles-1))
 
 

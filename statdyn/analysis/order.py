@@ -15,7 +15,7 @@ from freud.box import Box
 from freud.locality import NearestNeighbors
 from quaternion import as_quat_array, as_rotation_vector
 
-from ..molecule import Molecule, Trimer
+from ..molecules import Molecule, Trimer
 
 
 def get_z_orientation(orientations: np.ndarray) -> np.ndarray:

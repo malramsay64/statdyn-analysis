@@ -16,7 +16,7 @@ import hoomd
 import numpy as np
 
 from . import initialise
-from .. import molecule
+from .. import molecules
 from ..StepSize import GenerateStepSeries
 from .helper import set_integrator
 
@@ -33,7 +33,7 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
             max_initial: int=500,
             dump_period: int=10000,
             thermo_period: int=10000,
-            molecule: molecule.Molecule=molecule.Trimer(),
+            molecule: molecules.Molecule=molecules.Trimer(),
             ) -> None:
     """Initialise and run a hoomd npt simulation.
 
@@ -45,8 +45,8 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
     Keyword Args:
         init_args (str): Args with which to initialise the hoomd context.
             Default: ''
-        mol (class:`statdyn.Molecule`): Molecule to use in the simulation
-            Default: class:`statdyn.Molecule.Trimer()`
+        molecules (class:`statdyn.molecules.Molecule`): Molecule to use in the simulation
+            Default: class:`statdyn.molecules.Molecule.Trimer()`
         dt (float): size of each timestep in the simulation
             Default: 0.005
         tau (float): Restoring mass for the temperature integrator
@@ -61,7 +61,7 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
         initialise.initialise_snapshot(
             snapshot=snapshot,
             context=context,
-            mol=mol,
+            molecule=molecule,
         )
         set_integrator(temperature=temperature)
         _set_thermo(temperature=temperature,

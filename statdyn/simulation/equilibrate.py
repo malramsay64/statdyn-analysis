@@ -15,7 +15,7 @@ import hoomd
 import hoomd.md
 import numpy as np
 
-from ..molecule import Trimer
+from ..molecules import Trimer
 from .helper import dump_frame, set_dump, set_integrator, set_thermo
 from .initialise import initialise_snapshot, make_orthorhombic
 
@@ -41,7 +41,7 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
     sys = initialise_snapshot(
         snapshot=snapshot,
         context=temp_context,
-        mol=molecule
+        molecule=molecule
     )
 
     if interface:
@@ -110,7 +110,7 @@ def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
     sys = initialise_snapshot(
         snapshot=snapshot,
         context=temp_context,
-        mol=molecule,
+        molecule=molecule,
     )
     with temp_context:
         # Equilibrate liquid
@@ -154,7 +154,7 @@ def equil_liquid(snapshot: hoomd.data.SnapshotParticleData,
     sys = initialise_snapshot(
         snapshot=snapshot,
         context=temp_context,
-        mol=molecule
+        molecule=molecule
     )
     with temp_context:
         if init_temp:

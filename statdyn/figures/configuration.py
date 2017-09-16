@@ -15,7 +15,7 @@ from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.plotting import figure
 
 from ..analysis.order import get_z_orientation
-from ..molecule import Molecule, Trimer
+from ..molecules import Molecule, Trimer
 from .colour import colour_orientation
 
 logger = logging.getLogger(__name__)

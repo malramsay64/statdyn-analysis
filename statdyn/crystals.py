@@ -7,7 +7,7 @@ import hoomd
 import numpy as np
 import quaternion as qt
 
-from . import molecule
+from . import molecules
 
 
 class Crystal(object):
@@ -22,7 +22,7 @@ class Crystal(object):
         self.dimensions = 2
         self._orientations = np.zeros(1)
         self.positions = [[0, 0, 0]]
-        self.molecule = molecule.Molecule()
+        self.molecule = molecules.Molecule()
 
     def get_cell_len(self):
         """Return the unit cell parameters.
@@ -115,7 +115,7 @@ class CrysTrimer(Crystal):
     def __init__(self):
         super().__init__()
         self.dimensions = 2
-        self.molecule = molecule.Trimer()
+        self.molecule = molecules.Trimer()
 
 
 class TrimerP2(CrysTrimer):
@@ -173,7 +173,7 @@ class CubicSphere(Crystal):
         super().__init__()
         self.a = 2.
         self.cell_dimensions = 3
-        self.molecule = molecule.Sphere()
+        self.molecule = molecules.Sphere()
 
     def get_unitcell(self):
         return hoomd.lattice.sc(self.a)
@@ -186,7 +186,7 @@ class SquareCircle(Crystal):
         super().__init__()
         self.a = 2.
         self.cell_dimensions = 2
-        self.molecule = molecule.Disc()
+        self.molecule = molecules.Disc()
 
     def get_unitcell(self):
         return hoomd.lattice.sq(self.a)

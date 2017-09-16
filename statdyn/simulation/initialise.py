@@ -20,7 +20,7 @@ import hoomd
 import hoomd.md as md
 import numpy as np
 
-from .. import crystals, molecule
+from .. import crystals, molecules
 from .helper import dump_frame
 
 logger = logging.getLogger(__name__)
@@ -56,7 +56,7 @@ def init_from_none(hoomd_args: str='',
 
 def initialise_snapshot(snapshot: hoomd.data.SnapshotParticleData,
                         context: hoomd.context.SimulationContext,
-                        mol: molecule.Molecule,
+                        molecule: molecules.Molecule,
                         ) -> hoomd.data.system_data:
     """Initialise the configuration from a snapshot.
 
@@ -76,12 +76,12 @@ def initialise_snapshot(snapshot: hoomd.data.SnapshotParticleData,
             logger.info('Creating rigid bodies')
             create_bodies = True
         else:
-            assert num_particles % mol.num_particles == 0
-        snapshot = _check_properties(snapshot, mol)
+            assert num_particles % molecule.num_particles == 0
+        snapshot = _check_properties(snapshot, molecule)
         sys = hoomd.init.read_snapshot(snapshot)
-        mol.define_potential()
-        mol.define_dimensions()
-        rigid = mol.define_rigid()
+        molecule.define_potential()
+        molecule.define_dimensions()
+        rigid = molecule.define_rigid()
         if rigid:
             rigid.create_bodies(create=create_bodies)
             if create_bodies:
@@ -161,7 +161,7 @@ def init_slab(crystal: crystals.Crystal,
     sys = initialise_snapshot(
         snapshot=snapshot,
         context=temp_context,
-        mol=crystal.molecule,
+        molecule=crystal.molecule,
     )
     with temp_context:
         md.update.enforce2d()
@@ -200,8 +200,8 @@ def get_fname(temp: float, ext: str='gsd') -> str:
         str: The standard filename for my simulations
 
     """
-    return '{mol}-{press:.2f}-{temp:.2f}.{ext}'.format(
-        mol='Trimer',
+    return '{molecule}-{press:.2f}-{temp:.2f}.{ext}'.format(
+        molecule='Trimer',
         press=13.50,
         temp=temp,
         ext=ext
@@ -240,19 +240,19 @@ def make_orthorhombic(snapshot: hoomd.data.SnapshotParticleData
 
 
 def _check_properties(snapshot: hoomd.data.SnapshotParticleData,
-                      mol: molecule.Molecule
+                      molecule: molecules.Molecule
                       ) -> hoomd.data.SnapshotParticleData:
     try:
         nbodies = len(snapshot.particles.body)
         logger.debug(f'number of rigid bodies: {nbodies}')
-        snapshot.particles.types = mol.get_types()
+        snapshot.particles.types = molecule.get_types()
         snapshot.particles.moment_inertia[:nbodies] = np.array(
-            [mol.moment_inertia] * nbodies)
+            [molecule.moment_inertia] * nbodies)
     except (AttributeError, ValueError):
         num_atoms = len(snapshot.particles.position)
         logger.debug(f'num_atoms: {num_atoms}')
         if num_atoms > 0:
-            snapshot.particles.types = mol.get_types()
+            snapshot.particles.types = molecule.get_types()
             snapshot.particles.moment_inertia[:] = np.array(
-                [mol.moment_inertia] * num_atoms)
+                [molecule.moment_inertia] * num_atoms)
     return snapshot

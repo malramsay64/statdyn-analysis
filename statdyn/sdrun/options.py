@@ -14,7 +14,7 @@ from pathlib import Path
 import click
 
 from ..crystals import CRYSTAL_FUNCS
-from ..molecule import Dimer, Disc, Sphere, Trimer
+from ..molecules import Dimer, Disc, Sphere, Trimer
 from ..simulation import equilibrate
 
 logger = logging.getLogger(__name__)

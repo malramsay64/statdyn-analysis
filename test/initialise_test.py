@@ -15,9 +15,9 @@ import hoomd
 import numpy as np
 import pytest
 from hypothesis import given, settings
-from hypothesis.strategies import integers, tuples
+from hypothesis.strategies import floats, integers, tuples
 
-from statdyn import crystals, molecule
+from statdyn import crystals, molecules
 from statdyn.simulation import initialise
 
 from .crystal_test import get_distance
@@ -61,7 +61,7 @@ def test_initialise_snapshot():
     """Test initialisation from a snapshot works."""
     initialise.initialise_snapshot(create_snapshot(),
                                    hoomd.context.initialize(''),
-                                   molecule.Trimer(),
+                                   molecules.Trimer(),
                                    )
     assert True
 

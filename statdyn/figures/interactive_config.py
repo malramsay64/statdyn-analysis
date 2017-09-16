@@ -19,7 +19,7 @@ from bokeh.plotting import curdoc, figure
 from tornado import gen
 
 from statdyn.figures.configuration import plot, plot_circles, snapshot2data
-from statdyn.molecule import Trimer
+from statdyn.molecules import Trimer
 
 logger = logging.getLogger(__name__)
 

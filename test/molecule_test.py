@@ -11,8 +11,10 @@
 import pytest
 from statdyn import molecule
 
+from statdyn import molecules
 
-@pytest.fixture(params=[molecule.Molecule, molecule.Trimer, molecule.Dimer])
+
+@pytest.fixture(params=[molecules.Molecule, molecules.Trimer, molecules.Dimer])
 def mol_setup(request):
     """Test molecule setup."""
     return request.param()

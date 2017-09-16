@@ -19,7 +19,7 @@ import hoomd.context
 from . import options
 from ..analysis.run_analysis import comp_dynamics, order
 from ..crystals import Crystal
-from ..molecule import Molecule
+from ..molecules import Molecule
 from ..simulation import equilibrate, initialise, simrun
 
 logger = logging.getLogger(__name__)
