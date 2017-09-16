@@ -69,7 +69,7 @@ def _get_molecule(ctx, param, value):
     if not value or ctx.resilient_parsing:
         return
     return MOLECULE_OPTIONS[value](
-        moment_inertia_scale=ctx.params.get('moment_inertia_scale'),
+        moment_inertia_scale=ctx.params.get('moment_inertia_scale', 1.),
     )
 
 

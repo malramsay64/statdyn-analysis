@@ -8,8 +8,10 @@
 
 """Test the molecule class."""
 
+import numpy as np
 import pytest
-from statdyn import molecule
+from hypothesis import given
+from hypothesis.strategies import floats
 
 from statdyn import molecules
 
@@ -29,3 +31,14 @@ def test_moment_inertia(mol_setup):  # pylint: disable=redefined-outer-name
     """Test moment_inertia."""
     assert isinstance(mol_setup.moment_inertia, tuple)
     assert len(mol_setup.moment_inertia) == 3
+
+
+@given(floats(min_value=0, allow_infinity=False, allow_nan=False))
+def test_moment_inertia_scaling(scaling_factor):
+    """Test that the scaling factor is working properly."""
+    reference = molecules.Trimer()
+    scaled = molecules.Trimer(moment_inertia_scale=scaling_factor)
+    assert len(reference.moment_inertia) == len(scaled.moment_inertia)
+    with np.errstate(overflow='ignore'):
+        assert np.allclose(np.array(reference.moment_inertia)*scaling_factor,
+                           np.array(scaled.moment_inertia))

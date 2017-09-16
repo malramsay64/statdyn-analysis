@@ -156,5 +156,18 @@ def test_orthorhombic_init(cell_dimensions):
     assert snap_ortho.box.xz == 0
     assert snap_ortho.box.yz == 0
     for i in snap.particles.position:
-        assert np.sum(get_distance(i, snap.particles.position, snap.box)
-                      < 1.1) <= 3
+        assert np.sum(get_distance(i, snap.particles.position, snap.box) < 1.1) <= 3
+
+
+@given(floats(min_value=0.1, allow_infinity=False, allow_nan=False))
+def test_moment_inertia(scaling_factor):
+    """Ensure moment of intertia is set correctly in setup."""
+    init_mol = molecules.Trimer(moment_inertia_scale=scaling_factor)
+    snapshot = initialise.initialise_snapshot(
+        create_snapshot(),
+        hoomd.context.initialize(''),
+        init_mol,
+    ).take_snapshot()
+    nmols = max(snapshot.particles.body) + 1
+    assert np.allclose(snapshot.particles.moment_inertia[:nmols],
+                       np.array(init_mol.moment_inertia).astype(np.float32))

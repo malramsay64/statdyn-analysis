@@ -196,7 +196,9 @@ class Trimer(Molecule):
         self.distance = distance
         self.angle = angle
         self.particles = ['A', 'B', 'B']
-        self.moment_inertia = tuple(np.ndarray((0., 0., 1.65))*moment_inertia_scale)
+        self.moment_inertia = (0. * moment_inertia_scale,
+                               0 * moment_inertia_scale,
+                               1.65 * moment_inertia_scale)
         self.dimensions = 2
 
     def define_potential(self) -> hoomd.md.pair.pair:
@@ -271,14 +273,15 @@ class Trimer(Molecule):
                      position.shape, position.dtype)
         pos1 = position
         pos2 = np.array([position[:, 0] - np.sin(orientation - np.pi/3),
-                           position[:, 1] + np.cos(orientation - np.pi/3),
-                           position[:, 2]]).T
+                         position[:, 1] + np.cos(orientation - np.pi/3),
+                         position[:, 2]]).T
         pos3 = np.array([position[:, 0] - np.sin(orientation + np.pi/3),
-                           position[:, 1] + np.cos(orientation + np.pi/3),
-                           position[:, 2]]).T
+                         position[:, 1] + np.cos(orientation + np.pi/3),
+                         position[:, 2]]).T
         return np.append(pos1, np.append(pos2, pos3, axis=0), axis=0)
 
     def get_radii(self) -> np.ndarray:
+        """Radii of the particles."""
         return np.array([1., 0.637556, 0.637556])
 
 
