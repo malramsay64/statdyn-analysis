@@ -113,7 +113,7 @@ def process_gsd(infile: str,
                         frame.particles.position,
                         frame.particles.orientation
                     )
-                    logger.debug("Dynamics values %s", dynamics_series)
+                    logger.debug('Series: %s', index)
                     dynamics_series['start_index'] = index
                     dataframes.append(dynamics_series)
 

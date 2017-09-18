@@ -87,10 +87,7 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
                                    timestep=0,
                                    period=steps)
             for curr_step in iterator:
-                if curr_step == prev_step:
-                    continue
                 hoomd.run_upto(curr_step, quiet=True)
-                prev_step = curr_step
                 logger.debug(f'Write traj on step : {prev_step}')
                 dumpfile.write_restart()
         else:

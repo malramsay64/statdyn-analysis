@@ -47,13 +47,13 @@ def order(infile, outfile):
 @options.opt_verbose
 @click.option('--gen-steps', default=20000, type=click.IntRange(min=0))
 @click.option('--max-gen', default=500, type=click.IntRange(min=1))
-@options.opt_steps
-def comp_dynamics(infile, output, gen_steps, steps, max_gen):
+@click.option('--step-limit', default=None, type=click.IntRange(min=1))
+def comp_dynamics(infile, output, gen_steps, step_limit, max_gen):
     """Compute dynamic properties."""
     outfile = str(output / Path(infile).with_suffix('.hdf5').name)
     dynamics_data = process_gsd(infile,
                                 gen_steps=gen_steps,
                                 max_gen=max_gen,
-                                step_limit=steps,
+                                step_limit=step_limit,
                                 outfile=outfile,
                                 )
