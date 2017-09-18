@@ -19,6 +19,7 @@ requirements:
         - click 6.7*
         - scipy 0.19*
         - pandas 0.20*
+        - pytables 3.4.2
         - numba 0.34*
         - numpy 1.13.1
         - quaternion 2017.06.28*
