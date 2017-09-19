@@ -39,6 +39,6 @@ def test_moment_inertia_scaling(scaling_factor):
     reference = molecules.Trimer()
     scaled = molecules.Trimer(moment_inertia_scale=scaling_factor)
     assert len(reference.moment_inertia) == len(scaled.moment_inertia)
-    with np.errstate(overflow='ignore'):
+    with np.errstate(over='ignore'):
         assert np.allclose(np.array(reference.moment_inertia)*scaling_factor,
                            np.array(scaled.moment_inertia))
