@@ -20,8 +20,8 @@ import hoomd
 import hoomd.md as md
 import numpy as np
 
-from .. import crystals, molecules
-from .helper import dump_frame
+from .. import molecules
+from .helper import SimulationParams, dump_frame
 
 logger = logging.getLogger(__name__)
 
@@ -89,12 +89,8 @@ def initialise_snapshot(snapshot: hoomd.data.SnapshotParticleData,
         return sys
 
 
-def init_from_crystal(crystal: crystals.Crystal,
-                      hoomd_args: str='',
+def init_from_crystal(sim_params: SimulationParams,
                       cell_dimensions: Tuple[int, int]=(30, 34),
-                      step_size: float=0.005,
-                      optimise_steps: int=1000,
-                      outfile: Path=None,
                       ) -> hoomd.data.SnapshotParticleData:
     """Initialise a hoomd simulation from a crystal lattice.
 
@@ -102,110 +98,32 @@ def init_from_crystal(crystal: crystals.Crystal,
         crystal (class:`statdyn.crystals.Crystal`): The crystal lattice to
             generate the simulation from.
     """
-    temp_context = hoomd.context.initialize(hoomd_args)
+    temp_context = hoomd.context.initialize(sim_params.hoomd_args)
     with temp_context:
-        logger.debug(
-            f"Creating {crystal} cell of size {cell_dimensions}"
-        )
+        logger.debug("Creating %s cell of size %s", sim_params.crystal, cell_dimensions)
 
         sys = hoomd.init.create_lattice(
-            unitcell=crystal.get_unitcell(),
+            unitcell=sim_params.crystal.get_unitcell(),
             n=cell_dimensions
         )
         snap = sys.take_snapshot(all=True)
-    temp_context = hoomd.context.initialize(hoomd_args)
+    temp_context = hoomd.context.initialize(sim_params.hoomd_args)
     with temp_context:
-        sys = initialise_snapshot(snap, temp_context, crystal.molecule)
-        md.integrate.mode_standard(dt=step_size)
-        temperature = hoomd.variant.linear_interp([
-            (0, 0),
-            (optimise_steps, 0.5),
-        ])
-        if crystal.molecule.num_particles == 1:
-            group = hoomd.group.all()
-        else:
-            group = hoomd.group.rigid_center()
-        md.integrate.npt(group=group,
-                         kT=temperature,
-                         xy=True, couple='none',
-                         P=13.5, tau=1, tauP=1,
+        sys = initialise_snapshot(snap, temp_context, sim_params.molecule)
+        md.integrate.mode_standard(dt=sim_params.step_size)
+
+        md.integrate.npt(group=sim_params.group,
+                         kT=sim_params.temperature,
+                         xy=True,
+                         couple='none',
+                         P=sim_params.pressure,
+                         tau=sim_params.tau,
+                         tauP=sim_params.tauP,
                          )
 
         equil_snap = sys.take_snapshot(all=True)
-        if outfile:
-            dump_frame(outfile, group=group)
+        dump_frame(sim_params.filename(), group=sim_params.group)
     return make_orthorhombic(equil_snap)
-
-
-def init_slab(crystal: crystals.Crystal,
-              equil_temp: float,
-              equil_steps: int,
-              hoomd_args: str='',
-              cell_dimensions: Tuple[int, int]=(30, 40),
-              melt_temp: float=2.50,
-              melt_steps: int=20000,
-              tau: float=1.,
-              pressure: float=13.50,
-              tauP: float=1.,
-              step_size: float=0.005,
-              ) -> hoomd.data.SnapshotParticleData:
-    """Initialise a crystal slab in a liquid."""
-    snapshot = init_from_crystal(
-        crystal=crystal,
-        hoomd_args=hoomd_args,
-        cell_dimensions=cell_dimensions,
-        step_size=step_size/5,
-        optimise_steps=5000,
-    )
-    temp_context = hoomd.context.initialize(hoomd_args)
-    sys = initialise_snapshot(
-        snapshot=snapshot,
-        context=temp_context,
-        molecule=crystal.molecule,
-    )
-    with temp_context:
-        md.update.enforce2d()
-        prime_interval = 307
-        md.update.zero_momentum(period=prime_interval)
-        md.integrate.mode_standard(dt=step_size/5)
-        group = hoomd.group.intersection(
-            'rigid_stationary',
-            hoomd.group.cuboid(name='stationary',
-                               xmin=-sys.box.Lx/4,
-                               xmax=sys.box.Lx/4),
-            hoomd.group.rigid_center()
-        )
-        thermostat = md.integrate.npt(
-            group=group,
-            kT=melt_temp,
-            tau=tau,
-            P=pressure,
-            tauP=tauP
-        )
-        hoomd.run(melt_steps/10)
-        md.integrate.mode_standard(dt=step_size/5)
-        hoomd.run(melt_steps)
-        thermostat.set_params(kT=equil_temp)
-        hoomd.run(equil_steps)
-        return sys.take_snapshot(all=True)
-
-
-def get_fname(temp: float, ext: str='gsd') -> str:
-    """Construct filename of based on the temperature.
-
-    Args:
-        temp (float): The temperature of the simulation
-
-    Returns:
-        str: The standard filename for my simulations
-
-    """
-    return '{molecule}-{press:.2f}-{temp:.2f}.{ext}'.format(
-        molecule='Trimer',
-        press=13.50,
-        temp=temp,
-        ext=ext
-    )
 
 
 def make_orthorhombic(snapshot: hoomd.data.SnapshotParticleData

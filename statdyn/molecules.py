@@ -140,6 +140,9 @@ class Molecule(object):
         """Convert an index of molecules into an index of particles."""
         return np.append(indexes, [indexes]*(self.num_particles-1))
 
+    def __str__(self) -> str:
+        return type(self).__name__
+
 
 class Disc(Molecule):
     """Defines a 2D particle."""

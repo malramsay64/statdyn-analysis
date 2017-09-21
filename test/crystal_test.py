@@ -8,6 +8,8 @@
 
 """Testing the crystal class of statdyn."""
 
+from pathlib import Path
+
 import hoomd
 import numpy as np
 import pytest
@@ -17,12 +19,20 @@ from hypothesis.strategies import floats, integers, tuples
 
 from statdyn import crystals
 from statdyn.simulation import initialise
+from statdyn.simulation.helper import SimulationParams
 
 TEST_CLASSES = [
     crystals.Crystal,
     crystals.CrysTrimer,
     crystals.TrimerP2
 ]
+
+PARAMETERS = SimulationParams(
+    temperature=0.4,
+    num_steps=100,
+    outfile_path=Path('test/data'),
+    crystal=crystals.TrimerP2(),
+)
 
 
 @pytest.mark.parametrize("crys_class", TEST_CLASSES)
@@ -73,6 +83,7 @@ class mybox(object):
     """Simple box class."""
 
     def __init__(self):
+        """init."""
         self.Lx = 1.
         self.Ly = 1.
         self.Lz = 1.
@@ -93,7 +104,7 @@ def test_get_distance(pos_a, pos_b):
 @settings(max_examples=3, timeout=0)
 def test_cell_dimensions(cell_dimensions):
     """Test cell paramters work properly."""
-    snap = initialise.init_from_crystal(crystals.TrimerP2(),
+    snap = initialise.init_from_crystal(PARAMETERS,
                                         cell_dimensions=cell_dimensions
                                         )
     for i in snap.particles.position:

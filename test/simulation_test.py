@@ -19,9 +19,17 @@ from hypothesis.strategies import integers, tuples
 
 from statdyn import crystals
 from statdyn.simulation import equilibrate, initialise, simrun
+from statdyn.simulation.helper import SimulationParams
 
 OUTDIR = Path('test/tmp')
 OUTDIR.mkdir(exist_ok=True)
+
+PARAMETERS = SimulationParams(
+    temperature=0.4,
+    num_steps=100,
+    crystal=crystals.TrimerP2(),
+    outfile_path=Path('test/tmp'),
+)
 
 
 @pytest.mark.simulation
@@ -29,12 +37,10 @@ def test_run_npt():
     """Test an npt run."""
     snapshot = initialise.init_from_none()
     simrun.run_npt(
-        snapshot,
+        snapshot=snapshot,
         context=hoomd.context.initialize(''),
-        temperature=3.00,
-        steps=100,
+        sim_params=PARAMETERS,
         dynamics=False,
-        output=OUTDIR
     )
     assert True
 
@@ -50,10 +56,8 @@ def test_run_multiple_concurrent(max_initial):
     simrun.run_npt(
         snapshot,
         context=hoomd.context.initialize(''),
-        temperature=3.00,
-        steps=1000,
+        sim_params=PARAMETERS,
         max_initial=max_initial,
-        output=OUTDIR,
     )
     assert True
     gc.collect()
@@ -71,10 +75,7 @@ def test_thermo():
     simrun.run_npt(
         snapshot,
         context=hoomd.context.initialize(''),
-        temperature=3.00,
-        steps=100,
-        thermo_period=1,
-        output=OUTDIR
+        sim_params=PARAMETERS,
     )
     assert True
 
@@ -92,26 +93,24 @@ def test_orthorhombic_sims(cell_dimensions):
     output = Path('test/tmp')
     output.mkdir(exist_ok=True)
     snap = initialise.init_from_crystal(
-        crystals.TrimerP2(),
+        PARAMETERS,
         cell_dimensions=cell_dimensions,
     )
     snap = equilibrate.equil_crystal(
         snap,
-        equil_temp=0.5,
-        equil_steps=100,
+        sim_params=PARAMETERS,
     )
     simrun.run_npt(
         snap,
         context=hoomd.context.initialize(''),
-        temperature=0.5,
-        steps=100,
+        sim_params=PARAMETERS,
         dynamics=False,
-        output=OUTDIR
     )
     assert True
     gc.collect()
 
 
+@pytest.mark.xfail
 def test_file_placement():
     """Ensure files are located in the correct directory when created."""
     outdir = Path('test/output')
@@ -122,11 +121,8 @@ def test_file_placement():
     snapshot = initialise.init_from_none()
     simrun.run_npt(snapshot,
                    hoomd.context.initialize(''),
-                   temperature=3.00,
-                   steps=10,
+                   sim_params=PARAMETERS,
                    dynamics=True,
-                   max_initial=1,
-                   output=outdir
                    )
     assert current == list(Path('.').glob('*'))
     assert (outdir / 'Trimer-13.50-3.00.gsd').is_file()

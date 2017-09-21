@@ -19,15 +19,14 @@ from hypothesis.strategies import floats, integers, tuples
 
 from statdyn import crystals, molecules
 from statdyn.simulation import initialise
+from statdyn.simulation.helper import SimulationParams
 
 from .crystal_test import get_distance
 
 
 def create_snapshot():
     """Easily create a snapshot for later use in testing."""
-    return initialise.init_from_none(hoomd_args='',
-                                     cell_dimensions=(10, 10),
-                                     )
+    return initialise.init_from_none(hoomd_args='', cell_dimensions=(10, 10))
 
 
 def create_file():
@@ -43,11 +42,17 @@ def create_file():
         return Path(tmp.name)
 
 
+PARAMETERS = SimulationParams(
+    temperature=0.4,
+    num_steps=100,
+    crystal=crystals.TrimerP2(),
+)
+
 INIT_TEST_PARAMS = [
     (initialise.init_from_none, '', {}),
     (initialise.init_from_file, [create_file(), ''], {}),
     (initialise.init_from_crystal, [
-        crystals.TrimerP2(), ''], {'cell_dimensions': (10, 5)}),
+        PARAMETERS], {'cell_dimensions': (10, 5)}),
 ]
 
 
@@ -138,7 +143,7 @@ def test_make_orthorhombic(cell_dimensions):
 def test_orthorhombic_init(cell_dimensions):
     """Ensure orthorhombic cell initialises correctly."""
     snap = initialise.init_from_crystal(
-        crystals.TrimerP2(),
+        PARAMETERS,
         cell_dimensions=cell_dimensions
     )
     snap_ortho = initialise.make_orthorhombic(snap)

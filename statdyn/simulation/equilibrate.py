@@ -9,96 +9,57 @@
 """A series of methods for the equilibration of configurations."""
 
 import logging
-from pathlib import Path
 
 import hoomd
 import hoomd.md
 import numpy as np
 
-from ..molecules import Trimer
-from .helper import dump_frame, set_dump, set_integrator, set_thermo
+from .helper import (SimulationParams, dump_frame, set_dump, set_integrator,
+                     set_thermo)
 from .initialise import initialise_snapshot, make_orthorhombic
 
 logger = logging.getLogger(__name__)
 
 
 def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
-                  equil_temp: float=0.4,
-                  equil_steps: int=5000,
-                  hoomd_args: str='',
-                  tau: float=1.,
-                  pressure: float=13.50,
-                  tauP: float=1.,
-                  step_size: float=0.005,
+                  sim_params: SimulationParams,
                   interface: bool=False,
-                  molecule=Trimer(),
-                  outfile: Path=None,
-                  init_temp: float=0.4,
                   output_interval: int=10000,
                   ) -> hoomd.data.SnapshotParticleData:
     """Equilbrate crystal."""
-    temp_context = hoomd.context.initialize(hoomd_args)
+    temp_context = hoomd.context.initialize(sim_params.hoomd_args)
     sys = initialise_snapshot(
         snapshot=snapshot,
         context=temp_context,
-        molecule=molecule
+        molecule=sim_params.molecule
     )
 
-    if interface:
-        group = _interface_group(sys)
-    elif molecule.num_particles == 1:
-        group = hoomd.group.all()
-    else:
-        group = None
-
     with temp_context:
-        temperature = hoomd.variant.linear_interp([
-            (0, init_temp),
-            (int(equil_steps*0.75), equil_temp),
-            (equil_steps, equil_temp),
-        ], zero='now')
         set_integrator(
-            temperature=temperature,
-            step_size=step_size,
+            sim_params=sim_params,
             prime_interval=307,
-            group=group,
-            pressure=pressure,
             crystal=True,
-            tauP=tauP, tau=tau,
         )
 
-        if outfile is not None:
-            dumpfile = outfile.parent / ('dump-' + outfile.name)
-            logger.debug('Dumpting to %s every %d steps', dumpfile, output_interval)
-            set_dump(dumpfile,
-                     dump_period=output_interval,
-                     group=group)
+        set_dump(sim_params.filename(prefix='dump'),
+                 dump_period=output_interval,
+                 group=sim_params.group,)
 
-        set_thermo(Path('equil.log'),
+        set_thermo(sim_params.filename(prefix='equil'),
                    thermo_period=int(np.ceil(output_interval/10)),
                    rigid=False,)
 
-        logger.debug('Running crystal equilibration for %d steps.', equil_steps)
-        hoomd.run(equil_steps)
+        logger.debug('Running crystal equilibration for %d steps.', sim_params.num_steps)
+        hoomd.run(sim_params.num_steps)
         logger.debug('Crystal equilibration completed')
 
-        if outfile is not None:
-            dump_frame(outfile, group=hoomd.group.all())
+        dump_frame(sim_params.filename(), group=hoomd.group.all())
 
         return make_orthorhombic(sys.take_snapshot())
 
 
 def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
-                    equil_temp: float,
-                    equil_steps: int,
-                    init_temp: float=4.00,
-                    hoomd_args: str='',
-                    tau: float=1.,
-                    pressure: float=13.50,
-                    tauP: float=1.,
-                    step_size: float=0.005,
-                    molecule=Trimer(),
-                    outfile: Path=None,
+                    sim_params: SimulationParams,
                     output_interval: int=10000,
                     ) -> hoomd.data.SnapshotParticleData:
     """Equilbrate an interface at the desired temperature.
@@ -106,91 +67,52 @@ def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
     This is first done by equilibrating the crystal phase, which once completed
     the liquid phase is equilibrated.
     """
-    temp_context = hoomd.context.initialize(hoomd_args)
+    temp_context = hoomd.context.initialize(sim_params.hoomd_args)
     sys = initialise_snapshot(
         snapshot=snapshot,
         context=temp_context,
-        molecule=molecule,
+        molecule=sim_params.molecule,
     )
+    sim_params.set_group(_interface_group(sys, stationary=False))
     with temp_context:
         # Equilibrate liquid
-        if init_temp:
-            temperature = hoomd.variant.linear_interp([
-                (0, init_temp),
-                (equil_steps/2, equil_temp),
-                (equil_steps, equil_temp)
-            ])
-        else:
-            temperature = equil_temp
-        set_integrator(temperature=temperature,
-                       step_size=step_size,
-                       group=_interface_group(sys, stationary=False),
-                       pressure=pressure,
-                       tauP=tauP, tau=tau,
-                       crystal=True,
-                       create=False,
-                       )
-        hoomd.run(equil_steps)
-        if outfile is not None:
-            dump_frame(outfile, group=hoomd.group.all())
+        set_integrator(
+            sim_params=sim_params,
+            crystal=True,
+            create=False,
+        )
+        hoomd.run(sim_params.num_steps)
+        dump_frame(sim_params.filename(), group=hoomd.group.all())
         return sys.take_snapshot(all=True)
 
 
 def equil_liquid(snapshot: hoomd.data.SnapshotParticleData,
-                 equil_temp: float,
-                 equil_steps: int,
-                 hoomd_args: str='',
-                 tau: float=1.,
-                 pressure: float=13.50,
-                 tauP: float=1.,
-                 step_size: float=0.005,
-                 molecule=Trimer(),
-                 init_temp: float=None,
-                 outfile: Path=None,
+                 sim_params: SimulationParams,
                  output_interval: int=10000,
                  ) -> hoomd.data.SnapshotParticleData:
     """Equilibrate a liquid configuration."""
-    temp_context = hoomd.context.initialize(hoomd_args)
+    temp_context = hoomd.context.initialize(sim_params.hoomd_args)
     sys = initialise_snapshot(
         snapshot=snapshot,
         context=temp_context,
-        molecule=molecule
+        molecule=sim_params.molecule
     )
     with temp_context:
-        if init_temp:
-            temperature = hoomd.variant.linear_interp([
-                (0, init_temp),
-                (equil_steps/2, equil_temp),
-                (equil_steps, equil_temp)
-            ])
-        else:
-            temperature = equil_temp
-
-        if molecule.num_particles == 1:
-            group = hoomd.group.all()
-        else:
-            group = hoomd.group.rigid_center()
-        set_integrator(
-            temperature=temperature,
-            step_size=step_size,
-            group=group,
-            pressure=pressure,
-            tauP=tauP, tau=tau,
-        )
-        if outfile is not None:
-            set_thermo(outfile.parent / f'thermo-{equil_temp:.2f}.log',
-                       thermo_period=output_interval)
-        hoomd.run(equil_steps)
-        if outfile is not None:
-            dump_frame(outfile, group=hoomd.group.all())
+        set_integrator(sim_params=sim_params,)
+        set_thermo(sim_params.filename('log'),
+                   thermo_period=output_interval)
+        hoomd.run(sim_params.num_steps)
+        dump_frame(sim_params.filename(), group=hoomd.group.all())
         return sys.take_snapshot(all=True)
 
 
 def _interface_group(sys: hoomd.data.system_data,
                      stationary: bool=False):
-    stationary_group = hoomd.group.cuboid(name='stationary',
-                                          xmin=-sys.box.Lx/4,
-                                          xmax=sys.box.Lx/4)
+    stationary_group = hoomd.group.cuboid(
+        name='stationary',
+        xmin=-sys.box.Lx/4,
+        xmax=sys.box.Lx/4
+    )
     if stationary:
         return hoomd.group.intersection(
             'rigid_stationary',
