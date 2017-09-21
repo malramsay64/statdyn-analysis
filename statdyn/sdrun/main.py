@@ -11,183 +11,75 @@
 import logging
 from pathlib import Path
 from subprocess import run
-from typing import Tuple
 
-import click
 import hoomd.context
 
 from . import options
-from ..analysis.run_analysis import comp_dynamics, order
-from ..crystals import Crystal
-from ..molecules import Molecule
 from ..simulation import equilibrate, initialise, simrun
+from ..simulation.params import SimulationParams
 
 logger = logging.getLogger(__name__)
 
 
-@click.group(name='sdrun')
-@click.version_option()
-@options.opt_verbose
-@click.pass_context
-def sdrun(ctx):
+def sdrun():
     """Run main function."""
     logging.debug('Running main function')
 
 
-@sdrun.command()
-@options.opt_verbose
-@options.opt_steps
-@options.opt_temperature
-@options.opt_output
-@options.opt_molecule
-@options.opt_verbose
-@options.opt_dynamics
-@options.opt_moment_inertia_scale
-@options.opt_hoomd_args
-@options.opt_output_interval
-@options.opt_pressure
-@options.arg_infile
-def prod(infile: str,
-         steps: int,
-         temperature: float,
-         molecule: Molecule,
-         output: str,
-         dynamics: bool,
-         hoomd_args: str,
-         pressure: float,
-         output_interval: int,
-         ) -> None:
+def prod(sim_params: SimulationParams) -> None:
     """Run simulations on equilibrated phase."""
-    logger.debug(f'running prod')
-    logger.debug(f'Reading {infile}')
+    logger.debug('running prod')
+    logger.debug('Reading %s', sim_params.infile)
 
-    snapshot = initialise.init_from_file(Path(infile), hoomd_args=hoomd_args)
+    snapshot = initialise.init_from_file(sim_params.infile, hoomd_args=sim_params.hoomd_args)
     logger.debug(f'Snapshot initialised')
 
-    sim_context = hoomd.context.initialize(hoomd_args)
+    sim_context = hoomd.context.initialize(sim_params.hoomd_args)
     simrun.run_npt(
         snapshot=snapshot,
         context=sim_context,
-        steps=steps,
-        temperature=temperature,
-        pressure=pressure,
-        dynamics=dynamics,
-        output=Path(output),
-        dump_period=output_interval,
-        thermo_period=output_interval,
-        molecule=molecule,
+        sim_params=sim_params,
     )
 
 
-@sdrun.command()
-@options.opt_verbose
-@options.opt_temperature
-@options.opt_steps
-@options.opt_hoomd_args
-@options.opt_molecule
-@options.opt_equil
-@options.opt_init_temp
-@options.opt_pressure
-@options.opt_moment_inertia_scale
-@options.opt_output_interval
-@options.arg_infile
-@options.arg_outfile
-def equil(infile: str,
-          outfile: str,
-          molecule: Molecule,
-          temperature: float,
-          steps: int,
-          init_temp: float,
-          hoomd_args: str,
-          equil_type: str,
-          pressure: float,
-          output_interval: int,
-          ) -> None:
+def equil(sim_params: SimulationParams, equil_type: str) -> None:
     """Command group for the equilibration of configurations."""
     logger.debug('Running equil')
 
     # Ensure parent directory exists
-    outfile_path = Path(outfile)
-    outfile_path.parent.mkdir(exist_ok=True)
+    sim_params.outfile.parent.mkdir(exist_ok=True)
 
-    snapshot = initialise.init_from_file(Path(infile))
+    snapshot = initialise.init_from_file(sim_params.infile)
     options.EQUIL_OPTIONS.get(equil_type)(
         snapshot,
-        equil_temp=temperature,
-        equil_steps=steps,
-        hoomd_args=hoomd_args,
-        molecule=molecule,
-        init_temp=init_temp,
-        pressure=pressure,
-        outfile=outfile_path,
-        output_interval=output_interval,
+        sim_params=sim_params,
     )
 
 
-@sdrun.command()
-@options.opt_verbose
-@options.opt_space_group
-@options.opt_lattice_lengths
-@options.opt_molecule
-@options.opt_temperature
-@options.opt_steps
-@options.opt_hoomd_args
-@options.opt_pressure
-@options.opt_moment_inertia_scale
-@options.arg_outfile
-@click.option('--interface', is_flag=True)
-def create(space_group: Crystal,
-           lattice_lengths: Tuple[int, int],
-           molecule: Molecule,
-           temperature: float,
-           steps: int,
-           outfile: str,
-           interface: bool,
-           hoomd_args: str,
-           pressure: float,
-           ) -> None:
+def create(sim_params: SimulationParams) -> None:
     """Create things."""
     logger.debug('Running create.')
-    logger.debug(f'Interface flag: {interface}')
-    outfile_path = Path(outfile)
+    logger.debug('Interface flag: %s', sim_params.interface)
     # Ensure parent directory exists
-    outfile_path.parent.mkdir(exist_ok=True)
+    sim_params.outfile.parent.mkdir(exist_ok=True)
 
-    snapshot = initialise.init_from_crystal(
-        crystal=space_group,
-        hoomd_args=hoomd_args,
-        cell_dimensions=lattice_lengths,
-        outfile=None,
-    )
+    snapshot = initialise.init_from_crystal(sim_params=sim_params)
 
     equilibrate.equil_crystal(
         snapshot=snapshot,
-        equil_temp=temperature,
-        equil_steps=steps,
-        outfile=Path(outfile),
-        interface=interface,
-        molecule=molecule,
-        pressure=pressure,
+        sim_params=sim_params,
+        interface=sim_params.interface,
     )
 
 
-@sdrun.command()
-@options.opt_verbose
-@click.option('--show-fig', type=click.Choice(['interactive']),
-              default='interactive')
 def figure(show_fig: str) -> None:
     """Start bokeh server with the file passed."""
-    lookup = {
-        'interactive': Path(__file__).parents[1] / 'figures/interactive_config.py',
-    }
+    fig_file = Path(__file__).parents[1] / 'figures/interactive_config.py'
     try:
-        run(['bokeh', 'serve', '--show', str(lookup.get(show_fig))])
+        run(['bokeh', 'serve', '--show', str(fig_file)])
     except ProcessLookupError:
         logger.info('Bokeh server terminated.')
 
-
-for ext_command in [order, comp_dynamics]:
-    sdrun.add_command(ext_command)
 
 if __name__ == "__main__":
     sdrun()

@@ -90,7 +90,6 @@ def initialise_snapshot(snapshot: hoomd.data.SnapshotParticleData,
 
 
 def init_from_crystal(sim_params: SimulationParams,
-                      cell_dimensions: Tuple[int, int]=(30, 34),
                       ) -> hoomd.data.SnapshotParticleData:
     """Initialise a hoomd simulation from a crystal lattice.
 
@@ -100,11 +99,12 @@ def init_from_crystal(sim_params: SimulationParams,
     """
     temp_context = hoomd.context.initialize(sim_params.hoomd_args)
     with temp_context:
-        logger.debug("Creating %s cell of size %s", sim_params.crystal, cell_dimensions)
+        logger.debug("Creating %s cell of size %s",
+                     sim_params.crystal, sim_params.cell_dimensions)
 
         sys = hoomd.init.create_lattice(
             unitcell=sim_params.crystal.get_unitcell(),
-            n=cell_dimensions
+            n=sim_params.cell_dimensions
         )
         snap = sys.take_snapshot(all=True)
     temp_context = hoomd.context.initialize(sim_params.hoomd_args)

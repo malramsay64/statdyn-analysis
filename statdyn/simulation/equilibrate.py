@@ -24,7 +24,6 @@ logger = logging.getLogger(__name__)
 def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
                   sim_params: SimulationParams,
                   interface: bool=False,
-                  output_interval: int=10000,
                   ) -> hoomd.data.SnapshotParticleData:
     """Equilbrate crystal."""
     temp_context = hoomd.context.initialize(sim_params.hoomd_args)
@@ -42,11 +41,11 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
         )
 
         set_dump(sim_params.filename(prefix='dump'),
-                 dump_period=output_interval,
+                 dump_period=sim_params.output_interval,
                  group=sim_params.group,)
 
         set_thermo(sim_params.filename(prefix='equil'),
-                   thermo_period=int(np.ceil(output_interval/10)),
+                   thermo_period=int(np.ceil(sim_params.output_interval/10)),
                    rigid=False,)
 
         logger.debug('Running crystal equilibration for %d steps.', sim_params.num_steps)

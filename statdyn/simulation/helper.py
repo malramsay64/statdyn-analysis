@@ -10,94 +10,14 @@
 
 import logging
 from functools import partial
-from pathlib import Path
-from typing import List, Union
+from typing import List
 
 import hoomd
 import hoomd.md as md
 
-from ..crystals import Crystal
-from ..molecules import Molecule
+from .params import SimulationParams
 
 logger = logging.getLogger(__name__)
-
-
-class SimulationParams(object):
-    """Store the parameters of the simulation."""
-
-    def __init__(self,
-                 temperature: float,
-                 num_steps: int,
-                 molecule: Molecule=None,
-                 tau: float=1.,
-                 pressure: float=13.50,
-                 tauP: float=1.,
-                 step_size: float=0.005,
-                 init_temp: float=None,
-                 hoomd_args: str='',
-                 outfile_path: Path=Path.cwd(),
-                 crystal: Crystal=None,
-                 ) -> None:
-        """Create SimulationParams instance."""
-        if molecule is None and crystal is None:
-            raise ValueError('Both molecule and crystal are None, one of them needs to be defined.')
-        self._target_temp = temperature
-        self.tau = tau
-        self.pressure = pressure
-        self.tauP = tauP
-        self.step_size = step_size
-        self._molecule = molecule
-        self.num_steps = num_steps
-        self._init_temp = init_temp
-        self.outfile_path = outfile_path
-        self.hoomd_args = hoomd_args
-        self._crystal = crystal
-        self._group: hoomd.group.group = None
-
-    @property
-    def crystal(self) -> Crystal:
-        """Return the crystal if it exists."""
-        if self._crystal:
-            return self._crystal
-        raise ValueError('Crystal not found')
-
-    @property
-    def temperature(self) -> Union[float, hoomd.variant.linear_interp]:
-        """Temperature of the system."""
-        if self._init_temp:
-            return hoomd.variant.linear_interp([
-                (0, self._init_temp),
-                (int(self.num_steps*0.75), self._target_temp),
-                (self.num_steps, self._target_temp),
-            ], zero='now')
-        return self._target_temp
-
-    @property
-    def molecule(self) -> Molecule:
-        """Return the appropriate molecule."""
-        if self.crystal:
-            return self.crystal.molecule
-        return self._molecule
-
-    @property
-    def group(self) -> hoomd.group.group:
-        """Return the appropriate group."""
-        if self._group:
-            return self._group
-        if self.molecule.num_particles == 1:
-            return hoomd.group.all()
-        return hoomd.group.rigid_center()
-
-    def set_group(self, group: hoomd.group.group) -> None:
-        """Manually set integration group."""
-        self._group = group
-
-    def filename(self, prefix: str=None) -> str:
-        """Use the simulation parameters to construct a filename."""
-        return str(self.outfile_path / '-'.join(
-            [str(value)
-             for value in [prefix, self.molecule, self.pressure, self.temperature]
-             if value]))
 
 
 def set_integrator(sim_params: SimulationParams,
