@@ -227,8 +227,9 @@ def _verbosity(level: int=0) -> None:
         1: logging.INFO,
         2: logging.DEBUG,
     }
-    logging.basicConfig(level=levels.get(level))
-    root_logger.setLevel(levels.get(level))
+    log_level = levels.get(level, logging.DEBUG)
+    logging.basicConfig(level=log_level)
+    root_logger.setLevel(log_level)
 
 
 def parse_args():
