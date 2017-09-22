@@ -224,10 +224,27 @@ def create_parser():
     return parser
 
 
+def _verbosity(level: int=0) -> None:
+    root_logger = logging.getLogger('statdyn')
+    levels = {
+        0: logging.WARNING,
+        1: logging.INFO,
+        2: logging.DEBUG,
+    }
+    logging.basicConfig(level=levels.get(level))
+    root_logger.setLevel(levels.get(level))
+
+
 def parse_args():
     """Logic to parse the input arguments."""
     parser = create_parser()
     args = parser.parse_args()
+
+    # Handle verbosity
+    _verbosity(args.verbose)
+    del args.verbose
+
+    # Handle subparser function
     try:
         func = args.func
         del args.func
