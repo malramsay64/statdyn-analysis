@@ -10,12 +10,12 @@
 
 from copy import deepcopy
 from pathlib import Path
-from typing import Any, Dict, Union
+from typing import Any, Dict, Tuple, Union
 
 import hoomd
 
 from ..crystals import Crystal
-from ..molecules import Molecule
+from ..molecules import Molecule, Trimer
 
 
 class SimulationParams(object):
@@ -23,46 +23,78 @@ class SimulationParams(object):
 
     defaults = {
         'hoomd_args': '',
+        'step_size': 0.005,
+        'temperature': 0.4,
+        'tau': 1.0,
+        'pressure': 13.5,
+        'tauP': 1.0,
+        'cell_dimensions': (30, 42),
+        'outfile_path': Path.cwd(),
+        'max_gen': 500,
+        'gen_steps': 20_000,
+        'output_interval': 10_000,
     }  # type: Dict[str, Any]
 
     def __init__(self, **kwargs) -> None:
         """Create SimulationParams instance."""
         self.parameters: Dict[str, Any] = deepcopy(self.defaults)
-        self.parameters.update(**kwargs)
+        self.parameters.update(kwargs)
 
-    def __getattr__(self, attr):
-        return self.parameters.get(attr)
+    # I am using getattr over getattribute becuase of the lower search priority
+    # of getattr. This makes it a fallback, rather than the primary location
+    # for looking up attributes.
+    def __getattr__(self, key):
+        try:
+            return self.parameters.__getitem__(key)
+        except KeyError:
+            raise AttributeError
 
-    def __setattr__(self, attr):
-        return self.parameters.__setitem__(attr)
+    def __setattr__(self, key, value):
+        # setattr has a higher search priority than other functions, custom
+        # setters need to be added to the list below
+        if key in ['parameters']:
+            super().__setattr__(key, value)
+        else:
+            self.parameters.__setitem__(key, value)
 
     def __delattr__(self, attr):
         return self.parameters.__delitem__(attr)
 
     @property
-    def crystal(self) -> Crystal:
-        """Return the crystal if it exists."""
-        if self._crystal:
-            return self._crystal
-        raise ValueError('Crystal not found')
-
-    @property
     def temperature(self) -> Union[float, hoomd.variant.linear_interp]:
         """Temperature of the system."""
-        if self.init_temp:
+        try:
             return hoomd.variant.linear_interp([
-                (0, self._init_temp),
-                (int(self.num_steps*0.75), self.parameters.get('temperature')),
-                (self.num_steps, self.parameters.get('temperature')),
+                (0, self.init_temp),
+                (int(self.num_steps*0.75), self.parameters.get('temperature', self.init_temp)),
+                (self.num_steps, self.parameters.get('temperature', self.init_temp)),
             ], zero='now')
-        return self.parameters.get('temperature')
+        except AttributeError:
+            return self.parameters.get('temperature')
+
+    @temperature.setter
+    def temperature(self, value: float) -> None:
+        self.parameters['temperature'] = value
 
     @property
     def molecule(self) -> Molecule:
-        """Return the appropriate molecule."""
-        if self.crystal and not self.parameters.get('molecule'):
+        """Return the appropriate molecule.
+
+        Where there is no custom molecule defined then we return the molecule of
+        the crystal.
+
+        """
+        if self.parameters.get('crystal') is not None and self.parameters.get('molecule') is None:
             return self.crystal.molecule
-        return self.parameters.get('molecule')
+        return self.parameters.get('molecule', Trimer())
+
+    @property
+    def cell_dimensions(self) -> Tuple[int, int]:
+        try:
+            self.crystal
+            return self.parameters.get('cell_dimensions')
+        except AttributeError:
+            raise AttributeError
 
     @property
     def group(self) -> hoomd.group.group:
@@ -74,15 +106,16 @@ class SimulationParams(object):
         return hoomd.group.rigid_center()
 
     @property
-    def outdir(self) -> Path:
+    def outfile_path(self) -> Path:
         """Ensure the output directory is a path."""
-        if self.parameters.get('outdir'):
-            return Path(self.parameters.get('outdir'))
+        if self.parameters.get('outfile_path'):
+            return Path(self.parameters.get('outfile_path'))
         return Path.cwd()
 
-    def set_group(self, group: hoomd.group.group) -> None:
-        """Manually set integration group."""
-        self.parameters['group'] = group
+    @property
+    def outfile(self) -> Path:
+        """Ensure the output directory is a path."""
+        return Path(self.parameters.get('outfile'))
 
     def filename(self, prefix: str=None) -> str:
         """Use the simulation parameters to construct a filename."""
