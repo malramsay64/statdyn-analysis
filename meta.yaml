@@ -7,29 +7,27 @@ source:
 
 requirements:
     build:
-        - click 6.7*
-        - python 3.6*
+        - python {{ python }}
         - setuptools 36.2.2
         - setuptools_scm 1.15.6
 
     run:
-        - python 3.6*
+        - python {{ python }}
         - setuptools
         - hoomd 2.1*
-        - click 6.7*
         - scipy 0.19*
         - pandas 0.20*
-        - pytables 3.4.2
+        - pytables 3.4*
         - numba 0.34*
-        - numpy 1.13.1
-        - quaternion 2017.06.28*
-        - bokeh 0.12.7
-        - hsluv 0.0.2
-        - freud 0.6.2
-        - gsd 1.2.0
+        - numpy {{ numpy }}
+        - quaternion
+        - bokeh 0.12*
+        - hsluv 0.0.2*
+        - freud 0.6.2*
+        - gsd 1.2.0*
 
 build:
-    noarch: python
+    #noarch: python
     entry_points:
         - sdrun = statdyn.sdrun.main:sdrun
     preserve_egg_dir: False
