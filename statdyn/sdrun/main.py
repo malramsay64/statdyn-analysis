@@ -46,15 +46,6 @@ def sdrun():
     func(sim_params)
 
 
-def parse_args():
-    """Logic to parse the input arguments."""
-    parser = create_parser()
-    args = parser.parse_args()
-    func = args.func
-    del args.func
-    return func, SimulationParams(**vars(args))
-
-
 def prod(sim_params: SimulationParams) -> None:
     """Run simulations on equilibrated phase."""
     logger.debug('running prod')
@@ -160,8 +151,6 @@ def create_parser():
         type=str,
         help='Directory to output files to',
     )
-    parser.add_argument('--outfile', type=str)
-    parser.add_argument('--infile', type=str)
 
     parse_molecule = parser.add_argument_group('molecule')
     parse_molecule.add_argument(
@@ -194,34 +183,41 @@ def create_parser():
     )
 
     # TODO write up something useful in the help
-    subparsers = parser.add_subparsers()
-    equilibration = subparsers.add_parser('equil', add_help=False, parents=[parser])
-    equilibration.add_argument(
+    simtype = argparse.ArgumentParser(add_help=False)
+    subparsers = simtype.add_subparsers()
+    parse_equilibration = subparsers.add_parser('equil', add_help=False, parents=[parser])
+    parse_equilibration.add_argument(
         '--init-temp',
         type=float,
         help='Temperature to start equilibration from if differnt from the target.'
     )
-    equilibration.add_argument(
+    parse_equilibration.add_argument(
         '--equil-type',
         default='liquid',
         choices=EQUIL_OPTIONS.keys(),
     )
-    equilibration.set_defaults(func=equil)
+    parse_equilibration.add_argument('infile', type=str)
+    parse_equilibration.add_argument('outfile', type=str)
+    parse_equilibration.set_defaults(func=equil)
 
-    production = subparsers.add_parser('prod', add_help=False, parents=[parser])
-    production.add_argument('--no-dynamics', dest='dynamics', action='store_false')
-    production.add_argument('--dynamics', action='store_true')
-    production.set_defaults(func=prod)
+    parse_production = subparsers.add_parser('prod', add_help=False, parents=[parser])
+    parse_production.add_argument('--no-dynamics', dest='dynamics', action='store_false')
+    parse_production.add_argument('--dynamics', action='store_true')
+    parse_production.add_argument('infile', type=str)
+    parse_production.set_defaults(func=prod)
 
     parse_comp_dynamics = subparsers.add_parser('comp_dynamics', add_help=False, parents=[parser])
+    parse_comp_dynamics.add_argument('infile', type=str)
     parse_comp_dynamics.set_defaults(func=comp_dynamics)
 
     parse_create = subparsers.add_parser('create', add_help=False, parents=[parser])
     parse_create.add_argument('--interface', default=False, action='store_true')
+    parse_create.add_argument('outfile', type=str)
+
     parse_create.set_defaults(func=create)
     parse_figure = subparsers.add_parser('figure', add_help=True)
     parse_figure.set_defaults(func=figure)
-    return parser
+    return simtype
 
 
 def _verbosity(level: int=0) -> None:
