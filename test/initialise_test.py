@@ -46,13 +46,13 @@ PARAMETERS = SimulationParams(
     temperature=0.4,
     num_steps=100,
     crystal=crystals.TrimerP2(),
+    outfile_path=Path('test/tmp')
 )
 
 INIT_TEST_PARAMS = [
-    (initialise.init_from_none, '', {}),
-    (initialise.init_from_file, [create_file(), ''], {}),
-    (initialise.init_from_crystal, [
-        PARAMETERS], {'cell_dimensions': (10, 5)}),
+    (initialise.init_from_none, ''),
+    (initialise.init_from_file, [create_file(), '']),
+    (initialise.init_from_crystal, [PARAMETERS]),
 ]
 
 
@@ -64,28 +64,29 @@ def test_init_from_none():
 
 def test_initialise_snapshot():
     """Test initialisation from a snapshot works."""
-    initialise.initialise_snapshot(create_snapshot(),
-                                   hoomd.context.initialize(''),
-                                   molecules.Trimer(),
-                                   )
+    initialise.initialise_snapshot(
+        create_snapshot(),
+        hoomd.context.initialize(''),
+        molecules.Trimer(),
+    )
     assert True
 
 
-@pytest.mark.parametrize("init_func, args, kwargs", INIT_TEST_PARAMS)
-def test_init_all(init_func, args, kwargs):
+@pytest.mark.parametrize("init_func, args", INIT_TEST_PARAMS)
+def test_init_all(init_func, args):
     """Test the initialisation of all init functions."""
     if args:
-        init_func(*args, **kwargs)
+        init_func(*args)
     else:
         init_func()
     assert True
 
 
-@pytest.mark.parametrize("init_func, args, kwargs", INIT_TEST_PARAMS)
-def test_2d(init_func, args, kwargs):
+@pytest.mark.parametrize("init_func, args", INIT_TEST_PARAMS)
+def test_2d(init_func, args):
     """Test box is 2d when initialised."""
     if args:
-        sys = init_func(*args, **kwargs)
+        sys = init_func(*args)
     else:
         sys = init_func()
         assert sys.box.dimensions == 2
@@ -142,10 +143,7 @@ def test_make_orthorhombic(cell_dimensions):
 @settings(max_examples=10, timeout=0)
 def test_orthorhombic_init(cell_dimensions):
     """Ensure orthorhombic cell initialises correctly."""
-    snap = initialise.init_from_crystal(
-        PARAMETERS,
-        cell_dimensions=cell_dimensions
-    )
+    snap = initialise.init_from_crystal(PARAMETERS)
     snap_ortho = initialise.make_orthorhombic(snap)
     assert np.all(snap_ortho.particles.position ==
                   snap.particles.position)

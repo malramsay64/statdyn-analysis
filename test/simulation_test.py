@@ -21,6 +21,8 @@ from statdyn import crystals
 from statdyn.simulation import equilibrate, initialise, simrun
 from statdyn.simulation.helper import SimulationParams
 
+from .test_params import setValues
+
 OUTDIR = Path('test/tmp')
 OUTDIR.mkdir(exist_ok=True)
 
@@ -29,6 +31,7 @@ PARAMETERS = SimulationParams(
     num_steps=100,
     crystal=crystals.TrimerP2(),
     outfile_path=Path('test/tmp'),
+    dynamics=False,
 )
 
 
@@ -40,7 +43,6 @@ def test_run_npt():
         snapshot=snapshot,
         context=hoomd.context.initialize(''),
         sim_params=PARAMETERS,
-        dynamics=False,
     )
     assert True
 
@@ -53,12 +55,11 @@ def test_run_multiple_concurrent(max_initial):
     snapshot = initialise.init_from_file(
         Path('test/data/Trimer-13.50-3.00.gsd')
     )
-    simrun.run_npt(
-        snapshot,
-        context=hoomd.context.initialize(''),
-        sim_params=PARAMETERS,
-        max_initial=max_initial,
-    )
+    with setValues(PARAMETERS, max_initial=max_initial):
+        simrun.run_npt(snapshot,
+                       context=hoomd.context.initialize(''),
+                       sim_params=PARAMETERS
+                       )
     assert True
     gc.collect()
 
@@ -92,20 +93,13 @@ def test_orthorhombic_sims(cell_dimensions):
     cell_dimensions = cell_dimensions[0], cell_dimensions[1]*6
     output = Path('test/tmp')
     output.mkdir(exist_ok=True)
-    snap = initialise.init_from_crystal(
-        PARAMETERS,
-        cell_dimensions=cell_dimensions,
-    )
-    snap = equilibrate.equil_crystal(
-        snap,
-        sim_params=PARAMETERS,
-    )
-    simrun.run_npt(
-        snap,
-        context=hoomd.context.initialize(''),
-        sim_params=PARAMETERS,
-        dynamics=False,
-    )
+    with setValues(PARAMETERS, cell_dimensions=cell_dimensions):
+        snap = initialise.init_from_crystal(PARAMETERS)
+    snap = equilibrate.equil_crystal(snap, sim_params=PARAMETERS)
+    simrun.run_npt(snap,
+                   context=hoomd.context.initialize(''),
+                   sim_params=PARAMETERS,
+                   )
     assert True
     gc.collect()
 
@@ -119,11 +113,8 @@ def test_file_placement():
     for i in outdir.glob('*'):
         os.remove(str(i))
     snapshot = initialise.init_from_none()
-    simrun.run_npt(snapshot,
-                   hoomd.context.initialize(''),
-                   sim_params=PARAMETERS,
-                   dynamics=True,
-                   )
+    with setValues(PARAMETERS, dynamics=True):
+        simrun.run_npt(snapshot, hoomd.context.initialize(''), sim_params=PARAMETERS)
     assert current == list(Path('.').glob('*'))
     assert (outdir / 'Trimer-13.50-3.00.gsd').is_file()
     assert (outdir / 'dump-13.50-3.00.gsd').is_file()

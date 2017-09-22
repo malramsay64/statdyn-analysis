@@ -32,6 +32,7 @@ PARAMETERS = SimulationParams(
     num_steps=100,
     outfile_path=Path('test/data'),
     crystal=crystals.TrimerP2(),
+    cell_dimensions=(32, 40),
 )
 
 
@@ -104,9 +105,7 @@ def test_get_distance(pos_a, pos_b):
 @settings(max_examples=3, timeout=0)
 def test_cell_dimensions(cell_dimensions):
     """Test cell paramters work properly."""
-    snap = initialise.init_from_crystal(PARAMETERS,
-                                        cell_dimensions=cell_dimensions
-                                        )
+    snap = initialise.init_from_crystal(PARAMETERS)
     for i in snap.particles.position:
         distances = get_distance(i, snap.particles.position, snap.box) < 1.1
         assert np.sum(distances) <= 3

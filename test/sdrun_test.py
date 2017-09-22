@@ -18,7 +18,7 @@ def test_prod():
     subprocess.run(['ls', 'test/data'])
     command = ['sdrun',
                'prod',
-               'test/data/Trimer-13.50-3.00.gsd',
+               '--infile', 'test/data/Trimer-13.50-3.00.gsd',
                '-v',
                '-t', '3.00',
                '--no-dynamics',
@@ -38,7 +38,8 @@ def test_create(space_group):
                '-t', '2.50',
                '-s', '100',
                '--space-group', space_group,
-               'test/output/test_create.gsd',
+               '--lattice-lengths', '20', '24',
+               '--outfile', 'test/output/test_create.gsd',
                ]
     ret = subprocess.run(command)
     assert ret.returncode == 0
@@ -53,8 +54,8 @@ def test_equil():
                '-v',
                '-t', '2.50',
                '-s', '100',
-               'test/data/Trimer-13.50-3.00.gsd',
-               'test/output/test_equil.gsd',
+               '--infile', 'test/data/Trimer-13.50-3.00.gsd',
+               '--outfile', 'test/output/test_equil.gsd',
                ]
     ret = subprocess.run(command)
     assert ret.returncode == 0

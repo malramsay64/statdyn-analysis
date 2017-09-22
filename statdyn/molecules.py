@@ -39,6 +39,9 @@ class Molecule(object):
         self.particles = ['A']
         self.dimensions = 3
 
+    def __eq__(self, other) -> bool:
+        return type(self) == type(other)
+
     @property
     def num_particles(self) -> int:
         """Count of particles in the molecule."""
@@ -203,6 +206,14 @@ class Trimer(Molecule):
                                0 * moment_inertia_scale,
                                1.65 * moment_inertia_scale)
         self.dimensions = 2
+
+
+    def __eq__(self, other) -> bool:
+        if super().__eq__(other):
+            return (self.radius == other.radius and
+                    self.distance == other.distance and
+                    self.moment_inertia == other.moment_inertia)
+        return False
 
     def define_potential(self) -> hoomd.md.pair.pair:
         r"""Define the potential in the simulation context.

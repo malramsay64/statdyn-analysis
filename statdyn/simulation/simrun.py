@@ -24,8 +24,6 @@ logger = logging.getLogger(__name__)
 def run_npt(snapshot: hoomd.data.SnapshotParticleData,
             context: hoomd.context.SimulationContext,
             sim_params: SimulationParams,
-            dynamics: bool=True,
-            max_initial: int=500,
             dump_period: int=10000,
             thermo_period: int=10000,
             ) -> None:
@@ -50,10 +48,10 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
         set_dump(sim_params.filename(prefix='dump'),
                  dump_period=dump_period,
                  group=sim_params.group)
-        if dynamics:
+        if sim_params.dynamics:
             iterator = GenerateStepSeries(sim_params.num_steps,
                                           num_linear=100,
-                                          max_gen=max_initial,
+                                          max_gen=sim_params.max_gen,
                                           gen_steps=20000,
                                           )
             dumpfile = dump_frame(sim_params.filename(prefix='trajectory'),
