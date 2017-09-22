@@ -133,6 +133,6 @@ class SimulationParams(object):
             molecule=self.molecule,
             pressure=self.pressure,
             temperature=self.parameters.get('temperature'),
-            mom_inertia=self.moment_inertia_scale
+            mom_inertia=self.parameters.get('moment_inertia_scale'),
         )
         return str(self.outfile_path / fname)
