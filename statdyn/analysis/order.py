@@ -107,7 +107,7 @@ def compute_neighbours(box: np.ndarray,
 
 def compute_mol_neighbours(neighbourlist, bodies) -> List[Set[int]]:
     """Convert a particle neighbourlist to a molecular neighbourlist."""
-    mol_neighbours: List[Set[int]] = []
+    mol_neighbours = []  # type: List[Set[int]]
     nmols = bodies.max()
     for atom_index, neighbours in enumerate(neighbourlist):
         mol_index = bodies[atom_index]

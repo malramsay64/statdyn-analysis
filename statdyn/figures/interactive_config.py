@@ -73,7 +73,7 @@ def update_source(data):
     source.data = data
 
 def update_data(attr, old, new):
-    p.title.text = f'Timestep: {snapshot.configuration.step:.5g}'
+    p.title.text = 'Timestep: {:.5g}'.format(snapshot.configuration.step)
 
     data = snapshot2data(snapshot,
                          molecule=molecule,
@@ -129,7 +129,7 @@ media = widgetbox([prevFrame, play_pause, nextFrame, increment_size], width=300)
 
 # When using webgl as the backend the save option doesn't work for some reason.
 p = figure(width=920, height=800, aspect_scale=1, match_aspect=True,
-           title=f'Timestep: {timestep:.2g}',
+           title='Timestep: {:.2g}'.format(timestep),
            output_backend='webgl',
            active_scroll='wheel_zoom')
 

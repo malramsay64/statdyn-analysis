@@ -44,7 +44,7 @@ def update_file_list(attr, old, new):
 def update_file(attr, old, new):
     global dataframe
     src_fname = Path(directory.value) / new
-    logger.debug(f'Read file {src_fname}')
+    logger.debug('Read file %s', src_fname)
     dataframe = read_file(src_fname)
     update_factors(None, None, None)
     update_datacolumns(None, None, None)
@@ -83,8 +83,8 @@ factors.on_change('value', update_datacolumns)
 update_file_list(None, None, directory.value)
 
 
-logger.debug(f'Defualt colums {default_columns.data}')
-logger.debug(f'Defualt colummns columns {list(default_columns.data.keys())}')
+logger.debug('Defualt colums %s', default_columns.data)
+logger.debug('Defualt colummns columns %s',  list(default_columns.data.keys()))
 cols = list(default_columns.data.keys())
 cols.remove('x')
 x_range = None

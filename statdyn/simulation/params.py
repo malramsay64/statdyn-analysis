@@ -40,7 +40,7 @@ class SimulationParams(object):
 
     def __init__(self, **kwargs) -> None:
         """Create SimulationParams instance."""
-        self.parameters: Dict[str, Any] = deepcopy(self.defaults)
+        self.parameters = deepcopy(self.defaults)  # type: Dict[str, Any]
         self.parameters.update(kwargs)
 
     # I am using getattr over getattribute becuase of the lower search priority

@@ -16,7 +16,7 @@ from hypothesis.strategies import floats
 from statdyn.figures import colour
 
 
-@given(floats(min_value=-math.tau, max_value=math.tau))
+@given(floats(min_value=-math.pi, max_value=math.pi))
 def test_colour_orientation(orientation):
     """Ensure hex values being returned by colour_orientation."""
     int(colour.colour_orientation(orientation)[1:], 16)

@@ -36,8 +36,7 @@ def order(infile, outfile):
                 position=snapshot.particles.position,
                 orientation=snapshot.particles.orientation
             )
-            print(f'{snapshot.configuration.step}, {np.sum(order > 0.9) / len(order)}',
-                  file=dst)
+            print(snapshot.configuration.step, ',', np.sum(order > 0.9) / len(order), file=dst)
 
 
 def comp_dynamics(infile, output, gen_steps, step_limit, max_gen):

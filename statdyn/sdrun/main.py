@@ -52,7 +52,7 @@ def prod(sim_params: SimulationParams) -> None:
     logger.debug('Reading %s', sim_params.infile)
 
     snapshot = initialise.init_from_file(sim_params.infile, hoomd_args=sim_params.hoomd_args)
-    logger.debug(f'Snapshot initialised')
+    logger.debug('Snapshot initialised')
 
     sim_context = hoomd.context.initialize(sim_params.hoomd_args)
     simrun.run_npt(
