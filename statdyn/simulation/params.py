@@ -8,6 +8,7 @@
 
 """Parameters for passing between functions."""
 
+import logging
 from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Tuple, Union
@@ -16,6 +17,8 @@ import hoomd
 
 from ..crystals import Crystal
 from ..molecules import Molecule, Trimer
+
+logger = logging.getLogger(__name__)
 
 
 class SimulationParams(object):
@@ -121,14 +124,15 @@ class SimulationParams(object):
         """Use the simulation parameters to construct a filename."""
         base_string = '{molecule}-{pressure:.2f}-{temperature:.2f}'
         if prefix:
-            base_string = '{prefix}-'+base_string
+            base_string = '{prefix}-' + base_string
         if self.parameters.get('moment_inertia_scale'):
             base_string += '-{mom_inertia:.2f}'
+
         fname = base_string.format(
             prefix=prefix,
             molecule=self.molecule,
-            mom_inertia=self.moment_inertia_scale,
             pressure=self.pressure,
-            temperature=self.temperature,
+            temperature=self.parameters.get('temperature'),
+            mom_inertia=self.moment_inertia_scale
         )
         return str(self.outfile_path / fname)
