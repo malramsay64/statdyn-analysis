@@ -33,9 +33,9 @@ class Molecule(object):
 
     def __init__(self) -> None:
         """Initialise defualt properties."""
-        self.moment_inertia: Tuple[float, float, float] = (0., 0., 0.)
+        self.moment_inertia = (0., 0., 0.)  # type: Tuple[float, float, float]
         self.potential = hoomd.md.pair.lj
-        self.potential_args: Dict[Any, Any] = dict()
+        self.potential_args = dict()  # type: Dict[Any, Any]
         self.particles = ['A']
         self.dimensions = 3
 

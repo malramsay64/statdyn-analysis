@@ -34,8 +34,8 @@ class SimulationParams(object):
         'cell_dimensions': (30, 42),
         'outfile_path': Path.cwd(),
         'max_gen': 500,
-        'gen_steps': 20_000,
-        'output_interval': 10_000,
+        'gen_steps': 20000,
+        'output_interval': 10000,
     }  # type: Dict[str, Any]
 
     def __init__(self, **kwargs) -> None:

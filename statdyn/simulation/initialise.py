@@ -30,7 +30,7 @@ def init_from_file(fname: Path,
                    hoomd_args: str='',
                    ) -> hoomd.data.SnapshotParticleData:
     """Initialise a hoomd simulation from an input file."""
-    logger.debug(f'Initialising from file {fname}')
+    logger.debug('Initialising from file %s', fname)
     # Hoomd context needs to be initialised before calling gsd_snapshot
     temp_context = hoomd.context.initialize(hoomd_args)
     with temp_context:
@@ -70,7 +70,7 @@ def initialise_snapshot(snapshot: hoomd.data.SnapshotParticleData,
         except AttributeError:
             num_particles = len(snapshot.particles.position)
             num_mols = num_particles
-        logger.debug(f'Number of particles: {num_particles}, Number of molecules: {num_mols}')
+        logger.debug('Number of particles: %d , Number of molecules: %d', num_particles, num_mols)
         create_bodies = False
         if num_particles == num_mols:
             logger.info('Creating rigid bodies')
@@ -142,7 +142,7 @@ def make_orthorhombic(snapshot: hoomd.data.SnapshotParticleData
         cells.
 
     """
-    logger.debug(f'Snapshot type: {snapshot}')
+    logger.debug('Snapshot type: %s', snapshot)
     len_x = snapshot.box.Lx
     len_y = snapshot.box.Ly
     len_z = snapshot.box.Lz
@@ -151,7 +151,7 @@ def make_orthorhombic(snapshot: hoomd.data.SnapshotParticleData
     snapshot.particles.position[:, 0] %= len_x
     snapshot.particles.position[:, 0] -= len_x/2.
 
-    logger.debug(f"Updated positions: \n{snapshot.particles.position}")
+    logger.debug('Updated positions: \n%s', snapshot.particles.position)
     box = hoomd.data.boxdim(len_x, len_y, len_z, 0, 0, 0, dimensions=2)
     hoomd.data.set_snapshot_box(snapshot, box)
     return snapshot
@@ -162,13 +162,13 @@ def _check_properties(snapshot: hoomd.data.SnapshotParticleData,
                       ) -> hoomd.data.SnapshotParticleData:
     try:
         nbodies = len(snapshot.particles.body)
-        logger.debug(f'number of rigid bodies: {nbodies}')
+        logger.debug('number of rigid bodies: %d', nbodies)
         snapshot.particles.types = molecule.get_types()
         snapshot.particles.moment_inertia[:nbodies] = np.array(
             [molecule.moment_inertia] * nbodies)
     except (AttributeError, ValueError):
         num_atoms = len(snapshot.particles.position)
-        logger.debug(f'num_atoms: {num_atoms}')
+        logger.debug('num_atoms: %d', num_atoms)
         if num_atoms > 0:
             snapshot.particles.types = molecule.get_types()
             snapshot.particles.moment_inertia[:] = np.array(

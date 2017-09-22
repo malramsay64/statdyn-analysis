@@ -87,7 +87,7 @@ def set_thermo(outfile: str,
                'lx', 'ly', 'lz',
                'xy', 'xz', 'yz',
                ]
-    rigid_thermo: List[str] = []
+    rigid_thermo = []  # type: List[str]
     if rigid:
         rigid_thermo = ['temperature_rigid_center',
                         'pressure_rigid_center',

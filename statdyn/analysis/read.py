@@ -54,8 +54,8 @@ def process_gsd(infile: str,
         (py:class:`pandas.DataFrame`): DataFrame with the dynamics quantities.
 
     """
-    dataframes: List[pandas.DataFrame] = []
-    keyframes: List[dynamics] = []
+    dataframes = []  # type: List[pandas.DataFrame]
+    keyframes = []  # type: List[dynamics]
     append_file = False
     buffer_size = int(buffer_multiplier * 8192)
 

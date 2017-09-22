@@ -86,7 +86,7 @@ def exp_sequence(start: int=0,
             if step > curr_step:
                 yield step
         curr_step = start + num_linear*step_size
-        logger.debug(f'Current step {curr_step}')
+        logger.debug('Current step %d', curr_step)
         step_size *= base
 
 
@@ -106,7 +106,7 @@ class GenerateStepSeries(Iterable):
         self.curr_step = 0
         self._num_generators = 0
 
-        self.values: Dict[int, List[iterindex]] = {}
+        self.values = {}  # type: Dict[int, List[iterindex]]
         self._queue = PriorityQueue()
 
         self._add_generator()
