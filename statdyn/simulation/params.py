@@ -119,7 +119,11 @@ class SimulationParams(object):
 
     def filename(self, prefix: str=None) -> str:
         """Use the simulation parameters to construct a filename."""
-        return str(self.outfile_path / '-'.join(
-            [str(value)
-             for value in [prefix, self.molecule, self.pressure, self.temperature]
-             if value]))
+        fname_params = [
+            prefix,
+            self.molecule,
+            self.moment_inertia_scale,
+            self.pressure,
+            self.temperature,
+        ]
+        return str(self.outfile_path / '-'.join([str(value) for value in fname_params if value]))
