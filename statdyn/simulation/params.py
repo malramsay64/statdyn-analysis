@@ -125,7 +125,7 @@ class SimulationParams(object):
         base_string = '{molecule}-{pressure:.2f}-{temperature:.2f}'
         if prefix:
             base_string = '{prefix}-' + base_string
-        if self.parameters.get('moment_inertia_scale'):
+        if self.parameters.get('moment_inertia_scale') is not None:
             base_string += '-{mom_inertia:.2f}'
 
         fname = base_string.format(

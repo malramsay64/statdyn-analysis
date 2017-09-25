@@ -24,8 +24,6 @@ logger = logging.getLogger(__name__)
 def run_npt(snapshot: hoomd.data.SnapshotParticleData,
             context: hoomd.context.SimulationContext,
             sim_params: SimulationParams,
-            dump_period: int=10000,
-            thermo_period: int=10000,
             ) -> None:
     """Initialise and run a hoomd npt simulation.
 
@@ -44,9 +42,9 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
         )
         set_integrator(sim_params)
         set_thermo(sim_params.filename(prefix='thermo'),
-                   thermo_period=thermo_period)
+                   thermo_period=sim_params.output_interval)
         set_dump(sim_params.filename(prefix='dump'),
-                 dump_period=dump_period,
+                 dump_period=sim_params.output_interval,
                  group=sim_params.group)
         if sim_params.dynamics:
             iterator = GenerateStepSeries(sim_params.num_steps,
