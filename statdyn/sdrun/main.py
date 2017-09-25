@@ -67,7 +67,7 @@ def equil(sim_params: SimulationParams) -> None:
     logger.debug('Running equil')
 
     # Ensure parent directory exists
-    sim_params.outfile.parent.mkdir(exist_ok=True)
+    Path(sim_params.outfile).parent.mkdir(exist_ok=True)
 
     snapshot = initialise.init_from_file(sim_params.infile)
     EQUIL_OPTIONS.get(sim_params.equil_type)(
@@ -81,7 +81,7 @@ def create(sim_params: SimulationParams) -> None:
     logger.debug('Running create.')
     logger.debug('Interface flag: %s', sim_params.interface)
     # Ensure parent directory exists
-    sim_params.outfile.parent.mkdir(exist_ok=True)
+    Path(sim_params.outfile).parent.mkdir(exist_ok=True)
 
     snapshot = initialise.init_from_crystal(sim_params=sim_params)
 

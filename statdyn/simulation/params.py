@@ -116,9 +116,9 @@ class SimulationParams(object):
         return Path.cwd()
 
     @property
-    def outfile(self) -> Path:
+    def outfile(self) -> str:
         """Ensure the output directory is a path."""
-        return Path(self.parameters.get('outfile'))
+        return str(self.parameters.get('outfile'))
 
     def filename(self, prefix: str=None) -> str:
         """Use the simulation parameters to construct a filename."""

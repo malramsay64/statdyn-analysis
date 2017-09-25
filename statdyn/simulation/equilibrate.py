@@ -52,7 +52,7 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
         hoomd.run(sim_params.num_steps)
         logger.debug('Crystal equilibration completed')
 
-        dump_frame(sim_params.filename(), group=sim_params.group)
+        dump_frame(sim_params.outfile, group=sim_params.group)
 
         return make_orthorhombic(sys.take_snapshot())
 
@@ -82,7 +82,7 @@ def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
         )
         hoomd.run(sim_params.num_steps)
         del sim_params.group
-        dump_frame(sim_params.filename(), group=sim_params.group)
+        dump_frame(sim_params.outfile, group=sim_params.group)
         return sys.take_snapshot(all=True)
 
 
@@ -101,7 +101,7 @@ def equil_liquid(snapshot: hoomd.data.SnapshotParticleData,
         set_thermo(sim_params.filename('log'),
                    thermo_period=sim_params.output_interval)
         hoomd.run(sim_params.num_steps)
-        dump_frame(sim_params.filename(), group=sim_params.group)
+        dump_frame(sim_params.outfile, group=sim_params.group)
         return sys.take_snapshot(all=True)
 
 
