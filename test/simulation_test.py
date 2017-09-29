@@ -31,6 +31,7 @@ PARAMETERS = SimulationParams(
     num_steps=100,
     crystal=crystals.TrimerP2(),
     outfile_path=Path('test/tmp'),
+    outfile='test/tmp/testout',
     dynamics=False,
 )
 
@@ -104,19 +105,34 @@ def test_orthorhombic_sims(cell_dimensions):
     gc.collect()
 
 
-@pytest.mark.xfail
+def test_equil_file_placement():
+    outdir = Path('test/output')
+    outfile = outdir / 'test_equil'
+    current = list(Path.cwd().glob('*'))
+    for i in outdir.glob('*'):
+        os.remove(str(i))
+    with setValues(PARAMETERS, outfile_path=outdir, outfile=outfile, temperature=4.00):
+        snapshot = initialise.init_from_none()
+        equilibrate.equil_liquid(snapshot, PARAMETERS)
+        assert current == list(Path.cwd().glob('*'))
+        assert Path(outfile).is_file()
+    for i in outdir.glob('*'):
+        os.remove(str(i))
+
+
 def test_file_placement():
     """Ensure files are located in the correct directory when created."""
     outdir = Path('test/output')
-    outdir.mkdir(exist_ok=True)
-    current = list(Path('.').glob('*'))
+    current = list(Path.cwd().glob('*'))
     for i in outdir.glob('*'):
         os.remove(str(i))
-    snapshot = initialise.init_from_none()
-    with setValues(PARAMETERS, dynamics=True):
+    with setValues(PARAMETERS, outfile_path=outdir, dynamics=True, temperature=3.00):
+        snapshot = initialise.init_from_none()
         simrun.run_npt(snapshot, hoomd.context.initialize(''), sim_params=PARAMETERS)
-    assert current == list(Path('.').glob('*'))
-    assert (outdir / 'Trimer-13.50-3.00.gsd').is_file()
-    assert (outdir / 'dump-13.50-3.00.gsd').is_file()
-    assert (outdir / 'thermo-13.50-3.00.log').is_file()
-    assert (outdir / 'trajectory-13.50-3.00.gsd').is_file()
+        assert current == list(Path.cwd().glob('*'))
+        assert (outdir / 'Trimer-13.50-3.00.gsd').is_file()
+        assert (outdir / 'dump-Trimer-13.50-3.00.gsd').is_file()
+        assert (outdir / 'thermo-Trimer-13.50-3.00.log').is_file()
+        assert (outdir / 'trajectory-Trimer-13.50-3.00.gsd').is_file()
+    for i in outdir.glob('*'):
+        os.remove(str(i))

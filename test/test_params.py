@@ -10,8 +10,11 @@
 
 import logging
 from copy import deepcopy
+from pathlib import Path
 
 import pytest
+from hypothesis import example, given
+from hypothesis.strategies import text
 
 from statdyn.crystals import TrimerP2
 from statdyn.molecules import Dimer, Disc, Molecule, Sphere, Trimer
@@ -68,7 +71,10 @@ class setValues(object):
         self.params.parameters.update(self.original)
         logger.debug('Parameter on exit %s', str(self.params.parameters))
 
-@pytest.mark.parametrize('key, value', [('test', 'test')])
+
+@given(key=text(), value=text())
+@example(key='outfile', value='test')
+@example(key='outfile_path', value='testing')
 def test_setvalues(key, value):
     """Ensure setValues sets value correctly and returns to previous state.
 
@@ -80,15 +86,38 @@ def test_setvalues(key, value):
         assert sim_params.parameters.get(key) == value
     assert test_values == sim_params.parameters
 
+
 @pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_molecule(mol):
     with setValues(SIM_PARAMS, molecle=mol):
         assert SIM_PARAMS.molecle == mol
 
+
 def test_default_molecule():
     assert SIM_PARAMS.molecule == Trimer()
+
 
 def test_mol_crys():
     crys = TrimerP2()
     with setValues(SIM_PARAMS, crystal=crys):
         assert SIM_PARAMS.molecule == crys.molecule
+
+
+@pytest.mark.parametrize('outfile', [
+    'test/data',
+    Path('test/data')
+])
+def test_outfile(outfile):
+    with setValues(SIM_PARAMS, outfile=outfile):
+        assert SIM_PARAMS.parameters.get('outfile') == outfile
+        assert str(outfile) == SIM_PARAMS.outfile
+
+
+@pytest.mark.parametrize('outfile_path', [
+    'test/data',
+    Path('test/data')
+])
+def test_outdir(outfile_path):
+    with setValues(SIM_PARAMS, outfile_path=outfile_path):
+        assert SIM_PARAMS.parameters.get('outfile_path') == outfile_path
+        assert Path(outfile_path) == SIM_PARAMS.outfile_path

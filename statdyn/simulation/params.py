@@ -117,8 +117,10 @@ class SimulationParams(object):
 
     @property
     def outfile(self) -> str:
-        """Ensure the output directory is a path."""
-        return str(self.parameters.get('outfile'))
+        """Ensure the output file is a string."""
+        if self.parameters.get('outfile') is not None:
+            return str(self.parameters.get('outfile'))
+        raise AttributeError('Outfile does not exist')
 
     def filename(self, prefix: str=None) -> str:
         """Use the simulation parameters to construct a filename."""

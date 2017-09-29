@@ -57,13 +57,16 @@ def set_dump(outfile: str,
              dump_period: int=10000,
              timestep: int=0,
              group: hoomd.group.group=None,
+             extension: bool=True,
              ) -> hoomd.dump.gsd:
     """Initialise dumping configuration to a file."""
     if group is None:
         group = hoomd.group.rigid_center()
     # TODO on update to hoomd 2.2.0 change static to dynamic
+    if extension:
+        outfile += '.gsd'
     return hoomd.dump.gsd(
-        outfile+'.gsd',
+        outfile,
         time_step=timestep,
         period=dump_period,
         group=group,
