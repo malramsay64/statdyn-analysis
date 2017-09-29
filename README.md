@@ -1,56 +1,66 @@
 MD-Molecules-Hoomd
 ==================
 
-This is a set of scripts that use [Hoomd](https://bitbucket.org/glotzer/hoomd-blue) to perform the Molecular dynamics simulations of a glass forming molecular liquid. There is a particular focus on understanding the dynamic properties of these molecules.
+This is a set of scripts that use
+[Hoomd](https://bitbucket.org/glotzer/hoomd-blue) to perform the Molecular
+dynamics simulations of a glass forming molecular liquid. There is a particular
+focus on understanding the dynamic properties of these molecules.
+
+Note that this is still very early alpha software and there are likely to be
+large breaking changes that occur.
 
 Installation
 ------------
 
-There are some prerequisites for this set of scripts to run properly
- - hoomd-blue version 2.0.x
- - R
- - python numpy
- - python scipy
-and to build the documentation
- - python sphinx
- - python sphinx-rtd-theme
+The simplest method of installation is using `conda`. To install
+
+    conda install -c malramsay statdyn
 
 Running Simulations
 -------------------
 
-To set up the equilibration runs
+Interaction with the program is currently through the command line, using the
+command line arguments to specify the various parameters.
 
-    $ mkdir scratch
-    $ cd scratch
-    $ python ../TrimerEquil.py
+To create a crystal structure for a simulation run
 
-Note that using the default set of temperatures and steps will result in an equilibration that will take on the order of 3-5 days depending on configuration. There is a similar timescale for the production runs as well.
+    sdrun create --space-group p2 -s 1000 test.gsd
 
-To set up the production runs, which require the files generated in the equilibration runs, the command
+which will generate a file which has a trimer molecule with a p2 crystal
+structure. The simulation will be run for 1000 steps at a default low
+temperature to relax any stress.
 
-    $ python ../TrimerDynamics.py
+For other options see
 
-will run the simulation.
+    sdrun create --help
 
-The figures resulting from the dynamics can be produced with
+This output file we created can then be equilibrated using
 
-    $ Rscript ../figures/dynamics.R
+    sdrun equil -t 1.2 -s 1000 test.gsd test-1.2.gsd
 
-which creates a file `dynamics.pdf` in the current directory.
+which will gradually bring the temperature from the default to 1.2 over 1000
+steps with the final configuration output to `test-1.2.gsd`. This is unlikely
+to actually equilibrate this configuration, but it will run fast.
 
-Configuring Simulations
------------------------
+A production run can be run with the `prod` sub-command
 
-To configure the temperatures and timesteps of the equilibration, edit the `STEPS` and `TEMPERATURES` variables in either the `TrimerDynamics.hoomd` or the `TrimerEquil.hoomd` files.
+    sdrun prod -t 1.2 -s 1000 test-1.2.gsd
 
-The `STEPS` variables is a scaling factor for all simulations. It is a base value that applies to each temperature. The `TEMPERATURES` variable contains a list of *tuples*, which contain the temperature and a multiplier\* the `STEPS` variable. This configuration takes into account the slowing down of the dynamics at low temperatures, needing increasingly longer simulation times to reach equilibration.
+This has a different series of options including outputting a series of
+timesteps optimised for the analysis of dynamics quantities in the file
+prefixed with `trajectory-`. This dynamics optimised file can be analysed
+with
 
-Building Documentation
-----------------------
+    sdrun comp-dynamics trajectory-Trimer-13.50-1.20.gsd
 
-Assuming all the prerequisites are installed the documentation can be built using
+which will generate an hdf5 file of the same name containing a single table,
+`dynamics` which has all the dynamic quantities tabulated. This also includes
+a start index, over which statistics can be computed.
 
-    $ cd sphinx
-    $ make html
+Finally the command
 
+    sdrun figure
+
+will open up a bokeh server which will allow for the interactive visualisation
+of all `dump-*.gsd` files in the current directory.
 
