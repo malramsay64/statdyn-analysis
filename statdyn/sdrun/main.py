@@ -216,6 +216,13 @@ def create_parser():
 
     parse_create.set_defaults(func=create)
     parse_figure = subparsers.add_parser('figure', add_help=True)
+    parse_figure.add_argument(
+        '-v',
+        '--verbose',
+        action='count',
+        default=0,
+        help='Enable debug logging flags.',
+    )
     parse_figure.set_defaults(func=figure)
     return simtype
 
@@ -249,9 +256,12 @@ def parse_args():
         parser.print_help()
         exit()
 
-    if args.space_group:
-        args.crystal = CRYSTAL_FUNCS[args.space_group]()
-        del args.space_group
+    try:
+        if args.space_group:
+            args.crystal = CRYSTAL_FUNCS[args.space_group]()
+            del args.space_group
+    except AttributeError:
+        pass
 
     set_args = {key: val for key, val in vars(args).items() if val is not None}
     return func, SimulationParams(**set_args)
