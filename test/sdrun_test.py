@@ -61,6 +61,7 @@ def test_create(space_group):
                '-s', '100',
                '--space-group', space_group,
                '--lattice-lengths', '20', '24',
+               '-o', 'test/output',
                'test/output/test_create.gsd',
                ]
     ret = subprocess.run(command)
@@ -79,6 +80,7 @@ def test_create_mpi():
                '-s', '100',
                '--space-group', 'p2',
                '--lattice-lengths', '20', '24',
+               '-o', 'test/output',
                'test/output/test_create.gsd',
                ]
     command = 'mpirun -np 4'.split(' ') + command
@@ -95,6 +97,7 @@ def test_equil():
                '-v',
                '-t', '2.50',
                '-s', '100',
+               '-o', 'test/output',
                'test/data/Trimer-13.50-3.00.gsd',
                'test/output/test_equil.gsd',
                ]
@@ -112,6 +115,7 @@ def test_equil_mpi():
                '-v',
                '-t', '2.50',
                '-s', '100',
+               '-o', 'test/output',
                'test/data/Trimer-13.50-3.00.gsd',
                'test/output/test_equil.gsd',
                ]
@@ -126,6 +130,7 @@ def test_comp_dynamics():
     command = ['sdrun',
                'comp_dynamics',
                '-v',
+               '-o', 'test/output',
                'test/data/trajectory-13.50-3.00.gsd',
                ]
     ret = subprocess.run(command)
