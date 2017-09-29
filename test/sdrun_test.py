@@ -61,3 +61,20 @@ def test_equil():
     assert ret.returncode == 0
     ret = subprocess.run(command + ['--equil-type', 'interface'])
     assert ret.returncode == 0
+
+
+def test_comp_dynamics():
+    command = ['sdrun',
+               'comp_dynamics',
+               '-v',
+               'test/data/trajectory-13.50-3.00.gsd',
+               ]
+    ret = subprocess.run(command)
+    assert ret.returncode == 0
+
+
+def test_sdrun_figure():
+    command = ['sdrun',
+               'figure']
+    with pytest.raises(subprocess.TimeoutExpired):
+        ret = subprocess.run(command, timeout=1)

@@ -14,6 +14,7 @@ from pathlib import Path
 import gsd.hoomd
 import numpy as np
 
+from ..simulation.params import SimulationParams
 from .order import orientational_order
 from .read import process_gsd
 
@@ -39,12 +40,13 @@ def order(infile, outfile):
             print(snapshot.configuration.step, ',', np.sum(order > 0.9) / len(order), file=dst)
 
 
-def comp_dynamics(infile, output, gen_steps, step_limit, max_gen):
+def comp_dynamics(sim_params: SimulationParams) -> None:
     """Compute dynamic properties."""
-    outfile = str(output / Path(infile).with_suffix('.hdf5').name)
-    process_gsd(infile,
-                gen_steps=gen_steps,
-                max_gen=max_gen,
+    outfile = str(sim_params.outfile_path / Path(sim_params.infile).with_suffix('.hdf5').name)
+    step_limit = sim_params.parameters.get('num_steps')
+    process_gsd(sim_params.infile,
+                gen_steps=sim_params.gen_steps,
+                max_gen=sim_params.max_gen,
                 step_limit=step_limit,
                 outfile=outfile,
                 )
