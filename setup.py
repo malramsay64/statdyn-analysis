@@ -8,13 +8,26 @@
 
 """Command line tool to run simulations."""
 
+import numpy as np
+from Cython.Build import cythonize
 from setuptools import find_packages, setup
+from setuptools.extension import Extension
+
+extensions = [
+    Extension(
+        'statdyn.analysis.order',
+        ['statdyn/analysis/order.pyx'],
+        libraries=['m'],
+        include_dirs=[np.get_include()],
+    ),
+]
 
 setup(
     name='statdyn',
-    use_scm_version={'version_scheme':'post-release'},
-    setup_requires=[ "setuptools_scm", ],
+    use_scm_version={'version_scheme': 'post-release'},
+    setup_requires=['setuptools_scm', ],
     packages=find_packages(),
+    ext_modules=cythonize(extensions),
     include_package_data=True,
     entry_points="""
         [console_scripts]

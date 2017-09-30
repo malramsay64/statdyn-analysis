@@ -14,7 +14,8 @@ import numpy as np
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.plotting import figure
 
-from ..analysis.order import get_z_orientation, orientational_order
+from ..analysis.order import (get_z_orientation, num_neighbours,
+                              orientational_order)
 from ..molecules import Molecule, Trimer
 from .colour import colour_orientation
 
@@ -46,23 +47,32 @@ def snapshot2data(snapshot,
                   ordering=False,
                   ):
     radii = np.ones(snapshot.particles.N)
-    orientation = get_z_orientation(snapshot.particles.orientation)
+    orientation = snapshot.particles.orientation
+    angle = get_z_orientation(orientation)
     position = snapshot.particles.position
 
     nmols = max(snapshot.particles.body) + 1
     if snapshot.particles.N > nmols:
         orientation = orientation[: nmols]
+        angle = angle[: nmols]
         position = position[: nmols]
         radii = radii[: nmols]
 
+    colour = colour_orientation(angle)
+    if ordering:
+        ordered = orientational_order(snapshot.configuration.box,
+                                      position,
+                                      orientation,
+                                      3.5
+                                      ) > 0.85
+        colour[ordered] = colour_orientation(angle, light_colours=True)[ordered]
+
     if extra_particles:
-        position = molecule.orientation2positions(
-            position,
-            orientation,
-        )
+        position = molecule.orientation2positions(position, angle)
 
         logger.debug('Position shape: %s', position.shape)
         radii = np.append([], [radii*r for r in molecule.get_radii()])
+        colour = np.append([], [colour]*molecule.num_particles)
     else:
         position = snapshot.particles.position
 
@@ -70,22 +80,15 @@ def snapshot2data(snapshot,
         'x': position[:, 0],
         'y': position[:, 1],
         'radius': radii,
+        'colour': colour,
     }
-    data['colour'] = colour_orientation(orientation)
-    if ordering:
-        ordered = orientational_order(snapshot.configuration.box,
-                                      snapshot.particles.position,
-                                      snapshot.particles.orientation) > 0.85
-        data['colour'][ordered] = colour_orientation(orientation, light_colours=True)[ordered]
-    if extra_particles:
-        data['colour'] = np.append([], [data['colour']]*molecule.num_particles)
     return data
 
 
 def plot(snapshot, repeat=False, offset=False, order=False,
          extra_particles=True, source=None):
     """Plot snapshot using bokeh."""
-    data = snapshot2data(snapshot, molecule=Trimer(), extra_particles=extra_particles)
+    data = snapshot2data(snapshot, molecule=Trimer(), extra_particles=extra_particles, ordering=order)
     p = figure(aspect_scale=1, match_aspect=True, width=920, height=800,
                active_scroll='wheel_zoom')
     if source:
