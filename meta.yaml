@@ -10,6 +10,7 @@ requirements:
         - python {{ python }}
         - setuptools 36.2.2
         - setuptools_scm 1.15.6
+        - cython 0.26.*
 
     run:
         - python {{ python }}
