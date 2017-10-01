@@ -42,6 +42,24 @@ def test_z_orientation(angle):
         angle -= 2*np.pi
     assert np.isclose(computed_angle[0], angle, atol=1e-6)
 
+@pytest.mark.parametrize('infile', [
+    'test/data/Trimer-13.50-0.40-p2.gsd',
+    'test/data/Trimer-13.50-0.40-p2gg.gsd',
+    'test/data/Trimer-13.50-0.40-pg.gsd'
+])
+def test_nearest_neighbours(infile):
+    with gsd.hoomd.open(infile, 'rb') as f:
+        frame = f[0]
+        max_radius = 10
+        max_neighbours = 6
+        num_mols = frame.particles.N
+        box = frame.configuration.box
+        simulation_box = Box(box[0], box[1], is2D=True)
+        nn = NearestNeighbors(rmax=max_radius, n_neigh=max_neighbours)
+        nn.compute(simulation_box, frame.particles.position, frame.particles.position)
+    for i in range(num_mols):
+        assert np.all(nn.getNeighbors(i) < num_mols)
+
 
 @pytest.mark.parametrize('infile', [
     'test/data/Trimer-13.50-0.40-p2.gsd',
@@ -51,12 +69,30 @@ def test_z_orientation(angle):
 def test_compute_neighbours(infile):
     with gsd.hoomd.open(infile, 'rb') as f:
         frame = f[0]
+        max_radius = 10
+        max_neighbours = 6
+        num_mols = frame.particles.N
+        neighs = compute_neighbours(frame.configuration.box,
+                                    frame.particles.position,
+                                    max_radius,
+                                    max_neighbours)
+        assert np.all(neighs < num_mols)
+
+
+@pytest.mark.parametrize('infile', [
+    'test/data/Trimer-13.50-0.40-p2.gsd',
+    'test/data/Trimer-13.50-0.40-p2gg.gsd',
+    'test/data/Trimer-13.50-0.40-pg.gsd'
+])
+def test_num_neighbours(infile):
+    with gsd.hoomd.open(infile, 'rb') as f:
+        frame = f[0]
         max_radius = 3.5
         neighs = order.num_neighbours(frame.configuration.box,
                                       frame.particles.position,
                                       frame.particles.orientation,
                                       max_radius)
-        assert np.all(neighs == 6)
+    assert np.all(neighs == 6)
 
 
 def test_orientational_order():
@@ -67,4 +103,4 @@ def test_orientational_order():
                                                  frame.particles.position,
                                                  frame.particles.orientation,
                                                  max_radius)
-        assert np.allclose(orient_order, 1, atol=0.02)
+    assert np.allclose(orient_order, 1, atol=0.02)

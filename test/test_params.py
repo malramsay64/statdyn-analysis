@@ -114,8 +114,8 @@ def test_outfile(outfile):
 
 
 @pytest.mark.parametrize('outfile_path', [
-    'test/data',
-    Path('test/data')
+    'test/output',
+    Path('test/output')
 ])
 def test_outdir(outfile_path):
     with setValues(SIM_PARAMS, outfile_path=outfile_path):

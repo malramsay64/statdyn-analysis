@@ -30,7 +30,7 @@ TEST_CLASSES = [
 PARAMETERS = SimulationParams(
     temperature=0.4,
     num_steps=100,
-    outfile_path=Path('test/data'),
+    outfile_path=Path('test/output'),
     crystal=crystals.TrimerP2(),
     cell_dimensions=(32, 40),
 )

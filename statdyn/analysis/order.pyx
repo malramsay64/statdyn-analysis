@@ -30,13 +30,20 @@ cpdef compute_neighbours(np.ndarray[float, ndim=1] box,
                          float max_radius,
                          unsigned int max_neighbours):
     """Compute the neighbour list."""
-    cdef unsigned int ndim = 2
-    simulation_box = Box(*box[:ndim], is2D=True)
+    ndim = 2
+    if ndim == 2:
+        simulation_box = Box(box[0], box[1], is2D=True)
+    else:
+        simulation_box = Box(box[0], box[1], box[2], is2D=False)
+
+    cdef np.ndarray[unsigned int, ndim=2] neighs
+    neighs = np.empty((position.shape[0], max_neighbours), dtype=np.uint32)
 
     nn = NearestNeighbors(rmax=max_radius, n_neigh=max_neighbours, strict_cut=True)
     nn.compute(simulation_box, position, position)
-    return nn.getNeighborList()
 
+    neighs[...] = nn.getNeighborList()[...]
+    return neighs
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
