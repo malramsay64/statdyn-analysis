@@ -11,6 +11,7 @@
 import gsd.hoomd
 import numpy as np
 import pytest
+from freud.box import Box
 from hypothesis import given
 from hypothesis.strategies import floats
 
@@ -36,24 +37,6 @@ def test_z_orientation(angle):
         angle -= 2*np.pi
     assert np.isclose(computed_angle[0], angle, atol=1e-6)
 
-@pytest.mark.parametrize('infile', [
-    'test/data/Trimer-13.50-0.40-p2.gsd',
-    'test/data/Trimer-13.50-0.40-p2gg.gsd',
-    'test/data/Trimer-13.50-0.40-pg.gsd'
-])
-def test_nearest_neighbours(infile):
-    with gsd.hoomd.open(infile, 'rb') as f:
-        frame = f[0]
-        max_radius = 10
-        max_neighbours = 6
-        num_mols = frame.particles.N
-        box = frame.configuration.box
-        simulation_box = Box(box[0], box[1], is2D=True)
-        nn = NearestNeighbors(rmax=max_radius, n_neigh=max_neighbours)
-        nn.compute(simulation_box, frame.particles.position, frame.particles.position)
-    for i in range(num_mols):
-        assert np.all(nn.getNeighbors(i) < num_mols)
-
 
 @pytest.mark.parametrize('infile', [
     'test/data/Trimer-13.50-0.40-p2.gsd',
@@ -66,10 +49,10 @@ def test_compute_neighbours(infile):
         max_radius = 10
         max_neighbours = 6
         num_mols = frame.particles.N
-        neighs = compute_neighbours(frame.configuration.box,
-                                    frame.particles.position,
-                                    max_radius,
-                                    max_neighbours)
+        neighs = order.compute_neighbours(frame.configuration.box,
+                                          frame.particles.position,
+                                          max_radius,
+                                          max_neighbours)
         assert np.all(neighs < num_mols)
 
 
