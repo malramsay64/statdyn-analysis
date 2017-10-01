@@ -25,10 +25,10 @@ from libc cimport math
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef compute_neighbours(np.ndarray[float, ndim=1] box,
-                         np.ndarray[float, ndim=2] position,
-                         float max_radius,
-                         unsigned int max_neighbours):
+def compute_neighbours(box: np.ndarray,
+                       position: np.ndarray,
+                       max_radius: float,
+                       max_neighbours: int ):
     """Compute the neighbour list."""
     ndim = 2
     if ndim == 2:
@@ -45,35 +45,6 @@ cpdef compute_neighbours(np.ndarray[float, ndim=1] box,
     neighs[...] = nn.getNeighborList()[...]
     return neighs
 
-@cython.boundscheck(False)
-@cython.wraparound(False)
-cpdef compute_mol_neighbours(np.ndarray[unsigned int, ndim=2] neighbourlist,
-                             np.ndarray[unsigned int, ndim=1] bodies,
-                             unsigned int max_neighbours=7):
-    """Convert a particle neighbourlist to a molecular neighbourlist."""
-    cdef unsigned int nmols = bodies.max() + 1
-    cdef unsigned int mol_index
-    cdef unsigned int no_value = np.iinfo(np.uint32).max
-    cdef unsigned int num_particles = bodies.shape[0]
-    cdef unsigned int num_neighs = neighbourlist.shape[1]
-    cdef unsigned int i, n, atom_index
-    cdef np.ndarray[unsigned int, ndim=2] mol_neighbours
-
-    mol_neighbours = np.full((nmols, max_neighbours), no_value, dtype=np.uint32)
-
-    with nogil:
-        for atom_index in range(num_particles):
-            mol_index = bodies[atom_index]
-            for n in range(num_neighs):
-                for i in range(max_neighbours):
-                    # We reach the end of the added neighbours without finding ourself
-                    if mol_neighbours[mol_index, i] == no_value:
-                        mol_neighbours[mol_index, i] = neighbourlist[atom_index, n]
-                        break
-                        # We already exist in the list
-                    elif mol_neighbours[mol_index, i] == neighbourlist[atom_index, n]:
-                        break
-    return mol_neighbours
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
@@ -124,10 +95,11 @@ cpdef orientational_order(np.ndarray[float, ndim=1] box: np.ndarray,
             num_neighbours = 0
             for n in range(max_neighbours):
                 curr_neighbour = neighbourlist[mol_index, n]
-                if curr_neighbour == no_value:
+                if curr_neighbour < num_mols:
+                    order_parameter[mol_index] += math.fabs(math.cos(angles[mol_index] - angles[curr_neighbour]))
+                    num_neighbours += 1
+                else:
                     break
-                order_parameter[mol_index] += math.fabs(math.cos(angles[mol_index] - angles[curr_neighbour]))
-                num_neighbours += 1
             if num_neighbours > 1:
                 order_parameter[mol_index] /= num_neighbours
             else:
@@ -138,7 +110,7 @@ cpdef orientational_order(np.ndarray[float, ndim=1] box: np.ndarray,
 
 @cython.boundscheck(False)
 @cython.wraparound(False)
-cpdef np.ndarray[float, ndim=1] get_z_orientation(np.ndarray[float, ndim=2] orientations):
+cpdef get_z_orientation(np.ndarray[float, ndim=2] orientations):
     r"""Get the z component of the molecular orientation.
 
     This function converts the quaternion representing the orientation to a
