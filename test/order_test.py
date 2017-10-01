@@ -14,13 +14,7 @@ import pytest
 from hypothesis import given
 from hypothesis.strategies import floats
 
-# Allowing for more interactive updating of tests running cython code
-try:
-    import pyximport
-    pyximport.install()
-    from statdyn.analysis import order
-except ModuleNoeFoundError:
-    from statdyn.analysis import order
+from statdyn.analysis import order
 
 
 def z_angle_to_quat(theta):
