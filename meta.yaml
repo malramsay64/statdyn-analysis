@@ -11,6 +11,7 @@ requirements:
         - setuptools 36.2.2
         - setuptools_scm 1.15.6
         - cython 0.26.*
+        - numpy {{ numpy }}
 
     run:
         - python {{ python }}
@@ -26,9 +27,9 @@ requirements:
         - hsluv 0.0.2*
         - freud 0.6.2*
         - gsd 1.2.0*
+        - cython 0.26.*
 
 build:
-    #noarch: python
     entry_points:
         - sdrun = statdyn.sdrun.main:sdrun
     preserve_egg_dir: False
@@ -43,4 +44,4 @@ test:
         - test/*
     commands:
         - python -c "import statdyn"
-        - pytest
+        - pytest -v
