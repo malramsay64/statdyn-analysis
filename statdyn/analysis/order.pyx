@@ -17,7 +17,6 @@ import cython
 import numpy as np
 from freud.box import Box
 from freud.locality import NearestNeighbors
-from quaternion import as_quat_array, as_rotation_vector
 
 from statdyn.molecules import Molecule, Trimer
 
@@ -39,8 +38,8 @@ cpdef compute_neighbours(np.ndarray[np.float32_t, ndim=1] box,
     else:
         simulation_box = Box(box[0], box[1], box[2], is2D=False)
 
-    cdef np.ndarray[unsigned int, ndim=2] neighs
-    neighs = np.empty((position.shape[0], max_neighbours), dtype=np.uint32)
+    cdef np.ndarray[np.uint32_t, ndim=2] neighs
+    neighs = np.empty([position.shape[0], max_neighbours], dtype=np.uint32)
 
     nn = NearestNeighbors(rmax=max_radius, n_neigh=max_neighbours, strict_cut=True)
     nn.compute(simulation_box, position, position)
@@ -54,7 +53,7 @@ cpdef num_neighbours(np.ndarray[float, ndim=1] box,
                      np.ndarray[float, ndim=2] orientation,
                      float max_radius=3.5):
     cdef unsigned int max_neighbours = 8
-    cdef unsigned int num_mols = position.shape[0]
+    cdef Py_ssize_t num_mols = position.shape[0]
     cdef unsigned int no_value = UINT_MAX
     cdef np.ndarray[unsigned int, ndim=2] neighbourlist
     cdef np.ndarray[unsigned int, ndim=1] n_neighs
@@ -79,7 +78,7 @@ cpdef orientational_order(np.ndarray[float, ndim=1] box: np.ndarray,
     cdef unsigned int no_value = UINT_MAX
     cdef unsigned int max_neighbours = 8
     cdef unsigned int num_mols = position.shape[0]
-    cdef unsigned int mol_index, n, num_neighbours, curr_neighbour
+    cdef Py_ssize_t mol_index, n, num_neighbours, curr_neighbour
 
     cdef np.ndarray[unsigned int, ndim=2] neighbourlist
     cdef np.ndarray[float, ndim=1] order_parameter
