@@ -88,7 +88,10 @@ def snapshot2data(snapshot,
 def plot(snapshot, repeat=False, offset=False, order=False,
          extra_particles=True, source=None):
     """Plot snapshot using bokeh."""
-    data = snapshot2data(snapshot, molecule=Trimer(), extra_particles=extra_particles, ordering=order)
+    data = snapshot2data(snapshot,
+                         molecule=Trimer(),
+                         extra_particles=extra_particles,
+                         ordering=order)
     p = figure(aspect_scale=1, match_aspect=True, width=920, height=800,
                active_scroll='wheel_zoom')
     if source:
