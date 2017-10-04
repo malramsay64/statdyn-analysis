@@ -14,8 +14,8 @@ import numpy as np
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.plotting import figure
 
-from ..analysis.order import (get_z_orientation, num_neighbours,
-                              orientational_order)
+from ..analysis.order import num_neighbours, orientational_order
+from ..math_helper import quaternion2z
 from ..molecules import Molecule, Trimer
 from .colour import colour_orientation
 
@@ -48,7 +48,7 @@ def snapshot2data(snapshot,
                   ):
     radii = np.ones(snapshot.particles.N)
     orientation = snapshot.particles.orientation
-    angle = get_z_orientation(orientation)
+    angle = quaternion2z(orientation)
     position = snapshot.particles.position
 
     nmols = max(snapshot.particles.body) + 1

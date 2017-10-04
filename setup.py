@@ -20,6 +20,12 @@ extensions = [
         libraries=['m'],
         include_dirs=[np.get_include()],
     ),
+    Extension(
+        'statdyn.math_helper',
+         ['statdyn/math_helper.pyx'],
+        libraries=['m'],
+        include_dirs=[np.get_include()],
+    ),
 ]
 
 setup(
