@@ -49,8 +49,6 @@ def test_quaternion2z(quat):
     quat = quat / np.linalg.norm(quat, axis=1)
     result = quaternion2z(quat)
     assert np.abs(result) < np.pi + EPS
-    if abs(quat[:, 0]) > EPS and result > EPS:
-        assert np.sign(result) == np.sign(quat[:, 0])
 
 
 @settings(max_examples=1000)
@@ -86,3 +84,18 @@ def test_angle_roundtrip(angles):
     # print('Result: ', np.cos(result), 'diff: ', angles-result)
     assert np.allclose(np.cos(result), np.cos(angles), atol=2*get_quat_eps())
     assert np.allclose(np.cos(result_angle), np.cos(angles), atol=2*get_quat_eps())
+
+
+@pytest.mark.parametrize('quaternion, angle', [
+    ([ 0.98246199,  0.        ,  0.        ,  0.18646298],  0.37512138),
+    ([ 0.20939827,  0.        ,  0.        ,  0.97783041],  2.7196734 ),
+    ([ 0.97660005,  0.        ,  0.        , -0.21506353], -0.43351361),
+    ([-0.21179545,  0.        ,  0.        ,  0.977314  ], -2.71476936),
+])
+def test_quaternion2z_specifics(quaternion, angle):
+    """Test a few specific examples of converting a quaternion to an angle.
+
+    The four values here are the angles in the p2gg crystal structure of the trimer,
+    which are also in the four different quadrants of the 2d plane.
+    """
+    assert np.allclose(quaternion2z(np.array([quaternion], dtype=np.float32)), angle, atol=get_quat_eps())
