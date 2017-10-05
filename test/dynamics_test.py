@@ -13,7 +13,6 @@ import pytest
 from hypothesis import given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
-from quaternion import as_quat_array, rotation_intrinsic_distance
 
 from statdyn.analysis import dynamics
 
@@ -113,16 +112,10 @@ def test_rotationalDisplacement(init, final):
     """
     init = init / np.linalg.norm(init, axis=1)
     final = final / np.linalg.norm(final, axis=1)
-    init_quat = as_quat_array(init)
-    final_quat = as_quat_array(final)
-    result = np.zeros(len(init))
-    ref_res = np.empty(len(init))
+    result = np.zeros(init.shape[0])
+    ref_res = np.empty(init.shape[0])
     dynamics.rotationalDisplacement(init, final, result)
     rotationalDisplacement_reference(init, final, ref_res)
-    quat_res = []
-    for i, f in zip(init_quat, final_quat):
-        quat_res.append(rotation_intrinsic_distance(i, f))
-    assert np.allclose(result, np.array(quat_res), equal_nan=True, atol=5e-6)
     assert np.allclose(result, ref_res, equal_nan=True)
 
 
@@ -140,8 +133,7 @@ def test_overlap(displacement, rotation):
     overlap_same = dynamics.mobile_overlap(rotation, rotation)
     assert np.isclose(overlap_same, 1)
     overlap = dynamics.mobile_overlap(displacement, rotation)
-    assert overlap <= 1.
-    assert overlap >= 0.
+    assert 0. <= overlap <= 1.
 
 
 @given(arrays(np.float64, (100), elements=floats(0, 10)),
@@ -151,5 +143,4 @@ def test_spearman_rank(displacement, rotation):
     spearman_same = dynamics.spearman_rank(rotation, rotation)
     assert np.isclose(spearman_same, 1)
     spearman = dynamics.spearman_rank(rotation, rotation)
-    assert spearman <= 1
-    assert spearman >= -1
+    assert -1 <= spearman <= 1

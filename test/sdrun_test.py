@@ -28,12 +28,10 @@ def test_prod():
                ]
     ret = subprocess.run(command)
     assert ret.returncode == 0
-    ret = subprocess.run(['mpirun', '-np', '4'] + command)
-    assert ret.returncode == 0
 
 
-@pytest.mark.skipif(sys.platform == 'darwin', reason='No MPI on macOS')
-def test_prod():
+@pytest.mark.skipif(sys.platform == 'darwin', reason='No MPI support on macOS')
+def test_prod_mpi():
     """Ensure sdrun prod works."""
     subprocess.run(['ls', 'test/data'])
     command = ['sdrun',
@@ -46,7 +44,6 @@ def test_prod():
                '-o', 'test/output',
                ]
     command = 'mpirun -np 4'.split(' ') + command
-    ret = subprocess.run(command)
     ret = subprocess.run(command)
     assert ret.returncode == 0
 
@@ -70,7 +67,7 @@ def test_create(space_group):
     assert ret.returncode == 0
 
 
-@pytest.mark.skipif(sys.platform == 'darwin', reason='No MPI on macOS')
+@pytest.mark.skipif(sys.platform == 'darwin', reason='No MPI support on macOS')
 def test_create_mpi():
     """Ensure sdrun create works."""
     command = ['sdrun',
@@ -107,7 +104,7 @@ def test_equil():
     assert ret.returncode == 0
 
 
-@pytest.mark.skipif(sys.platform == 'darwin', reason='No MPI on macOS')
+@pytest.mark.skipif(sys.platform == 'darwin', reason='No MPI support on macOS')
 def test_equil_mpi():
     """Ensure sdrun create works."""
     command = ['sdrun',

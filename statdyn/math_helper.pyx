@@ -69,9 +69,10 @@ cpdef np.ndarray[float, ndim=1] quaternion_angle(
 cpdef np.ndarray[float, ndim=2] z2quaternion(
         np.ndarray[float, ndim=1] theta
 ):
-    cdef Py_ssize_t i, nitems = theta.shape[0]
-    cdef float angle
+    cdef Py_ssize_t i
+    cdef Py_ssize_t nitems = theta.shape[0]
     cdef Py_ssize_t w_pos = 0, z_pos = 3
+    cdef float angle
     cdef np.ndarray[float, ndim=2] result
 
     result = np.zeros([nitems, 4], dtype=np.float32)
@@ -79,7 +80,7 @@ cpdef np.ndarray[float, ndim=2] z2quaternion(
     for i in range(nitems):
         angle = theta[i]/2.
         if close(angle, 0):
-            result[i, w_pos] = angle
+            result[i, w_pos] = 1.
         else:
             result[i, w_pos] = cos(angle)
             result[i, z_pos] = sin(angle)

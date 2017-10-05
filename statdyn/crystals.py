@@ -5,9 +5,9 @@ import math
 
 import hoomd
 import numpy as np
-import quaternion as qt
 
 from . import molecules
+from .math_helper import z2quaternion
 
 
 class Crystal(object):
@@ -97,12 +97,12 @@ class Crystal(object):
             angle (float): The angle that a molecule is oriented
 
         Returns:
-            class:`numpy.quaternion`: Quaternion representation of the angle
+            class:`numpy.ndarray`: Quaternion representation of the angles
 
         """
-        angles = self._orientations * (math.pi / 180)
-        return qt.as_float_array(np.array(
-            [qt.from_rotation_vector((0, 0, angle)) for angle in angles]))
+        # Convert from degrees to radians
+        angles = (self._orientations * (math.pi / 180)).astype(np.float32)
+        return z2quaternion(angles)
 
     def get_num_molecules(self):
         """Return the number of molecules."""

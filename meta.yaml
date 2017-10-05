@@ -15,16 +15,12 @@ requirements:
 
     run:
         - python {{ python }}
-        - setuptools
         - hoomd 2.1*
         - scipy 0.19*
         - pandas 0.20*
         - pytables 3.4*
-        - numba 0.34*
         - numpy {{ numpy }}
-        - quaternion
         - bokeh 0.12*
-        - hsluv 0.0.2*
         - freud 0.6.2*
         - gsd 1.2.0*
         - cython 0.26.*

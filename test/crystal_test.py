@@ -47,7 +47,7 @@ def test_get_orientations(crys_class):
     """Test the orientation is returned as a float."""
     crys = crys_class()
     orient = crys.get_orientations()
-    assert orient.dtype == float
+    assert orient.dtype == np.float32
 
 
 @pytest.mark.parametrize("crys_class", TEST_CLASSES)
