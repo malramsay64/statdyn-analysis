@@ -13,8 +13,7 @@ from pathlib import Path
 
 import gsd.hoomd
 from bokeh.layouts import column, row, widgetbox
-from bokeh.models import (Button, ColumnDataSource, Select, Slider, TextInput,
-                          Toggle)
+from bokeh.models import Button, ColumnDataSource, Select, Slider, Toggle
 from bokeh.plotting import curdoc, figure
 from tornado import gen
 
@@ -31,9 +30,14 @@ molecule = Trimer()
 default_dir = '.'
 timestep = 0
 Lx, Ly = (60, 60)
-source = ColumnDataSource(data={})
+source = ColumnDataSource(data={'x': [0], 'y': [0], 'radius': [1], 'colour': ['red']})
 play = False
 doc = curdoc()
+
+
+def get_filename():
+    return str(Path.cwd() / directory.value / fname.value)
+
 
 def update_files(attr, old, new):
     fname.options = new
@@ -41,36 +45,47 @@ def update_files(attr, old, new):
         fname.value = new[0]
     update_trajectory(None, None, fname.value)
 
+
 def update_trajectory(attr, old, new):
     global trj
-    trj = gsd.hoomd.open(
-        str(Path(directory.value) / new), 'rb')
-    index.end = len(trj) - 1
+    trj = gsd.hoomd.open(get_filename(), 'rb')
+    # Bokeh will cope with IndexError in file but not beginning and end
+    # of slider being the same value.
+    index.end = max(len(trj) - 1, 1)
     if index.value > len(trj) - 1:
         update_index(None, None, len(trj)-1)
     else:
         update_index(None, None, index.value)
 
+
 def update_index(attr, old, new):
     update_snapshot(attr, old, int(new))
+
 
 def incr_index():
     if index.value < index.end:
         index.value += increment_size.value
 
+
 def decr_index():
     if index.value > index.start:
         index.value -= increment_size.value
 
+
 def update_snapshot(attr, old, new):
     if old != new:
         global snapshot
-        snapshot = trj[new]
+        try:
+            snapshot = trj[new]
+        except IndexError:
+            pass
         update_data(None, None, None)
+
 
 @gen.coroutine
 def update_source(data):
     source.data = data
+
 
 def update_data(attr, old, new):
     p.title.text = 'Timestep: {:.5g}'.format(snapshot.configuration.step)
@@ -80,17 +95,17 @@ def update_data(attr, old, new):
                          extra_particles=extra_particles,
                          ordering=ordered.active,
                          )
-    try:
-        doc.add_next_tick_callback(partial(update_source, data=data))
-    except ValueError:
-        pass
+    source.data = data
+
 
 def update_data_now(arg):
     update_data(None, None, None)
 
+
 def update_directory(attr, old, new):
-    files = sorted([filename.name for filename in Path(new).glob('dump*.gsd')])
+    files = sorted([filename.name for filename in Path(directory.value).glob('dump*.gsd')])
     update_files(None, None, files)
+
 
 def play_pause_toggle(arg):
     if arg:
@@ -98,7 +113,9 @@ def play_pause_toggle(arg):
     else:
         doc.remove_periodic_callback(incr_index)
 
-directory = TextInput( value=default_dir, title='Source directory', width=300,)
+
+DIR_OPTIONS = sorted([d.parts[-1] for d in Path.cwd().glob('*/') if d.is_dir()])
+directory = Select(value=DIR_OPTIONS[-1], title='Source directory', options=DIR_OPTIONS)
 directory.on_change('value', update_directory)
 
 fname = Select(title='File', value='', options=[])
@@ -134,6 +151,7 @@ p = figure(width=920, height=800, aspect_scale=1, match_aspect=True,
            active_scroll='wheel_zoom')
 
 update_directory(None, None, default_dir)
+update_data(None, None, None)
 
 plot_circles(p, source)
 
