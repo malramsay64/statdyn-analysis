@@ -146,6 +146,11 @@ class Molecule(object):
     def __str__(self) -> str:
         return type(self).__name__
 
+    def scale_moment_inertia(self, scale_factor: float) -> None:
+        """Scale the moment of inertia by a constant factor."""
+        i_x, i_y, i_z = self.moment_inertia
+        self.moment_inertia = (i_x * scale_factor, i_y * scale_factor, i_z * scale_factor)
+
 
 class Disc(Molecule):
     """Defines a 2D particle."""

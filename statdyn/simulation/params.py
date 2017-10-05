@@ -87,9 +87,19 @@ class SimulationParams(object):
         the crystal.
 
         """
-        if self.parameters.get('crystal') is not None and self.parameters.get('molecule') is None:
-            return self.crystal.molecule
-        return self.parameters.get('molecule', Trimer())
+        if self.parameters.get('molecule') is not None:
+            mol = self.parameters.get('molecule')
+        if self.parameters.get('crystal') is not None:
+            mol = self.crystal.molecule
+        else:
+            mol = Trimer()
+
+        if self.parameters.get('moment_inertia_scale') is not None:
+            mol = deepcopy(mol)
+            mol.scale_moment_inertia(self.parameters.get('moment_inertia_scale'))
+
+        return mol
+
 
     @property
     def cell_dimensions(self) -> Tuple[int, int]:
@@ -124,11 +134,11 @@ class SimulationParams(object):
 
     def filename(self, prefix: str=None) -> str:
         """Use the simulation parameters to construct a filename."""
-        base_string = '{molecule}-{pressure:.2f}-{temperature:.2f}'
+        base_string = '{molecule}-P{pressure:.2f}-T{temperature:.2f}'
         if prefix:
             base_string = '{prefix}-' + base_string
         if self.parameters.get('moment_inertia_scale') is not None:
-            base_string += '-{mom_inertia:.2f}'
+            base_string += '-I{mom_inertia:.2f}'
 
         fname = base_string.format(
             prefix=prefix,

@@ -119,11 +119,6 @@ def create_parser():
         help='The number of steps for which to run the simulation.',
     )
     parser.add_argument(
-        '--moment-inertia-scale',
-        type=float,
-        help='Scaling factor for the moment of inertia.',
-    )
-    parser.add_argument(
         '--output-interval',
         type=int,
         help='Steps between output of dump and thermodynamic quantities.'
@@ -156,6 +151,11 @@ def create_parser():
     parse_molecule.add_argument(
         '--molecule',
         choices=MOLECULE_OPTIONS.keys(),
+    )
+    parse_molecule.add_argument(
+        '--moment-inertia-scale',
+        type=float,
+        help='Scaling factor for the moment of inertia.',
     )
 
     parse_crystal = parser.add_argument_group('crystal')
