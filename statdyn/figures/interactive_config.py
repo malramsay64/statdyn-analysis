@@ -104,7 +104,8 @@ def update_data_now(arg):
 
 def update_directory(attr, old, new):
     files = sorted([filename.name for filename in Path(directory.value).glob('dump*.gsd')])
-    update_files(None, None, files)
+    if files:
+        update_files(None, None, files)
 
 
 def play_pause_toggle(arg):
@@ -114,7 +115,7 @@ def play_pause_toggle(arg):
         doc.remove_periodic_callback(incr_index)
 
 
-DIR_OPTIONS = sorted([d.parts[-1] for d in Path.cwd().glob('*/') if d.is_dir()])
+DIR_OPTIONS = sorted([d.parts[-1] for d in Path.cwd().glob('*/') if d.is_dir() and len(list(d.glob('dump*.gsd')))])
 directory = Select(value=DIR_OPTIONS[-1], title='Source directory', options=DIR_OPTIONS)
 directory.on_change('value', update_directory)
 
