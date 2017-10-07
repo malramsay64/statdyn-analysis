@@ -14,6 +14,7 @@ from pathlib import Path
 from subprocess import run
 
 import hoomd.context
+from pkg_resources import DistributionNotFound, get_distribution
 
 from ..analysis.run_analysis import comp_dynamics
 from ..crystals import CRYSTAL_FUNCS
@@ -22,6 +23,13 @@ from ..simulation import equilibrate, initialise, simrun
 from ..simulation.params import SimulationParams
 
 logger = logging.getLogger(__name__)
+
+
+try:
+    __version__ = get_distribution('statdyn').version
+except DistributionNotFound:
+    # package is not installed
+    pass
 
 
 MOLECULE_OPTIONS = {
@@ -92,11 +100,11 @@ def create(sim_params: SimulationParams) -> None:
     )
 
 
-def figure(show_fig: str) -> None:
+def figure(args) -> None:
     """Start bokeh server with the file passed."""
     fig_file = Path(__file__).parents[1] / 'figures/interactive_config.py'
     try:
-        run(['bokeh', 'serve', '--show', str(fig_file)])
+        run(['bokeh', 'serve', '--show', str(fig_file)] + args.bokeh)
     except ProcessLookupError:
         logger.info('Bokeh server terminated.')
 
@@ -105,13 +113,6 @@ def create_parser():
     """Create the argument parser."""
     parser = argparse.ArgumentParser()
 
-    parser.add_argument(
-        '-v',
-        '--verbose',
-        action='count',
-        default=0,
-        help='Enable debug logging flags.',
-    )
     parser.add_argument(
         '-s', '--steps',
         dest='num_steps',
@@ -182,10 +183,25 @@ def create_parser():
         type=int
     )
 
+    default_parser = argparse.ArgumentParser(add_help=False)
+    default_parser.add_argument(
+        '-v',
+        '--verbose',
+        action='count',
+        default=0,
+        help='Enable debug logging flags.',
+    )
+    default_parser.add_argument(
+        '--version',
+        action='version',
+        version='sdrun {0}'.format(__version__)
+    )
+
+
     # TODO write up something useful in the help
-    simtype = argparse.ArgumentParser(add_help=False)
+    simtype = argparse.ArgumentParser(add_help=False, parents=[default_parser])
     subparsers = simtype.add_subparsers()
-    parse_equilibration = subparsers.add_parser('equil', add_help=False, parents=[parser])
+    parse_equilibration = subparsers.add_parser('equil', add_help=False, parents=[parser, default_parser])
     parse_equilibration.add_argument(
         '--init-temp',
         type=float,
@@ -200,28 +216,26 @@ def create_parser():
     parse_equilibration.add_argument('outfile', type=str)
     parse_equilibration.set_defaults(func=equil)
 
-    parse_production = subparsers.add_parser('prod', add_help=False, parents=[parser])
+    parse_production = subparsers.add_parser('prod', add_help=False, parents=[parser, default_parser])
     parse_production.add_argument('--no-dynamics', dest='dynamics', action='store_false')
     parse_production.add_argument('--dynamics', action='store_true')
     parse_production.add_argument('infile', type=str)
     parse_production.set_defaults(func=prod)
 
-    parse_comp_dynamics = subparsers.add_parser('comp_dynamics', add_help=False, parents=[parser])
+    parse_comp_dynamics = subparsers.add_parser('comp_dynamics', add_help=False, parents=[parser, default_parser])
     parse_comp_dynamics.add_argument('infile', type=str)
     parse_comp_dynamics.set_defaults(func=comp_dynamics)
 
-    parse_create = subparsers.add_parser('create', add_help=False, parents=[parser])
+    parse_create = subparsers.add_parser('create', add_help=False, parents=[parser, default_parser])
     parse_create.add_argument('--interface', default=False, action='store_true')
     parse_create.add_argument('outfile', type=str)
 
     parse_create.set_defaults(func=create)
-    parse_figure = subparsers.add_parser('figure', add_help=True)
+    parse_figure = subparsers.add_parser('figure', add_help=True, parents=[default_parser])
     parse_figure.add_argument(
-        '-v',
-        '--verbose',
-        action='count',
-        default=0,
-        help='Enable debug logging flags.',
+        'bokeh',
+        nargs='*',
+        default='',
     )
     parse_figure.set_defaults(func=figure)
     return simtype
