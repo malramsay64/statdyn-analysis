@@ -103,8 +103,9 @@ class dynamics(object):
                    orientation: np.ndarray=None,
                    ) -> pandas.Series:
         """Compute all dynamics quantities of interest."""
-        delta_rotation = np.empty(self.num_particles, dtype=self.dyn_dtype)
-        rotationalDisplacement(self.orientation, orientation, delta_rotation)
+        delta_rotation = np.zeros(self.num_particles, dtype=self.dyn_dtype)
+        if orientation is not None:
+            rotationalDisplacement(self.orientation, orientation, delta_rotation)
 
         delta_displacement = np.empty(self.num_particles, dtype=self.dyn_dtype)
         translationalDisplacement(self.box, self.position, position, delta_displacement)

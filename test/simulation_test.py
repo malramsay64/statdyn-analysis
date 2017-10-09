@@ -130,9 +130,9 @@ def test_file_placement():
         snapshot = initialise.init_from_none()
         simrun.run_npt(snapshot, hoomd.context.initialize(''), sim_params=PARAMETERS)
         assert current == list(Path.cwd().glob('*'))
-        assert (outdir / 'Trimer-13.50-3.00.gsd').is_file()
-        assert (outdir / 'dump-Trimer-13.50-3.00.gsd').is_file()
-        assert (outdir / 'thermo-Trimer-13.50-3.00.log').is_file()
-        assert (outdir / 'trajectory-Trimer-13.50-3.00.gsd').is_file()
+        assert (outdir / 'Trimer-P13.50-T3.00.gsd').is_file()
+        assert (outdir / 'dump-Trimer-P13.50-T3.00.gsd').is_file()
+        assert (outdir / 'thermo-Trimer-P13.50-T3.00.log').is_file()
+        assert (outdir / 'trajectory-Trimer-P13.50-T3.00.gsd').is_file()
     for i in outdir.glob('*'):
         os.remove(str(i))

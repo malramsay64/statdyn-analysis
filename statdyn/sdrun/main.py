@@ -235,7 +235,7 @@ def create_parser():
     parse_figure.add_argument(
         'bokeh',
         nargs='*',
-        default='',
+        default=[],
     )
     parse_figure.set_defaults(func=figure)
     return simtype

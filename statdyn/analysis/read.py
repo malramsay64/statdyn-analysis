@@ -61,7 +61,7 @@ def process_gsd(infile: str,
 
     curr_step = 0
     with gsd.hoomd.open(infile, 'rb') as src:
-        if step_limit:
+        if step_limit is not None:
             num_steps = step_limit
         else:
             num_steps = src[-1].configuration.step

@@ -8,11 +8,14 @@
 
 """Test the statdyn.analysis.read module."""
 
+import numpy as np
 import pytest
 
 from statdyn.analysis import read
+from statdyn.StepSize import GenerateStepSeries
 
 
-@pytest.mark.parametrize('step_limit', [0, 10, 20, 100, 1000])
+@pytest.mark.parametrize('step_limit', [0, 10, 20, 100])
 def test_stopiter_handling(step_limit):
-    read.process_gsd('test/data/trajectory-13.50-3.00.gsd', step_limit=step_limit)
+    df = read.process_gsd('test/data/trajectory-13.50-3.00.gsd', step_limit=step_limit)
+    assert np.all(df.time == list(GenerateStepSeries(step_limit)))
