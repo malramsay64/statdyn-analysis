@@ -9,3 +9,8 @@ test/tmp
 # Ignore conda build directories
 dist
 build
+
+# Ignore cython generated files
+statdyn/**/*.c
+statdyn/**/*.html
+statdyn/**/*.so

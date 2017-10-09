@@ -45,6 +45,7 @@ def test_version(func, extras):
         parser.parse_args(['--version', func])
         assert e == 0
 
+
 @pytest.mark.parametrize('extras', [
     ['test'],
     ['--argument'],

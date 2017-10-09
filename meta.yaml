@@ -21,6 +21,7 @@ requirements:
         - pytables 3.4*
         - numpy {{ numpy }}
         - bokeh 0.12*
+        - setuptools *
         - freud 0.6.2*
         - gsd 1.2.0*
         - cython 0.26.*
