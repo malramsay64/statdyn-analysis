@@ -70,10 +70,6 @@ def process_gsd(infile: str,
                                        num_linear=num_linear,
                                        gen_steps=gen_steps,
                                        max_gen=max_gen)
-        try:
-            curr_step = step_iter.next()
-        except StopIteration:
-            return
         for frame in src:
             logger.debug('Step %d with index %s',
                          curr_step, step_iter.get_index())

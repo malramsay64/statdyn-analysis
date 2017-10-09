@@ -24,6 +24,8 @@ logger = logging.getLogger(__name__)
 class dynamics(object):
     """Compute dynamic properties of a simulation."""
 
+    dyn_dtype = np.float32
+
     def __init__(self,
                  timestep: int,
                  box: np.ndarray,
@@ -45,19 +47,19 @@ class dynamics(object):
         """
         self.timestep = timestep
         self.box = box[:3]
-        self.position = position
-        self.num_particles = len(position)
-        self.orientation = orientation
+        self.position = position.astype(self.dyn_dtype)
+        self.num_particles = position.shape[0]
+        self.orientation = orientation.astype(self.dyn_dtype)
 
     def computeMSD(self, position: np.ndarray) -> float:
         """Compute the mean squared displacement."""
-        result = np.zeros(self.num_particles)
+        result = np.zeros(self.num_particles, dtype=self.dyn_dtype)
         translationalDisplacement(self.box, self.position, position, result)
         return mean_squared_displacement(result)
 
     def comptuteMFD(self, position: np.ndarray) -> float:
         """Comptute the fourth power of displacement."""
-        result = np.zeros(self.num_particles)
+        result = np.zeros(self.num_particles, dtype=self.dyn_dtype)
         translationalDisplacement(self.box, self.position, position, result)
         return mean_fourth_displacement(result)
 
@@ -69,7 +71,7 @@ class dynamics(object):
                       {2\langle \Delta r^2  \rangle^2} -1
 
         """
-        disp2 = np.empty(self.num_particles)
+        disp2 = np.empty(self.num_particles, dtype=self.dyn_dtype)
         translationalDisplacement(self.box, self.position, position, disp2)
         return alpha_non_gaussian(disp2)
 
@@ -79,19 +81,19 @@ class dynamics(object):
 
     def computeRotation(self, orientation: np.ndarray) -> float:
         """Compute the rotation of the moleule."""
-        result = np.empty(self.num_particles)
+        result = np.empty(self.num_particles, dtype=self.dyn_dtype)
         rotationalDisplacement(self.orientation, orientation, result)
         return mean_rotation(result)
 
     def get_rotations(self, orientation: np.ndarray) -> np.ndarray:
         """Get all the rotations."""
-        result = np.empty(self.num_particles)
+        result = np.empty(self.num_particles, dtype=self.dyn_dtype)
         rotationalDisplacement(self.orientation, orientation, result)
         return result
 
     def get_displacements(self, position: np.ndarray) -> np.ndarray:
         """Get all the displacements."""
-        result = np.empty(self.num_particles)
+        result = np.empty(self.num_particles, dtype=self.dyn_dtype)
         translationalDisplacement(self.box, self.position, position, result)
         return mean_displacement(result)
 
@@ -101,10 +103,10 @@ class dynamics(object):
                    orientation: np.ndarray=None,
                    ) -> pandas.Series:
         """Compute all dynamics quantities of interest."""
-        delta_rotation = np.empty(self.num_particles)
+        delta_rotation = np.empty(self.num_particles, dtype=self.dyn_dtype)
         rotationalDisplacement(self.orientation, orientation, delta_rotation)
 
-        delta_displacement = np.empty(self.num_particles)
+        delta_displacement = np.empty(self.num_particles, dtype=self.dyn_dtype)
         translationalDisplacement(self.box, self.position, position, delta_displacement)
         return all_dynamics(
             self.computeTimeDelta(timestep),
@@ -293,7 +295,6 @@ def spearman_rank(displacement: np.ndarray,
     trans_order = np.argsort(displacement)[:-num_elements-1:-1]
     rot_order = np.argsort(np.abs(rotation))[:-num_elements-1:-1]
     rho, _ = spearmanr(trans_order, rot_order)
-    # Elements are in reverse order, smallest to largest so negate spearman value
     return rho
 
 
