@@ -30,8 +30,8 @@ cpdef float get_quat_eps():
     return QUAT_EPS
 
 cdef float single_quat_rotation(
-        float[:] initial,
-        float[:] final
+        const float[:] initial,
+        const float[:] final
 ) nogil:
     return 2.*acos(fabs(
             initial[0] * final[0] +
@@ -41,10 +41,10 @@ cdef float single_quat_rotation(
         ))
 
 cpdef void quaternion_rotation(
-        float[:, :] initial,
-        float[:, :] final,
-        float[:] result
-) nogil:
+        np.ndarray[float, ndim=2] initial,
+        np.ndarray[float, ndim=2] final,
+        np.ndarray[float, ndim=1] result,
+):
     cdef Py_ssize_t nitems = result.shape[0]
 
     for i in range(nitems):
@@ -70,7 +70,9 @@ cpdef np.ndarray[float, ndim=2] z2quaternion(
     cdef Py_ssize_t i
     cdef Py_ssize_t nitems = theta.shape[0]
     cdef Py_ssize_t w_pos = 0, z_pos = 3
-    cdef float angle
+    # Use double for intermediate value in computation
+    cdef double angle
+
     cdef np.ndarray[float, ndim=2] result
 
     result = np.zeros([nitems, 4], dtype=np.float32)
@@ -92,7 +94,7 @@ cpdef np.ndarray[float, ndim=1] quaternion2z(
     cdef np.ndarray[float, ndim=1] result
     result = np.empty(nitems, dtype=np.float32)
 
-    cdef float q_w
+    cdef double q_w
     for i in range(nitems):
         q_w = orientations[i, 0]
         if close(abs(q_w), 1) or close(orientations[i, 3], 0):
@@ -114,9 +116,12 @@ cpdef void displacement_periodic(
         float[:] result
 ) nogil:
     cdef int n_elements = result.shape[0]
-    cdef float[3] x, inv_box, box_2
-    cdef int i
-    cdef float images
+    cdef int i, j
+
+    # Use doubles for intermediate values of computation
+    cdef double[3] x, inv_box
+    cdef double images
+
     inv_box[0] = 1./box[0]
     inv_box[1] = 1./box[1]
     inv_box[2] = 1./box[2]
@@ -126,6 +131,6 @@ cpdef void displacement_periodic(
             x[j] = initial[i, j] - final[i, j]
             if box[j] > FLT_EPSILON:
                 images = inv_box[j] * x[j]
-                x[j] = box[j] * (round(images))
+                x[j] = box[j] * (images - round(images))
 
         result[i] = sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2])

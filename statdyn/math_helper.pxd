@@ -23,10 +23,10 @@ cdef float single_quat_rotation(
 
 
 cpdef void quaternion_rotation(
-        float[:, :] initial,
-        float[:, :] final,
-        float[:] result
-) nogil
+        np.ndarray[float, ndim=2] initial,
+        np.ndarray[float, ndim=2] final,
+        np.ndarray[float, ndim=1] result,
+)
 
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(
