@@ -19,13 +19,14 @@ from libc.math cimport fabs, cos, M_PI, M_2_PI, acos, sqrt
 cdef float single_quat_rotation(
         float[:] initial,
         float[:] final
-)
+) nogil
 
 
-cpdef np.ndarray[float, ndim=1] quaternion_rotation(
-        np.ndarray[float, ndim=2] initial,
-        np.ndarray[float, ndim=2] final
-)
+cpdef void quaternion_rotation(
+        float[:, :] initial,
+        float[:, :] final,
+        float[:] result
+) nogil
 
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(
@@ -41,3 +42,11 @@ cpdef np.ndarray[float, ndim=2] z2quaternion(
 cpdef np.ndarray[float, ndim=1] quaternion2z(
         np.ndarray[float, ndim=2] orientations
 )
+
+
+cpdef void displacement_periodic(
+        float[:] box,
+        float[:, :] initial,
+        float[:, :] final,
+        float[:] result
+) nogil

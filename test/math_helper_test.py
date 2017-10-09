@@ -10,17 +10,64 @@
 
 import numpy as np
 import pytest
-from hypothesis import given, settings
-from hypothesis.extra.numpy import arrays
+from hypothesis import HealthCheck, assume, given, settings
+from hypothesis.extra.numpy import arrays, complex_number_dtypes
 from hypothesis.strategies import floats
 
 from statdyn.math_helper import (get_quat_eps, quaternion2z, quaternion_angle,
                                  quaternion_rotation, z2quaternion)
 
+np.seterr(over='ignore')
 EPS = np.finfo(np.float32).eps * 2
 
+
+def _normalize_quat(q):
+    return q / np.linalg.norm(q)
+
+
+def _complex_to_quat(c):
+    q = np.zeros(4, dtype=np.float32)
+    q[0] = c.real
+    q[3] = c.imag
+    return q
+
+
+def _increase_dims(a):
+    return np.expand_dims(a, axis=0)
+
+
+def unit_quaternion_Z():
+    return arrays(complex_number_dtypes(sizes=64), 1).filter(
+        lambda x: abs(x) > 0.2 and abs(x) != np.inf
+    ).map(_complex_to_quat).map(_normalize_quat).map(_increase_dims)
+
+
+def unit_quaternion(num_elements=1):
+    q = arrays(np.float32, 4,
+               elements=floats(
+                   max_value=np.finfo(np.float32).max/8,
+                   min_value=np.finfo(np.float32).min*8,
+                   allow_nan=False,
+                   allow_infinity=False
+               )).filter(
+        lambda x: np.linalg.norm(x) > 0.2 and np.linalg.norm(x) != np.inf
+    ).map(_normalize_quat).map(_increase_dims)
+    return q
+
+
+def angle(num_elements=1):
+    theta = arrays(np.float32,
+                   num_elements,
+                   elements=floats(max_value=np.finfo(np.float32).max,
+                                   min_value=np.finfo(np.float32).min,
+                                   allow_nan=False,
+                                   allow_infinity=False),
+                   )
+    return theta
+
+
 @settings(max_examples=1000)
-@given(arrays(np.float32, 1, elements=floats(min_value=-10*np.pi, max_value=10*np.pi), unique=True))
+@given(angle())
 def test_z2quaternion(angles):
     """Ensure quaternions are normalised.
 
@@ -30,13 +77,11 @@ def test_z2quaternion(angles):
 
     """
     result = z2quaternion(angles)
-    print(result)
     assert np.allclose(np.linalg.norm(result, axis=1), 1)
 
 
 @settings(max_examples=1000)
-@given(arrays(np.float32, (1, 4), elements=floats(min_value=-1, max_value=1)
-              ).filter(lambda x: np.linalg.norm(x, axis=1) > 0.8))
+@given(unit_quaternion_Z())
 def test_quaternion2z(quat):
     """Ensures correct range of angles [-pi, pi].
 
@@ -45,9 +90,12 @@ def test_quaternion2z(quat):
     also an assertion to ensure that the sign of the rotation of the quaternion
     is the same as that in the returned orientation.
 
+    Since complex numbers are a subset of the quaternions there is also a test
+    to ensure these functions are giving the same angle as for complex numbers.
+
     """
-    quat = quat / np.linalg.norm(quat, axis=1)
     result = quaternion2z(quat)
+    assume(not np.isnan(np.linalg.norm(quat)))
     assert np.abs(result) < np.pi + EPS
 
 
@@ -99,3 +147,14 @@ def test_quaternion2z_specifics(quaternion, angle):
     which are also in the four different quadrants of the 2d plane.
     """
     assert np.allclose(quaternion2z(np.array([quaternion], dtype=np.float32)), angle, atol=get_quat_eps())
+
+
+def test_quat_rotation():
+    initial = np.random.random((1000, 4)).astype(np.float32)
+    final = np.random.random((1000, 4)).astype(np.float32)
+    initial = initial / np.linalg.norm(initial, axis=1).reshape(1000, 1)
+    final = final / np.linalg.norm(final, axis=1).reshape(1000, 1)
+    result = np.empty(1000, dtype=np.float32)
+    quaternion_rotation(initial, final, result)
+    assert np.all(result < 2*np.pi)
+    assert np.all(0 < result)

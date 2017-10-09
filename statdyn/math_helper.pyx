@@ -16,7 +16,7 @@ import cython
 import numpy as np
 
 cimport numpy as np
-from libc.math cimport fabs, sin, cos, M_PI, acos, sqrt, isnan
+from libc.math cimport fabs, sin, cos, M_PI, acos, sqrt, isnan, round
 from libc.float cimport FLT_EPSILON
 
 
@@ -32,7 +32,7 @@ cpdef float get_quat_eps():
 cdef float single_quat_rotation(
         float[:] initial,
         float[:] final
-):
+) nogil:
     return 2.*acos(fabs(
             initial[0] * final[0] +
             initial[1] * final[1] +
@@ -40,17 +40,15 @@ cdef float single_quat_rotation(
             initial[3] * final[3]
         ))
 
-cpdef np.ndarray[float, ndim=1] quaternion_rotation(
-        np.ndarray[float, ndim=2] initial,
-        np.ndarray[float, ndim=2] final,
-):
-    cdef Py_ssize_t nitems = initial.shape[0]
-    cdef np.ndarray[float, ndim=1] result
-    result = np.empty(nitems, dtype=np.float32)
+cpdef void quaternion_rotation(
+        float[:, :] initial,
+        float[:, :] final,
+        float[:] result
+) nogil:
+    cdef Py_ssize_t nitems = result.shape[0]
 
     for i in range(nitems):
         result[i] = single_quat_rotation(initial[i], final[i])
-    return result
 
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(
@@ -107,3 +105,27 @@ cpdef np.ndarray[float, ndim=1] quaternion2z(
                 result[i] += M_TAU
 
     return result
+
+
+cpdef void displacement_periodic(
+        float[:] box,
+        float[:, :] initial,
+        float[:, :] final,
+        float[:] result
+) nogil:
+    cdef int n_elements = result.shape[0]
+    cdef float[3] x, inv_box, box_2
+    cdef int i
+    cdef float images
+    inv_box[0] = 1./box[0]
+    inv_box[1] = 1./box[1]
+    inv_box[2] = 1./box[2]
+
+    for i in range(n_elements):
+        for j in range(3):
+            x[j] = initial[i, j] - final[i, j]
+            if box[j] > FLT_EPSILON:
+                images = inv_box[j] * x[j]
+                x[j] = box[j] * (round(images))
+
+        result[i] = sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2])

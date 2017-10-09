@@ -14,6 +14,8 @@ import numpy as np
 import pandas
 from scipy.stats import spearmanr
 
+from ..math_helper import displacement_periodic, quaternion_rotation
+
 np.seterr(divide='raise', invalid='raise')
 
 logger = logging.getLogger(__name__)
@@ -360,9 +362,7 @@ def rotationalDisplacement(initial: np.ndarray,
     .. [Jim Belk]: https://math.stackexchange.com/questions/90081/quaternion-distance
 
     """
-    with np.errstate(invalid='ignore'):
-        result[:] = 2*np.arccos(np.abs(np.einsum('ij,ij->i', initial, final)))
-    np.nan_to_num(result, copy=False)
+    quaternion_rotation(initial, final, result)
 
 
 def translationalDisplacement(box: np.ndarray,
@@ -380,12 +380,4 @@ def translationalDisplacement(box: np.ndarray,
     which breaks slightly when the frame size changes. I am assuming this is
     negligible so not including it.
     """
-    temp = initial - final
-    gt = np.where(temp > box/2)
-    lt = np.where(temp < -box/2)
-    # gt and lt contain 2 numpy arrays, one indexing each dimension. Here I am
-    # taking the position in the second dimension which indicates the box
-    # dimension and subtracting from the result to give the periodic distance.
-    temp[lt] += box[lt[1]]
-    temp[gt] -= box[gt[1]]
-    result[:] = np.linalg.norm(temp, axis=1)
+    displacement_periodic(box.astype(np.float32), initial, final, result)
