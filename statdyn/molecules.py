@@ -151,6 +151,14 @@ class Molecule(object):
         i_x, i_y, i_z = self.moment_inertia
         self.moment_inertia = (i_x * scale_factor, i_y * scale_factor, i_z * scale_factor)
 
+    def compute_moment_intertia(self, scale_factor: float=1) -> Tuple[float, float, float]:
+        """Compute the moment of inertia from the particle paramters."""
+        positions = self.orientation2positions(np.zeros((1, 3)), np.zeros((1, 1)))
+        COM = np.sum(positions, axis=0)/positions.shape[0]
+        moment_inertia = np.sum(np.square(positions - COM))
+        moment_inertia *= scale_factor
+        return (0, 0, moment_inertia)
+
 
 class Disc(Molecule):
     """Defines a 2D particle."""
@@ -207,9 +215,7 @@ class Trimer(Molecule):
         self.distance = distance
         self.angle = angle
         self.particles = ['A', 'B', 'B']
-        self.moment_inertia = (0. * moment_inertia_scale,
-                               0 * moment_inertia_scale,
-                               1.65 * moment_inertia_scale)
+        self.moment_inertia = self.compute_moment_intertia(moment_inertia_scale)
         self.dimensions = 2
 
 
@@ -291,11 +297,11 @@ class Trimer(Molecule):
         logger.debug('Position shape: %s, dype: %s',
                      position.shape, position.dtype)
         pos1 = position
-        pos2 = np.array([position[:, 0] - np.sin(orientation - np.pi/3),
-                         position[:, 1] + np.cos(orientation - np.pi/3),
+        pos2 = np.array([position[:, 0] - self.distance*np.sin(orientation - np.pi/3),
+                         position[:, 1] + self.distance*np.cos(orientation - np.pi/3),
                          position[:, 2]]).T
-        pos3 = np.array([position[:, 0] - np.sin(orientation + np.pi/3),
-                         position[:, 1] + np.cos(orientation + np.pi/3),
+        pos3 = np.array([position[:, 0] - self.distance*np.sin(orientation + np.pi/3),
+                         position[:, 1] + self.distance*np.cos(orientation + np.pi/3),
                          position[:, 2]]).T
         return np.append(pos1, np.append(pos2, pos3, axis=0), axis=0)
 

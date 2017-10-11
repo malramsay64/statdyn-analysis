@@ -33,6 +33,16 @@ def test_moment_inertia(mol_setup):  # pylint: disable=redefined-outer-name
     assert len(mol_setup.moment_inertia) == 3
 
 
+def test_moment_inertia_trimer():
+    """Ensure calculation of moment of inertia is working properly."""
+    mol = molecules.Trimer()
+    assert mol.moment_inertia == (0, 0, 1.6666666666666665)
+    mol = molecules.Trimer(distance=0.8)
+    assert mol.moment_inertia[2] < 1.6666666666666665
+    mol = molecules.Trimer(distance=1.2)
+    assert mol.moment_inertia[2] > 1.6666666666666665
+
+
 @given(floats(min_value=0, allow_infinity=False, allow_nan=False))
 def test_moment_inertia_scaling(scaling_factor):
     """Test that the scaling factor is working properly."""
