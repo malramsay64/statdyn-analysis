@@ -154,6 +154,11 @@ def create_parser():
         choices=MOLECULE_OPTIONS.keys(),
     )
     parse_molecule.add_argument(
+        '--distance',
+        type=float,
+        help='Distance at which small particles are situated',
+    )
+    parse_molecule.add_argument(
         '--moment-inertia-scale',
         type=float,
         help='Scaling factor for the moment of inertia.',
@@ -270,6 +275,18 @@ def parse_args():
         parser.print_help()
         exit()
 
+    # Parse Molecules
+    my_mol = MOLECULE_OPTIONS.get(getattr(args, 'molecule', None))
+    if my_mol is None:
+        my_mol = Trimer
+    mol_kwargs = {}
+    for attr in ['distance', 'moment_inertia_scale']:
+        if getattr(args, attr, None) is not None:
+            mol_kwargs[attr] = getattr(args, attr)
+
+    args.molecule = my_mol(**mol_kwargs)
+
+    # Parse space groups
     try:
         if args.space_group:
             args.crystal = CRYSTAL_FUNCS[args.space_group]()

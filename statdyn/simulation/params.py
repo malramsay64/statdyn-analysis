@@ -89,17 +89,12 @@ class SimulationParams(object):
         """
         if self.parameters.get('molecule') is not None:
             mol = self.parameters.get('molecule')
-        if self.parameters.get('crystal') is not None:
+        elif self.parameters.get('crystal') is not None:
             mol = self.crystal.molecule
         else:
             mol = Trimer()
 
-        if self.parameters.get('moment_inertia_scale') is not None:
-            mol = deepcopy(mol)
-            mol.scale_moment_inertia(self.parameters.get('moment_inertia_scale'))
-
         return mol
-
 
     @property
     def cell_dimensions(self) -> Tuple[int, int]:
