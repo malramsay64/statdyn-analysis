@@ -284,7 +284,7 @@ def mobile_overlap(displacement: np.ndarray,
 
 def spearman_rank(displacement: np.ndarray,
                   rotation: np.ndarray,
-                  fraction: float=0.1) -> float:
+                  fraction: float=1.) -> float:
     """Compute the Spearman Rank coefficient for fast molecules.
 
     This takes the molecules with the fastest 10% of the translations or
@@ -331,7 +331,7 @@ def all_dynamics(timediff: int,
             'rot1': rotational_relax1(rotation),
             'rot2': rotational_relax2(rotation),
             'gamma': gamma(displacement, rotation),
-            'spearman_rank': spearman_rank(displacement, rotation, fraction=0.1),
+            'spearman_rank': spearman_rank(displacement, rotation),
             'overlap': mobile_overlap(displacement, rotation),
         })
     return pandas.DataFrame(dynamic_quantities, index=[timediff])
