@@ -29,7 +29,7 @@ pbs_file = """
 export PATH=$HOME/.pyenv/versions/dev/bin:$PATH
 
 mpirun -np {ncpus} sdrun create --pressure {P} -o {outdir} -t 0.2 --space-group p2 -s 1_000 --moment-inertia-scale {I} {outdir}/Trimer-P{P:.2f}-T0.2-I{I:.2f}-p2.gsd
-mpirun -np {ncpus} sdrun equil -t {T}  --pressure {P} --init-temp 0.2 -o {outdir} -s 100_000 --moment-inertia-scale {I} {outdir}/Trimer-P{P:.2f}-T0.2-I{I:.2f}-p2.gsd {outdir}/Trimer-P{P:.2f}-T{T:.2f}-I{I:.2f}-p2.gsd
+mpirun -np {ncpus} sdrun equil --equil-type crys -t {T}  --pressure {P} --init-temp 0.2 -o {outdir} -s 100_000 --moment-inertia-scale {I} {outdir}/Trimer-P{P:.2f}-T0.2-I{I:.2f}-p2.gsd {outdir}/Trimer-P{P:.2f}-T{T:.2f}-I{I:.2f}-p2.gsd
 mpirun -np {ncpus} sdrun prod -t {T} --pressure {P} -o {outdir} -s 10_000_000 --moment-inertia-scale {I} {outdir}/Trimer-P{P:.2f}-T{T:.2f}-I{I:.2f}-p2.gsd
 
 """
