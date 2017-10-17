@@ -66,7 +66,7 @@ create_out = '{outdir}' + create_fname('Trimer', create_temp, pressure, moment_i
 
 create_opts = [
     '--space-group', crystal,
-    '--steps', '1000',
+    '--steps', '{create_steps}',
     '--temperature', create_temp,
     create_out,
 ]
@@ -78,7 +78,7 @@ equil_out = '{outdir}' + create_fname('Trimer', temperature, pressure, moment_in
 equil_opts = [
     '--equil-type', 'crystal',
     '--init-temp', create_temp,
-    '--steps', '1000',
+    '--steps', '{equil_steps}',
     create_out,
     equil_out,
 ]
@@ -86,7 +86,7 @@ equil_opts = [
 subprocess.call(run_comand + ['equil'] + common_opts + equil_opts)
 
 prod_opts = [
-    '--steps', '10000000',
+    '--steps', '{prod_steps}',
     equil_out,
 ]
 
@@ -114,21 +114,23 @@ if __name__ == "__main__":
         else:
             return f'#PBS -J 0-{num_values-1}'
 
-    cat_file = subprocess.Popen(['echo', pbs_file.format(values=all_values,
-                                 array_flag=get_array_flag(len(all_values)),
-                                 outdir=outdir,
-                                 ncpus=8)], stdout=subprocess.PIPE)
+    sub_file = pbs_file.format(
+        values=all_values,
+        array_flag=get_array_flag(len(all_values)),
+        outdir=outdir,
+        create_steps=1000,
+        equil_steps=100_000,
+        prod_steps=10_000_000,
+        ncpus=8
+    )
 
-    subprocess.Popen(['qsub'],
-                     stdin=cat_file.stdout,
-                     stdout=sys.stdout,
-                     stderr=sys.stderr,
-                     env=os.environ,
-                     )
+    subprocess.run(['qsub'],
+                   input=sub_file,
+                   encoding='utf-8',
+                   stdout=sys.stdout,
+                   stderr=sys.stderr,
+                   env=os.environ,
+                   )
 
-    with open('testfile.py', 'w') as tf:
-        tf.write(pbs_file.format(values=all_values,
-                                 array_flag=get_array_flag(len(all_values)),
-                                 outdir=outdir,
-                                 ncpus=8))
-    cat_file.stdout.close()
+    with open(outdir / 'sub_file.py', 'w') as tf:
+        tf.write(sub_file)
