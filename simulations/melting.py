@@ -8,14 +8,14 @@
 
 """Set running a series of simulations."""
 
+import os
 import subprocess
 import sys
 from pathlib import Path
 
 import numpy as np
 
-pbs_file = """
-#!/bin/bash
+pbs_file = """#!/usr/bin/env python
 #PBS -N Trimer-P{P:.2f}-T{T:.2f}-I{I:.2f}
 #PBS -m abe
 #PBS -M malramsay64+quartz@gmail
@@ -24,32 +24,90 @@ pbs_file = """
 #PBS -l select=1:ncpus={ncpus}
 #PBS -l walltime=500:00:00
 #PBS -l cput=3600:00:00
-#PBS -S /bin/bash
+#PBS -V
 
-export PATH=$HOME/.pyenv/versions/dev/bin:$PATH
+import subprocess
+import os
+from pathlib import Path
 
-mpirun -np {ncpus} sdrun create --pressure {P} -o {outdir} -t 0.2 --space-group p2 -s 1_000 --moment-inertia-scale {I} {outdir}/Trimer-P{P:.2f}-T0.2-I{I:.2f}-p2.gsd
-mpirun -np {ncpus} sdrun equil --equil-type crys -t {T}  --pressure {P} --init-temp 0.2 -o {outdir} -s 100_000 --moment-inertia-scale {I} {outdir}/Trimer-P{P:.2f}-T0.2-I{I:.2f}-p2.gsd {outdir}/Trimer-P{P:.2f}-T{T:.2f}-I{I:.2f}-p2.gsd
-mpirun -np {ncpus} sdrun prod -t {T} --pressure {P} -o {outdir} -s 10_000_000 --moment-inertia-scale {I} {outdir}/Trimer-P{P:.2f}-T{T:.2f}-I{I:.2f}-p2.gsd
+temperature = {T}
+pressure = {P}
+moment_inertia = {I}
+ncpus = {ncpus}
+
+common_opts = [
+    '--pressure', str(pressure),
+    '--temperature', str(temperature),
+    '--moment-inertia-scale', str(moment_inertia),
+    '--output', '{outdir}',
+]
+
+run_comand = ['sdrun']
+if ncpus > 1:
+    run_comand = [
+        'mpirun',
+        '--np', str(ncpus),
+    ] + run_comand
+
+create_out = '{outdir}/Trimer-P{P:.2f}-T0.2-I{I:.2f}-p2.gsd'
+
+create_opts = [
+    '--space-group', 'p2',
+    '--steps', '1000',
+    '--temperature', '0.2',
+    create_out,
+]
+
+subprocess.call(run_comand + ['create'] + common_opts + create_opts)
+
+equil_out = '{outdir}/Trimer-P{P:.2f}-T{T:.2f}-I{I:.2f}-p2.gsd'
+
+equil_opts = [
+    '--equil-type', 'crystal',
+    '--init-temp', '0.2',
+    '--steps', '100000',
+    create_out,
+    equil_out,
+]
+
+subprocess.call(run_comand + ['equil'] + common_opts + equil_opts)
+
+prod_opts = [
+    '--steps', '10000000',
+    equil_out,
+]
+
+subprocess.call(run_comand + ['prod'] + common_opts + prod_opts)
 
 """
 
 
-temperatures = np.arange(0.2, 1.6, 0.2)
-pressures = np.arange(1.5, 13.5, 1.5)
-mom_inertia = np.power(10., np.arange(-1, 3))
+temperatures = np.arange(0.2, 0.4, 0.2)
+pressures = np.arange(1.5, 3.0, 1.5)
+mom_inertia = np.power(10., np.arange(0, 1))
 
-outdir = Path.home() / 'tmp1m/2017-10-12-phases'
+outdir = Path.home() / 'tmp1m/2017-10-17-testing'
 
 if __name__ == "__main__":
     # ensure outdir exists
     outdir.mkdir(exist_ok=True)
 
+
+
     for T in temperatures:
         for P in pressures:
             for I in mom_inertia:
                 cat_file = subprocess.Popen(
-                    ['echo', pbs_file.format(T=T, P=P, I=I, outdir=outdir, ncpus=8)],
+                    ['echo', pbs_file.format(T=T, P=P, I=I, outdir=outdir, ncpus=8, version='dev', home=Path.home())],
                     stdout=subprocess.PIPE)
-                subprocess.Popen(['qsub'], stdin=cat_file.stdout, stdout=sys.stdout)
+
+                subprocess.Popen(['qsub'],
+                                 stdin=cat_file.stdout,
+                                 stdout=sys.stdout,
+                                 stderr=sys.stderr,
+                                 env=os.environ,
+                                 )
+
+                with open('testfile.py', 'w') as tf:
+                    tf.write(pbs_file.format(T=T, P=P, I=I, outdir=outdir, ncpus=8, version='dev', home=Path.home()))
                 cat_file.stdout.close()
