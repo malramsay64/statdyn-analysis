@@ -134,6 +134,8 @@ class SimulationParams(object):
             base_string = '{prefix}-' + base_string
         if self.parameters.get('moment_inertia_scale') is not None:
             base_string += '-I{mom_inertia:.2f}'
+        if self.parameters.get('space_group') is not None:
+            base_string += '-{space_group}'
 
         fname = base_string.format(
             prefix=prefix,
@@ -141,5 +143,6 @@ class SimulationParams(object):
             pressure=self.pressure,
             temperature=self.parameters.get('temperature'),
             mom_inertia=self.parameters.get('moment_inertia_scale'),
+            space_group = self.parameters.get('space_group'),
         )
         return str(self.outfile_path / fname)

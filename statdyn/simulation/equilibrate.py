@@ -23,7 +23,6 @@ logger = logging.getLogger(__name__)
 
 def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
                   sim_params: SimulationParams,
-                  interface: bool=False,
                   ) -> hoomd.data.SnapshotParticleData:
     """Equilbrate crystal."""
     temp_context = hoomd.context.initialize(sim_params.hoomd_args)

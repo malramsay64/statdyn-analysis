@@ -287,12 +287,8 @@ def parse_args():
     args.molecule = my_mol(**mol_kwargs)
 
     # Parse space groups
-    try:
-        if args.space_group:
-            args.crystal = CRYSTAL_FUNCS[args.space_group]()
-            del args.space_group
-    except AttributeError:
-        pass
+    if func == create:
+        args.crystal = CRYSTAL_FUNCS[args.space_group]()
 
     set_args = {key: val for key, val in vars(args).items() if val is not None}
     return func, SimulationParams(**set_args)
