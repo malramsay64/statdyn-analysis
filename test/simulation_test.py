@@ -10,6 +10,7 @@
 
 import gc
 import os
+import subprocess
 from pathlib import Path
 
 import hoomd
@@ -134,3 +135,32 @@ def test_file_placement():
         assert (outdir / 'trajectory-Trimer-P13.50-T3.00.gsd').is_file()
     for i in outdir.glob('*'):
         os.remove(str(i))
+
+@pytest.mark.parametrize('pressure, temperature', [(1.0, 1.8), (13.5, 3.00)])
+def test_interface(pressure, temperature):
+    init_temp = 0.4
+    create_command = [
+        'sdrun', 'create',
+        '--pressure', '{}'.format(pressure),
+        '--space-group', 'p2',
+        '--lattice-lengths', '48', '42',
+        '--temperature', '{}'.format(init_temp),
+        '--steps', '1000',
+        '--output', OUTDIR,
+        OUTDIR / 'create_interface-P{:.2f}-T{:.2f}.gsd'.format(pressure, init_temp),
+    ]
+    melt_command = [
+        'sdrun', 'equil',
+        '--equil-type', 'interface',
+        '--pressure', '{}'.format(pressure),
+        '--space-group', 'p2',
+        '--temperature', '{}'.format(temperature),
+        '--output', OUTDIR,
+        '--steps', '1000',
+        OUTDIR / 'create_interface-P{:.2f}-T{:.2f}.gsd'.format(pressure, init_temp),
+        OUTDIR / 'melt_interface-P{:.2f}-T{:.2f}.gsd'.format(pressure, temperature),
+    ]
+    create = subprocess.run(create_command)
+    assert create.returncode == 0
+    melt = subprocess.run(melt_command)
+    assert melt.returncode == 0

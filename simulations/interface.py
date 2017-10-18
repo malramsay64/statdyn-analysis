@@ -56,7 +56,7 @@ run_comand = ['sdrun']
 if ncpus > 1:
     run_comand = [
         'mpirun',
-        '--np', str(ncpus/2),
+        '--np', str(ncpus),
     ] + run_comand
 
 init_temp = '0.39'
