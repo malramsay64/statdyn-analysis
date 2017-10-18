@@ -15,7 +15,7 @@ requirements:
 
     run:
         - python {{ python }}
-        - hoomd 2.1*
+        - hoomd 2.2*
         - scipy 0.19*
         - pandas 0.20*
         - pytables 3.4*

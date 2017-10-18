@@ -56,7 +56,6 @@ def set_dump(outfile: str,
     """Initialise dumping configuration to a file."""
     if group is None:
         group = hoomd.group.rigid_center()
-    # TODO on update to hoomd 2.2.0 change static to dynamic
     if extension:
         outfile += '.gsd'
     return hoomd.dump.gsd(
@@ -65,7 +64,6 @@ def set_dump(outfile: str,
         period=dump_period,
         group=group,
         overwrite=True,
-        static=['topology', 'attribute', 'momentum']
     )
 
 
@@ -94,7 +92,7 @@ def set_thermo(outfile: str,
                         'translational_ndof_rigid_center',
                         'rotational_ndof_rigid_center',
                         ]
-    # TODO Set logger to hdf5 file on update to hoomd 2.2.0
+    # TODO Set logger to hdf5 file
     hoomd.analyze.log(
         outfile+'.log',
         quantities=default + rigid_thermo,
