@@ -25,6 +25,7 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
                   sim_params: SimulationParams,
                   ) -> hoomd.data.SnapshotParticleData:
     """Equilbrate crystal."""
+    logger.debug('Simulation steps: %d', sim_params.num_steps)
     temp_context = hoomd.context.initialize(sim_params.hoomd_args)
     sys = initialise_snapshot(
         snapshot=snapshot,
@@ -58,29 +59,41 @@ def equil_crystal(snapshot: hoomd.data.SnapshotParticleData,
 
 def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
                     sim_params: SimulationParams,
-                    output_interval: int=10000,
                     ) -> hoomd.data.SnapshotParticleData:
     """Equilbrate an interface at the desired temperature.
 
     This is first done by equilibrating the crystal phase, which once completed
     the liquid phase is equilibrated.
     """
+
+    if getattr(sim_params, 'init_temp', None) is None:
+        with paramsContext(sim_params, num_steps=2000, tauP=8, tau=8):
+            logger.debug('sim_params Steps: %d', sim_params.num_steps)
+            snapshot = equil_crystal(snapshot, sim_params)
+
     temp_context = hoomd.context.initialize(sim_params.hoomd_args)
     sys = initialise_snapshot(
         snapshot=snapshot,
         context=temp_context,
         molecule=sim_params.molecule,
     )
-    sim_params.group = _interface_group(sys, stationary=False)
     with temp_context:
-        # Equilibrate liquid
-        set_integrator(
-            sim_params=sim_params,
-            crystal=True,
-            create=False,
-        )
+        logger.debug('Entering temporary context')
+
+        interface = _interface_group(sys)
+        # Set mobile group for integrator
+        with paramsContext(sim_params, group=interface):
+            set_integrator(sim_params=sim_params, crystal=True)
+
+        set_dump(sim_params.filename(prefix='dump'),
+                 dump_period=sim_params.output_interval,
+                 group=sim_params.group)
+        set_thermo(sim_params.filename(prefix='equil'),
+                   thermo_period=int(np.ceil(sim_params.output_interval/10)),
+                   rigid=False)
+
         hoomd.run(sim_params.num_steps)
-        del sim_params.group
+
         dump_frame(sim_params.outfile, group=sim_params.group, extension=False)
         return sys.take_snapshot(all=True)
 

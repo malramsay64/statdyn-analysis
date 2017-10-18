@@ -26,30 +26,24 @@ def set_integrator(sim_params: SimulationParams,
                    create: bool=True,
                    ) -> hoomd.md.integrate.npt:
     """Hoomd integrate method."""
-    if create:
-        md.update.enforce2d()
-        md.integrate.mode_standard(sim_params.step_size)
-        if prime_interval:
-            md.update.zero_momentum(period=prime_interval, phase=-1)
+    md.integrate.mode_standard(sim_params.step_size)
+    md.update.enforce2d()
+
+    if prime_interval:
+        md.update.zero_momentum(period=prime_interval, phase=-1)
+
+    integrator = md.integrate.npt(
+        group=sim_params.group,
+        kT=sim_params.temperature,
+        tau=sim_params.tau,
+        P=sim_params.pressure,
+        tauP=sim_params.tauP,
+    )
 
     if crystal:
-        integrator = md.integrate.npt(
-            group=sim_params.group,
-            kT=sim_params.temperature,
-            tau=sim_params.tau,
-            P=sim_params.pressure,
-            tauP=sim_params.tauP,
-            rescale_all=True,
-            couple='none',
-        )
-    else:
-        integrator = md.integrate.npt(
-            group=sim_params.group,
-            kT=sim_params.temperature,
-            tau=sim_params.tau,
-            P=sim_params.pressure,
-            tauP=sim_params.tauP,
-        )
+        integrator.couple = 'none'
+        integrator.set_params(rescale_all=True)
+
     return integrator
 
 

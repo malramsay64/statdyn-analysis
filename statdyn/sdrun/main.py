@@ -14,6 +14,7 @@ from pathlib import Path
 from subprocess import run
 
 import hoomd.context
+
 from pkg_resources import DistributionNotFound, get_distribution
 
 from ..analysis.run_analysis import comp_dynamics
@@ -72,7 +73,7 @@ def prod(sim_params: SimulationParams) -> None:
 
 def equil(sim_params: SimulationParams) -> None:
     """Command group for the equilibration of configurations."""
-    logger.debug('Running equil')
+    logger.debug('Running %s equil', sim_params.equil_type)
 
     # Ensure parent directory exists
     Path(sim_params.outfile).parent.mkdir(exist_ok=True)
@@ -96,7 +97,6 @@ def create(sim_params: SimulationParams) -> None:
     equilibrate.equil_crystal(
         snapshot=snapshot,
         sim_params=sim_params,
-        interface=sim_params.interface,
     )
 
 
