@@ -19,9 +19,7 @@ from hypothesis.strategies import integers, tuples
 
 from statdyn import crystals
 from statdyn.simulation import equilibrate, initialise, simrun
-from statdyn.simulation.helper import SimulationParams
-
-from .test_params import setValues
+from statdyn.simulation.params import SimulationParams, paramsContext
 
 OUTDIR = Path('test/tmp')
 OUTDIR.mkdir(exist_ok=True)
@@ -56,7 +54,7 @@ def test_run_multiple_concurrent(max_initial):
     snapshot = initialise.init_from_file(
         Path('test/data/Trimer-13.50-3.00.gsd')
     )
-    with setValues(PARAMETERS, max_initial=max_initial):
+    with paramsContext(PARAMETERS, max_initial=max_initial):
         simrun.run_npt(snapshot,
                        context=hoomd.context.initialize(''),
                        sim_params=PARAMETERS
@@ -94,7 +92,7 @@ def test_orthorhombic_sims(cell_dimensions):
     cell_dimensions = cell_dimensions[0], cell_dimensions[1]*6
     output = Path('test/tmp')
     output.mkdir(exist_ok=True)
-    with setValues(PARAMETERS, cell_dimensions=cell_dimensions):
+    with paramsContext(PARAMETERS, cell_dimensions=cell_dimensions):
         snap = initialise.init_from_crystal(PARAMETERS)
     snap = equilibrate.equil_crystal(snap, sim_params=PARAMETERS)
     simrun.run_npt(snap,
@@ -111,7 +109,7 @@ def test_equil_file_placement():
     current = list(Path.cwd().glob('*'))
     for i in outdir.glob('*'):
         os.remove(str(i))
-    with setValues(PARAMETERS, outfile_path=outdir, outfile=outfile, temperature=4.00):
+    with paramsContext(PARAMETERS, outfile_path=outdir, outfile=outfile, temperature=4.00):
         snapshot = initialise.init_from_none()
         equilibrate.equil_liquid(snapshot, PARAMETERS)
         assert current == list(Path.cwd().glob('*'))
@@ -126,7 +124,7 @@ def test_file_placement():
     current = list(Path.cwd().glob('*'))
     for i in outdir.glob('*'):
         os.remove(str(i))
-    with setValues(PARAMETERS, outfile_path=outdir, dynamics=True, temperature=3.00):
+    with paramsContext(PARAMETERS, outfile_path=outdir, dynamics=True, temperature=3.00):
         snapshot = initialise.init_from_none()
         simrun.run_npt(snapshot, hoomd.context.initialize(''), sim_params=PARAMETERS)
         assert current == list(Path.cwd().glob('*'))
