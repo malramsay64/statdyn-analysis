@@ -18,78 +18,37 @@ from hypothesis.strategies import text
 
 from statdyn.crystals import TrimerP2
 from statdyn.molecules import Dimer, Disc, Molecule, Sphere, Trimer
-from statdyn.simulation.params import SimulationParams
+from statdyn.simulation.params import SimulationParams, paramsContext
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
 logging.basicConfig(level=logging.DEBUG)
 
-SIM_PARAMS = SimulationParams()
+SIM_PARAMS = SimulationParams(num_steps=1000, temperature=1.0, space_group='p2')
 
 MOLECULE_LIST = [Molecule, Sphere, Trimer, Dimer, Disc, None]
-
-class setValues(object):
-    """Temporarily set values for testing.
-
-    This is a context manager that can be used to temporarily set the values of a
-    SimulationParams instance. This simplifies the setup allowing for a single global
-    instance that is modified with every test. The modifications also make it clear
-    what is actually being tested.
-
-    """
-
-    def __init__(self, sim_params: SimulationParams, **kwargs) -> None:
-        """Initialise setValues class.
-
-        Args:
-            sim_params (class:`statdyn.simulation.params.SimulationParams`): The
-                instance that is to be temporarily modified.
-
-        Kwargs:
-            key: value
-
-        Any of the keys and values that are held by a SimulationParams instance.
-        """
-        self.params = sim_params
-        self.modifications = kwargs
-        self.original = {key: sim_params.parameters.get(key)
-                         for key in kwargs.keys()
-                         if sim_params.parameters.get(key) is not None}
-
-    def __enter__(self) -> SimulationParams:
-        for key, val in self.modifications.items():
-            self.params.parameters[key] = val
-        logger.debug('Parameter on entry %s', str(self.params.parameters))
-        return self.params
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        for key, _ in self.modifications.items():
-            try:
-                del self.params.parameters[key]
-            except AttributeError:
-                pass
-        self.params.parameters.update(self.original)
-        logger.debug('Parameter on exit %s', str(self.params.parameters))
 
 
 @given(key=text(), value=text())
 @example(key='outfile', value='test')
 @example(key='outfile_path', value='testing')
-def test_setvalues(key, value):
-    """Ensure setValues sets value correctly and returns to previous state.
+def test_paramContext(key, value):
+    """Ensure paramsContext sets value correctly and returns to previous state.
 
     This is just testing that the values in the dictionary are the same since
-    that is what the setValues class is modifying. Note that this isn't testing
-    the getattr, setattr, delattr of the SimulationParams class."""
+    that is what the paramsContext class is modifying. Note that this isn't testing
+    the getattr, setattr, delattr of the SimulationParams class.
+
+    """
     test_values = deepcopy(SIM_PARAMS.parameters)
-    with setValues(SIM_PARAMS, **{key: value}) as sim_params:
+    with paramsContext(SIM_PARAMS, **{key: value}) as sim_params:
         assert sim_params.parameters.get(key) == value
     assert test_values == sim_params.parameters
 
 
 @pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_molecule(mol):
-    with setValues(SIM_PARAMS, molecle=mol):
+    with paramsContext(SIM_PARAMS, molecle=mol):
         assert SIM_PARAMS.molecle == mol
 
 
@@ -99,7 +58,7 @@ def test_default_molecule():
 
 def test_mol_crys():
     crys = TrimerP2()
-    with setValues(SIM_PARAMS, crystal=crys):
+    with paramsContext(SIM_PARAMS, crystal=crys):
         assert SIM_PARAMS.molecule == crys.molecule
 
 
@@ -108,7 +67,7 @@ def test_mol_crys():
     Path('test/data')
 ])
 def test_outfile(outfile):
-    with setValues(SIM_PARAMS, outfile=outfile):
+    with paramsContext(SIM_PARAMS, outfile=outfile):
         assert SIM_PARAMS.parameters.get('outfile') == outfile
         assert str(outfile) == SIM_PARAMS.outfile
 
@@ -118,6 +77,21 @@ def test_outfile(outfile):
     Path('test/output')
 ])
 def test_outdir(outfile_path):
-    with setValues(SIM_PARAMS, outfile_path=outfile_path):
+    with paramsContext(SIM_PARAMS, outfile_path=outfile_path):
         assert SIM_PARAMS.parameters.get('outfile_path') == outfile_path
         assert Path(outfile_path) == SIM_PARAMS.outfile_path
+
+
+def func(sim_params, value):
+    return getattr(sim_params, value)
+
+
+@pytest.mark.parametrize('sim_params', [SIM_PARAMS])
+def test_function_passing(sim_params):
+    assert sim_params.num_steps == 1000
+    with paramsContext(sim_params, num_steps=2000):
+        assert func(sim_params, 'num_steps') == 2000
+        assert sim_params.num_steps == 2000
+    assert func(sim_params, 'num_steps') == 1000
+    assert sim_params.num_steps == 1000
+

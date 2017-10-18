@@ -146,3 +146,43 @@ class SimulationParams(object):
             space_group = self.parameters.get('space_group'),
         )
         return str(self.outfile_path / fname)
+
+
+class paramsContext(object):
+    """Temporarily set parameter values with a context manager.
+
+    This is a context manager that can be used to temporarily set the values of a
+    SimulationParams instance. This simplifies the setup allowing for a single global
+    instance that is modified with every test. The modifications also make it clear
+    what is actually being tested.
+
+    """
+
+    def __init__(self, sim_params: SimulationParams, **kwargs) -> None:
+        """Initialise setValues class.
+
+        Args:
+            sim_params (class:`statdyn.simulation.params.SimulationParams`): The
+                instance that is to be temporarily modified.
+
+        Kwargs:
+            key: value
+
+        Any of the keys and values that are held by a SimulationParams instance.
+        """
+        self.params = sim_params
+        self.modifications = kwargs
+        self.original = {key: sim_params.parameters.get(key)
+                         for key in kwargs.keys()
+                         if sim_params.parameters.get(key) is not None}
+
+    def __enter__(self) -> SimulationParams:
+        for key, val in self.modifications.items():
+            self.params.parameters[key] = val
+        logger.debug('Parameter on entry %s', str(self.params.parameters))
+        return self.params
+
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
+        for key, _ in self.modifications.items():
+            del self.params.parameters[key]
+        self.params.parameters.update(self.original)
