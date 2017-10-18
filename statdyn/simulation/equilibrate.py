@@ -122,8 +122,10 @@ def _interface_group(sys: hoomd.data.system_data,
                      stationary: bool=False):
     stationary_group = hoomd.group.cuboid(
         name='stationary',
-        xmin=-sys.box.Lx/4,
-        xmax=sys.box.Lx/4
+        xmin=-sys.box.Lx/3,
+        xmax=sys.box.Lx/3
+        ymin=-sys.box.Ly/3,
+        ymax=sys.box.Ly/3
     )
     if stationary:
         return hoomd.group.intersection(
