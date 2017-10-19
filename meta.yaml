@@ -2,6 +2,11 @@ package:
     name: statdyn
     version: {{ GIT_DESCRIBE_TAG }}
 
+about:
+    home: https://github.com/malramsay64/MD-Molecules-Hoomd
+    license: MIT
+    license_file: LICENSE
+
 source:
     path: .
 
