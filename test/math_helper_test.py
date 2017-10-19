@@ -10,6 +10,7 @@
 
 import numpy as np
 import pytest
+import quaternion
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.extra.numpy import arrays, complex_number_dtypes
 from hypothesis.strategies import floats
@@ -45,12 +46,12 @@ def unit_quaternion_Z():
 def unit_quaternion(num_elements=1):
     q = arrays(np.float32, 4,
                elements=floats(
-                   max_value=np.finfo(np.float32).max/8,
-                   min_value=np.finfo(np.float32).min*8,
+                   max_value=np.sqrt(np.finfo(np.float32).max),
+                   min_value=-np.sqrt(-np.finfo(np.float32).min),
                    allow_nan=False,
                    allow_infinity=False
                )).filter(
-        lambda x: np.linalg.norm(x) > 0.2 and np.linalg.norm(x) != np.inf
+        lambda x: np.linalg.norm(x) > 0.1 and np.linalg.norm(x) != np.inf
     ).map(_normalize_quat).map(_increase_dims)
     return q
 
@@ -80,7 +81,7 @@ def test_z2quaternion(angles):
     assert np.allclose(np.linalg.norm(result, axis=1), 1)
 
 
-@settings(max_examples=1000)
+@settings(max_examples=1000, suppress_health_check=[HealthCheck.filter_too_much])
 @given(unit_quaternion_Z())
 def test_quaternion2z(quat):
     """Ensures correct range of angles [-pi, pi].
@@ -96,12 +97,18 @@ def test_quaternion2z(quat):
     """
     result = quaternion2z(quat)
     assume(not np.isnan(np.linalg.norm(quat)))
-    assert np.abs(result) < np.pi + EPS
+    assume(np.linalg.norm(quat) != 0)
+    # assert np.abs(result) < np.pi + EPS
+    q_quat = quaternion.as_quat_array(quat)[0]
+    q_res = np.array(quaternion.as_rotation_vector(q_quat)[2], dtype=np.float32)
+    if q_res > np.pi:
+        q_res -= 2*np.pi
+    print(q_res, result)
+    assert np.isclose(q_res, result, atol=0.5)
 
 
-@settings(max_examples=1000)
-@given(arrays(np.float32, (1, 4), elements=floats(min_value=-1, max_value=1)
-              ).filter(lambda x: np.linalg.norm(x, axis=1) > 0.5))
+@settings(max_examples=1000, suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow])
+@given(unit_quaternion())
 def test_quaternion_angle_2d(quat):
     """Ensures correct range of angles [pi, pi].
 
@@ -109,7 +116,6 @@ def test_quaternion_angle_2d(quat):
     [-pi,pi]. This tests that the resulting angle is in this range.
 
     """
-    quat = quat / np.linalg.norm(quat, axis=1)
     result = quaternion_angle(quat)
     assert 0 <= result < 2*(np.pi + EPS)
 
@@ -158,3 +164,8 @@ def test_quat_rotation():
     quaternion_rotation(initial, final, result)
     assert np.all(result < 2*np.pi)
     assert np.all(0 < result)
+    initial_q = quaternion.as_quat_array(initial)
+    final_q = quaternion.as_quat_array(final)
+    result_q = np.array([quaternion.rotation_intrinsic_distance(i, f)
+                           for i, f in zip(initial_q, final_q)], dtype=np.float32)
+    assert np.allclose(result, result_q, atol=1e-5)

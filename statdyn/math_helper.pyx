@@ -94,18 +94,18 @@ cpdef np.ndarray[float, ndim=1] quaternion2z(
     cdef np.ndarray[float, ndim=1] result
     result = np.empty(nitems, dtype=np.float32)
 
-    cdef double q_w
+    cdef double q_w, q_x, q_y, q_z
     for i in range(nitems):
         q_w = orientations[i, 0]
-        if close(abs(q_w), 1) or close(orientations[i, 3], 0):
-            result[i] = 0
+        q_x = orientations[i, 1]
+        q_y = orientations[i, 2]
+        q_z = orientations[i, 3]
+        if q_z*q_z == 0.:
+            result[i] = 0.
         else:
-            result[i] = 2.*acos(q_w) / sqrt(1-q_w*q_w) * orientations[i, 3]
+            result[i] = 2.*acos(q_w) / sqrt(q_x*q_x + q_y*q_y + q_z*q_z) * q_z
             if result[i] > M_PI:
                 result[i] -= M_TAU
-            if result[i] < -M_PI:
-                result[i] += M_TAU
-
     return result
 
 

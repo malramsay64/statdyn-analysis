@@ -37,6 +37,7 @@ test:
     requires:
         - pytest
         - hypothesis
+        - quaternion
     source_files:
         - test/*
     commands:
