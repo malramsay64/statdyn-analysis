@@ -21,12 +21,12 @@ from libc.float cimport FLT_EPSILON
 
 
 cdef float QUAT_EPS = 2*FLT_EPSILON
-cdef float M_TAU = 2*M_PI
+cdef double M_TAU = 2*M_PI
 
-cdef inline bint close(float a, float b):
-    return abs(a-b) <= QUAT_EPS
+cdef bint close(float a, float b) nogil:
+    return fabs(a-b) <= QUAT_EPS
 
-cpdef float get_quat_eps():
+cpdef float get_quat_eps() nogil:
     return QUAT_EPS
 
 cdef float single_quat_rotation(
@@ -47,8 +47,14 @@ cpdef void quaternion_rotation(
 ):
     cdef Py_ssize_t nitems = result.shape[0]
 
-    for i in range(nitems):
-        result[i] = single_quat_rotation(initial[i], final[i])
+    with nogil:
+        for i in range(nitems):
+            result[i] = 2.*acos(fabs(
+                    initial[i, 0] * final[i, 0] +
+                    initial[i, 1] * final[i, 1] +
+                    initial[i, 2] * final[i, 2] +
+                    initial[i, 3] * final[i, 3]
+                ))
 
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(
@@ -58,8 +64,9 @@ cpdef np.ndarray[float, ndim=1] quaternion_angle(
     cdef np.ndarray[float, ndim=1] result
     result = np.empty(nitems, dtype=np.float32)
 
-    for i in range(nitems):
-        result[i] = 2*acos(quat[i, 0])
+    with nogil:
+        for i in range(nitems):
+            result[i] = 2*acos(quat[i, 0])
 
     return result
 
@@ -76,14 +83,14 @@ cpdef np.ndarray[float, ndim=2] z2quaternion(
     cdef np.ndarray[float, ndim=2] result
 
     result = np.zeros([nitems, 4], dtype=np.float32)
-
-    for i in range(nitems):
-        angle = theta[i]/2.
-        if close(angle, 0):
-            result[i, w_pos] = 1.
-        else:
-            result[i, w_pos] = cos(angle)
-            result[i, z_pos] = sin(angle)
+    with nogil:
+        for i in range(nitems):
+            angle = theta[i]/2.
+            if close(angle, 0):
+                result[i, w_pos] = 1.
+            else:
+                result[i, w_pos] = cos(angle)
+                result[i, z_pos] = sin(angle)
     return result
 
 
@@ -95,17 +102,18 @@ cpdef np.ndarray[float, ndim=1] quaternion2z(
     result = np.empty(nitems, dtype=np.float32)
 
     cdef double q_w, q_x, q_y, q_z
-    for i in range(nitems):
-        q_w = orientations[i, 0]
-        q_x = orientations[i, 1]
-        q_y = orientations[i, 2]
-        q_z = orientations[i, 3]
-        if q_z*q_z == 0.:
-            result[i] = 0.
-        else:
-            result[i] = 2.*acos(q_w) / sqrt(q_x*q_x + q_y*q_y + q_z*q_z) * q_z
-            if result[i] > M_PI:
-                result[i] -= M_TAU
+    with nogil:
+        for i in range(nitems):
+            q_w = orientations[i, 0]
+            q_x = orientations[i, 1]
+            q_y = orientations[i, 2]
+            q_z = orientations[i, 3]
+            if q_z*q_z == 0.:
+                result[i] = 0.
+            else:
+                result[i] = 2.*acos(q_w) / sqrt(q_x*q_x + q_y*q_y + q_z*q_z) * q_z
+                if result[i] > M_PI:
+                    result[i] -= M_TAU
     return result
 
 
