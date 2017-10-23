@@ -12,7 +12,7 @@ import logging
 
 import numpy as np
 from bokeh.models import ColumnDataSource, HoverTool
-from bokeh.plotting import figure
+from bokeh.plotting import figure, show
 
 from ..analysis.order import num_neighbours, orientational_order
 from ..math_helper import quaternion2z
@@ -44,7 +44,7 @@ def plot_circles(mol_plot, source):
 def snapshot2data(snapshot,
                   molecule: Molecule=Trimer(),
                   extra_particles=True,
-                  ordering=False,
+                  ordering=None,
                   ):
     radii = np.ones(snapshot.particles.N)
     orientation = snapshot.particles.orientation
@@ -59,13 +59,8 @@ def snapshot2data(snapshot,
         radii = radii[: nmols]
 
     colour = colour_orientation(angle)
-    if ordering:
-        ordered = orientational_order(snapshot.configuration.box,
-                                      position,
-                                      orientation,
-                                      3.5
-                                      ) > 0.85
-        colour[ordered] = colour_orientation(angle, light_colours=True)[ordered]
+    if ordering is not None:
+        colour[ordering] = colour_orientation(angle, light_colours=True)[ordering]
 
     if extra_particles:
         position = molecule.orientation2positions(position, angle)
@@ -85,7 +80,7 @@ def snapshot2data(snapshot,
     return data
 
 
-def plot(snapshot, repeat=False, offset=False, order=False,
+def plot(snapshot, repeat=False, offset=False, order=None,
          extra_particles=True, source=None):
     """Plot snapshot using bokeh."""
     data = snapshot2data(snapshot,
