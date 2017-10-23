@@ -43,6 +43,11 @@ cpdef np.ndarray[float, ndim=1] quaternion2z(
         np.ndarray[float, ndim=2] orientations
 )
 
+cpdef float single_displacement(
+        float[:] box,
+        float[:] initial,
+        float[:] final
+) nogil
 
 cpdef void displacement_periodic(
         float[:] box,

@@ -117,6 +117,28 @@ cpdef np.ndarray[float, ndim=1] quaternion2z(
     return result
 
 
+cpdef float single_displacement(
+        float[:] box,
+        float[:] initial,
+        float[:] final
+) nogil:
+    cdef int j
+    cdef double[3] x, inv_box
+    cdef double images
+
+    inv_box[0] = 1./box[0]
+    inv_box[1] = 1./box[1]
+    inv_box[2] = 1./box[2]
+
+    for j in range(3):
+        x[j] = initial[j] - final[j]
+        if box[j] > FLT_EPSILON:
+            images = inv_box[j] * x[j]
+            x[j] = box[j] * (images - round(images))
+
+    return sqrt(x[0]*x[0] + x[1]*x[1] + x[2]*x[2])
+
+
 cpdef void displacement_periodic(
         float[:] box,
         float[:, :] initial,
