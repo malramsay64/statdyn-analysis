@@ -7,16 +7,20 @@
 # Distributed under terms of the MIT license.
 """Create an interactive view of a configuration."""
 
+import functools
 import logging
 from functools import partial
 from pathlib import Path
 
 import gsd.hoomd
 from bokeh.layouts import column, row, widgetbox
-from bokeh.models import Button, ColumnDataSource, Select, Slider, Toggle
+from bokeh.models import (Button, ColumnDataSource, RadioButtonGroup, Select,
+                          Slider, Toggle)
 from bokeh.plotting import curdoc, figure
 from tornado import gen
 
+from statdyn.analysis.order import (compute_ml_order, dt_model, knn_model,
+                                    nn_model, orientational_order)
 from statdyn.figures.configuration import plot, plot_circles, snapshot2data
 from statdyn.molecules import Trimer
 
@@ -93,7 +97,7 @@ def update_data(attr, old, new):
     data = snapshot2data(snapshot,
                          molecule=molecule,
                          extra_particles=extra_particles,
-                         ordering=ordered.active,
+                         ordering=order_parameters[OP_KEYS[ordered.active]],
                          )
     source.data = data
 
@@ -125,7 +129,18 @@ fname.on_change('value', update_trajectory)
 index = Slider(title='Index', value=0, start=0, end=1, step=1)
 index.on_change('value', update_index)
 
-ordered = Toggle(name='order', label='Colour Order')
+
+order_parameters = {
+    'None': None,
+    'Orient': orientational_order,
+    'Neural Net': functools.partial(compute_ml_order, nn_model()),
+    'Decision Tree': functools.partial(compute_ml_order, dt_model()),
+    'KNN Model': functools.partial(compute_ml_order, knn_model()),
+}
+OP_KEYS = list(order_parameters.keys())
+
+ordered = RadioButtonGroup(
+        labels=OP_KEYS, active=0)
 ordered.on_click(update_data_now)
 
 radius_scale = Slider(title='Particle Radius', value=1, start=0.1, end=2, step=0.05)

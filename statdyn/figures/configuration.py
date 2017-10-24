@@ -60,7 +60,12 @@ def snapshot2data(snapshot,
 
     colour = colour_orientation(angle)
     if ordering is not None:
-        colour[ordering] = colour_orientation(angle, light_colours=True)[ordering]
+        order = ordering(snapshot.configuration.box, position, orientation)
+        if order.dtype in [int, bool]:
+            order = order.astype(bool)
+        else:
+            order = order != 'liq'
+        colour[order] = colour_orientation(angle, light_colours=True)[order]
 
     if extra_particles:
         position = molecule.orientation2positions(position, angle)
