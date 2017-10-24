@@ -27,6 +27,23 @@ from libc.math cimport fabs, cos, M_PI
 from libc.limits cimport UINT_MAX
 from statdyn.math_helper cimport single_quat_rotation, single_displacement
 
+
+def nn_model():
+    from keras.models import load_model
+    from pathlib import Path
+    return load_model(Path(__file__).parent / 'models/nn-Trimer-model.hdf5')
+
+def dt_model():
+    from sklearn.externals import joblib
+    from pathlib import Path
+    return joblib.load(Path(__file__).parent / 'models/dt-Trimer-model.pkl')
+
+def knn_model():
+    from sklearn.externals import joblib
+    from pathlib import Path
+    return joblib.load(Path(__file__).parent / 'models/knn-Trimer-model.pkl')
+
+
 cpdef compute_neighbours(np.ndarray[np.float32_t, ndim=1] box,
                          np.ndarray[np.float32_t, ndim=2] position,
                          float max_radius=3.5,
@@ -170,6 +187,7 @@ cpdef relative_distances(np.ndarray[float, ndim=1] box: np.ndarray,
 cpdef orientational_order(np.ndarray[float, ndim=1] box: np.ndarray,
                           np.ndarray[float, ndim=2] position: np.ndarray,
                           np.ndarray[float, ndim=2] orientation: np.ndarray,
+                          float cutoff=0.8,
                           float max_radius=3.5,
                           float angle_factor=1.):
     """Compute the orientational order parameter.
@@ -212,4 +230,22 @@ cpdef orientational_order(np.ndarray[float, ndim=1] box: np.ndarray,
             order_parameter[mol_index] /= num_neighbours
         else:
             order_parameter[mol_index] = 0
-    return order_parameter
+    return order_parameter > cutoff
+
+
+def compute_ml_order(
+        model,
+        np.ndarray[float, ndim=1] box,
+        np.ndarray[float, ndim=2] position,
+        np.ndarray[float, ndim=2] orientation,
+    ):
+
+    cdef float max_radius = 3.5
+    cdef unsigned int max_neighbours = 8
+    cdef np.ndarray[float, ndim=2] orientations
+
+    orientations = relative_orientations(box, position, orientation, max_radius)
+    try:
+        return model.predict_classes(orientations)
+    except AttributeError:
+        return model.predict(orientations)
