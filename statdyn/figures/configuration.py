@@ -45,6 +45,7 @@ def snapshot2data(snapshot,
                   molecule: Molecule=Trimer(),
                   extra_particles=True,
                   ordering=None,
+                  order_list=None,
                   ):
     radii = np.ones(snapshot.particles.N)
     orientation = snapshot.particles.orientation
@@ -59,7 +60,9 @@ def snapshot2data(snapshot,
         radii = radii[: nmols]
 
     colour = colour_orientation(angle)
-    if ordering is not None:
+    if order_list is not None:
+        colour[order_list] = colour_orientation(angle, light_colours=True)[order_list]
+    elif ordering is not None:
         order = ordering(snapshot.configuration.box, position, orientation)
         if order.dtype in [int, bool]:
             order = order.astype(bool)
@@ -86,12 +89,13 @@ def snapshot2data(snapshot,
 
 
 def plot(snapshot, repeat=False, offset=False, order=None,
-         extra_particles=True, source=None):
+         extra_particles=True, source=None, order_list=None):
     """Plot snapshot using bokeh."""
     data = snapshot2data(snapshot,
                          molecule=Trimer(),
                          extra_particles=extra_particles,
-                         ordering=order)
+                         ordering=order,
+                         order_list=order_list)
     p = figure(aspect_scale=1, match_aspect=True, width=920, height=800,
                active_scroll='wheel_zoom')
     if source:
