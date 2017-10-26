@@ -17,7 +17,8 @@ extensions = [
     Extension(
         'statdyn.analysis.order',
         ['statdyn/analysis/order.pyx'],
-        libraries=['m'],
+        language='c++',
+        libraries=['m', 'voro++'],
         include_dirs=[np.get_include()],
     ),
     Extension(

@@ -18,15 +18,38 @@ import numpy as np
 from freud.box import Box
 from freud.locality import NearestNeighbors
 
-from statdyn.molecules import Molecule, Trimer
-
 from ..molecules import Molecule, Trimer
-import tess
 
 cimport numpy as np
-from libc.math cimport fabs, cos, M_PI
+from libc.math cimport fabs, cos, M_PI, pow, round, sqrt
 from libc.limits cimport UINT_MAX
-from statdyn.math_helper cimport single_quat_rotation, single_displacement
+from cython.operator cimport dereference
+
+from ..math_helper cimport single_quat_rotation, single_displacement
+
+cdef extern from "voro++/voro++.hh" namespace "voro":
+    cdef cppclass container_base:
+        pass
+
+
+    cdef cppclass container:
+        container(double,double, double,double, double,double,
+                int,int,int, bint,bint,bint, int) except +
+        bint compute_cell(voronoicell_neighbor &c, c_loop_all &vl) nogil
+
+        void put(int, double, double, double) nogil
+        int total_particles()
+
+
+    cdef cppclass voronoicell_neighbor:
+        voronoicell_neighbor() nogil
+        double number_of_faces() nogil
+
+    cdef cppclass c_loop_all:
+        c_loop_all(container_base&) nogil
+        bint start() nogil
+        bint inc() nogil
+        int pid() nogil
 
 
 def nn_model():
@@ -252,17 +275,53 @@ def compute_ml_order(
         return model.predict(orientations)
 
 
-def compute_voronoi_neighs(
+cpdef compute_voronoi_neighs(
         np.ndarray[float, ndim=1] box,
         np.ndarray[float, ndim=2] position,
 ):
     cdef np.ndarray[np.int16_t, ndim=1] num_neighs
     cdef Py_ssize_t num_elements = position.shape[0]
-
+    cdef double Lx, Ly, Lz
+    cdef int bx, by, bz
+    cdef double N
     num_neighs = np.empty(num_elements, dtype=np.int16)
-    cells = tess.Container(position, limits=box[:3], periodic=(True, True, False))
 
-    for i in range(num_elements):
-        num_neighs[i] = <int>cells[i].number_of_faces() - 2
+    cdef container *configuration
+    cdef voronoicell_neighbor *cell
+    cdef c_loop_all *vl
+
+    Lx = box[0]
+    Ly = box[1]
+    Lz = box[2]
+
+    N = sqrt(num_elements/(Lx * Ly))
+
+    bx = max(<int>round(N * Lx), 1)
+    by = max(<int>round(N * Ly), 1)
+    bz = 1
+
+
+    configuration = new container(
+            -Lx/2, Lx/2, -Ly/2, Ly/2, -Lz/2, Lz/2,
+            bx, by, bz, True, True, False, num_elements
+    )
+
+    with nogil:
+        for i in range(num_elements):
+            configuration.put(i, position[i, 0], position[i, 1], position[i, 2])
+
+        cell = new voronoicell_neighbor()
+        vl = new c_loop_all(<container_base&>dereference(configuration))
+
+        if not vl.start():
+            del vl
+            with gil:
+                raise ValueError("Failed to start loop")
+
+        while True:
+            if (configuration.compute_cell(dereference(cell), dereference(vl))):
+                num_neighs[vl.pid()] = <int>cell.number_of_faces() - 2
+            if not vl.inc(): break
+        del configuration, cell, vl
 
     return num_neighs
