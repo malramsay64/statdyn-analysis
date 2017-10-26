@@ -19,8 +19,9 @@ from bokeh.models import (Button, ColumnDataSource, RadioButtonGroup, Select,
 from bokeh.plotting import curdoc, figure
 from tornado import gen
 
-from statdyn.analysis.order import (compute_ml_order, dt_model, knn_model,
-                                    nn_model, orientational_order)
+from statdyn.analysis.order import (compute_ml_order, compute_voronoi_neighs,
+                                    dt_model, knn_model, nn_model,
+                                    orientational_order)
 from statdyn.figures.configuration import plot, plot_circles, snapshot2data
 from statdyn.molecules import Trimer
 
@@ -136,6 +137,7 @@ order_parameters = {
     'Neural Net': functools.partial(compute_ml_order, nn_model()),
     'Decision Tree': functools.partial(compute_ml_order, dt_model()),
     'KNN Model': functools.partial(compute_ml_order, knn_model()),
+    'Num Neighs': lambda box, pos, orient: compute_voronoi_neighs(box, pos) == 6,
 }
 OP_KEYS = list(order_parameters.keys())
 

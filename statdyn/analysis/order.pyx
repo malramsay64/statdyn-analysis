@@ -21,6 +21,7 @@ from freud.locality import NearestNeighbors
 from statdyn.molecules import Molecule, Trimer
 
 from ..molecules import Molecule, Trimer
+import tess
 
 cimport numpy as np
 from libc.math cimport fabs, cos, M_PI
@@ -249,3 +250,19 @@ def compute_ml_order(
         return model.predict_classes(orientations)
     except AttributeError:
         return model.predict(orientations)
+
+
+def compute_voronoi_neighs(
+        np.ndarray[float, ndim=1] box,
+        np.ndarray[float, ndim=2] position,
+):
+    cdef np.ndarray[np.int16_t, ndim=1] num_neighs
+    cdef Py_ssize_t num_elements = position.shape[0]
+
+    num_neighs = np.empty(num_elements, dtype=np.int16)
+    cells = tess.Container(position, limits=box[:3], periodic=(True, True, False))
+
+    for i in range(num_elements):
+        num_neighs[i] = <int>cells[i].number_of_faces() - 2
+
+    return num_neighs
