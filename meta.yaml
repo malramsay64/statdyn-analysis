@@ -17,6 +17,7 @@ requirements:
         - setuptools_scm 1.15.6
         - cython 0.26.*
         - numpy {{ numpy }}
+        - voro
 
     run:
         - python {{ python }}
@@ -27,10 +28,10 @@ requirements:
         - numpy {{ numpy }}
         - bokeh 0.12*
         - setuptools *
-        - freud 0.6.2*
+        - freud 0.6.*
         - gsd 1.2.0*
         - cython 0.26.*
-        - keras-gpu
+        - keras
         - scikit-learn
 
 build:
