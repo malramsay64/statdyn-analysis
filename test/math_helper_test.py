@@ -103,8 +103,12 @@ def test_quaternion2z(quat):
     q_res = np.array(quaternion.as_rotation_vector(q_quat)[2], dtype=np.float32)
     if q_res > np.pi:
         q_res -= 2*np.pi
+    if q_res < -np.pi:
+        q_res += 2*np.pi
     print(q_res, result)
-    assert np.isclose(q_res, result, atol=0.5)
+    assert (np.isclose(q_res, result, atol=0.1) or
+            np.isclose(q_res, result - 2*np.pi, atol=0.1) or
+            np.isclose(q_res, result + 2*np.pi, atol=0.1))
 
 
 @settings(max_examples=1000, suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow])

@@ -27,13 +27,17 @@ TEST_CLASSES = [
     crystals.TrimerP2
 ]
 
+output_dir = Path('test/output')
+output_dir.mkdir(exist_ok=True)
+
 PARAMETERS = SimulationParams(
     temperature=0.4,
     num_steps=100,
-    outfile_path=Path('test/output'),
+    outfile_path=output_dir,
     crystal=crystals.TrimerP2(),
     cell_dimensions=(32, 40),
 )
+
 
 
 @pytest.mark.parametrize("crys_class", TEST_CLASSES)

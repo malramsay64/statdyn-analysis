@@ -9,8 +9,7 @@
 """Testing the dynamics module."""
 
 import numpy as np
-import pytest
-from hypothesis import assume, given
+from hypothesis import given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
 

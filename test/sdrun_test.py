@@ -138,4 +138,4 @@ def test_sdrun_figure():
     command = ['sdrun',
                'figure']
     with pytest.raises(subprocess.TimeoutExpired):
-        ret = subprocess.run(command, timeout=1)
+        subprocess.run(command, timeout=1)
