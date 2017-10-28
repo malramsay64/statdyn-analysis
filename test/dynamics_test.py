@@ -20,20 +20,20 @@ from statdyn.analysis.read import process_gsd
 MAX_BOX = 20.
 
 DTYPE = np.float32
-EPS = np.finfo(DTYPE).eps * 8
+EPS = np.sqrt(np.finfo(DTYPE).eps)
 
 
 def translationalDisplacement_reference(box: np.ndarray,
                                         initial: np.ndarray,
                                         final: np.ndarray,
-                                        result: np.ndarray
-                                        ) -> None:
+                                        ) -> np.ndarray:
     """Simplified reference implementation for computing the displacement.
 
     This computes the displacment using the shortest path from the original
     position to the final position.
 
     """
+    result = np.empty(final.shape[0], dtype=final.dtype)
     for index in range(len(result)):
         temp = initial[index] - final[index]
         for i in range(3):
@@ -42,15 +42,17 @@ def translationalDisplacement_reference(box: np.ndarray,
             if temp[i] < -box[i]/2:
                 temp[i] += box[i]
         result[index] = np.linalg.norm(temp)
+    return result
 
 
 def rotationalDisplacement_reference(initial: np.ndarray,
                                      final: np.ndarray,
-                                     result: np.ndarray,
-                                     ) -> None:
+                                     ) -> np.ndarray:
     """Simplified reference implementation of the rotational displacement."""
-    for index in range(len(result)):
+    result = np.empty(final.shape[0], dtype=final.dtype)
+    for index in range(final.shape[0]):
         result[index] = 2*np.arccos(np.abs(np.dot(initial[index], final[index])))
+    return result
 
 
 @given(arrays(DTYPE, (10, 3), elements=floats(-MAX_BOX/4, MAX_BOX/4)),
@@ -63,11 +65,9 @@ def test_translationalDisplacement_noperiod(init, final):
     about.
     """
     box = np.array([MAX_BOX, MAX_BOX, MAX_BOX], dtype=DTYPE)
-    result = np.zeros(len(init), dtype=DTYPE)
-    ref_res = np.zeros(len(init), dtype=DTYPE)
     np_res = np.linalg.norm(init-final, axis=1)
-    dynamics.translationalDisplacement(box, init, final, result)
-    translationalDisplacement_reference(box, init, final, ref_res)
+    result = dynamics.translationalDisplacement(box, init, final)
+    ref_res = translationalDisplacement_reference(box, init, final)
     assert np.allclose(result, np_res, atol=EPS)
     assert np.allclose(result, ref_res, atol=EPS)
 
@@ -80,11 +80,9 @@ def test_translationalDisplacement_periodicity(init, final):
     This is testing that periodic boundaries are identified appropriately.
     """
     box = np.array([MAX_BOX, MAX_BOX, MAX_BOX], dtype=DTYPE)
-    result = np.empty(len(init), dtype=DTYPE)
-    ref_res = np.empty(len(init), dtype=DTYPE)
     np_res = np.square(np.linalg.norm(init-final, axis=1))
-    dynamics.translationalDisplacement(box, init, final, result)
-    translationalDisplacement_reference(box, init, final, ref_res)
+    result = dynamics.translationalDisplacement(box, init, final)
+    ref_res = translationalDisplacement_reference(box, init, final)
     assert np.all(np.logical_not(np.isclose(result, np_res)))
     assert np.allclose(result, ref_res, atol=EPS)
 
@@ -97,10 +95,8 @@ def test_translationalDisplacement(init, final):
     This is testing that periodic boundaries are identified appropriately.
     """
     box = np.array([MAX_BOX, MAX_BOX, MAX_BOX], dtype=DTYPE)
-    result = np.empty(len(init), dtype=DTYPE)
-    ref_res = np.empty(len(init), dtype=DTYPE)
-    dynamics.translationalDisplacement(box, init, final, result)
-    translationalDisplacement_reference(box, init, final, ref_res)
+    result = dynamics.translationalDisplacement(box, init, final)
+    ref_res = translationalDisplacement_reference(box, init, final)
     assert np.allclose(result, ref_res, atol=EPS)
 
 
@@ -116,10 +112,8 @@ def test_rotationalDisplacement(init, final):
     """
     init = init / np.linalg.norm(init, axis=1)
     final = final / np.linalg.norm(final, axis=1)
-    result = np.zeros(init.shape[0], dtype=DTYPE)
-    ref_res = np.empty(init.shape[0], dtype=DTYPE)
-    dynamics.rotationalDisplacement(init, final, result)
-    rotationalDisplacement_reference(init, final, ref_res)
+    result = dynamics.rotationalDisplacement(init, final)
+    ref_res = rotationalDisplacement_reference(init, final)
     assert np.allclose(result, ref_res, equal_nan=True, atol=EPS)
 
 

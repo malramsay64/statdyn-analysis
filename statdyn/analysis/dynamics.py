@@ -53,14 +53,12 @@ class dynamics(object):
 
     def computeMSD(self, position: np.ndarray) -> float:
         """Compute the mean squared displacement."""
-        result = np.zeros(self.num_particles, dtype=self.dyn_dtype)
-        translationalDisplacement(self.box, self.position, position, result)
+        result = translationalDisplacement(self.box, self.position, position)
         return mean_squared_displacement(result)
 
     def comptuteMFD(self, position: np.ndarray) -> float:
         """Comptute the fourth power of displacement."""
-        result = np.zeros(self.num_particles, dtype=self.dyn_dtype)
-        translationalDisplacement(self.box, self.position, position, result)
+        result = translationalDisplacement(self.box, self.position, position)
         return mean_fourth_displacement(result)
 
     def computeAlpha(self, position: np.ndarray) -> float:
@@ -71,9 +69,8 @@ class dynamics(object):
                       {2\langle \Delta r^2  \rangle^2} -1
 
         """
-        disp2 = np.empty(self.num_particles, dtype=self.dyn_dtype)
-        translationalDisplacement(self.box, self.position, position, disp2)
-        return alpha_non_gaussian(disp2)
+        result = translationalDisplacement(self.box, self.position, position)
+        return alpha_non_gaussian(result)
 
     def computeTimeDelta(self, timestep: int) -> int:
         """Time difference between keyframe and timestep."""
@@ -81,20 +78,17 @@ class dynamics(object):
 
     def computeRotation(self, orientation: np.ndarray) -> float:
         """Compute the rotation of the moleule."""
-        result = np.empty(self.num_particles, dtype=self.dyn_dtype)
-        rotationalDisplacement(self.orientation, orientation, result)
+        result = rotationalDisplacement(self.orientation, orientation)
         return mean_rotation(result)
 
     def get_rotations(self, orientation: np.ndarray) -> np.ndarray:
         """Get all the rotations."""
-        result = np.empty(self.num_particles, dtype=self.dyn_dtype)
-        rotationalDisplacement(self.orientation, orientation, result)
+        result = rotationalDisplacement(self.orientation, orientation)
         return result
 
     def get_displacements(self, position: np.ndarray) -> np.ndarray:
         """Get all the displacements."""
-        result = np.empty(self.num_particles, dtype=self.dyn_dtype)
-        translationalDisplacement(self.box, self.position, position, result)
+        result = translationalDisplacement(self.box, self.position, position)
         return mean_displacement(result)
 
     def computeAll(self,
@@ -103,12 +97,12 @@ class dynamics(object):
                    orientation: np.ndarray=None,
                    ) -> pandas.Series:
         """Compute all dynamics quantities of interest."""
-        delta_rotation = np.zeros(self.num_particles, dtype=self.dyn_dtype)
         if orientation is not None:
-            rotationalDisplacement(self.orientation, orientation, delta_rotation)
+            delta_rotation = rotationalDisplacement(self.orientation, orientation)
+        else:
+            delta_rotation = None
 
-        delta_displacement = np.empty(self.num_particles, dtype=self.dyn_dtype)
-        translationalDisplacement(self.box, self.position, position, delta_displacement)
+        delta_displacement = translationalDisplacement(self.box, self.position, position)
         return all_dynamics(
             self.computeTimeDelta(timestep),
             delta_displacement,
@@ -339,8 +333,7 @@ def all_dynamics(timediff: int,
 
 def rotationalDisplacement(initial: np.ndarray,
                            final: np.ndarray,
-                           result: np.ndarray
-                           ) -> None:
+                           ) -> np.ndarray:
     r"""Compute the rotational displacement.
 
     Args:
@@ -364,14 +357,15 @@ def rotationalDisplacement(initial: np.ndarray,
     .. [Jim Belk]: https://math.stackexchange.com/questions/90081/quaternion-distance
 
     """
+    result = np.empty(final.shape[0], dtype=final.dtype)
     quaternion_rotation(initial, final, result)
+    return result
 
 
 def translationalDisplacement(box: np.ndarray,
                               initial: np.ndarray,
                               final: np.ndarray,
-                              result: np.ndarray
-                              ) -> None:
+                              ) -> np.ndarray:
     """Optimised function for computing the displacement.
 
     This computes the displacement using the shortest path from the original
@@ -382,4 +376,6 @@ def translationalDisplacement(box: np.ndarray,
     which breaks slightly when the frame size changes. I am assuming this is
     negligible so not including it.
     """
+    result = np.empty(final.shape[0], dtype=final.dtype)
     displacement_periodic(box.astype(np.float32), initial, final, result)
+    return result
