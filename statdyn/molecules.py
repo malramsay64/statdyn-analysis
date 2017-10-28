@@ -159,6 +159,8 @@ class Molecule(object):
         moment_inertia *= scale_factor
         return (0, 0, moment_inertia)
 
+    def get_radii(self) -> np.ndarray:
+        return np.ones(1)
 
 class Disc(Molecule):
     """Defines a 2D particle."""
@@ -340,7 +342,7 @@ class Dimer(Molecule):
         self.moment_inertia = self.compute_moment_intertia()
         self.dimensions = 2
 
-    def compute_moment_intertia(self) -> Tuple[float, float, float]:
+    def compute_moment_intertia(self, scale_factor: float=1.) -> Tuple[float, float, float]:
         """Compute the moment of inertia from the particle paramters."""
         return (0., 0., 2 * (self.distance / 2)**2)
 

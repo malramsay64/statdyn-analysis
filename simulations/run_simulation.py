@@ -14,6 +14,7 @@ import itertools
 import os
 import subprocess
 from pathlib import Path
+from typing import List
 
 
 pbs_header = """#!/usr/bin/env python
@@ -146,7 +147,7 @@ def get_array_flag(num_values: int) -> str:
 temperatures = [0.3, 0.35, 0.4, 0.45, 0.5, 0.6, 0.8, 1.0, 1.5, 1.8]
 pressures = [1.]
 mom_inertia = [1.]
-crystals = [None]
+crystals: List[str] = [None]
 
 outdir = Path.home() / 'tmp1m/2017-10-27-dynamics'
 
@@ -167,7 +168,6 @@ if __name__ == "__main__":
     create_process = subprocess.run(
         ['qsub'],
         input=create_pbs,
-        encoding='utf-8',
         stdout=subprocess.PIPE,
         env=os.environ,
     )
@@ -190,7 +190,6 @@ if __name__ == "__main__":
     equil_process = subprocess.run(
         ['qsub', '-W', 'depend=afterok:'+create_process.stdout],
         input=equil_pbs,
-        encoding='utf-8',
         stdout=subprocess.PIPE,
         env=os.environ,
     )
@@ -211,7 +210,6 @@ if __name__ == "__main__":
     prod_process = subprocess.run(
         ['qsub', '-W', 'depend=afterok:'+create_process.stdout],
         input=prod_pbs,
-        encoding='utf-8',
         stdout=subprocess.PIPE,
         env=os.environ,
     )

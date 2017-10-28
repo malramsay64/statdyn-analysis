@@ -86,7 +86,7 @@ def simple_exponential_relaxation(time: np.ndarray,
 def exponential_relaxation(time: np.ndarray,
                            value: np.ndarray,
                            sigma: np.ndarray=None,
-                           value_width: float=0.3) -> Tuple[float, float]:
+                           value_width: float=0.3) -> Tuple[float, float, float]:
     """Fit a region of the exponential relaxation with an exponential.
 
     This fits an exponential to the small region around the value 1/e.
@@ -122,7 +122,7 @@ def exponential_relaxation(time: np.ndarray,
             fprime=_ddx_exponential_decay,
         )
 
-    val_mean = find_root(*popt)
-    val_min = find_root(*(popt-perr))
-    val_max = find_root(*(popt+perr))
+    val_mean: float = find_root(*popt)
+    val_min: float = find_root(*(popt-perr))
+    val_max: float = find_root(*(popt+perr))
     return val_mean, val_mean - val_min, val_max - val_min
