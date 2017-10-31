@@ -144,3 +144,11 @@ def test_spearman_rank(displacement, rotation):
 
 def test_dynamics():
     process_gsd('test/data/trajectory-13.50-3.00.gsd')
+
+def test_molecularRelaxation():
+    num_elements = 10
+    tau_1 = dynamics.molecularRelaxation(num_elements, 2)
+    tau_1.add(100, np.ones(num_elements) * 2)
+    assert np.all(tau_1.status == np.full(num_elements, tau_1._max_value))
+    tau_1.add(100, np.ones(num_elements) * 3)
+    assert np.all(tau_1.status == np.full(num_elements, 100))

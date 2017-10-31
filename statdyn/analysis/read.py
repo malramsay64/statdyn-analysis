@@ -15,7 +15,7 @@ import gsd.hoomd
 import pandas
 
 from ..StepSize import GenerateStepSeries
-from .dynamics import dynamics
+from .dynamics import dynamics, relaxations
 
 logger = logging.getLogger(__name__)
 
@@ -56,6 +56,7 @@ def process_gsd(infile: str,
     """
     dataframes: List[pandas.DataFrame] = []
     keyframes: List[dynamics] = []
+    relaxframes: List[relaxations] = []
     append_file = False
     buffer_size = int(buffer_multiplier * 8192)
 
@@ -94,6 +95,7 @@ def process_gsd(infile: str,
                 for index in indexes:
                     try:
                         mydyn = keyframes[index]
+                        myrelax = relaxframes[index]
                     except IndexError:
                         logger.debug('Create keyframe at step %s', curr_step)
                         keyframes.append(dynamics(
@@ -102,12 +104,24 @@ def process_gsd(infile: str,
                             position=frame.particles.position,
                             orientation=frame.particles.orientation,
                         ))
+                        relaxframes.append(relaxations(
+                            timestep=frame.configuration.step,
+                            box=frame.configuration.box,
+                            position=frame.particles.position,
+                            orientation=frame.particles.orientation,
+                        ))
                         mydyn = keyframes[index]
+                        myrelax = relaxframes[index]
 
                     dynamics_series = mydyn.computeAll(
                         curr_step,
                         frame.particles.position,
-                        frame.particles.orientation
+                        frame.particles.orientation,
+                    )
+                    myrelax.add(
+                        curr_step,
+                        frame.particles.position,
+                        frame.particles.orientation,
                     )
                     logger.debug('Series: %s', index)
                     dynamics_series['start_index'] = index
@@ -125,7 +139,14 @@ def process_gsd(infile: str,
                         format='table',
                         append=append_file,
                     )
+                    pandas.concat([relax.summary() for relax in relaxframes]).to_hdf(
+                        outfile,
+                        'relaxations',
+                        format='table',
+                        append=append_file,
+                    )
                     dataframes.clear()
+                    relaxations.clear()
                     # Once we have written to the file once, append to the
                     # existing file.
                     if not append_file:
@@ -135,6 +156,12 @@ def process_gsd(infile: str,
         pandas.concat(dataframes).to_hdf(
             outfile,
             'dynamics',
+            format='table',
+            append=append_file,
+        )
+        pandas.concat([relax.summary() for relax in relaxframes]).to_hdf(
+            outfile,
+            'relaxations',
             format='table',
             append=append_file,
         )

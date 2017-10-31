@@ -9,6 +9,7 @@
 """Compute dynamic properties."""
 
 import logging
+from functools import partial
 
 import numpy as np
 import pandas
@@ -112,6 +113,59 @@ class dynamics(object):
     def get_molid(self):
         """Molecule ids of each of the values."""
         return np.arange(self.num_particles)
+
+
+class molecularRelaxation(object):
+    """Computeteh relaxation of each molecule."""
+
+    def __init__(self, num_elements: int, threshold: float) -> None:
+        self.num_elements = num_elements
+        self.threshold = threshold
+        self._max_value = 2**32 - 1
+        self.status = np.full(self.num_elements, self._max_value, dtype=int)
+
+    def add(self, timediff: int, distance: np.ndarray) -> None:
+        assert distance.shape == self.status.shape
+        distance[np.isnan(distance)] = 0
+        moved = np.greater(self.threshold, distance)
+        moveable = np.greater(self.status, timediff)
+        self.status[np.logical_and(moved, moveable)] = timediff
+
+
+class relaxations(object):
+
+    def __init__(self, timestep: int,
+                 box: np.ndarray,
+                 position: np.ndarray,
+                 orientation: np.ndarray) -> None:
+        self.init_time = timestep
+        self.box = box
+        num_elements = position.shape[0]
+        self.init_position = position
+        self.init_orientation = orientation
+        self.mol_relax = {
+            'tau_D1': molecularRelaxation(num_elements, threshold=1.),
+            'tau_D012': molecularRelaxation(num_elements, threshold=0.12),
+            'tau_T2': molecularRelaxation(num_elements, threshold=np.pi/2),
+            'tau_T4': molecularRelaxation(num_elements, threshold=np.pi/4),
+        }
+
+    def add(self, timestep: int,
+            position: np.ndarray,
+            orientation: np.ndarray,
+            ) -> None:
+        displacement = translationalDisplacement(self.box, self.init_position, position)
+        rotation = rotationalDisplacement(self.init_orientation, orientation)
+        for key, func in self.mol_relax.items():
+            if 'D' in key:
+                func.add(timestep, displacement)
+            else:
+                func.add(timestep, rotation)
+
+    def summary(self) -> pandas.DataFrame:
+        return pandas.DataFrame(
+            {key: func.status for key, func in self.mol_relax.items()}
+        )
 
 
 def mean_squared_displacement(displacement: np.ndarray) -> float:
