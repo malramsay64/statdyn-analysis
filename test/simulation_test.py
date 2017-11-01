@@ -24,6 +24,7 @@ from statdyn.simulation.params import SimulationParams, paramsContext
 
 OUTDIR = Path('test/tmp')
 OUTDIR.mkdir(exist_ok=True)
+HOOMD_ARGS="--mode=cpu"
 
 PARAMETERS = SimulationParams(
     temperature=0.4,
@@ -32,13 +33,15 @@ PARAMETERS = SimulationParams(
     outfile_path=Path('test/tmp'),
     outfile='test/tmp/testout',
     dynamics=False,
+    hoomd_args=HOOMD_ARGS
 )
+
 
 
 @pytest.mark.simulation
 def test_run_npt():
     """Test an npt run."""
-    snapshot = initialise.init_from_none()
+    snapshot = initialise.init_from_none(hoomd_args=HOOMD_ARGS)
     simrun.run_npt(
         snapshot=snapshot,
         context=hoomd.context.initialize(''),
@@ -53,7 +56,8 @@ def test_run_npt():
 def test_run_multiple_concurrent(max_initial):
     """Test running multiple concurrent."""
     snapshot = initialise.init_from_file(
-        Path('test/data/Trimer-13.50-3.00.gsd')
+        Path('test/data/Trimer-13.50-3.00.gsd'),
+        hoomd_args=HOOMD_ARGS,
     )
     with paramsContext(PARAMETERS, max_initial=max_initial):
         simrun.run_npt(snapshot,
@@ -72,7 +76,7 @@ def test_thermo():
     """
     output = Path('test/tmp')
     output.mkdir(exist_ok=True)
-    snapshot = initialise.init_from_none()
+    snapshot = initialise.init_from_none(hoomd_args=HOOMD_ARGS)
     simrun.run_npt(
         snapshot,
         context=hoomd.context.initialize(''),
@@ -111,7 +115,7 @@ def test_equil_file_placement():
     for i in outdir.glob('*'):
         os.remove(str(i))
     with paramsContext(PARAMETERS, outfile_path=outdir, outfile=outfile, temperature=4.00):
-        snapshot = initialise.init_from_none()
+        snapshot = initialise.init_from_none(hoomd_args=HOOMD_ARGS)
         equilibrate.equil_liquid(snapshot, PARAMETERS)
         assert current == list(Path.cwd().glob('*'))
         assert Path(outfile).is_file()
@@ -126,7 +130,7 @@ def test_file_placement():
     for i in outdir.glob('*'):
         os.remove(str(i))
     with paramsContext(PARAMETERS, outfile_path=outdir, dynamics=True, temperature=3.00):
-        snapshot = initialise.init_from_none()
+        snapshot = initialise.init_from_none(hoomd_args=HOOMD_ARGS)
         simrun.run_npt(snapshot, hoomd.context.initialize(''), sim_params=PARAMETERS)
         assert current == list(Path.cwd().glob('*'))
         assert (outdir / 'Trimer-P13.50-T3.00.gsd').is_file()

@@ -9,7 +9,6 @@
 """Compute dynamic properties."""
 
 import logging
-from functools import partial
 
 import numpy as np
 import pandas
@@ -126,8 +125,7 @@ class molecularRelaxation(object):
 
     def add(self, timediff: int, distance: np.ndarray) -> None:
         assert distance.shape == self.status.shape
-        distance[np.isnan(distance)] = 0
-        moved = np.greater(self.threshold, distance)
+        moved = np.less(self.threshold, distance)
         moveable = np.greater(self.status, timediff)
         self.status[np.logical_and(moved, moveable)] = timediff
 

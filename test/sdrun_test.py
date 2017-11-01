@@ -25,6 +25,7 @@ def test_prod():
                '--no-dynamics',
                '-s', '100',
                '-o', 'test/output',
+               '--hoomd-args', '"--mode=cpu"',
                ]
     ret = subprocess.run(command)
     assert ret.returncode == 0
@@ -42,6 +43,7 @@ def test_prod_mpi():
                '--no-dynamics',
                '-s', '100',
                '-o', 'test/output',
+               '--hoomd-args', '"--mode=cpu"',
                ]
     command = 'mpirun -np 4'.split(' ') + command
     ret = subprocess.run(command)
@@ -60,6 +62,7 @@ def test_create(space_group):
                '--lattice-lengths', '20', '24',
                '-o', 'test/output',
                'test/output/test_create.gsd',
+               '--hoomd-args', '"--mode=cpu"',
                ]
     ret = subprocess.run(command)
     assert ret.returncode == 0
@@ -78,6 +81,7 @@ def test_create_mpi():
                '--space-group', 'p2',
                '--lattice-lengths', '20', '24',
                '-o', 'test/output',
+               '--hoomd-args', '"--mode=cpu"',
                'test/output/test_create.gsd',
                ]
     command = 'mpirun -np 4'.split(' ') + command
@@ -95,6 +99,7 @@ def test_equil():
                '-t', '2.50',
                '-s', '100',
                '-o', 'test/output',
+               '--hoomd-args', '"--mode=cpu"',
                'test/data/Trimer-13.50-3.00.gsd',
                'test/output/test_equil.gsd',
                ]
@@ -109,10 +114,11 @@ def test_equil_mpi():
     """Ensure sdrun create works."""
     command = ['sdrun',
                'equil',
-               '-v',
+               '-vvv',
                '-t', '2.50',
                '-s', '100',
                '-o', 'test/output',
+               '--hoomd-args', '"--mode=cpu"',
                'test/data/Trimer-13.50-3.00.gsd',
                'test/output/test_equil.gsd',
                ]
@@ -128,6 +134,7 @@ def test_comp_dynamics():
                'comp_dynamics',
                '-v',
                '-o', 'test/output',
+               '--hoomd-args', '"--mode=cpu"',
                'test/data/trajectory-13.50-3.00.gsd',
                ]
     ret = subprocess.run(command)

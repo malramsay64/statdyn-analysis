@@ -146,7 +146,7 @@ def process_gsd(infile: str,
                         append=append_file,
                     )
                     dataframes.clear()
-                    relaxations.clear()
+                    relaxframes.clear()
                     # Once we have written to the file once, append to the
                     # existing file.
                     if not append_file:
