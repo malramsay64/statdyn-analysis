@@ -9,17 +9,21 @@
 """Testing the dynamics module."""
 
 import numpy as np
-from hypothesis import given
+import quaternion
+from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
 
 from statdyn.analysis import dynamics
 from statdyn.analysis.read import process_gsd
 
+from .math_helper_test import unit_quaternion
+
 MAX_BOX = 20.
 
 DTYPE = np.float32
-EPS = np.sqrt(np.finfo(DTYPE).eps)
+EPS = 2*np.sqrt(np.finfo(DTYPE).eps)
+HYP_DTYPE = DTYPE
 
 
 def translationalDisplacement_reference(box: np.ndarray,
@@ -40,7 +44,7 @@ def translationalDisplacement_reference(box: np.ndarray,
                 temp[i] -= box[i]
             if temp[i] < -box[i]/2:
                 temp[i] += box[i]
-        result[index] = np.linalg.norm(temp)
+        result[index] = np.linalg.norm(temp, axis=0)
     return result
 
 
@@ -48,14 +52,13 @@ def rotationalDisplacement_reference(initial: np.ndarray,
                                      final: np.ndarray,
                                      ) -> np.ndarray:
     """Simplified reference implementation of the rotational displacement."""
-    result = np.empty(final.shape[0], dtype=final.dtype)
-    for index in range(final.shape[0]):
-        result[index] = 2*np.arccos(np.abs(np.dot(initial[index], final[index])))
-    return result
+    init = quaternion.as_quat_array(initial)[0]
+    fin = quaternion.as_quat_array(final)[0]
+    return quaternion.rotation_intrinsic_distance(init, fin)
 
 
-@given(arrays(DTYPE, (10, 3), elements=floats(-MAX_BOX/4, MAX_BOX/4)),
-       arrays(DTYPE, (10, 3), elements=floats(-MAX_BOX/4, MAX_BOX/4)))
+@given(arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX/4, MAX_BOX/4)),
+       arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX/4, MAX_BOX/4)))
 def test_translationalDisplacement_noperiod(init, final):
     """Test calculation of the translational displacement.
 
@@ -67,12 +70,13 @@ def test_translationalDisplacement_noperiod(init, final):
     np_res = np.linalg.norm(init-final, axis=1)
     result = dynamics.translationalDisplacement(box, init, final)
     ref_res = translationalDisplacement_reference(box, init, final)
+    print(result)
     assert np.allclose(result, np_res, atol=EPS)
     assert np.allclose(result, ref_res, atol=EPS)
 
 
-@given(arrays(DTYPE, (10, 3), elements=floats(-MAX_BOX/2, -MAX_BOX/4-1e-5)),
-       arrays(DTYPE, (10, 3), elements=floats(MAX_BOX/4, MAX_BOX/2)))
+@given(arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX/2, -MAX_BOX/4-1e-5)),
+       arrays(HYP_DTYPE, (10, 3), elements=floats(MAX_BOX/4, MAX_BOX/2)))
 def test_translationalDisplacement_periodicity(init, final):
     """Ensure the periodicity is calulated appropriately.
 
@@ -86,8 +90,8 @@ def test_translationalDisplacement_periodicity(init, final):
     assert np.allclose(result, ref_res, atol=EPS)
 
 
-@given(arrays(DTYPE, (10, 3), elements=floats(-MAX_BOX/2, MAX_BOX/2)),
-       arrays(DTYPE, (10, 3), elements=floats(-MAX_BOX/2, MAX_BOX/2)))
+@given(arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX/2, MAX_BOX/2)),
+       arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX/2, MAX_BOX/2)))
 def test_translationalDisplacement(init, final):
     """Ensure the periodicity is calulated appropriately.
 
@@ -99,32 +103,31 @@ def test_translationalDisplacement(init, final):
     assert np.allclose(result, ref_res, atol=EPS)
 
 
-@given(arrays(DTYPE, (1, 4), elements=floats(-1, 1)
-              ).filter(lambda x: np.linalg.norm(x) > 0.5),
-       arrays(DTYPE, (1, 4), elements=floats(-1, 1)
-              ).filter(lambda x: np.linalg.norm(x) > 0.5),)
+@settings(suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow])
+@given(unit_quaternion(), unit_quaternion())
 def test_rotationalDisplacement(init, final):
     """Test the calculation of the rotationalDisplacement.
 
     This compares the result of my algorithm to the quaternion library
     which is much slower on arrays of values.
     """
-    init = init / np.linalg.norm(init, axis=1)
-    final = final / np.linalg.norm(final, axis=1)
+    assume(not np.any(np.isnan(init)))
+    assume(not np.any(np.isnan(final)))
     result = dynamics.rotationalDisplacement(init, final)
     ref_res = rotationalDisplacement_reference(init, final)
-    assert np.allclose(result, ref_res, equal_nan=True, atol=EPS)
+    assert np.allclose(result, ref_res, equal_nan=True, atol=10e-2)
 
 
-@given(arrays(DTYPE, (100), elements=floats(0, 10)))
+@given(arrays(HYP_DTYPE, (100), elements=floats(0, 10)))
 def test_alpha(displacement):
     """Test the computation of the non-gaussian parameter."""
     alpha = dynamics.alpha_non_gaussian(displacement)
+    assume(not np.isnan(alpha))
     assert alpha >= -1
 
 
-@given(arrays(DTYPE, (100), elements=floats(0, 10)),
-       arrays(DTYPE, (100), elements=floats(0, 2*np.pi)))
+@given(arrays(HYP_DTYPE, (100), elements=floats(0, 10)),
+       arrays(HYP_DTYPE, (100), elements=floats(0, 2*np.pi)))
 def test_overlap(displacement, rotation):
     """Test the computation of the overlap of the largest values."""
     overlap_same = dynamics.mobile_overlap(rotation, rotation)
@@ -133,8 +136,8 @@ def test_overlap(displacement, rotation):
     assert 0. <= overlap <= 1.
 
 
-@given(arrays(DTYPE, (100), elements=floats(0, 10)),
-       arrays(DTYPE, (100), elements=floats(0, 2*np.pi)))
+@given(arrays(HYP_DTYPE, (100), elements=floats(0, 10)),
+       arrays(HYP_DTYPE, (100), elements=floats(0, 2*np.pi)))
 def test_spearman_rank(displacement, rotation):
     """Test the spearman ranking coefficient."""
     spearman_same = dynamics.spearman_rank(rotation, rotation)
