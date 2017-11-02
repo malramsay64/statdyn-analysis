@@ -151,6 +151,8 @@ def test_interface(pressure, temperature):
         '--temperature', '{}'.format(init_temp),
         '--steps', '1000',
         '--output', OUTDIR,
+        '-vvv',
+        '--hoomd-args', '"--mode=cpu"',
         str(OUTDIR / 'create_interface-P{:.2f}-T{:.2f}.gsd'.format(pressure, init_temp)),
     ]
     melt_command = [
@@ -161,6 +163,8 @@ def test_interface(pressure, temperature):
         '--temperature', '{}'.format(temperature),
         '--output', OUTDIR,
         '--steps', '1000',
+        '-vvv',
+        '--hoomd-args', '"--mode=cpu"',
         str(OUTDIR / 'create_interface-P{:.2f}-T{:.2f}.gsd'.format(pressure, init_temp)),
         str(OUTDIR / 'melt_interface-P{:.2f}-T{:.2f}.gsd'.format(pressure, temperature)),
     ]
