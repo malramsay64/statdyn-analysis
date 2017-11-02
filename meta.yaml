@@ -16,15 +16,15 @@ requirements:
         - setuptools 36.2.2
         - setuptools_scm 1.15.6
         - cython 0.26.*
-        - numpy 1.13.1-py36_0
-        - mkl 2017.0.3-0
+        - numpy 1.13.1
+        - mkl 2017.0.3
         - libgfortran 3.0.0
 
     run:
         - python 3.6.1
         - hoomd 2.2*
-        - mkl 2017.0.3-0
-        - numpy 1.13.1-py36_0
+        - mkl 2017.0.3
+        - numpy 1.13.1
         - libgfortran 3.0.0
         - scipy 0.19*
         - pandas 0.20*
