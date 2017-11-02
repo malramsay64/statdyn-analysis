@@ -12,19 +12,23 @@ source:
 
 requirements:
     build:
-        - python {{ python }}
+        - python 3.6.1
         - setuptools 36.2.2
         - setuptools_scm 1.15.6
         - cython 0.26.*
-        - numpy {{ numpy }}
+        - numpy 1.13.1-py36_0
+        - mkl 2017.0.3-0
+        - libgfortran 3.0.0
 
     run:
-        - python {{ python }}
+        - python 3.6.1
         - hoomd 2.2*
+        - mkl 2017.0.3-0
+        - numpy 1.13.1-py36_0
+        - libgfortran 3.0.0
         - scipy 0.19*
         - pandas 0.20*
         - pytables 3.4*
-        - numpy {{ numpy }}
         - bokeh 0.12*
         - setuptools *
         - freud 0.6.2*
