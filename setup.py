@@ -8,6 +8,9 @@
 
 """Command line tool to run simulations."""
 
+from pathlib import Path
+from sysconfig import get_path
+
 import numpy as np
 from Cython.Build import cythonize
 from setuptools import find_packages, setup
@@ -19,7 +22,7 @@ extensions = [
         ['statdyn/analysis/order.pyx'],
         language='c++',
         libraries=['m', 'voro++'],
-        include_dirs=[np.get_include()],
+        include_dirs=[np.get_include(), Path(get_path('data')) / 'include'],
     ),
     Extension(
         'statdyn.math_helper',
