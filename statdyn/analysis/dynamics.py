@@ -125,9 +125,10 @@ class molecularRelaxation(object):
 
     def add(self, timediff: int, distance: np.ndarray) -> None:
         assert distance.shape == self.status.shape
-        moved = np.less(self.threshold, distance)
-        moveable = np.greater(self.status, timediff)
-        self.status[np.logical_and(moved, moveable)] = timediff
+        with np.errstate(invalid='ignore'):
+            moved = np.less(self.threshold, distance)
+            moveable = np.greater(self.status, timediff)
+            self.status[np.logical_and(moved, moveable)] = timediff
 
 
 class relaxations(object):

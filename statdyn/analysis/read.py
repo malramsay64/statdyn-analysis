@@ -94,6 +94,7 @@ def process_gsd(infile: str,
                 indexes = step_iter.get_index()
                 for index in indexes:
                     try:
+                        logger.debug(f'len(keyframes): {len(keyframes)}, len(relaxframes): {len(relaxframes)}')
                         mydyn = keyframes[index]
                         myrelax = relaxframes[index]
                     except IndexError:
@@ -146,7 +147,7 @@ def process_gsd(infile: str,
                         append=append_file,
                     )
                     dataframes.clear()
-                    relaxframes.clear()
+
                     # Once we have written to the file once, append to the
                     # existing file.
                     if not append_file:
