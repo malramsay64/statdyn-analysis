@@ -21,12 +21,14 @@ install:
   - source activate statdyn-dev
   - python setup.py install
   - python setup.py build_ext --inplace
+  - pip install codecov
 
 script:
     - pytest
 
 after_success:
     - conda install -n root anaconda-client conda-build
+    - codecov
 
 deploy:
     provider: script

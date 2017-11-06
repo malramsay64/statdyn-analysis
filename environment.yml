@@ -23,7 +23,10 @@ dependencies:
     - setuptools
     - hypothesis
     - quaternion
+    - coverage
     - pip:
         - mypy
         - pytest-mypy
         - pytest-pylint
+        - pytest-cov
+
