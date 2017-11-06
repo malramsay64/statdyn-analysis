@@ -20,6 +20,7 @@ install:
   - conda env create
   - source activate statdyn-dev
   - python setup.py install
+  - python setup.py build_ext --inplace
 
 script:
     - pytest
