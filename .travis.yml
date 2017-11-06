@@ -2,7 +2,7 @@ language: python
 
 cache:
   directories:
-      - $HOME/miniconda/pkgs
+      - $HOME/miniconda
   pip: true
 
 install:
@@ -16,7 +16,7 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda env create
+  - conda env update
   - source activate statdyn-dev
   - python setup.py install
   - python setup.py build_ext --inplace
