@@ -13,8 +13,8 @@ source:
 requirements:
     build:
         - python 3.6.1
-        - setuptools 36.2.2
-        - setuptools_scm 1.15.6
+        - setuptools 36.*
+        - setuptools_scm 1.15*
         - cython 0.26.*
         - numpy 1.13.1
         - mkl 2017.0.3
