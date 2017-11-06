@@ -28,6 +28,8 @@ script:
 after_success:
     - codecov
     - conda install -n root anaconda-client conda-build
+    - conda config --append channels moble
+    - conda config --append channels glotzer
     - chmod +x scripts/deploy_anaconda.sh
 
 deploy:
