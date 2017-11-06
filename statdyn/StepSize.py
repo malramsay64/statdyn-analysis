@@ -107,7 +107,7 @@ class GenerateStepSeries(Iterable):
         self._num_generators = 0
 
         self.values: Dict[int, List[iterindex]] = {}
-        self._queue = PriorityQueue()
+        self._queue: PriorityQueue = PriorityQueue()
 
         self._add_generator()
 
