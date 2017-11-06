@@ -7,6 +7,3 @@
 #
 
 conda build . --token "$CONDA_UPLOAD_TOKEN" --user "$CONDA_USER"
-
-echo "Successfully deployed to anaconda.org"
-exit 0
