@@ -27,8 +27,9 @@ script:
     - pytest
 
 after_success:
-    - conda install -n root anaconda-client conda-build
     - codecov
+    - conda install -n root anaconda-client conda-build
+    - chmod +x scripts/deploy_anaconda.sh
 
 deploy:
     provider: script
