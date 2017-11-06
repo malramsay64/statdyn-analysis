@@ -24,3 +24,12 @@ install:
 
 script:
     - pytest
+
+after_success:
+    - conda install -n root anaconda-client conda-build
+
+deploy:
+    provider: script
+    script: ./scripts/deploy_anaconda.sh
+    on:
+        tags: true
