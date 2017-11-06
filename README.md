@@ -4,6 +4,7 @@ MD-Molecules-Hoomd
 [![Build Status](https://travis-ci.org/malramsay64/MD-Molecules-Hoomd.svg?branch=master)](https://travis-ci.org/malramsay64/MD-Molecules-Hoomd)
 [![Anaconda-Server Badge](https://anaconda.org/malramsay/statdyn/badges/installer/conda.svg)](https://conda.anaconda.org/malramsay)
 [![Anaconda-Server Badge](https://anaconda.org/malramsay/statdyn/badges/version.svg)](https://anaconda.org/malramsay/statdyn)
+[![codecov](https://codecov.io/gh/malramsay64/MD-Molecules-Hoomd/branch/master/graph/badge.svg)](https://codecov.io/gh/malramsay64/MD-Molecules-Hoomd)
 
 
 This is a set of scripts that use
