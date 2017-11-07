@@ -40,6 +40,47 @@ cdef float single_quat_rotation(
             initial[3] * final[3]
         ))
 
+cpdef np.ndarray[float, ndim=2] rotate_vectors(float[:, :] quaternions, float[:, :] vectors):
+    cdef Py_ssize_t v, q, num_quat, num_vect, i
+    cdef np.ndarray[float, ndim=2] result
+
+    num_quat = quaternions.shape[0]
+    num_vect = vectors.shape[0]
+
+    result = np.empty((num_vect*num_quat, 3), dtype=np.float32)
+
+    for v in range(num_vect):
+        for q in range(num_quat):
+            i = v*num_quat + q
+            quaternion_rotate_vector(
+                quaternions[q],
+                vectors[v],
+                result[i],
+            )
+    return result
+
+cdef void quaternion_rotate_vector(float[:] q, float[:] v, float[:] result) nogil:
+    """
+    The most efficient formula I know of for rotating a vector by a quaternion is
+    v' = v + 2 * r x (s * v + r x v) / m
+    where x represents the cross product, s and r are the scalar and vector parts of the quaternion, respectively,
+    and m is the sum of the squares of the components of the quaternion.  This requires 22 multiplications and
+    14 additions, as opposed to 32 and 24 for naive application of `q*v*q.conj()`.  In this function, I will further
+    reduce the operation count to 18 and 12 by skipping the normalization by `m`.  The full version will be
+    implemented in another function.
+    """
+    cdef float w[3]
+    cdef float two_over_m = 2
+
+    w[0] = q[0] * v[0] + q[2]*v[2] - q[3]*v[1];
+    w[1] = q[0] * v[1] + q[3]*v[0] - q[1]*v[2];
+    w[2] = q[0] * v[2] + q[1]*v[1] - q[2]*v[0];
+
+    result[0] = v[0] + two_over_m * (q[2]*w[2] - q[3]*w[1]);
+    result[1] = v[1] + two_over_m * (q[3]*w[0] - q[1]*w[2]);
+    result[2] = v[2] + two_over_m * (q[1]*w[1] - q[2]*w[0]);
+
+
 cpdef void quaternion_rotation(
         np.ndarray[float, ndim=2] initial,
         np.ndarray[float, ndim=2] final,
@@ -50,11 +91,11 @@ cpdef void quaternion_rotation(
     with nogil:
         for i in range(nitems):
             result[i] = 2.*acos(fabs(
-                    initial[i, 0] * final[i, 0] +
-                    initial[i, 1] * final[i, 1] +
-                    initial[i, 2] * final[i, 2] +
-                    initial[i, 3] * final[i, 3]
-                ))
+                initial[i, 0] * final[i, 0] +
+                initial[i, 1] * final[i, 1] +
+                initial[i, 2] * final[i, 2] +
+                initial[i, 3] * final[i, 3]
+            ))
 
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(

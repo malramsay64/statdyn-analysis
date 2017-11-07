@@ -14,7 +14,9 @@ import numpy as np
 import pandas
 from scipy.stats import spearmanr
 
-from ..math_helper import displacement_periodic, quaternion_rotation
+from ..math_helper import (displacement_periodic, quaternion_rotation,
+                           rotate_vectors)
+from ..molecules import Molecule, Trimer
 
 np.seterr(divide='raise', invalid='raise')
 
@@ -31,6 +33,7 @@ class dynamics(object):
                  box: np.ndarray,
                  position: np.ndarray,
                  orientation: np.ndarray=None,
+                 molecule: Molecule=Trimer(),
                  ) -> None:
         """Initialise a dynamics instance.
 
@@ -50,6 +53,7 @@ class dynamics(object):
         self.position = position.astype(self.dyn_dtype)
         self.num_particles = position.shape[0]
         self.orientation = orientation.astype(self.dyn_dtype)
+        self.mol_vector = molecule.positions
 
     def computeMSD(self, position: np.ndarray) -> float:
         """Compute the mean squared displacement."""
@@ -91,6 +95,17 @@ class dynamics(object):
         result = translationalDisplacement(self.box, self.position, position)
         return mean_displacement(result)
 
+    def computeStructRelax(self, position: np.ndarray,
+                           orientation: np.ndarray,
+                           threshold: float=0.3
+                           ) -> float:
+        particle_displacement = translationalDisplacement(
+            self.box,
+            molecule2particles(self.position, self.orientation, self.mol_vector),
+            molecule2particles(position, orientation, self.mol_vector)
+        )
+        return structural_relax(particle_displacement, threshold)
+
     def computeAll(self,
                    timestep: int,
                    position: np.ndarray,
@@ -103,11 +118,25 @@ class dynamics(object):
             delta_rotation = None
 
         delta_displacement = translationalDisplacement(self.box, self.position, position)
-        return all_dynamics(
-            self.computeTimeDelta(timestep),
-            delta_displacement,
-            delta_rotation,
-        )
+
+        dynamic_quantities = {
+            'time': self.computeTimeDelta(timestep),
+            'mean_displacement': mean_displacement(delta_displacement),
+            'msd': mean_squared_displacement(delta_displacement),
+            'mfd': mean_fourth_displacement(delta_displacement),
+            'alpha': alpha_non_gaussian(delta_displacement),
+        }
+        if orientation is not None:
+            dynamic_quantities.update({
+                'mean_rotation': mean_rotation(delta_rotation),
+                'rot1': rotational_relax1(delta_rotation),
+                'rot2': rotational_relax2(delta_rotation),
+                'gamma': gamma(delta_displacement, delta_rotation),
+                'spearman_rank': spearman_rank(delta_displacement, delta_rotation),
+                'overlap': mobile_overlap(delta_displacement, delta_rotation),
+                'struct': self.computeStructRelax(position, orientation, threshold=0.3),
+            })
+        return pandas.DataFrame(dynamic_quantities, index=[self.computeTimeDelta(timestep)])
 
     def get_molid(self):
         """Molecule ids of each of the values."""
@@ -115,7 +144,7 @@ class dynamics(object):
 
 
 class molecularRelaxation(object):
-    """Computeteh relaxation of each molecule."""
+    """Compute the relaxation of each molecule."""
 
     def __init__(self, num_elements: int, threshold: float) -> None:
         self.num_elements = num_elements
@@ -136,7 +165,8 @@ class relaxations(object):
     def __init__(self, timestep: int,
                  box: np.ndarray,
                  position: np.ndarray,
-                 orientation: np.ndarray) -> None:
+                 orientation: np.ndarray,
+                 molecule: Molecule=None) -> None:
         self.init_time = timestep
         self.box = box
         num_elements = position.shape[0]
@@ -144,10 +174,17 @@ class relaxations(object):
         self.init_orientation = orientation
         self.mol_relax = {
             'tau_D1': molecularRelaxation(num_elements, threshold=1.),
-            'tau_D012': molecularRelaxation(num_elements, threshold=0.12),
+            'tau_D03': molecularRelaxation(num_elements, threshold=0.3),
             'tau_T2': molecularRelaxation(num_elements, threshold=np.pi/2),
             'tau_T4': molecularRelaxation(num_elements, threshold=np.pi/4),
         }
+        self.mol_vector = None
+        if molecule:
+            self.mol_vector = molecule.positions.astype(np.float32)
+            self.mol_relax['tau_S03'] = molecularRelaxation(
+                num_elements*self.mol_vector.shape[0],
+                threshold=0.3
+            )
 
     def add(self, timestep: int,
             position: np.ndarray,
@@ -155,16 +192,31 @@ class relaxations(object):
             ) -> None:
         displacement = translationalDisplacement(self.box, self.init_position, position)
         rotation = rotationalDisplacement(self.init_orientation, orientation)
+        if self.mol_vector is not None:
+            particle_displacement = translationalDisplacement(
+                self.box,
+                molecule2particles(self.init_position, self.init_orientation, self.mol_vector),
+                molecule2particles(position, orientation, self.mol_vector)
+            )
         for key, func in self.mol_relax.items():
             if 'D' in key:
                 func.add(timestep, displacement)
+            elif 'S' in key:
+                func.add(timestep, particle_displacement)
             else:
                 func.add(timestep, rotation)
 
     def summary(self) -> pandas.DataFrame:
-        return pandas.DataFrame(
-            {key: func.status for key, func in self.mol_relax.items()}
+        return pandas.DataFrame.from_dict(
+            {key: pandas.Series(func.status) for key, func in self.mol_relax.items()},
         )
+
+def molecule2particles(position: np.ndarray,
+                       orientation: np.ndarray,
+                       mol_vector: np.ndarray
+                       ) -> np.ndarray:
+    return (rotate_vectors(orientation, mol_vector.astype(np.float32)) +
+            np.repeat(position, mol_vector.shape[0], axis=0))
 
 
 def mean_squared_displacement(displacement: np.ndarray) -> float:
@@ -371,6 +423,7 @@ def all_dynamics(timediff: int,
         'msd': mean_squared_displacement(displacement),
         'mfd': mean_fourth_displacement(displacement),
         'alpha': alpha_non_gaussian(displacement),
+        'struct_com': structural_relax(displacement, threshold=structural_threshold),
     }
     if rotation is not None:
         dynamic_quantities.update({
@@ -380,6 +433,7 @@ def all_dynamics(timediff: int,
             'gamma': gamma(displacement, rotation),
             'spearman_rank': spearman_rank(displacement, rotation),
             'overlap': mobile_overlap(displacement, rotation),
+            'struct': structural_relax(displacement, rotation, threshold=structural_threshold),
         })
     return pandas.DataFrame(dynamic_quantities, index=[timediff])
 

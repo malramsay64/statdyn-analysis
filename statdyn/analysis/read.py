@@ -14,6 +14,7 @@ from typing import List
 import gsd.hoomd
 import pandas
 
+from ..molecules import Trimer
 from ..StepSize import GenerateStepSeries
 from .dynamics import dynamics, relaxations
 
@@ -110,6 +111,7 @@ def process_gsd(infile: str,
                             box=frame.configuration.box,
                             position=frame.particles.position,
                             orientation=frame.particles.orientation,
+                            molecule=Trimer()
                         ))
                         mydyn = keyframes[index]
                         myrelax = relaxframes[index]

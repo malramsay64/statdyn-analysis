@@ -52,8 +52,11 @@ def diffusion_constant(time: np.ndarray,
         (float, float): The diffusion constant
 
     """
-    linear_region = msd > 2
-    popt, pcov = curve_fit(_msd_function, time[linear_region], msd[linear_region])
+    linear_region = np.logical_and(2 < msd, msd < 100)
+    try:
+        popt, pcov = curve_fit(_msd_function, time[linear_region], msd[linear_region])
+    except TypeError:
+        return 0, 0
     perr = 2*np.sqrt(np.diag(pcov))
     return popt[0], perr[0]
 

@@ -38,6 +38,9 @@ class Molecule(object):
         self.potential_args = dict()  # type: Dict[Any, Any]
         self.particles = ['A']
         self.dimensions = 3
+        self.positions = np.array([
+            [0, 0, 0]
+        ])
 
     def __eq__(self, other) -> bool:
         return type(self) == type(other)
@@ -211,7 +214,6 @@ class Trimer(Molecule):
                 factor.
 
         """
-        # super(Trimer, self).__init__()
         super().__init__()
         self.radius = radius
         self.distance = distance
@@ -219,6 +221,12 @@ class Trimer(Molecule):
         self.particles = ['A', 'B', 'B']
         self.moment_inertia = self.compute_moment_intertia(moment_inertia_scale)
         self.dimensions = 2
+        self.positions = self.distance * np.array([
+            [0, 0, 0],
+            [np.sin(self.angle), np.cos(self.angle), 0],
+            [-np.sin(self.angle), np.cos(self.angle), 0]
+        ])
+
 
 
     def __eq__(self, other) -> bool:
