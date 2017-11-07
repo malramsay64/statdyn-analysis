@@ -31,8 +31,6 @@ before_deploy:
     - conda config --append channels moble
     - conda config --append channels glotzer
     - chmod +x scripts/deploy_anaconda.sh
-    on:
-        tags: true
 
 deploy:
     provider: script
