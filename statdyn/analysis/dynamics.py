@@ -423,7 +423,6 @@ def all_dynamics(timediff: int,
         'msd': mean_squared_displacement(displacement),
         'mfd': mean_fourth_displacement(displacement),
         'alpha': alpha_non_gaussian(displacement),
-        'struct_com': structural_relax(displacement, threshold=structural_threshold),
     }
     if rotation is not None:
         dynamic_quantities.update({
@@ -433,7 +432,6 @@ def all_dynamics(timediff: int,
             'gamma': gamma(displacement, rotation),
             'spearman_rank': spearman_rank(displacement, rotation),
             'overlap': mobile_overlap(displacement, rotation),
-            'struct': structural_relax(displacement, rotation, threshold=structural_threshold),
         })
     return pandas.DataFrame(dynamic_quantities, index=[timediff])
 

@@ -23,24 +23,29 @@ from libc.float cimport FLT_EPSILON
 cdef float QUAT_EPS = 2*FLT_EPSILON
 cdef double M_TAU = 2*M_PI
 
+
 cdef bint close(float a, float b) nogil:
     return fabs(a-b) <= QUAT_EPS
+
 
 cpdef float get_quat_eps() nogil:
     return QUAT_EPS
 
+
 cdef float single_quat_rotation(
         const float[:] initial,
-        const float[:] final
-) nogil:
+        const float[:] final) nogil:
     return 2.*acos(fabs(
-            initial[0] * final[0] +
-            initial[1] * final[1] +
-            initial[2] * final[2] +
-            initial[3] * final[3]
-        ))
+        initial[0] * final[0] +
+        initial[1] * final[1] +
+        initial[2] * final[2] +
+        initial[3] * final[3]
+    ))
 
-cpdef np.ndarray[float, ndim=2] rotate_vectors(float[:, :] quaternions, float[:, :] vectors):
+
+cpdef np.ndarray[float, ndim=2] rotate_vectors(
+        np.ndarray[float, ndim=2] quaternions,
+        np.ndarray[float, ndim=2] vectors):
     cdef Py_ssize_t v, q, num_quat, num_vect, i
     cdef np.ndarray[float, ndim=2] result
 
@@ -53,21 +58,33 @@ cpdef np.ndarray[float, ndim=2] rotate_vectors(float[:, :] quaternions, float[:,
         for q in range(num_quat):
             i = v*num_quat + q
             quaternion_rotate_vector(
-                quaternions[q],
-                vectors[v],
-                result[i],
+                quaternions[q, :],
+                vectors[v, :],
+                result[i, :],
             )
     return result
 
-cdef void quaternion_rotate_vector(float[:] q, float[:] v, float[:] result) nogil:
-    """
+
+cdef void quaternion_rotate_vector(
+        np.ndarray[float, ndim=1] q,
+        np.ndarray[float, ndim=1] v,
+        float[:] result):
+    """Rotate a vector by a quaternion
+
+    Code adapted from Moble/Quaternion
+
     The most efficient formula I know of for rotating a vector by a quaternion is
+
     v' = v + 2 * r x (s * v + r x v) / m
-    where x represents the cross product, s and r are the scalar and vector parts of the quaternion, respectively,
-    and m is the sum of the squares of the components of the quaternion.  This requires 22 multiplications and
-    14 additions, as opposed to 32 and 24 for naive application of `q*v*q.conj()`.  In this function, I will further
-    reduce the operation count to 18 and 12 by skipping the normalization by `m`.  The full version will be
-    implemented in another function.
+
+    where x represents the cross product, s and r are the scalar and vector
+    parts of the quaternion, respectively, and m is the sum of the squares of
+    the components of the quaternion.  This requires 22 multiplications and 14
+    additions, as opposed to 32 and 24 for naive application of `q*v*q.conj()`.
+    In this function, I will further reduce the operation count to 18 and 12 by
+    skipping the normalization by `m`.  The full version will be implemented in
+    another function.
+
     """
     cdef float w[3]
     cdef float two_over_m = 2
@@ -84,8 +101,7 @@ cdef void quaternion_rotate_vector(float[:] q, float[:] v, float[:] result) nogi
 cpdef void quaternion_rotation(
         np.ndarray[float, ndim=2] initial,
         np.ndarray[float, ndim=2] final,
-        np.ndarray[float, ndim=1] result,
-):
+        np.ndarray[float, ndim=1] result):
     cdef Py_ssize_t nitems = result.shape[0]
 
     with nogil:
@@ -99,8 +115,7 @@ cpdef void quaternion_rotation(
 
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(
-        np.ndarray[float, ndim=2] quat
-):
+        np.ndarray[float, ndim=2] quat):
     cdef Py_ssize_t nitems = quat.shape[0]
     cdef np.ndarray[float, ndim=1] result
     result = np.empty(nitems, dtype=np.float32)
@@ -112,9 +127,9 @@ cpdef np.ndarray[float, ndim=1] quaternion_angle(
     return result
 
 
+
 cpdef np.ndarray[float, ndim=2] z2quaternion(
-        np.ndarray[float, ndim=1] theta
-):
+        np.ndarray[float, ndim=1] theta):
     cdef Py_ssize_t i
     cdef Py_ssize_t nitems = theta.shape[0]
     cdef Py_ssize_t w_pos = 0, z_pos = 3
@@ -136,8 +151,7 @@ cpdef np.ndarray[float, ndim=2] z2quaternion(
 
 
 cpdef np.ndarray[float, ndim=1] quaternion2z(
-        np.ndarray[float, ndim=2] orientations,
-):
+        np.ndarray[float, ndim=2] orientations):
     cdef Py_ssize_t nitems = orientations.shape[0]
     cdef np.ndarray[float, ndim=1] result
     result = np.empty(nitems, dtype=np.float32)
@@ -161,8 +175,7 @@ cpdef np.ndarray[float, ndim=1] quaternion2z(
 cpdef float single_displacement(
         float[:] box,
         float[:] initial,
-        float[:] final
-) nogil:
+        float[:] final) nogil:
     cdef int j
     cdef double[3] x, inv_box
     cdef double images
@@ -184,8 +197,7 @@ cpdef void displacement_periodic(
         float[:] box,
         float[:, :] initial,
         float[:, :] final,
-        float[:] result
-) nogil:
+        float[:] result) nogil:
     cdef int n_elements = result.shape[0]
     cdef int i, j
 

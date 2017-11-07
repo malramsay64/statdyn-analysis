@@ -29,15 +29,15 @@ cpdef void quaternion_rotation(
 )
 
 cpdef np.ndarray[float, ndim=2] rotate_vectors(
-        float[:, :] quaternions,
-        float[:, :] vectors
+        np.ndarray[float, ndim=2] quaternions,
+        np.ndarray[float, ndim=2] vectors
 )
 
 cdef void quaternion_rotate_vector(
-        float[:] q,
-        float[:] v,
+        np.ndarray[float, ndim=1] q,
+        np.ndarray[float, ndim=1] v,
         float[:] result
-) nogil
+)
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(
         np.ndarray[float, ndim=2] quat
