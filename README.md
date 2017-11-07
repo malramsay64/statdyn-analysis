@@ -22,6 +22,19 @@ The simplest method of installation is using `conda`. To install
 
     conda install -c malramsay statdyn
 
+It is also possible to set the repository up as a development environment,
+in which case cloning the repository and installing is possible by running
+
+    git clone https://github.com/malramsay64/MD-Molecules-Hoomd.git
+    cd MD-Molecules-Hoomd
+    conda env create
+    source activate statdyn-dev
+    python setup.py develop
+
+Once the environment is setup the tests can be run with
+
+    pytest
+
 Running Simulations
 -------------------
 
