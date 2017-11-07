@@ -29,7 +29,7 @@ try:
     __version__ = get_distribution('statdyn').version
 except DistributionNotFound:
     # package is not installed
-    pass
+    __version__ = "dev"
 
 
 MOLECULE_OPTIONS = {
