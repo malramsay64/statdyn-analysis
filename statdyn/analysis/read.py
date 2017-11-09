@@ -66,7 +66,15 @@ def process_gsd(infile: str,
         if step_limit is not None:
             num_steps = step_limit
         else:
-            num_steps = src[-1].configuration.step
+            while True:
+                frame_index = -1
+                try:
+                    num_steps = src[-1].configuration.step
+                    break
+                except RuntimeError:
+                    frame_index -= 1
+
+
         logger.debug('Infile: %s contains %d steps', infile, num_steps)
         step_iter = GenerateStepSeries(num_steps,
                                        num_linear=num_linear,
