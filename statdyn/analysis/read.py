@@ -142,12 +142,6 @@ def process_gsd(infile: str,
                         format='table',
                         append=append_file,
                     )
-                    pandas.concat([relax.summary() for relax in relaxframes]).to_hdf(
-                        outfile,
-                        'relaxations',
-                        format='table',
-                        append=append_file,
-                    )
                     dataframes.clear()
 
                     # Once we have written to the file once, append to the
@@ -162,7 +156,9 @@ def process_gsd(infile: str,
             format='table',
             append=append_file,
         )
-        pandas.concat([relax.summary() for relax in relaxframes]).to_hdf(
+        pandas.concat([relax.summary() for relax in relaxframes],
+                      keys=range(len(relaxframes)),
+                      copy=False).to_hdf(
             outfile,
             'relaxations',
             format='table',
