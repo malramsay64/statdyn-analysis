@@ -34,6 +34,7 @@ class dynamics(object):
                  position: np.ndarray,
                  orientation: np.ndarray=None,
                  molecule: Molecule=Trimer(),
+                 spearman: bool=False,
                  ) -> None:
         """Initialise a dynamics instance.
 
@@ -54,6 +55,7 @@ class dynamics(object):
         self.num_particles = position.shape[0]
         self.orientation = orientation.astype(self.dyn_dtype)
         self.mol_vector = molecule.positions
+        self.spearman = spearman
 
     def computeMSD(self, position: np.ndarray) -> float:
         """Compute the mean squared displacement."""
@@ -112,7 +114,7 @@ class dynamics(object):
                    orientation: np.ndarray=None,
                    ) -> pandas.Series:
         """Compute all dynamics quantities of interest."""
-        if orientation is not None:
+        if self.orientation is not None:
             delta_rotation = rotationalDisplacement(self.orientation, orientation)
         else:
             delta_rotation = None
@@ -126,15 +128,18 @@ class dynamics(object):
             'mfd': mean_fourth_displacement(delta_displacement),
             'alpha': alpha_non_gaussian(delta_displacement),
         }
-        if orientation is not None:
+        if self.orientation is not None:
             dynamic_quantities.update({
                 'mean_rotation': mean_rotation(delta_rotation),
                 'rot1': rotational_relax1(delta_rotation),
                 'rot2': rotational_relax2(delta_rotation),
                 'gamma': gamma(delta_displacement, delta_rotation),
-                'spearman_rank': spearman_rank(delta_displacement, delta_rotation),
                 'overlap': mobile_overlap(delta_displacement, delta_rotation),
                 'struct': self.computeStructRelax(position, orientation, threshold=0.3),
+            })
+        if self.spearman:
+            dynamic_quantities.update({
+                'spearman_rank': spearman_rank(delta_displacement, delta_rotation),
             })
         return pandas.DataFrame(dynamic_quantities, index=[self.computeTimeDelta(timestep)])
 
@@ -186,6 +191,9 @@ class relaxations(object):
                 threshold=0.3
             )
 
+    def get_timediff(self, timestep: int):
+        return timestep - self.init_time
+
     def add(self, timestep: int,
             position: np.ndarray,
             orientation: np.ndarray,
@@ -200,11 +208,11 @@ class relaxations(object):
             )
         for key, func in self.mol_relax.items():
             if 'D' in key:
-                func.add(timestep, displacement)
+                func.add(self.get_timediff(timestep), displacement)
             elif 'S' in key:
-                func.add(timestep, particle_displacement)
+                func.add(self.get_timediff(timestep), particle_displacement)
             else:
-                func.add(timestep, rotation)
+                func.add(self.get_timediff(timestep), rotation)
 
     def summary(self) -> pandas.DataFrame:
         return pandas.DataFrame.from_dict(
@@ -402,6 +410,7 @@ def all_dynamics(timediff: int,
                  displacement: np.ndarray,
                  rotation: np.ndarray=None,
                  structural_threshold: float=0.3,
+                 spearman: bool=False,
                  ) -> pandas.DataFrame:
     """Compute all dynamics quantities from the base quantites.
 
@@ -430,9 +439,13 @@ def all_dynamics(timediff: int,
             'rot1': rotational_relax1(rotation),
             'rot2': rotational_relax2(rotation),
             'gamma': gamma(displacement, rotation),
-            'spearman_rank': spearman_rank(displacement, rotation),
             'overlap': mobile_overlap(displacement, rotation),
         })
+    if spearman:
+        dynamic_quantities.update({
+            'spearman_rank': spearman_rank(displacement, rotation),
+        })
+
     return pandas.DataFrame(dynamic_quantities, index=[timediff])
 
 
