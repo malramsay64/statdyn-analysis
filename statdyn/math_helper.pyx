@@ -72,9 +72,9 @@ cpdef np.ndarray[float, ndim=2] rotate_vectors(
 
 
 cdef void quaternion_rotate_vector(
-        np.ndarray[float, ndim=1] q,
-        np.ndarray[float, ndim=1] v,
-        float[:] result):
+        float[:] q,
+        float[:] v,
+        float[:] result) nogil:
     """Rotate a vector by a quaternion
 
     Code adapted from Moble/Quaternion
@@ -105,9 +105,9 @@ cdef void quaternion_rotate_vector(
 
 
 cpdef void quaternion_rotation(
-        np.ndarray[float, ndim=2] initial,
-        np.ndarray[float, ndim=2] final,
-        np.ndarray[float, ndim=1] result):
+        float[:, :] initial,
+        float[:, :] final,
+        float[:] result):
     cdef Py_ssize_t nitems = result.shape[0]
 
     with nogil:
@@ -121,7 +121,7 @@ cpdef void quaternion_rotation(
 
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(
-        np.ndarray[float, ndim=2] quat):
+        float[:, :] quat):
     cdef Py_ssize_t nitems = quat.shape[0]
     cdef np.ndarray[float, ndim=1] result
     result = np.empty(nitems, dtype=np.float32)
@@ -135,7 +135,7 @@ cpdef np.ndarray[float, ndim=1] quaternion_angle(
 
 
 cpdef np.ndarray[float, ndim=2] z2quaternion(
-        np.ndarray[float, ndim=1] theta):
+        float[:] theta):
     cdef Py_ssize_t i
     cdef Py_ssize_t nitems = theta.shape[0]
     cdef Py_ssize_t w_pos = 0, z_pos = 3
@@ -157,7 +157,7 @@ cpdef np.ndarray[float, ndim=2] z2quaternion(
 
 
 cpdef np.ndarray[float, ndim=1] quaternion2z(
-        np.ndarray[float, ndim=2] orientations):
+        float[:, :] orientations):
     cdef Py_ssize_t nitems = orientations.shape[0]
     cdef np.ndarray[float, ndim=1] result
     result = np.empty(nitems, dtype=np.float32)
