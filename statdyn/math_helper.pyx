@@ -44,24 +44,30 @@ cdef float single_quat_rotation(
 
 
 cpdef np.ndarray[float, ndim=2] rotate_vectors(
-        np.ndarray[float, ndim=2] quaternions,
-        np.ndarray[float, ndim=2] vectors):
-    cdef Py_ssize_t v, q, num_quat, num_vect, i
-    cdef np.ndarray[float, ndim=2] result
+        float[:, :] q,
+        float[:, :] v):
+    """Rotate a series of vectors by a list of quaternions."""
+    cdef:
+        Py_ssize_t num_quat, num_vect, i, j, res_index
+        np.ndarray[float, ndim=2] result
+        float w[3]
+        float two_over_m = 2
 
-    num_quat = quaternions.shape[0]
-    num_vect = vectors.shape[0]
+    num_quat = q.shape[0]
+    num_vect = v.shape[0]
 
     result = np.empty((num_vect*num_quat, 3), dtype=np.float32)
 
-    for v in range(num_vect):
-        for q in range(num_quat):
-            i = v*num_quat + q
-            quaternion_rotate_vector(
-                quaternions[q, :],
-                vectors[v, :],
-                result[i, :],
-            )
+    for i in range(num_vect):
+        for j in range(num_quat):
+            res_index = i*num_quat + j
+            w[0] = q[j, 0] * v[i, 0] + q[j, 2]*v[i, 2] - q[j, 3]*v[i, 1];
+            w[1] = q[j, 0] * v[i, 1] + q[j, 3]*v[i, 0] - q[j, 1]*v[i, 2];
+            w[2] = q[j, 0] * v[i, 2] + q[j, 1]*v[i, 1] - q[j, 2]*v[i, 0];
+
+            result[res_index, 0] = v[i, 0] + two_over_m * (q[j, 2]*w[2] - q[j, 3]*w[1]);
+            result[res_index, 1] = v[i, 1] + two_over_m * (q[j, 3]*w[0] - q[j, 1]*w[2]);
+            result[res_index, 2] = v[i, 2] + two_over_m * (q[j, 1]*w[1] - q[j, 2]*w[0]);
     return result
 
 
