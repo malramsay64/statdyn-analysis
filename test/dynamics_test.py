@@ -152,6 +152,6 @@ def test_molecularRelaxation():
     num_elements = 10
     tau_1 = dynamics.molecularRelaxation(num_elements, 2.)
     tau_1.add(120, np.zeros(num_elements))
-    assert np.all(tau_1.status == np.full(num_elements, tau_1._max_value))
+    assert np.all(tau_1.get_status() == np.full(num_elements, tau_1._max_value))
     tau_1.add(100, np.ones(num_elements) * 3)
-    assert np.all(tau_1.status == np.full(num_elements, 100))
+    assert np.all(tau_1.get_status() == np.full(num_elements, 100))
