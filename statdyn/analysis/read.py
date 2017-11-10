@@ -9,7 +9,7 @@
 """Read input files and compute dynamic and thermodynamic quantities."""
 
 import logging
-from typing import List
+from typing import Any, Dict, List
 
 import gsd.hoomd
 import pandas
@@ -55,7 +55,7 @@ def process_gsd(infile: str,
         (py:class:`pandas.DataFrame`): DataFrame with the dynamics quantities.
 
     """
-    dataframes: List[pandas.DataFrame] = []
+    dataframes: List[Dict[str, Any]] = []
     keyframes: List[dynamics] = []
     relaxframes: List[relaxations] = []
     append_file = False
@@ -144,7 +144,7 @@ def process_gsd(infile: str,
                     break
 
                 if outfile and len(dataframes) >= buffer_size:
-                    pandas.concat(dataframes).to_hdf(
+                    pandas.DataFrame.from_records(dataframes).to_hdf(
                         outfile,
                         'dynamics',
                         format='table',
@@ -158,20 +158,19 @@ def process_gsd(infile: str,
                         append_file = True
 
     if outfile:
-        pandas.concat(dataframes).to_hdf(
+        pandas.DataFrame.from_records(dataframes).to_hdf(
             outfile,
             'dynamics',
             format='table',
             append=append_file,
         )
-        pandas.concat([relax.summary() for relax in relaxframes],
-                      keys=range(len(relaxframes)),
-                      copy=False).to_hdf(
-            outfile,
-            'relaxations',
-            format='table',
-            append=append_file,
-        )
+        pandas.DataFrame.from_records(
+            [relax.summary() for relax in relaxframes]).to_hdf(
+                outfile,
+                'relaxations',
+                format='table',
+                append=append_file,
+            )
         return
 
-    return pandas.concat(dataframes)
+    return pandas.DataFrame.from_records(dataframes)

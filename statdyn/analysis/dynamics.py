@@ -9,9 +9,9 @@
 """Compute dynamic properties."""
 
 import logging
+from typing import Any, Dict
 
 import numpy as np
-import pandas
 from scipy.stats import spearmanr
 
 from ..math_helper import (displacement_periodic, quaternion_rotation,
@@ -112,7 +112,7 @@ class dynamics(object):
                    timestep: int,
                    position: np.ndarray,
                    orientation: np.ndarray=None,
-                   ) -> pandas.Series:
+                   ) -> Dict[str, Any]:
         """Compute all dynamics quantities of interest."""
         if self.orientation is not None:
             delta_rotation = rotationalDisplacement(self.orientation, orientation)
@@ -141,7 +141,7 @@ class dynamics(object):
             dynamic_quantities.update({
                 'spearman_rank': spearman_rank(delta_displacement, delta_rotation),
             })
-        return pandas.DataFrame(dynamic_quantities, index=[self.computeTimeDelta(timestep)])
+        return dynamic_quantities
 
     def get_molid(self):
         """Molecule ids of each of the values."""
@@ -214,10 +214,9 @@ class relaxations(object):
             else:
                 func.add(self.get_timediff(timestep), rotation)
 
-    def summary(self) -> pandas.DataFrame:
-        return pandas.DataFrame.from_dict(
-            {key: pandas.Series(func.status) for key, func in self.mol_relax.items()},
-        )
+    def summary(self) -> Dict[str, np.ndarray]:
+        return {key: func.status for key, func in self.mol_relax.items()}
+
 
 def molecule2particles(position: np.ndarray,
                        orientation: np.ndarray,
@@ -404,49 +403,6 @@ def spearman_rank(displacement: np.ndarray,
     rot_order = np.argsort(np.abs(rotation))[:-num_elements-1:-1]
     rho, _ = spearmanr(trans_order, rot_order)
     return rho
-
-
-def all_dynamics(timediff: int,
-                 displacement: np.ndarray,
-                 rotation: np.ndarray=None,
-                 structural_threshold: float=0.3,
-                 spearman: bool=False,
-                 ) -> pandas.DataFrame:
-    """Compute all dynamics quantities from the base quantites.
-
-    This computes all the possible dynamic quantities from the input arrays
-    taking into account the presence of rotational data.
-
-    Args:
-        timediff (int): Time difference described by the displacement and rotation.
-        displacement: (:class:`numpy.ndarray`): An array of the translational
-            motion. Note that this is the distance moved, rather than the motion
-            vector.
-        rotations: (:class:`numpy.ndarray`): An array of the rotaional motion of
-            molecules. Again note that this is the rotational displacment.
-
-    """
-    dynamic_quantities = {
-        'time': timediff,
-        'mean_displacement': mean_displacement(displacement),
-        'msd': mean_squared_displacement(displacement),
-        'mfd': mean_fourth_displacement(displacement),
-        'alpha': alpha_non_gaussian(displacement),
-    }
-    if rotation is not None:
-        dynamic_quantities.update({
-            'mean_rotation': mean_rotation(rotation),
-            'rot1': rotational_relax1(rotation),
-            'rot2': rotational_relax2(rotation),
-            'gamma': gamma(displacement, rotation),
-            'overlap': mobile_overlap(displacement, rotation),
-        })
-    if spearman:
-        dynamic_quantities.update({
-            'spearman_rank': spearman_rank(displacement, rotation),
-        })
-
-    return pandas.DataFrame(dynamic_quantities, index=[timediff])
 
 
 def rotationalDisplacement(initial: np.ndarray,
