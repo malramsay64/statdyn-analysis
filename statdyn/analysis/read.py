@@ -164,12 +164,11 @@ def process_gsd(infile: str,
             format='table',
             append=append_file,
         )
-        pandas.DataFrame.from_records(
-            [relax.summary() for relax in relaxframes]).to_hdf(
+        pandas.concat((relax.summary() for relax in relaxframes)).to_hdf(
                 outfile,
                 'relaxations',
                 format='table',
-                append=append_file,
+                append=False,
             )
         return
 

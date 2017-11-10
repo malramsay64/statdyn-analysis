@@ -12,6 +12,7 @@ import logging
 from typing import Any, Dict
 
 import numpy as np
+import pandas
 from scipy.stats import spearmanr
 
 from ..math_helper import (displacement_periodic, quaternion_rotation,
@@ -214,8 +215,8 @@ class relaxations(object):
             else:
                 func.add(self.get_timediff(timestep), rotation)
 
-    def summary(self) -> Dict[str, np.ndarray]:
-        return {key: func.status for key, func in self.mol_relax.items()}
+    def summary(self) -> pandas.DataFrame:
+        return pandas.DataFrame({key: func.get_status() for key, func in self.mol_relax.items()})
 
 
 def molecule2particles(position: np.ndarray,
