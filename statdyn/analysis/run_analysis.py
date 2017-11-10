@@ -42,11 +42,12 @@ def order(infile, outfile):
 
 def comp_dynamics(sim_params: SimulationParams) -> None:
     """Compute dynamic properties."""
-    outfile = str(sim_params.outfile_path / Path(sim_params.infile).with_suffix('.hdf5').name)
+    outfile = sim_params.outfile_path / Path(sim_params.infile).with_suffix('.hdf5').name
+    outfile.parent.mkdir(exist_ok=True)
     step_limit = sim_params.parameters.get('num_steps')
     process_gsd(sim_params.infile,
                 gen_steps=sim_params.gen_steps,
                 max_gen=sim_params.max_gen,
                 step_limit=step_limit,
-                outfile=outfile,
+                outfile=str(outfile),
                 )
