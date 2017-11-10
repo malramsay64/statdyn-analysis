@@ -13,6 +13,7 @@ import os
 import subprocess
 from pathlib import Path
 
+import gsd.hoomd
 import hoomd
 import pytest
 from hypothesis import given, settings
@@ -35,7 +36,6 @@ PARAMETERS = SimulationParams(
     dynamics=False,
     hoomd_args=HOOMD_ARGS
 )
-
 
 
 @pytest.mark.simulation
@@ -140,6 +140,7 @@ def test_file_placement():
     for i in outdir.glob('*'):
         os.remove(str(i))
 
+
 @pytest.mark.parametrize('pressure, temperature', [(1.0, 1.8), (13.5, 3.00)])
 def test_interface(pressure, temperature):
     init_temp = 0.4
@@ -172,3 +173,17 @@ def test_interface(pressure, temperature):
     assert create.returncode == 0
     melt = subprocess.run(melt_command)
     assert melt.returncode == 0
+
+def test_dynamics_output():
+    """Ensure files are located in the correct directory when created."""
+    outdir = Path('test/output')
+    for i in outdir.glob('*'):
+        os.remove(str(i))
+    with paramsContext(PARAMETERS, outfile_path=outdir, dynamics=True, temperature=3.00):
+        snapshot = initialise.init_from_none(hoomd_args=HOOMD_ARGS)
+        simrun.run_npt(snapshot, hoomd.context.initialize(''), sim_params=PARAMETERS)
+        assert (outdir / 'trajectory-Trimer-P13.50-T3.00.gsd').is_file()
+        with gsd.hoomd.open(str(outdir / 'trajectory-Trimer-P13.50-T3.00.gsd')) as trj:
+            assert [f.configuration.step for f in trj] == list(range(101))
+    for i in outdir.glob('*'):
+        os.remove(str(i))

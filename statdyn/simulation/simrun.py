@@ -52,8 +52,13 @@ def run_npt(snapshot: hoomd.data.SnapshotParticleData,
                                           max_gen=sim_params.max_gen,
                                           gen_steps=20000,
                                           )
-            dumpfile = dump_frame(sim_params.filename(prefix='trajectory'),
-                                  group=sim_params.group)
+            # Zeroth step
+            curr_step = iterator.next()
+            assert curr_step == 0
+            dumpfile = dump_frame(
+                sim_params.filename(prefix='trajectory'),
+                group=sim_params.group
+            )
             for curr_step in iterator:
                 hoomd.run_upto(curr_step, quiet=True)
                 dumpfile.write_restart()
