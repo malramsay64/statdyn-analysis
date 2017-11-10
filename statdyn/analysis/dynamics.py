@@ -156,14 +156,27 @@ class molecularRelaxation(object):
         self.num_elements = num_elements
         self.threshold = threshold
         self._max_value = 2**32 - 1
-        self.status = np.full(self.num_elements, self._max_value, dtype=int)
+        self._status = np.full(self.num_elements, self._max_value, dtype=int)
 
     def add(self, timediff: int, distance: np.ndarray) -> None:
-        assert distance.shape == self.status.shape
+        assert distance.shape == self._status.shape
         with np.errstate(invalid='ignore'):
             moved = np.less(self.threshold, distance)
-            moveable = np.greater(self.status, timediff)
-            self.status[np.logical_and(moved, moveable)] = timediff
+            moveable = np.greater(self._status, timediff)
+            self._status[np.logical_and(moved, moveable)] = timediff
+
+    def get_status(self):
+        return self._status
+
+
+class structRelaxations(molecularRelaxation):
+    """Compute the average structural relaxation for a molecule."""
+    def __init__(self, num_elements: int, threshold: float, molecule: Molecule) -> None:
+        self.molecule = molecule
+        super().__init__(num_elements*self.molecule.num_particles, threshold)
+
+    def get_status(self):
+        return self._status.reshape((-1, self.molecule.num_particles)).mean(axis=1)
 
 
 class relaxations(object):
@@ -187,9 +200,10 @@ class relaxations(object):
         self.mol_vector = None
         if molecule:
             self.mol_vector = molecule.positions.astype(np.float32)
-            self.mol_relax['tau_S03'] = molecularRelaxation(
-                num_elements*self.mol_vector.shape[0],
-                threshold=0.3
+            self.mol_relax['tau_S03'] = structRelaxations(
+                num_elements,
+                threshold=0.3,
+                molecule=molecule,
             )
 
     def get_timediff(self, timestep: int):
