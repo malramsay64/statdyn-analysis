@@ -38,6 +38,9 @@ class Molecule(object):
         self.potential_args = dict()  # type: Dict[Any, Any]
         self.particles = ['A']
         self.dimensions = 3
+        self.positions = np.array([
+            [0, 0, 0]
+        ])
 
     def __eq__(self, other) -> bool:
         return type(self) == type(other)
@@ -159,6 +162,8 @@ class Molecule(object):
         moment_inertia *= scale_factor
         return (0, 0, moment_inertia)
 
+    def get_radii(self) -> np.ndarray:
+        return np.ones(1)
 
 class Disc(Molecule):
     """Defines a 2D particle."""
@@ -209,7 +214,6 @@ class Trimer(Molecule):
                 factor.
 
         """
-        # super(Trimer, self).__init__()
         super().__init__()
         self.radius = radius
         self.distance = distance
@@ -217,6 +221,12 @@ class Trimer(Molecule):
         self.particles = ['A', 'B', 'B']
         self.moment_inertia = self.compute_moment_intertia(moment_inertia_scale)
         self.dimensions = 2
+        self.positions = self.distance * np.array([
+            [0, 0, 0],
+            [np.sin(self.angle), np.cos(self.angle), 0],
+            [-np.sin(self.angle), np.cos(self.angle), 0]
+        ])
+
 
 
     def __eq__(self, other) -> bool:
@@ -340,7 +350,7 @@ class Dimer(Molecule):
         self.moment_inertia = self.compute_moment_intertia()
         self.dimensions = 2
 
-    def compute_moment_intertia(self) -> Tuple[float, float, float]:
+    def compute_moment_intertia(self, scale_factor: float=1.) -> Tuple[float, float, float]:
         """Compute the moment of inertia from the particle paramters."""
         return (0., 0., 2 * (self.distance / 2)**2)
 

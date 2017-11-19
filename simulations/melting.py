@@ -126,7 +126,6 @@ if __name__ == "__main__":
 
     subprocess.run(['qsub'],
                    input=sub_file,
-                   encoding='utf-8',
                    stdout=sys.stdout,
                    stderr=sys.stderr,
                    env=os.environ,

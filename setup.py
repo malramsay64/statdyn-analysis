@@ -22,7 +22,7 @@ extensions = [
         ['statdyn/analysis/order.pyx'],
         language='c++',
         libraries=['m', 'voro++'],
-        include_dirs=[np.get_include(), Path(get_path('data')) / 'include'],
+        include_dirs=[np.get_include(), str(Path(get_path('data')) / 'include')],
     ),
     Extension(
         'statdyn.math_helper',

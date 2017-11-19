@@ -23,24 +23,34 @@ cdef float single_quat_rotation(
 
 
 cpdef void quaternion_rotation(
-        np.ndarray[float, ndim=2] initial,
-        np.ndarray[float, ndim=2] final,
-        np.ndarray[float, ndim=1] result,
+        float[:, :] initial,
+        float[:, :] final,
+        float[:] result,
 )
 
+cpdef np.ndarray[float, ndim=2] rotate_vectors(
+        float[:, :] quaternions,
+        float[:, :] vectors
+)
+
+cdef void quaternion_rotate_vector(
+        float[:] q,
+        float[:] v,
+        float[:] result
+) nogil
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(
-        np.ndarray[float, ndim=2] quat
+        float[:, :] quat
 )
 
 
 cpdef np.ndarray[float, ndim=2] z2quaternion(
-        np.ndarray[float, ndim=1] theta
+        float[:] theta
 )
 
 
 cpdef np.ndarray[float, ndim=1] quaternion2z(
-        np.ndarray[float, ndim=2] orientations
+        float[:, :] orientations
 )
 
 cpdef float single_displacement(

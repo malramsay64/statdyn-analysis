@@ -32,6 +32,7 @@ def init_from_file(fname: Path,
     """Initialise a hoomd simulation from an input file."""
     logger.debug('Initialising from file %s', fname)
     # Hoomd context needs to be initialised before calling gsd_snapshot
+    logger.debug('Hoomd Arguments: %s', hoomd_args)
     temp_context = hoomd.context.initialize(hoomd_args)
     with temp_context:
         return hoomd.data.gsd_snapshot(str(fname), frame=0)
@@ -46,6 +47,7 @@ def init_from_none(hoomd_args: str='',
     This creates a simulation with a large unit cell lattice such that there
     is no chance of molecules overlapping and places molecules on the lattice.
     """
+    logger.debug('Hoomd Arguments: %s', hoomd_args)
     with hoomd.context.initialize(hoomd_args):
         sys = hoomd.init.create_lattice(
             unitcell=hoomd.lattice.sq(a=cell_len),
@@ -97,6 +99,7 @@ def init_from_crystal(sim_params: SimulationParams,
         crystal (class:`statdyn.crystals.Crystal`): The crystal lattice to
             generate the simulation from.
     """
+    logger.info('Hoomd Arguments: %s', sim_params.hoomd_args)
     temp_context = hoomd.context.initialize(sim_params.hoomd_args)
     with temp_context:
         logger.debug("Creating %s cell of size %s",

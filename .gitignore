@@ -5,6 +5,7 @@ sphinx/build
 test/output
 test/tmp
 .hypothesis
+.coverage*
 
 # Ignore conda build directories
 dist

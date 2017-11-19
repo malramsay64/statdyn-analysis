@@ -1,6 +1,12 @@
 MD-Molecules-Hoomd
 ==================
 
+[![Build Status](https://travis-ci.org/malramsay64/MD-Molecules-Hoomd.svg?branch=master)](https://travis-ci.org/malramsay64/MD-Molecules-Hoomd)
+[![codecov](https://codecov.io/gh/malramsay64/MD-Molecules-Hoomd/branch/master/graph/badge.svg)](https://codecov.io/gh/malramsay64/MD-Molecules-Hoomd)
+[![Anaconda-Server Badge](https://anaconda.org/malramsay/statdyn/badges/installer/conda.svg)](https://conda.anaconda.org/malramsay)
+[![Anaconda-Server Badge](https://anaconda.org/malramsay/statdyn/badges/version.svg)](https://anaconda.org/malramsay/statdyn)
+
+
 This is a set of scripts that use
 [Hoomd](https://bitbucket.org/glotzer/hoomd-blue) to perform the Molecular
 dynamics simulations of a glass forming molecular liquid. There is a particular
@@ -15,6 +21,19 @@ Installation
 The simplest method of installation is using `conda`. To install
 
     conda install -c malramsay statdyn
+
+It is also possible to set the repository up as a development environment,
+in which case cloning the repository and installing is possible by running
+
+    git clone https://github.com/malramsay64/MD-Molecules-Hoomd.git
+    cd MD-Molecules-Hoomd
+    conda env create
+    source activate statdyn-dev
+    python setup.py develop
+
+Once the environment is setup the tests can be run with
+
+    pytest
 
 Running Simulations
 -------------------

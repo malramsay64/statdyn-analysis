@@ -14,7 +14,6 @@ from pathlib import Path
 from subprocess import run
 
 import hoomd.context
-
 from pkg_resources import DistributionNotFound, get_distribution
 
 from ..analysis.run_analysis import comp_dynamics
@@ -30,7 +29,7 @@ try:
     __version__ = get_distribution('statdyn').version
 except DistributionNotFound:
     # package is not installed
-    pass
+    __version__ = "dev"
 
 
 MOLECULE_OPTIONS = {
@@ -75,10 +74,13 @@ def equil(sim_params: SimulationParams) -> None:
     """Command group for the equilibration of configurations."""
     logger.debug('Running %s equil', sim_params.equil_type)
 
+    logger.debug('Equil hoomd args: %s', sim_params.hoomd_args)
+
     # Ensure parent directory exists
     Path(sim_params.outfile).parent.mkdir(exist_ok=True)
 
-    snapshot = initialise.init_from_file(sim_params.infile)
+    snapshot = initialise.init_from_file(sim_params.infile,
+                                         hoomd_args=sim_params.hoomd_args)
     EQUIL_OPTIONS.get(sim_params.equil_type)(
         snapshot,
         sim_params=sim_params,

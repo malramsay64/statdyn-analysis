@@ -9,13 +9,14 @@
 """Read input files and compute dynamic and thermodynamic quantities."""
 
 import logging
-from typing import List
+from typing import Any, Dict, List
 
 import gsd.hoomd
 import pandas
 
+from ..molecules import Trimer
 from ..StepSize import GenerateStepSeries
-from .dynamics import dynamics
+from .dynamics import dynamics, relaxations
 
 logger = logging.getLogger(__name__)
 
@@ -54,8 +55,9 @@ def process_gsd(infile: str,
         (py:class:`pandas.DataFrame`): DataFrame with the dynamics quantities.
 
     """
-    dataframes = []  # type: List[pandas.DataFrame]
-    keyframes = []  # type: List[dynamics]
+    dataframes: List[Dict[str, Any]] = []
+    keyframes: List[dynamics] = []
+    relaxframes: List[relaxations] = []
     append_file = False
     buffer_size = int(buffer_multiplier * 8192)
 
@@ -64,7 +66,15 @@ def process_gsd(infile: str,
         if step_limit is not None:
             num_steps = step_limit
         else:
-            num_steps = src[-1].configuration.step
+            while True:
+                frame_index = -1
+                try:
+                    num_steps = src[-1].configuration.step
+                    break
+                except RuntimeError:
+                    frame_index -= 1
+
+
         logger.debug('Infile: %s contains %d steps', infile, num_steps)
         step_iter = GenerateStepSeries(num_steps,
                                        num_linear=num_linear,
@@ -93,7 +103,9 @@ def process_gsd(infile: str,
                 indexes = step_iter.get_index()
                 for index in indexes:
                     try:
+                        logger.debug(f'len(keyframes): {len(keyframes)}, len(relaxframes): {len(relaxframes)}')
                         mydyn = keyframes[index]
+                        myrelax = relaxframes[index]
                     except IndexError:
                         logger.debug('Create keyframe at step %s', curr_step)
                         keyframes.append(dynamics(
@@ -102,12 +114,25 @@ def process_gsd(infile: str,
                             position=frame.particles.position,
                             orientation=frame.particles.orientation,
                         ))
+                        relaxframes.append(relaxations(
+                            timestep=frame.configuration.step,
+                            box=frame.configuration.box,
+                            position=frame.particles.position,
+                            orientation=frame.particles.orientation,
+                            molecule=Trimer()
+                        ))
                         mydyn = keyframes[index]
+                        myrelax = relaxframes[index]
 
                     dynamics_series = mydyn.computeAll(
                         curr_step,
                         frame.particles.position,
-                        frame.particles.orientation
+                        frame.particles.orientation,
+                    )
+                    myrelax.add(
+                        curr_step,
+                        frame.particles.position,
+                        frame.particles.orientation,
                     )
                     logger.debug('Series: %s', index)
                     dynamics_series['start_index'] = index
@@ -119,25 +144,33 @@ def process_gsd(infile: str,
                     break
 
                 if outfile and len(dataframes) >= buffer_size:
-                    pandas.concat(dataframes).to_hdf(
+                    pandas.DataFrame.from_records(dataframes).to_hdf(
                         outfile,
                         'dynamics',
                         format='table',
                         append=append_file,
                     )
                     dataframes.clear()
+
                     # Once we have written to the file once, append to the
                     # existing file.
                     if not append_file:
                         append_file = True
 
     if outfile:
-        pandas.concat(dataframes).to_hdf(
+        pandas.DataFrame.from_records(dataframes).to_hdf(
             outfile,
             'dynamics',
             format='table',
             append=append_file,
         )
+        pandas.concat((relax.summary() for relax in relaxframes),
+                      keys=range(len(relaxframes))).to_hdf(
+                          outfile,
+                          'relaxations',
+                          format='table',
+                          append=False,
+                      )
         return
 
-    return pandas.concat(dataframes)
+    return pandas.DataFrame.from_records(dataframes)

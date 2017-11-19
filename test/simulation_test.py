@@ -13,6 +13,7 @@ import os
 import subprocess
 from pathlib import Path
 
+import gsd.hoomd
 import hoomd
 import pytest
 from hypothesis import given, settings
@@ -24,6 +25,7 @@ from statdyn.simulation.params import SimulationParams, paramsContext
 
 OUTDIR = Path('test/tmp')
 OUTDIR.mkdir(exist_ok=True)
+HOOMD_ARGS="--mode=cpu"
 
 PARAMETERS = SimulationParams(
     temperature=0.4,
@@ -32,13 +34,14 @@ PARAMETERS = SimulationParams(
     outfile_path=Path('test/tmp'),
     outfile='test/tmp/testout',
     dynamics=False,
+    hoomd_args=HOOMD_ARGS
 )
 
 
 @pytest.mark.simulation
 def test_run_npt():
     """Test an npt run."""
-    snapshot = initialise.init_from_none()
+    snapshot = initialise.init_from_none(hoomd_args=HOOMD_ARGS)
     simrun.run_npt(
         snapshot=snapshot,
         context=hoomd.context.initialize(''),
@@ -53,7 +56,8 @@ def test_run_npt():
 def test_run_multiple_concurrent(max_initial):
     """Test running multiple concurrent."""
     snapshot = initialise.init_from_file(
-        Path('test/data/Trimer-13.50-3.00.gsd')
+        Path('test/data/Trimer-13.50-3.00.gsd'),
+        hoomd_args=HOOMD_ARGS,
     )
     with paramsContext(PARAMETERS, max_initial=max_initial):
         simrun.run_npt(snapshot,
@@ -72,7 +76,7 @@ def test_thermo():
     """
     output = Path('test/tmp')
     output.mkdir(exist_ok=True)
-    snapshot = initialise.init_from_none()
+    snapshot = initialise.init_from_none(hoomd_args=HOOMD_ARGS)
     simrun.run_npt(
         snapshot,
         context=hoomd.context.initialize(''),
@@ -111,7 +115,7 @@ def test_equil_file_placement():
     for i in outdir.glob('*'):
         os.remove(str(i))
     with paramsContext(PARAMETERS, outfile_path=outdir, outfile=outfile, temperature=4.00):
-        snapshot = initialise.init_from_none()
+        snapshot = initialise.init_from_none(hoomd_args=HOOMD_ARGS)
         equilibrate.equil_liquid(snapshot, PARAMETERS)
         assert current == list(Path.cwd().glob('*'))
         assert Path(outfile).is_file()
@@ -126,7 +130,7 @@ def test_file_placement():
     for i in outdir.glob('*'):
         os.remove(str(i))
     with paramsContext(PARAMETERS, outfile_path=outdir, dynamics=True, temperature=3.00):
-        snapshot = initialise.init_from_none()
+        snapshot = initialise.init_from_none(hoomd_args=HOOMD_ARGS)
         simrun.run_npt(snapshot, hoomd.context.initialize(''), sim_params=PARAMETERS)
         assert current == list(Path.cwd().glob('*'))
         assert (outdir / 'Trimer-P13.50-T3.00.gsd').is_file()
@@ -135,6 +139,7 @@ def test_file_placement():
         assert (outdir / 'trajectory-Trimer-P13.50-T3.00.gsd').is_file()
     for i in outdir.glob('*'):
         os.remove(str(i))
+
 
 @pytest.mark.parametrize('pressure, temperature', [(1.0, 1.8), (13.5, 3.00)])
 def test_interface(pressure, temperature):
@@ -147,7 +152,9 @@ def test_interface(pressure, temperature):
         '--temperature', '{}'.format(init_temp),
         '--steps', '1000',
         '--output', OUTDIR,
-        OUTDIR / 'create_interface-P{:.2f}-T{:.2f}.gsd'.format(pressure, init_temp),
+        '-vvv',
+        '--hoomd-args', '"--mode=cpu"',
+        str(OUTDIR / 'create_interface-P{:.2f}-T{:.2f}.gsd'.format(pressure, init_temp)),
     ]
     melt_command = [
         'sdrun', 'equil',
@@ -157,10 +164,26 @@ def test_interface(pressure, temperature):
         '--temperature', '{}'.format(temperature),
         '--output', OUTDIR,
         '--steps', '1000',
-        OUTDIR / 'create_interface-P{:.2f}-T{:.2f}.gsd'.format(pressure, init_temp),
-        OUTDIR / 'melt_interface-P{:.2f}-T{:.2f}.gsd'.format(pressure, temperature),
+        '-vvv',
+        '--hoomd-args', '"--mode=cpu"',
+        str(OUTDIR / 'create_interface-P{:.2f}-T{:.2f}.gsd'.format(pressure, init_temp)),
+        str(OUTDIR / 'melt_interface-P{:.2f}-T{:.2f}.gsd'.format(pressure, temperature)),
     ]
     create = subprocess.run(create_command)
     assert create.returncode == 0
     melt = subprocess.run(melt_command)
     assert melt.returncode == 0
+
+def test_dynamics_output():
+    """Ensure files are located in the correct directory when created."""
+    outdir = Path('test/output')
+    for i in outdir.glob('*'):
+        os.remove(str(i))
+    with paramsContext(PARAMETERS, outfile_path=outdir, dynamics=True, temperature=3.00):
+        snapshot = initialise.init_from_none(hoomd_args=HOOMD_ARGS)
+        simrun.run_npt(snapshot, hoomd.context.initialize(''), sim_params=PARAMETERS)
+        assert (outdir / 'trajectory-Trimer-P13.50-T3.00.gsd').is_file()
+        with gsd.hoomd.open(str(outdir / 'trajectory-Trimer-P13.50-T3.00.gsd')) as trj:
+            assert [f.configuration.step for f in trj] == list(range(101))
+    for i in outdir.glob('*'):
+        os.remove(str(i))

@@ -11,12 +11,8 @@
 import gsd.hoomd
 import numpy as np
 import pytest
-from freud.box import Box
-from hypothesis import given
-from hypothesis.strategies import floats
 
-from statdyn.analysis import order
-from statdyn.math_helper import quaternion2z, z2quaternion
+from statdyn.analysis import order  # type: ignore
 
 
 @pytest.mark.parametrize('infile', [
@@ -49,7 +45,6 @@ def test_num_neighbours(infile):
         neighs = order.num_neighbours(
             frame.configuration.box,
             frame.particles.position,
-            frame.particles.orientation,
             max_radius
         )
     assert np.all(neighs == 6)

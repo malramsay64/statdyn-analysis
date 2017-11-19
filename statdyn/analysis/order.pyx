@@ -18,8 +18,6 @@ import numpy as np
 from freud.box import Box
 from freud.locality import NearestNeighbors
 
-from ..molecules import Molecule, Trimer
-
 cimport numpy as np
 from libc.math cimport fabs, cos, M_PI, pow, round, sqrt
 from libc.limits cimport UINT_MAX

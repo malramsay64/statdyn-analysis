@@ -12,9 +12,8 @@ import logging
 
 import numpy as np
 from bokeh.models import ColumnDataSource, HoverTool
-from bokeh.plotting import figure, show
+from bokeh.plotting import figure
 
-from ..analysis.order import num_neighbours, orientational_order
 from ..math_helper import quaternion2z
 from ..molecules import Molecule, Trimer
 from .colour import colour_orientation

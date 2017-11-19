@@ -1,0 +1,35 @@
+name: statdyn-dev
+channels:
+    - defaults
+    - glotzer
+    - moble
+    - malramsay
+dependencies:
+    - python=3.6.1
+    - numpy=1.13.1
+    - mkl=2017.0.3
+    - libgfortran=3.0.0
+    - scipy
+    - libgcc
+    - pandas
+    - pytables
+    - bokeh
+    - matplotlib
+    - hoomd
+    - gsd
+    - freud
+    - voro
+    - keras
+    - pytest
+    - pylint
+    - quaternion
+    - cython
+    - setuptools
+    - hypothesis
+    - coverage
+    - pip:
+        - mypy
+        - pytest-mypy
+        - pytest-pylint
+        - pytest-cov
+

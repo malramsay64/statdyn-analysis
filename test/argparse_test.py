@@ -57,3 +57,7 @@ def test_bokeh(extras):
     assert args.bokeh == extras
     args = parser.parse_args(['figure', '"{}"'.format(' '.join(extras))])
     assert args.bokeh == ['"{}"'.format(' '.join(extras))]
+
+def test_hoomd_args():
+    args = parser.parse_args(['equil', '--hoomd-args', '"-mode=cpu"', 'infile', 'outfile'])
+    assert args.hoomd_args == '"-mode=cpu"'

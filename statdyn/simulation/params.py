@@ -15,7 +15,6 @@ from typing import Any, Dict, Tuple, Union
 
 import hoomd
 
-from ..crystals import Crystal
 from ..molecules import Molecule, Trimer
 
 logger = logging.getLogger(__name__)
@@ -24,7 +23,7 @@ logger = logging.getLogger(__name__)
 class SimulationParams(object):
     """Store the parameters of the simulation."""
 
-    defaults = {
+    defaults: Dict[str, Any] = {
         'hoomd_args': '',
         'step_size': 0.005,
         'temperature': 0.4,
@@ -36,11 +35,11 @@ class SimulationParams(object):
         'max_gen': 500,
         'gen_steps': 20000,
         'output_interval': 10000,
-    }  # type: Dict[str, Any]
+    }
 
     def __init__(self, **kwargs) -> None:
         """Create SimulationParams instance."""
-        self.parameters = deepcopy(self.defaults)  # type: Dict[str, Any]
+        self.parameters: Dict[str, Any] = deepcopy(self.defaults)
         self.parameters.update(kwargs)
 
     # I am using getattr over getattribute becuase of the lower search priority

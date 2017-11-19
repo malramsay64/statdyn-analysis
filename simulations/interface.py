@@ -210,7 +210,6 @@ if __name__ == "__main__":
     create_process = subprocess.run(
         ['qsub'],
         input=create_pbs,
-        encoding='utf-8',
         stdout=subprocess.PIPE,
     )
 
@@ -219,7 +218,6 @@ if __name__ == "__main__":
 
     subprocess.run(['qsub', '-W', 'depend=afterok:'+job_id],
                    input=prod_pbs,
-                   encoding='utf-8',
                    env=os.environ,
                    )
 

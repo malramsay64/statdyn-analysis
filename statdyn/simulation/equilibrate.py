@@ -71,6 +71,7 @@ def equil_interface(snapshot: hoomd.data.SnapshotParticleData,
             logger.debug('sim_params Steps: %d', sim_params.num_steps)
             snapshot = equil_crystal(snapshot, sim_params)
 
+    logger.debug('Hoomd Arguments: %s', sim_params.hoomd_args)
     temp_context = hoomd.context.initialize(sim_params.hoomd_args)
     sys = initialise_snapshot(
         snapshot=snapshot,
