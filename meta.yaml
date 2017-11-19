@@ -12,21 +12,17 @@ source:
 
 requirements:
     build:
-        - python 3.6.1
+        - python 3.6.*
         - setuptools 36.*
         - setuptools_scm 1.15*
         - cython 0.26.*
         - numpy 1.13.1
-        - mkl 2017.0.3
-        - libgfortran 3.0.0
 
     run:
-        - python 3.6.1
+        - python 3.6.*
         - hoomd 2.2*
-        - mkl 2017.0.3
         - numpy 1.13.1
-        - libgfortran 3.0.0
-        - scipy 0.19*
+        - scipy 0.19.0
         - pandas 0.20*
         - pytables 3.4*
         - bokeh 0.12*

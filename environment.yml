@@ -1,4 +1,4 @@
-name: statdyn-dev
+name: hoomd
 channels:
     - defaults
     - glotzer
@@ -9,6 +9,7 @@ dependencies:
     - mkl=2017.0.3
     - libgfortran=3.0.0
     - scipy
+    - libgcc
     - pandas
     - pytables
     - bokeh
@@ -22,7 +23,6 @@ dependencies:
     - cython
     - setuptools
     - hypothesis
-    - quaternion
     - coverage
     - pip:
         - mypy
