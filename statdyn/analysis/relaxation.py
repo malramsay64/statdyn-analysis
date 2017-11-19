@@ -123,6 +123,8 @@ def exponential_relaxation(time: np.ndarray,
             args=(a, b, -exp_value),
             x0=zero_est,
             fprime=_ddx_exponential_decay,
+            maxiter=100,
+            tol=1e-4
         )
 
     val_mean: float = find_root(*popt)
