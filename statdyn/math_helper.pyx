@@ -112,12 +112,15 @@ cpdef void quaternion_rotation(
 
     with nogil:
         for i in range(nitems):
-            result[i] = 2.*acos(fabs(
-                initial[i, 0] * final[i, 0] +
-                initial[i, 1] * final[i, 1] +
-                initial[i, 2] * final[i, 2] +
-                initial[i, 3] * final[i, 3]
-            ))
+            if initial[i, 0] == final[i, 0]:
+                result[i] == 0
+            else:
+                result[i] = 2.*acos(fabs(
+                    initial[i, 0] * final[i, 0] +
+                    initial[i, 1] * final[i, 1] +
+                    initial[i, 2] * final[i, 2] +
+                    initial[i, 3] * final[i, 3]
+                ))
 
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(

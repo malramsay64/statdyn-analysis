@@ -66,8 +66,8 @@ def knn_model():
     return joblib.load(Path(__file__).parent / 'models/knn-Trimer-model.pkl')
 
 
-cpdef compute_neighbours(np.ndarray[np.float32_t, ndim=1] box,
-                         np.ndarray[np.float32_t, ndim=2] position,
+cpdef compute_neighbours(float[:] box,
+                         float[:, :] position,
                          float max_radius=3.5,
                          int max_neighbours=8):
     """Compute the neighbour list."""
@@ -90,9 +90,10 @@ cpdef compute_neighbours(np.ndarray[np.float32_t, ndim=1] box,
     return neighs
 
 
-cpdef num_neighbours(np.ndarray[float, ndim=1] box,
-                     np.ndarray[float, ndim=2] position,
-                     float max_radius=3.5):
+cpdef np.ndarray[np.uint32_t, ndim=2] num_neighbours(
+        float[:] box,
+        float[:, :] position,
+        float max_radius=3.5):
     """Compute the number of neighbours for each molecule.
 
     Args:
@@ -108,7 +109,7 @@ cpdef num_neighbours(np.ndarray[float, ndim=1] box,
     cdef Py_ssize_t num_mols = position.shape[0]
     cdef unsigned int no_value = UINT_MAX
     cdef unsigned int[:, :] neighbourlist
-    cdef np.ndarray[unsigned int, ndim=1] n_neighs
+    cdef unsigned int[:] n_neighs
 
     n_neighs = np.zeros(num_mols, dtype=np.uint32)
     neighbourlist = compute_neighbours(box, position, max_radius, max_neighbours)
@@ -119,13 +120,14 @@ cpdef num_neighbours(np.ndarray[float, ndim=1] box,
                 n_neighs[i] += 1
             else:
                 break
-    return n_neighs
+    return np.asarray(n_neighs)
 
 
-cpdef relative_orientations(np.ndarray[float, ndim=1] box: np.ndarray,
-                            np.ndarray[float, ndim=2] position: np.ndarray,
-                            np.ndarray[float, ndim=2] orientation: np.ndarray,
-                            float max_radius=3.5):
+cpdef np.ndarray[float, ndim=2] relative_orientations(
+        float[:] box,
+        float[:, :] position,
+        float[:, :] orientation,
+        float max_radius=3.5):
     """Compute the relative orientations of molecules
 
     This parameter computed from the relative orientation of the neighbouring
@@ -149,7 +151,7 @@ cpdef relative_orientations(np.ndarray[float, ndim=1] box: np.ndarray,
     cdef np.ndarray[float, ndim=2] orientations
 
     neighbourlist = compute_neighbours(box, position, max_radius, max_neighbours)
-    orientations = np.zeros((num_mols, max_neighbours), dtype=np.float32)
+    orientations = np.empty((num_mols, max_neighbours), dtype=np.float32)
 
     for mol_index in range(num_mols):
         num_neighbours = 0
@@ -165,9 +167,10 @@ cpdef relative_orientations(np.ndarray[float, ndim=1] box: np.ndarray,
     return orientations
 
 
-cpdef relative_distances(np.ndarray[float, ndim=1] box: np.ndarray,
-                         np.ndarray[float, ndim=2] position: np.ndarray,
-                         float max_radius=3.5):
+cpdef np.ndarray[float, ndim=2] relative_distances(
+        float[:] box,
+        float[:, :] position,
+        float max_radius=3.5):
     """Compute the relative distance of molecules
 
     This parameter computed from the relative orientation of the neighbouring
@@ -188,7 +191,7 @@ cpdef relative_distances(np.ndarray[float, ndim=1] box: np.ndarray,
     cdef np.ndarray[float, ndim=2] distances
 
     neighbourlist = compute_neighbours(box, position, max_radius, max_neighbours)
-    distances = np.zeros((num_mols, max_neighbours), dtype=np.float32)
+    distances = np.empty((num_mols, max_neighbours), dtype=np.float32)
 
     for mol_index in range(num_mols):
         num_neighbours = 0
@@ -206,12 +209,13 @@ cpdef relative_distances(np.ndarray[float, ndim=1] box: np.ndarray,
     return distances
 
 
-cpdef orientational_order(np.ndarray[float, ndim=1] box: np.ndarray,
-                          np.ndarray[float, ndim=2] position: np.ndarray,
-                          np.ndarray[float, ndim=2] orientation: np.ndarray,
-                          float cutoff=0.8,
-                          float max_radius=3.5,
-                          float angle_factor=1.):
+cpdef np.ndarray[np.uint8_t, ndim=1] orientational_order(
+        float[:] box,
+        float[:, :] position,
+        float[:, :] orientation,
+        float cutoff=0.8,
+        float max_radius=3.5,
+        float angle_factor=1.):
     """Compute the orientational order parameter.
 
     This parameter computed from the relative orientation of the neighbouring
@@ -232,35 +236,36 @@ cpdef orientational_order(np.ndarray[float, ndim=1] box: np.ndarray,
     cdef Py_ssize_t mol_index, n, num_neighbours, curr_neighbour
 
     cdef unsigned int[:, :] neighbourlist
-    cdef np.ndarray[float, ndim=1] order_parameter
+    cdef np.ndarray[np.uint8_t, ndim=1] is_ordered
+    cdef float order_parameter
 
     neighbourlist = compute_neighbours(box, position, max_radius, max_neighbours)
-    order_parameter = np.zeros(num_mols, dtype=np.float32)
+    is_ordered = np.empty(num_mols, dtype=np.uint8)
 
     for mol_index in range(num_mols):
         num_neighbours = 0
         for n in range(max_neighbours):
             curr_neighbour = neighbourlist[mol_index, n]
             if curr_neighbour < num_mols:
-                order_parameter[mol_index] += fabs(cos(
+                order_parameter += fabs(cos(
                     angle_factor * single_quat_rotation(orientation[curr_neighbour], orientation[mol_index])
                 ))
                 num_neighbours += 1
             else:
                 break
         if num_neighbours > 1:
-            order_parameter[mol_index] /= num_neighbours
+            order_parameter /= num_neighbours
         else:
-            order_parameter[mol_index] = 0
-    return order_parameter > cutoff
+            order_parameter = 0
+        is_ordered[mol_index] = order_parameter > cutoff
+    return is_ordered
 
 
-def compute_ml_order(
-        model,
-        np.ndarray[float, ndim=1] box,
-        np.ndarray[float, ndim=2] position,
-        np.ndarray[float, ndim=2] orientation,
-    ):
+def compute_ml_order(model,
+                     float[:] box,
+                     float[:, :] position,
+                     float[:, :] orientation,
+                     ):
 
     cdef float max_radius = 3.5
     cdef unsigned int max_neighbours = 8
@@ -273,16 +278,15 @@ def compute_ml_order(
         return model.predict(orientations)
 
 
-cpdef compute_voronoi_neighs(
-        np.ndarray[float, ndim=1] box,
-        np.ndarray[float, ndim=2] position,
-):
-    cdef np.ndarray[np.int16_t, ndim=1] num_neighs
+cpdef np.ndarray[np.uint16_t, ndim=1] compute_voronoi_neighs(
+        float[:] box,
+        float[:, :] position):
+    cdef np.ndarray[np.uint16_t, ndim=1] num_neighs
     cdef Py_ssize_t num_elements = position.shape[0]
     cdef double Lx, Ly, Lz
     cdef int bx, by, bz
     cdef double N
-    num_neighs = np.empty(num_elements, dtype=np.int16)
+    num_neighs = np.empty(num_elements, dtype=np.uint16)
 
     cdef container *configuration
     cdef voronoicell_neighbor *cell
@@ -297,7 +301,6 @@ cpdef compute_voronoi_neighs(
     bx = max(<int>round(N * Lx), 1)
     by = max(<int>round(N * Ly), 1)
     bz = 1
-
 
     configuration = new container(
             -Lx/2, Lx/2, -Ly/2, Ly/2, -Lz/2, Lz/2,
