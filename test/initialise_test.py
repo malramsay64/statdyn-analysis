@@ -45,8 +45,9 @@ def create_file():
 PARAMETERS = SimulationParams(
     temperature=0.4,
     num_steps=100,
-    crystal=crystals.TrimerP2(),
-    outfile_path=Path('test/tmp')
+    crystal=crystals.TrimerPg(),
+    outfile_path=Path('test/tmp'),
+    cell_dimensions=(10, 10),
 )
 
 INIT_TEST_PARAMS = [

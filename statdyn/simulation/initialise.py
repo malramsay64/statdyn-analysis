@@ -100,6 +100,9 @@ def init_from_crystal(sim_params: SimulationParams,
             generate the simulation from.
     """
     logger.info('Hoomd Arguments: %s', sim_params.hoomd_args)
+    assert hasattr(sim_params, 'cell_dimensions')
+    assert hasattr(sim_params, 'crystal')
+    assert hasattr(sim_params, 'molecule')
     temp_context = hoomd.context.initialize(sim_params.hoomd_args)
     with temp_context:
         logger.debug("Creating %s cell of size %s",

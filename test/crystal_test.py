@@ -24,7 +24,11 @@ from statdyn.simulation.helper import SimulationParams
 TEST_CLASSES = [
     crystals.Crystal,
     crystals.CrysTrimer,
-    crystals.TrimerP2
+    crystals.TrimerP2,
+    crystals.TrimerP2gg,
+    crystals.TrimerPg,
+    crystals.SquareCircle,
+    crystals.CubicSphere,
 ]
 
 output_dir = Path('test/output')
@@ -37,7 +41,6 @@ PARAMETERS = SimulationParams(
     crystal=crystals.TrimerP2(),
     cell_dimensions=(32, 40),
 )
-
 
 
 @pytest.mark.parametrize("crys_class", TEST_CLASSES)

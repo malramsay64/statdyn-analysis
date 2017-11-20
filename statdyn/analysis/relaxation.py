@@ -61,31 +61,6 @@ def diffusion_constant(time: np.ndarray,
     return popt[0], perr[0]
 
 
-def simple_exponential_relaxation(time: np.ndarray,
-                                  value: np.ndarray,
-                                  sigma: np.ndarray=None,
-                                  ) -> Tuple[float, float]:
-    """Compute the exponential relaxation of a function by finding the crossover point.
-
-    We are defining exponential relaxation as the time taken for a function to
-    reach a value of :math:`1/e`.
-
-    This function finds the time steps between which this value falls. The error
-    of the function is the distance between timesteps at that point.
-
-    Args:
-        time (class:`np.ndarray`): The timesteps corresponding to each msd value.
-        value (class:`np.ndarray`): Values of the relaxation paramter
-
-    Returns:
-        diffusion_constant (float): The relaxation time for the given quantity.
-        error (float): The error in the fit of the relaxation
-
-    """
-    index = np.argmax(value < 1/np.exp(1))
-    return time[index], time[index]-time[index-1]
-
-
 def exponential_relaxation(time: np.ndarray,
                            value: np.ndarray,
                            sigma: np.ndarray=None,
