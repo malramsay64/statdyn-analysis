@@ -10,6 +10,7 @@ dependencies:
     - mkl=2017.0.3
     - libgfortran=3.0.0
     - scipy
+    - scikit-learn=0.19.0
     - libgcc
     - pandas
     - pytables

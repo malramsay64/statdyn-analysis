@@ -13,5 +13,6 @@ build
 
 # Ignore cython generated files
 statdyn/**/*.c
+statdyn/**/*.cpp
 statdyn/**/*.html
 statdyn/**/*.so

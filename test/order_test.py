@@ -50,7 +50,20 @@ def test_num_neighbours(infile):
     assert np.all(neighs == 6)
 
 
-@pytest.mark.xfail()
+@pytest.mark.parametrize('infile', [
+    'test/data/Trimer-13.50-0.40-p2.gsd',
+    'test/data/Trimer-13.50-0.40-p2gg.gsd',
+    'test/data/Trimer-13.50-0.40-pg.gsd'
+])
+def test_voronoi_neighbours(infile):
+    with gsd.hoomd.open(infile, 'rb') as f:
+        frame = f[0]
+        neighs = order.compute_voronoi_neighs(
+            frame.configuration.box,
+            frame.particles.position,
+        )
+    assert np.all(neighs == 6)
+
 def test_orientational_order():
     with gsd.hoomd.open('test/data/Trimer-13.50-0.40-p2.gsd') as f:
         frame = f[0]
@@ -61,4 +74,17 @@ def test_orientational_order():
             frame.particles.orientation,
             max_radius
         )
-    assert np.allclose(orient_order, 1, atol=0.02)
+    assert np.all(np.logical_not(orient_order))
+
+@pytest.mark.parametrize('model', [order.nn_model, order.dt_model, order.knn_model])
+def test_ml_models(model):
+    with gsd.hoomd.open('test/data/Trimer-13.50-0.40-p2.gsd') as f:
+        frame = f[0]
+        ordering = order.compute_ml_order(
+            model(),
+            frame.configuration.box,
+            frame.particles.position,
+            frame.particles.orientation,
+        )
+        assert np.all(ordering != 0)
+
