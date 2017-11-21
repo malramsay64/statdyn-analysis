@@ -14,7 +14,7 @@ dependencies:
     - libgcc
     - pandas
     - pytables
-    - bokeh
+    - bokeh 0.12.9
     - matplotlib
     - hoomd
     - gsd
