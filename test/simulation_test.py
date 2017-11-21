@@ -51,7 +51,7 @@ def test_run_npt():
 
 
 @given(integers(max_value=10, min_value=1))
-@settings(max_examples=5, deadline=1000)
+@settings(max_examples=5, deadline=None)
 @pytest.mark.hypothesis
 def test_run_multiple_concurrent(max_initial):
     """Test running multiple concurrent."""
@@ -87,7 +87,7 @@ def test_thermo():
 
 @given(tuples(integers(max_value=30, min_value=5),
               integers(max_value=5, min_value=1)))
-@settings(max_examples=10, deadline=2000)
+@settings(max_examples=10, deadline=None)
 def test_orthorhombic_sims(cell_dimensions):
     """Test the initialisation from a crystal unit cell.
 
