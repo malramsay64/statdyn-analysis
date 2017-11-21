@@ -109,18 +109,19 @@ cpdef void quaternion_rotation(
         float[:, :] final,
         float[:] result):
     cdef Py_ssize_t nitems = result.shape[0]
+    cdef double intermediate
 
     with nogil:
         for i in range(nitems):
-            if initial[i, 0] == final[i, 0]:
+            intermediate = fabs(initial[i, 0] * final[i, 0] +
+                           initial[i, 1] * final[i, 1] +
+                           initial[i, 2] * final[i, 2] +
+                           initial[i, 3] * final[i, 3]
+                           )
+            if fabs(intermediate - 1.) < QUAT_EPS:
                 result[i] == 0
             else:
-                result[i] = 2.*acos(fabs(
-                    initial[i, 0] * final[i, 0] +
-                    initial[i, 1] * final[i, 1] +
-                    initial[i, 2] * final[i, 2] +
-                    initial[i, 3] * final[i, 3]
-                ))
+                result[i] = 2.*acos(intermediate)
 
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(
