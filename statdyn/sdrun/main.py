@@ -12,6 +12,7 @@ import argparse
 import logging
 from pathlib import Path
 from subprocess import run
+from typing import Callable, List, Tuple
 
 import hoomd.context
 from pkg_resources import DistributionNotFound, get_distribution
@@ -47,7 +48,7 @@ EQUIL_OPTIONS = {
 }
 
 
-def sdrun():
+def sdrun() -> None:
     """Run main function."""
     logging.debug('Running main function')
     func, sim_params = parse_args()
@@ -111,7 +112,7 @@ def figure(args) -> None:
         logger.info('Bokeh server terminated.')
 
 
-def create_parser():
+def create_parser() -> argparse.ArgumentParser:
     """Create the argument parser."""
     parser = argparse.ArgumentParser()
 
@@ -260,10 +261,14 @@ def _verbosity(level: int=0) -> None:
     root_logger.setLevel(log_level)
 
 
-def parse_args():
+def parse_args(input_args: List[str]=None
+               ) -> Tuple[Callable[[SimulationParams], None], SimulationParams]:
     """Logic to parse the input arguments."""
     parser = create_parser()
-    args = parser.parse_args()
+    if input_args is None:
+        args = parser.parse_args()
+    else:
+        args = parser.parse_args(input_args)
 
     # Handle verbosity
     _verbosity(args.verbose)
@@ -294,7 +299,3 @@ def parse_args():
 
     set_args = {key: val for key, val in vars(args).items() if val is not None}
     return func, SimulationParams(**set_args)
-
-
-if __name__ == "__main__":
-    sdrun()
