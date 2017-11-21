@@ -109,7 +109,7 @@ def test_get_distance(pos_a, pos_b):
 
 @given(tuples(integers(max_value=30, min_value=1),
               integers(max_value=30, min_value=1)))
-@settings(max_examples=3, deadline=5000)
+@settings(max_examples=3, deadline=None)
 def test_cell_dimensions(cell_dimensions):
     """Test cell paramters work properly."""
     snap = initialise.init_from_crystal(PARAMETERS)
