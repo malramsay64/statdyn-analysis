@@ -194,6 +194,7 @@ class relaxations(object):
         self.mol_relax = {
             'tau_D1': molecularRelaxation(num_elements, threshold=1.),
             'tau_D03': molecularRelaxation(num_elements, threshold=0.3),
+            'tau_D04': molecularRelaxation(num_elements, threshold=0.4),
             'tau_T2': molecularRelaxation(num_elements, threshold=np.pi/2),
             'tau_T4': molecularRelaxation(num_elements, threshold=np.pi/4),
         }
