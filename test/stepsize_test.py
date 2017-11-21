@@ -89,7 +89,7 @@ def test_num_linear(num_linear):
 
 
 @given(integers(min_value=1, max_value=500))
-@settings(max_examples=10)
+@settings(max_examples=10, deadline=None)
 def test_get_index(max_gen):
     gen_steps = 100
     g = GenerateStepSeries(50000, gen_steps=gen_steps, max_gen=max_gen)

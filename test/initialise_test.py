@@ -164,6 +164,7 @@ def test_orthorhombic_init(cell_dimensions):
 
 
 @given(floats(min_value=0.1, allow_infinity=False, allow_nan=False))
+@settings(deadline=1000)
 def test_moment_inertia(scaling_factor):
     """Ensure moment of intertia is set correctly in setup."""
     init_mol = molecules.Trimer(moment_inertia_scale=scaling_factor)
