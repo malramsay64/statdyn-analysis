@@ -31,8 +31,8 @@ PARAMETERS = SimulationParams(
     temperature=0.4,
     num_steps=100,
     crystal=crystals.TrimerP2(),
-    outfile_path=Path('test/tmp'),
-    outfile='test/tmp/testout',
+    outfile_path=OUTDIR,
+    outfile=OUTDIR / 'testout',
     dynamics=False,
     hoomd_args=HOOMD_ARGS
 )

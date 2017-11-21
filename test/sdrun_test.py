@@ -13,119 +13,57 @@ import sys
 
 import pytest
 
+from statdyn.sdrun.main import parse_args
 
-def test_prod():
+TEST_ARGS = [
+    ['prod',
+     'test/data/Trimer-13.50-3.00.gsd',
+     '-t', '3.00',
+     '--no-dynamics',
+     ],
+    ['create',
+     '-t', '2.50',
+     '--space-group', 'pg',
+     '--lattice-lengths', '20', '24',
+     'test/output/test_create.gsd',
+     ],
+    ['equil',
+     '-t', '2.50',
+     'test/data/Trimer-13.50-3.00.gsd',
+     'test/output/test_equil.gsd',
+     ]
+]
+
+COMMON_ARGS = [
+     '--hoomd-args', '"--mode=cpu"',
+     '-o', 'test/output',
+     '-s', '100',
+     '-v',
+]
+
+
+@pytest.mark.parametrize('arguments', TEST_ARGS)
+def test_man(arguments):
+    func, sim_params = parse_args(arguments + COMMON_ARGS)
+    func(sim_params)
+
+
+@pytest.mark.parametrize('arguments', TEST_ARGS)
+def test_commands(arguments):
     """Ensure sdrun prod works."""
     subprocess.run(['ls', 'test/data'])
-    command = ['sdrun',
-               'prod',
-               'test/data/Trimer-13.50-3.00.gsd',
-               '-v',
-               '-t', '3.00',
-               '--no-dynamics',
-               '-s', '100',
-               '-o', 'test/output',
-               '--hoomd-args', '"--mode=cpu"',
-               ]
+    command = ['sdrun'] + arguments + COMMON_ARGS
     ret = subprocess.run(command)
     assert ret.returncode == 0
 
 
 @pytest.mark.skipif(sys.platform == 'darwin', reason='No MPI support on macOS')
-def test_prod_mpi():
+@pytest.mark.parametrize('arguments', TEST_ARGS)
+def test_commands_mpi(arguments):
     """Ensure sdrun prod works."""
     subprocess.run(['ls', 'test/data'])
-    command = ['sdrun',
-               'prod',
-               'test/data/Trimer-13.50-3.00.gsd',
-               '-v',
-               '-t', '3.00',
-               '--no-dynamics',
-               '-s', '100',
-               '-o', 'test/output',
-               '--hoomd-args', '"--mode=cpu"',
-               ]
-    command = 'mpirun -np 4'.split(' ') + command
+    command = ['mpirun', '-np', '4', 'sdrun'] + arguments + COMMON_ARGS
     ret = subprocess.run(command)
-    assert ret.returncode == 0
-
-
-@pytest.mark.parametrize('space_group', ['p2', 'p2gg', 'pg'])
-def test_create(space_group):
-    """Ensure sdrun create works."""
-    command = ['sdrun',
-               'create',
-               '-v',
-               '-t', '2.50',
-               '-s', '100',
-               '--space-group', space_group,
-               '--lattice-lengths', '20', '24',
-               '-o', 'test/output',
-               'test/output/test_create.gsd',
-               '--hoomd-args', '"--mode=cpu"',
-               ]
-    ret = subprocess.run(command)
-    assert ret.returncode == 0
-    ret = subprocess.run(command + ['--interface'])
-    assert ret.returncode == 0
-
-
-@pytest.mark.skipif(sys.platform == 'darwin', reason='No MPI support on macOS')
-def test_create_mpi():
-    """Ensure sdrun create works."""
-    command = ['sdrun',
-               'create',
-               '-v',
-               '-t', '2.50',
-               '-s', '100',
-               '--space-group', 'p2',
-               '--lattice-lengths', '20', '24',
-               '-o', 'test/output',
-               '--hoomd-args', '"--mode=cpu"',
-               'test/output/test_create.gsd',
-               ]
-    command = 'mpirun -np 4'.split(' ') + command
-    ret = subprocess.run(command)
-    assert ret.returncode == 0
-    ret = subprocess.run(command + ['--interface'])
-    assert ret.returncode == 0
-
-
-def test_equil():
-    """Ensure sdrun create works."""
-    command = ['sdrun',
-               'equil',
-               '-v',
-               '-t', '2.50',
-               '-s', '100',
-               '-o', 'test/output',
-               '--hoomd-args', '"--mode=cpu"',
-               'test/data/Trimer-13.50-3.00.gsd',
-               'test/output/test_equil.gsd',
-               ]
-    ret = subprocess.run(command)
-    assert ret.returncode == 0
-    ret = subprocess.run(command + ['--equil-type', 'interface'])
-    assert ret.returncode == 0
-
-
-@pytest.mark.skipif(sys.platform == 'darwin', reason='No MPI support on macOS')
-def test_equil_mpi():
-    """Ensure sdrun create works."""
-    command = ['sdrun',
-               'equil',
-               '-vvv',
-               '-t', '2.50',
-               '-s', '100',
-               '-o', 'test/output',
-               '--hoomd-args', '"--mode=cpu"',
-               'test/data/Trimer-13.50-3.00.gsd',
-               'test/output/test_equil.gsd',
-               ]
-    command = 'mpirun -np 4'.split(' ') + command
-    ret = subprocess.run(command)
-    assert ret.returncode == 0
-    ret = subprocess.run(command + ['--equil-type', 'interface'])
     assert ret.returncode == 0
 
 
@@ -142,7 +80,6 @@ def test_comp_dynamics():
 
 
 def test_sdrun_figure():
-    command = ['sdrun',
-               'figure']
+    command = ['sdrun', 'figure']
     with pytest.raises(subprocess.TimeoutExpired):
         subprocess.run(command, timeout=1)
