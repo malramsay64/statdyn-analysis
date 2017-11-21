@@ -30,6 +30,7 @@ before_deploy:
     - conda install -n root anaconda-client conda-build
     - conda config --append channels moble
     - conda config --append channels glotzer
+    - conda config --append channels malramsay
     - chmod +x scripts/deploy_anaconda.sh
 
 deploy:
