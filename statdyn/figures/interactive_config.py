@@ -96,14 +96,17 @@ def update_source(data):
 
 
 def update_data(attr, old, new):
-    p.title.text = 'Timestep: {:.5g}'.format(snapshot.configuration.step)
+    try:
+        p.title.text = 'Timestep: {:.5g}'.format(snapshot.configuration.step)
 
-    data = snapshot2data(snapshot,
-                         molecule=molecule,
-                         extra_particles=extra_particles,
-                         ordering=order_parameters[OP_KEYS[ordered.active]],
-                         )
-    source.data = data
+        data = snapshot2data(snapshot,
+                             molecule=molecule,
+                             extra_particles=extra_particles,
+                             ordering=order_parameters[OP_KEYS[ordered.active]],
+                             )
+        source.data = data
+    except AttributeError:
+        pass
 
 
 def update_data_now(arg):
@@ -124,7 +127,11 @@ def play_pause_toggle(arg):
 
 
 DIR_OPTIONS = sorted([d.parts[-1] for d in Path.cwd().glob('*/') if d.is_dir() and len(list(d.glob('dump*.gsd')))])
-directory = Select(value=DIR_OPTIONS[-1], title='Source directory', options=DIR_OPTIONS)
+try:
+    directory = Select(value=DIR_OPTIONS[-1], title='Source directory', options=DIR_OPTIONS)
+except IndexError:
+    directory = Select(title='Source directory', options=DIR_OPTIONS)
+
 directory.on_change('value', update_directory)
 
 fname = Select(title='File', value='', options=[])
@@ -170,6 +177,8 @@ p = figure(width=920, height=800, aspect_scale=1, match_aspect=True,
            title='Timestep: {:.2g}'.format(timestep),
            output_backend='webgl',
            active_scroll='wheel_zoom')
+p.xgrid.grid_line_color = None
+p.ygrid.grid_line_color = None
 
 update_directory(None, None, default_dir)
 update_data(None, None, None)

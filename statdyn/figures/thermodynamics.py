@@ -13,16 +13,15 @@
 import logging
 from pathlib import Path
 
-import click
 import numpy as np
 import pandas
-from bkcharts import TimeSeries, show
 from bokeh.layouts import column, gridplot, row, widgetbox
 from bokeh.models import (CheckboxButtonGroup, ColumnDataSource, MultiSelect,
                           Panel, Select, Tabs, TextInput)
 from bokeh.plotting import curdoc, figure
 
 logger = logging.getLogger(__name__)
+
 
 def read_file(source):
     """Read a file into a pandas dataframe."""
@@ -37,10 +36,13 @@ def read_file(source):
 def update_file_list(attr, old, new):
     old_file = fname.value
     fname.options = [filename.name for filename in Path(new).glob('thermo*')]
-    new_file = fname.options[0]
-    if old_file in fname.options:
-        new_file = old_file
-    fname.value = new_file
+    try:
+        new_file = fname.options[0]
+        if old_file in fname.options:
+            new_file = old_file
+        fname.value = new_file
+    except IndexError:
+        pass
 
 
 def update_file(attr, old, new):
@@ -51,9 +53,11 @@ def update_file(attr, old, new):
     update_factors(None, None, None)
     update_datacolumns(None, None, None)
 
+
 def update_factors(attr, old, new):
     factors.options = list(dataframe.columns)
     factors.value = factors.options[2]
+
 
 def update_datacolumns(attr, old, new):
     default_columns.data = {
@@ -88,7 +92,10 @@ update_file_list(None, None, directory.value)
 logger.debug('Defualt colums %s', default_columns.data)
 logger.debug('Defualt colummns columns %s',  list(default_columns.data.keys()))
 cols = list(default_columns.data.keys())
-cols.remove('x')
+try:
+    cols.remove('x')
+except ValueError:
+    pass
 x_range = None
 fig_args = {
     'plot_height': 150,
@@ -105,7 +112,7 @@ for fig, col in zip(default_plots, cols):
 
 
 logger.debug('Laying out defualt tab')
-controls_default = widgetbox([directory, fname,], width=300)
+controls_default = widgetbox([directory, fname], width=300)
 grid = gridplot(default_plots, ncols=1)
 default_layout = row(controls_default, grid)
 default_tab = Panel(child=default_layout, title='Default')
@@ -117,7 +124,7 @@ plot = figure(**fig_args)
 plot.line(source=datacolumns, x='x', y='y')
 
 
-controls_inv = widgetbox([factors,], width=300)
+controls_inv = widgetbox([factors], width=300)
 inv_layout = column(controls_inv, plot)
 investigate_tab = Panel(child=inv_layout, title='Investigate')
 
