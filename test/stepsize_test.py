@@ -36,6 +36,7 @@ def steps(request):
 
 
 @given(integers(min_value=0))
+@settings(deadline=None)
 def test_initial_start(initial):
     """Ensure the first value produced is the initial value."""
     gen = generate_steps(total_steps=initial+10, start=initial)
@@ -43,6 +44,7 @@ def test_initial_start(initial):
 
 
 @given(integers(min_value=0))
+@settings(deadline=None)
 def test_initial_start_series(initial):
     """Ensure the first value produced is the initial value."""
     gen = GenerateStepSeries(total_steps=initial+10)
@@ -50,6 +52,7 @@ def test_initial_start_series(initial):
 
 
 @given(integers(min_value=0))
+@settings(deadline=None)
 def test_final_total(final):
     """Ensure the final value produced is the final value."""
     genlist = list(generate_steps(total_steps=final))
@@ -57,6 +60,7 @@ def test_final_total(final):
 
 
 @given(integers(min_value=0))
+@settings(deadline=None)
 def test_final_total_series(final):
     """Ensure the final value produced is the final value."""
     genlist = list(GenerateStepSeries(total_steps=final))
@@ -120,6 +124,7 @@ def test_generate_step_series_many():
 
 
 @given(integers(min_value=0), integers(min_value=1, max_value=300))
+@settings(deadline=None)
 def test_no_duplicates(total_steps, num_linear):
     """Test generation of a step series works."""
     series_list = list(generate_steps(total_steps=total_steps, num_linear=num_linear))

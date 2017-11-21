@@ -111,7 +111,7 @@ def test_orthorhombic_null():
 
 @given(tuples(integers(max_value=30, min_value=5),
               integers(max_value=30, min_value=5)))
-@settings(max_examples=10, timeout=0)
+@settings(max_examples=10, deadline=None)
 def test_make_orthorhombic(cell_dimensions):
     """Ensure that a conversion to an orthorhombic cell goes smoothly.
 
@@ -164,7 +164,7 @@ def test_orthorhombic_init(cell_dimensions):
 
 
 @given(floats(min_value=0.1, allow_infinity=False, allow_nan=False))
-@settings(deadline=1000)
+@settings(deadline=None)
 def test_moment_inertia(scaling_factor):
     """Ensure moment of intertia is set correctly in setup."""
     init_mol = molecules.Trimer(moment_inertia_scale=scaling_factor)
