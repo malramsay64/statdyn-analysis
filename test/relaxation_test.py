@@ -18,7 +18,7 @@ def test_diffusion_constant():
     known_diffusion = 1e-3
     offset = 1e-4
     time = np.arange(10000)
-    msd = time*known_diffusion + offset
+    msd = time*known_diffusion/4 + offset
     diff, diff_err = relaxation.diffusion_constant(time, msd)
     assert np.isclose(diff, known_diffusion)
     assert np.isclose(diff_err, 0)
