@@ -42,7 +42,7 @@ class Molecule(object):
         self.particles = ['A']
         self._radii = {'A': 1.}
         self.dimensions = 3
-        self.positions = np.array([0, 0, 0])
+        self.positions = np.array([[0, 0, 0]])
 
     def __eq__(self, other) -> bool:
         return type(self) == type(other)

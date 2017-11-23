@@ -63,6 +63,26 @@ def test_define_dimensions(mol):
 
 
 @pytest.mark.parametrize('mol', MOLECULE_LIST)
+def test_orientation2positions(mol):
+    position = np.array([[0, 0, 0]], dtype=np.float32)
+    orientation = np.array([[1, 0, 0, 0]], dtype=np.float32)
+    assert np.allclose(
+        mol.orientation2positions(position, orientation),
+        mol.positions
+    )
+
+
+@pytest.mark.parametrize('mol', MOLECULE_LIST)
+def test_orientation2positions_invert(mol):
+    position = np.array([[0, 0, 0]], dtype=np.float32)
+    orientation = np.array([[0, 0, 0, 1]], dtype=np.float32)
+    assert np.allclose(
+        mol.orientation2positions(position, orientation),
+        -mol.positions
+    )
+
+
+@pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_get_types(mol):
     mol.get_types()
 
