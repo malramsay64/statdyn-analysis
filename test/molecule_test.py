@@ -15,23 +15,56 @@ from hypothesis.strategies import floats
 
 from statdyn import molecules
 
+MOLECULE_LIST = [
+    molecules.Molecule(),
+    molecules.Trimer(),
+    molecules.Dimer(),
+    molecules.Disc(),
+    molecules.Sphere(),
+]
 
-@pytest.fixture(params=[molecules.Molecule, molecules.Trimer, molecules.Dimer])
-def mol_setup(request):
-    """Test molecule setup."""
-    return request.param()
+@pytest.mark.parametrize('mol', MOLECULE_LIST)
+def test_compute_moment_inertia(mol):
+    mom_I = np.array(mol.moment_inertia)
+    assert np.all(mom_I[:2] == 0)
 
 
-def test_mol_types(mol_setup):  # pylint: disable=redefined-outer-name
-    """Test mol_types."""
-    assert isinstance(mol_setup.get_types(), list)
+@pytest.mark.parametrize('mol', MOLECULE_LIST)
+def test_scale_moment_inertia(mol):
+    scale_factor = 10.
+    init_mom_I = np.array(mol.moment_inertia)
+    mol.scale_moment_inertia(scale_factor)
+    final_mom_I = np.array(mol.moment_inertia)
+    assert np.all(scale_factor*init_mom_I == final_mom_I)
 
 
-def test_moment_inertia(mol_setup):  # pylint: disable=redefined-outer-name
-    """Test moment_inertia."""
-    assert isinstance(mol_setup.moment_inertia, tuple)
-    assert len(mol_setup.moment_inertia) == 3
+@pytest.mark.parametrize('mol', MOLECULE_LIST)
+def test_get_radii(mol):
+    radii = mol.get_radii()
+    assert radii[0] == 1.
 
+
+@pytest.mark.xfail
+@pytest.mark.parametrize('mol', MOLECULE_LIST)
+def test_define_rigid(mol):
+    mol.define_rigid()
+
+
+@pytest.mark.xfail
+@pytest.mark.parametrize('mol', MOLECULE_LIST)
+def test_define_potential(mol):
+    mol.define_potential()
+
+
+@pytest.mark.xfail
+@pytest.mark.parametrize('mol', MOLECULE_LIST)
+def test_define_dimensions(mol):
+    mol.define_dimensions()
+
+
+@pytest.mark.parametrize('mol', MOLECULE_LIST)
+def test_get_types(mol):
+    mol.get_types()
 
 def test_moment_inertia_trimer():
     """Ensure calculation of moment of inertia is working properly."""
@@ -47,8 +80,9 @@ def test_moment_inertia_trimer():
 def test_moment_inertia_scaling(scaling_factor):
     """Test that the scaling factor is working properly."""
     reference = molecules.Trimer()
-    scaled = molecules.Trimer(moment_inertia_scale=scaling_factor)
-    assert len(reference.moment_inertia) == len(scaled.moment_inertia)
     with np.errstate(over='ignore'):
+        scaled = molecules.Trimer(moment_inertia_scale=scaling_factor)
+        assert len(reference.moment_inertia) == len(scaled.moment_inertia)
         assert np.allclose(np.array(reference.moment_inertia)*scaling_factor,
                            np.array(scaled.moment_inertia))
+

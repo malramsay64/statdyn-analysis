@@ -9,11 +9,14 @@
 """Module to define a molecule to use for simulation."""
 
 import logging
+from itertools import combinations_with_replacement
 from typing import Any, Dict, List, Tuple
 
 import hoomd
 import hoomd.md
 import numpy as np
+
+from .math_helper import rotate_vectors
 
 logger = logging.getLogger(__name__)
 
@@ -37,11 +40,9 @@ class Molecule(object):
         self.potential = hoomd.md.pair.lj
         self.potential_args = dict()  # type: Dict[Any, Any]
         self.particles = ['A']
+        self._radii = {'A': 1.}
         self.dimensions = 3
-        self.positions = self.orientation2positions(
-            position=np.array([[0, 0, 0]]),
-            orientation=np.array([0])
-        )
+        self.positions = np.array([0, 0, 0])
 
     def __eq__(self, other) -> bool:
         return type(self) == type(other)
@@ -54,7 +55,7 @@ class Molecule(object):
 
     def get_types(self) -> List[str]:
         """Get the types of particles present in a molecule."""
-        return sorted(list(set(self.particles)))
+        return sorted(list(self._radii.keys()))
 
     def define_dimensions(self) -> None:
         """Set the number of dimensions for the simulation.
@@ -84,7 +85,8 @@ class Molecule(object):
             **self.potential_args,
             nlist=hoomd.md.nlist.cell()
         )
-        potential.pair_coeff.set('A', 'A', epsilon=1, sigma=2.0)
+        for i, j in combinations_with_replacement(self._radii.keys(), 2):
+            potential.pair_coeff.set(i, j, epsilon=1, sigma=self._radii[i] + self._radii[j])
         return potential
 
     def define_rigid(self, params: Dict[Any, Any]=None
@@ -114,35 +116,10 @@ class Molecule(object):
             params = dict()
         params['type_name'] = self.particles[0]
         params['types'] = self.particles[1:]
+        params.setdefault('positions', [tuple(pos) for i, pos in enumerate(self.positions) if i > 0])
         rigid = hoomd.md.constrain.rigid()
         rigid.set_param(**params)
         return rigid
-
-    def orientation2positions(self,
-                              position: np.ndarray,
-                              orientation: np.ndarray
-                              ) -> np.ndarray:
-        r"""Convert from orientation representation to all positions.
-
-        One representation of the moleucles is as a single position representing
-        the center of the central molecule and a rotation angle. This function
-        converts that representation to one where each particle has a position.
-        The resulting array consists of a single array of length
-        :math:`n\times np` where :math:`n` is the length of the input array
-        and :math:`np` is the number of particles in the molecule. The positions
-        of each particle are grouped together.
-
-        Args:
-            position: (class:`numpy.ndarray`): The position of the central
-                particle
-            orientation: (class:`numpy.ndarray`): The orientation of the molecule
-                in radians
-
-        Returns:
-            class:`numpy.ndarray`: The position of each particle.
-
-        """
-        return position
 
     def identify_bodies(self, indexes: np.ndarray) -> np.ndarray:
         """Convert an index of molecules into an index of particles."""
@@ -158,14 +135,15 @@ class Molecule(object):
 
     def compute_moment_intertia(self, scale_factor: float=1) -> Tuple[float, float, float]:
         """Compute the moment of inertia from the particle paramters."""
-        positions = self.orientation2positions(np.zeros((1, 3)), np.zeros((1, 1)))
+        positions = self.positions
         COM = np.sum(positions, axis=0)/positions.shape[0]
         moment_inertia = np.sum(np.square(positions - COM))
         moment_inertia *= scale_factor
         return (0, 0, moment_inertia)
 
     def get_radii(self) -> np.ndarray:
-        return np.ones(1)
+        """Radii of the particles."""
+        return np.array([self._radii[p] for p in self.particles])
 
 class Disc(Molecule):
     """Defines a 2D particle."""
@@ -221,12 +199,14 @@ class Trimer(Molecule):
         self.distance = distance
         self.angle = angle
         self.particles = ['A', 'B', 'B']
-        self.moment_inertia = self.compute_moment_intertia(moment_inertia_scale)
+        self._radii.update(B=self.radius)
         self.dimensions = 2
-        self.positions = self.orientation2positions(
-            position=np.array([[0, 0, 0]]),
-            orientation=np.array([0])
-        )
+        self.positions = np.array([
+            [0, 0, 0],
+            [-self.distance * np.sin(self.rad_angle/2), self.distance * np.cos(self.rad_angle/2), 0],
+            [self.distance * np.sin(self.rad_angle/2), self.distance * np.cos(self.rad_angle/2), 0],
+        ])
+        self.moment_inertia = self.compute_moment_intertia(moment_inertia_scale)
 
     @property
     def rad_angle(self) -> float:
@@ -239,88 +219,8 @@ class Trimer(Molecule):
                     self.moment_inertia == other.moment_inertia)
         return False
 
-    def define_potential(self) -> hoomd.md.pair.pair:
-        r"""Define the potential in the simulation context.
-
-        A helper function that defines the potential to be used by the  hoomd
-        simulation context. The default values for the potential are a
-        Lennard-Jones potential with a cutoff of 2.5 and interaction parameters
-        of :math:`\epsilon = 1.0` and :math:`\sigma = 2.0`.
-
-        Returns:
-            class:`hoomd.md.pair`: The interaction potential object class.
-
-        """
-        potential = super(Trimer, self).define_potential()
-        potential.pair_coeff.set('B', 'B', epsilon=1, sigma=self.radius * 2)
-        potential.pair_coeff.set('A', 'B', epsilon=1, sigma=1.0 + self.radius)
-        return potential
-
-    def define_rigid(self, params: Dict[Any, Any]=None
-                     ) -> hoomd.md.constrain.rigid:
-        """Define the rigid constraints of the Trimer molecule.
-
-        This is a helper function to define the rigid body constraints of the
-        particular molecules within the hoomd context.
-
-        Args:
-            params (dict): Dictionary defining the rigid body structure. The
-                default values for the `type_name` of A and the `types` of the
-                `self.particles` variable should work for the vast majority of
-                systems, so the only value required should be the topology.
-
-        Returns:
-            class:`hoomd.md.constrain.rigid`: Rigid constraint object
-
-        """
-        if not params:
-            params = dict()
-        params.setdefault('positions', [tuple(pos) for i, pos in enumerate(self.positions) if i > 0]
-        rigid = super(Trimer, self).define_rigid(params)
-        return rigid
-
-    def orientation2positions(self,
-                              position: np.ndarray,
-                              orientation: np.ndarray,
-                              ) -> np.ndarray:
-        r"""Convert from orientation representation to all positions.
-
-        One representation of the moleucles is as a single position representing
-        the center of the central molecule and a rotation angle. This function
-        converts that representation to one where each particle has a position.
-        The resulting array consists of a single array of length
-        :math:`n\times np` where :math:`n` is the length of the input array
-        and :math:`np` is the number of particles in the molecule. The positions
-        of each particle are grouped together.
-
-        Args:
-            position: (class:`numpy.ndarray`): The position of the central
-                particle
-            orientation: (class:`numpy.ndarray`): The orientation of the molecule
-                in radians
-
-        Returns:
-            class:`numpy.ndarray`: The position of each particle.
-
-        """
-        logger.debug('Position shape: %s, dype: %s',
-                     position.shape, position.dtype)
-        pos1 = position
-        pos2 = np.array([position[:, 0] - self.distance*np.sin(orientation - np.pi/3),
-                         position[:, 1] + self.distance*np.cos(orientation - np.pi/3),
-                         position[:, 2]]).T
-        pos3 = np.array([position[:, 0] - self.distance*np.sin(orientation + np.pi/3),
-                         position[:, 1] + self.distance*np.cos(orientation + np.pi/3),
-                         position[:, 2]]).T
-        return np.append(pos1, np.append(pos2, pos3, axis=0), axis=0)
-
-    def get_radii(self) -> np.ndarray:
-        """Radii of the particles."""
-        return np.array([1., 0.637556, 0.637556])
-
-
 class Dimer(Molecule):
-    """Defines a Trimer molecule for initialisation within a hoomd context.
+    """Defines a Dimer molecule for initialisation within a hoomd context.
 
     This defines a molecule of three particles, shaped somewhat like Mickey
     Mouse. The central particle is of type `'A'` while the outer two
@@ -346,85 +246,10 @@ class Dimer(Molecule):
         self.radius = radius
         self.distance = distance
         self.particles = ['A', 'B']
-        self.moment_inertia = self.compute_moment_intertia()
+        self._radii.update(B=self.radius)
         self.dimensions = 2
-        self.positions = self.orientation2positions(
-            position=np.array([[0, 0, 0]]),
-            orientation=np.array([0])
-        )
-
-    def compute_moment_intertia(self, scale_factor: float=1.) -> Tuple[float, float, float]:
-        """Compute the moment of inertia from the particle paramters."""
-        return (0., 0., 2 * (self.distance / 2)**2)
-
-    def define_potential(self) -> hoomd.md.pair.pair:
-        r"""Define the potential in the simulation context.
-
-        A helper function that defines the potential to be used by the  hoomd
-        simulation context. The default values for the potential are a
-        Lennard-Jones potential with a cutoff of 2.5 and interaction parameters
-        of :math:`\epsilon = 1.0` and :math:`\sigma = 2.0`.
-
-        Returns:
-            class:`hoomd.md.pair`: The interaction potential object class.
-
-        """
-        potential = super(Dimer, self).define_potential()
-        potential.pair_coeff.set('B', 'B', epsilon=1, sigma=self.radius * 2)
-        potential.pair_coeff.set('A', 'B', epsilon=1, sigma=1.0 + self.radius)
-        return potential
-
-    def define_rigid(self, params: Dict[Any, Any]=None
-                     ) -> hoomd.md.constrain.rigid:
-        """Define the rigid constraints of the molecule.
-
-        This is a helper function to define the rigid body constraints of the
-        particular molecules within the hoomd context.
-
-        Args:
-            params (dict): Dictionary defining the rigid body structure. The
-                default values for the `type_name` of A and the `types` of the
-                `self.particles` variable should work for the vast majority of
-                systems, so the only value required should be the topology.
-
-        Returns:
-            class:`hoomd.md.constrain.rigid`: Rigid constraint object
-
-        """
-        if not params:
-            params = dict()
-        params.setdefault('positions', [(self.distance, 0, 0)])
-        rigid = super(Dimer, self).define_rigid(params)
-        return rigid
-
-    def orientation2positions(self,
-                              position: np.ndarray,
-                              orientation: np.ndarray,
-                              ) -> np.ndarray:
-        r"""Convert from orientation representation to all positions.
-
-        One representation of the moleucles is as a single position representing
-        the center of the central molecule and a rotation angle. This function
-        converts that representation to one where each particle has a position.
-        The resulting array consists of a single array of length
-        :math:`n\times np` where :math:`n` is the length of the input array
-        and :math:`np` is the number of particles in the molecule. The positions
-        of each particle are grouped together.
-
-        Args:
-            position: (class:`numpy.ndarray`): The position of the central
-                particle
-            orientation: (class:`numpy.ndarray`): The orientation of the molecule
-                in radians
-
-        Returns:
-            class:`numpy.ndarray`: The position of each particle.
-
-        """
-        logger.debug('Position shape: %s, dype: %s',
-                     position.shape, position.dtype)
-        pos1 = position
-        pos2 = np.array([position[:, 0] - self.distance*np.cos(orientation),
-                         position[:, 1] + self.distance*np.sin(orientation),
-                         position[:, 2]]).T
-        return np.append(pos1, pos2, axis=0)
+        self.positions = np.array([
+            [0, 0, 0],
+            [0, self.distance, 0],
+        ])
+        self.moment_inertia = self.compute_moment_intertia()
