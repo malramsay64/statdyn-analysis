@@ -13,9 +13,8 @@ from copy import deepcopy
 from pathlib import Path
 
 import pytest
-from hypothesis import example, given
+from hypothesis import example, given, settings
 from hypothesis.strategies import text
-
 from statdyn.crystals import TrimerP2
 from statdyn.molecules import Dimer, Disc, Molecule, Sphere, Trimer
 from statdyn.simulation.params import SimulationParams, paramsContext
@@ -32,6 +31,7 @@ MOLECULE_LIST = [Molecule, Sphere, Trimer, Dimer, Disc, None]
 @given(key=text(), value=text())
 @example(key='outfile', value='test')
 @example(key='outfile_path', value='testing')
+@settings(deadline=None)
 def test_paramContext(key, value):
     """Ensure paramsContext sets value correctly and returns to previous state.
 

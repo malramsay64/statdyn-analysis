@@ -16,7 +16,6 @@ import numpy as np
 import pytest
 from hypothesis import given, settings
 from hypothesis.strategies import floats, integers, tuples
-
 from statdyn import crystals, molecules
 from statdyn.simulation import initialise
 from statdyn.simulation.helper import SimulationParams
@@ -142,7 +141,7 @@ def test_make_orthorhombic(cell_dimensions):
 @given(tuples(integers(max_value=30, min_value=5),
               integers(max_value=30, min_value=5)))
 @settings(max_examples=10, timeout=0)
-def test_orthorhombic_init(cell_dimensions):
+def test_orthorhombic_init(cell_dimensions, deadline=None):
     """Ensure orthorhombic cell initialises correctly."""
     snap = initialise.init_from_crystal(PARAMETERS)
     snap_ortho = initialise.make_orthorhombic(snap)

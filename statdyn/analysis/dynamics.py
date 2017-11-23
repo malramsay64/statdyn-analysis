@@ -128,7 +128,7 @@ class dynamics(object):
             'msd': mean_squared_displacement(delta_displacement),
             'mfd': mean_fourth_displacement(delta_displacement),
             'alpha': alpha_non_gaussian(delta_displacement),
-            'com_struct': structural_relax(delta_displacement, threshold=0.4),
+            'com_struct': structural_relax(delta_displacement, dist=0.4),
         }
         if self.orientation is not None:
             dynamic_quantities.update({
@@ -173,7 +173,7 @@ class molecularRelaxation(object):
 class lastMolecularRelaxation(molecularRelaxation):
 
     def __init__(self, num_elements: int, threshold: float) -> None:
-        super()__init__(num_elements, threshold)
+        super().__init__(num_elements, threshold)
         self._state = np.zeros(self.num_elements, dtype=bool)
 
 
@@ -181,7 +181,7 @@ class lastMolecularRelaxation(molecularRelaxation):
         assert distance.shape == self._status.shape
         with np.errstate(invalid='ignore'):
             state = np.greater(distance, self.threshold)
-            self._status[state & self.state != state] = timediff
+            self._status[state & self._state != state] = timediff
 
 
 
