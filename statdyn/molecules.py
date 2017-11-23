@@ -38,9 +38,10 @@ class Molecule(object):
         self.potential_args = dict()  # type: Dict[Any, Any]
         self.particles = ['A']
         self.dimensions = 3
-        self.positions = np.array([
-            [0, 0, 0]
-        ])
+        self.positions = self.orientation2positions(
+            position=np.array([[0, 0, 0]]),
+            orientation=np.array([0])
+        )
 
     def __eq__(self, other) -> bool:
         return type(self) == type(other)
@@ -49,6 +50,7 @@ class Molecule(object):
     def num_particles(self) -> int:
         """Count of particles in the molecule."""
         return len(self.particles)
+
 
     def get_types(self) -> List[str]:
         """Get the types of particles present in a molecule."""
@@ -140,7 +142,7 @@ class Molecule(object):
             class:`numpy.ndarray`: The position of each particle.
 
         """
-        pass
+        return position
 
     def identify_bodies(self, indexes: np.ndarray) -> np.ndarray:
         """Convert an index of molecules into an index of particles."""
@@ -221,13 +223,14 @@ class Trimer(Molecule):
         self.particles = ['A', 'B', 'B']
         self.moment_inertia = self.compute_moment_intertia(moment_inertia_scale)
         self.dimensions = 2
-        self.positions = self.distance * np.array([
-            [0, 0, 0],
-            [np.sin(self.angle), np.cos(self.angle), 0],
-            [-np.sin(self.angle), np.cos(self.angle), 0]
-        ])
+        self.positions = self.orientation2positions(
+            position=np.array([[0, 0, 0]]),
+            orientation=np.array([0])
+        )
 
-
+    @property
+    def rad_angle(self) -> float:
+        return np.radians(self.angle)
 
     def __eq__(self, other) -> bool:
         if super().__eq__(other):
@@ -270,19 +273,15 @@ class Trimer(Molecule):
             class:`hoomd.md.constrain.rigid`: Rigid constraint object
 
         """
-        angle = (self.angle / 2) * np.pi / 180.
         if not params:
             params = dict()
-        params.setdefault('positions', [
-            (np.sin(angle), np.cos(angle), 0),
-            (-np.sin(angle), np.cos(angle), 0)
-        ])
+        params.setdefault('positions', [tuple(pos) for i, pos in enumerate(self.positions) if i > 0]
         rigid = super(Trimer, self).define_rigid(params)
         return rigid
 
     def orientation2positions(self,
                               position: np.ndarray,
-                              orientation: np.ndarray
+                              orientation: np.ndarray,
                               ) -> np.ndarray:
         r"""Convert from orientation representation to all positions.
 
@@ -349,6 +348,10 @@ class Dimer(Molecule):
         self.particles = ['A', 'B']
         self.moment_inertia = self.compute_moment_intertia()
         self.dimensions = 2
+        self.positions = self.orientation2positions(
+            position=np.array([[0, 0, 0]]),
+            orientation=np.array([0])
+        )
 
     def compute_moment_intertia(self, scale_factor: float=1.) -> Tuple[float, float, float]:
         """Compute the moment of inertia from the particle paramters."""
@@ -393,3 +396,35 @@ class Dimer(Molecule):
         params.setdefault('positions', [(self.distance, 0, 0)])
         rigid = super(Dimer, self).define_rigid(params)
         return rigid
+
+    def orientation2positions(self,
+                              position: np.ndarray,
+                              orientation: np.ndarray,
+                              ) -> np.ndarray:
+        r"""Convert from orientation representation to all positions.
+
+        One representation of the moleucles is as a single position representing
+        the center of the central molecule and a rotation angle. This function
+        converts that representation to one where each particle has a position.
+        The resulting array consists of a single array of length
+        :math:`n\times np` where :math:`n` is the length of the input array
+        and :math:`np` is the number of particles in the molecule. The positions
+        of each particle are grouped together.
+
+        Args:
+            position: (class:`numpy.ndarray`): The position of the central
+                particle
+            orientation: (class:`numpy.ndarray`): The orientation of the molecule
+                in radians
+
+        Returns:
+            class:`numpy.ndarray`: The position of each particle.
+
+        """
+        logger.debug('Position shape: %s, dype: %s',
+                     position.shape, position.dtype)
+        pos1 = position
+        pos2 = np.array([position[:, 0] - self.distance*np.cos(orientation),
+                         position[:, 1] + self.distance*np.sin(orientation),
+                         position[:, 2]]).T
+        return np.append(pos1, pos2, axis=0)
