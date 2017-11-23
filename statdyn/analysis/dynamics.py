@@ -161,12 +161,27 @@ class molecularRelaxation(object):
     def add(self, timediff: int, distance: np.ndarray) -> None:
         assert distance.shape == self._status.shape
         with np.errstate(invalid='ignore'):
-            moved = np.less(self.threshold, distance)
+            moved = np.greater(distance, self.threshold)
             moveable = np.greater(self._status, timediff)
             self._status[np.logical_and(moved, moveable)] = timediff
 
     def get_status(self):
         return self._status
+
+
+class lastMolecularRelaxation(molecularRelaxation):
+
+    def __init__(self, num_elements: int, threshold: float) -> None:
+        super()__init__(num_elements, threshold)
+        self._state = np.zeros(self.num_elements, dtype=bool)
+
+
+    def add(self, timediff: int, distance: np.ndarray) -> None:
+        assert distance.shape == self._status.shape
+        with np.errstate(invalid='ignore'):
+            state = np.greater(distance, self.threshold)
+            self._status[state & self.state != state] = timediff
+
 
 
 class structRelaxations(molecularRelaxation):
@@ -195,6 +210,7 @@ class relaxations(object):
             'tau_D1': molecularRelaxation(num_elements, threshold=1.),
             'tau_D03': molecularRelaxation(num_elements, threshold=0.3),
             'tau_D04': molecularRelaxation(num_elements, threshold=0.4),
+            'tau_DL04': lastMolecularRelaxation(num_elements, threshold=0.4),
             'tau_T2': molecularRelaxation(num_elements, threshold=np.pi/2),
             'tau_T4': molecularRelaxation(num_elements, threshold=np.pi/4),
         }
