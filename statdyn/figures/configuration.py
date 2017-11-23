@@ -62,7 +62,7 @@ def snapshot2data(snapshot,
     colour = colour_orientation(angle)
     if order_list is not None:
         if invert_colours:
-            order = np.logical_not(order)
+            order_list = np.logical_not(order_list)
         colour[order_list] = colour_orientation(angle, light_colours=True)[order_list]
     elif ordering is not None:
         order = ordering(snapshot.configuration.box, position, orientation)
