@@ -75,7 +75,7 @@ def snapshot2data(snapshot,
         colour[order] = colour_orientation(angle, light_colours=True)[order]
 
     if extra_particles:
-        position = molecule.orientation2positions(position, angle)
+        position = molecule.orientation2positions(position, orientation)
 
         logger.debug('Position shape: %s', position.shape)
         radii = np.append([], [radii*r for r in molecule.get_radii()])

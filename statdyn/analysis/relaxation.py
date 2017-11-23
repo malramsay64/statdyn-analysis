@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def _msd_function(x: np.ndarray, m: float, b: float) -> np.ndarray:
-    return m*x + b
+    return 0.25*m*x + b
 
 
 def _exponential_decay(x: np.ndarray, a: float, b: float, c: float=0) -> np.ndarray:

@@ -145,6 +145,9 @@ class Molecule(object):
         """Radii of the particles."""
         return np.array([self._radii[p] for p in self.particles])
 
+    def orientation2positions(self, position, orientation):
+        return position + rotate_vectors(orientation, self.positions)
+
 class Disc(Molecule):
     """Defines a 2D particle."""
 
