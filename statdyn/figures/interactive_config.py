@@ -103,6 +103,7 @@ def update_data(attr, old, new):
                              molecule=molecule,
                              extra_particles=extra_particles,
                              ordering=order_parameters[OP_KEYS[ordered.active]],
+                             invert_colours=order_emphasis.active,
                              )
         source.data = data
     except AttributeError:
@@ -155,6 +156,9 @@ ordered = RadioButtonGroup(
         labels=OP_KEYS, active=0)
 ordered.on_click(update_data_now)
 
+order_emphasis = Toggle(name='emphaisis', label="Toggle Emphasis", active=True)
+order_emphasis.on_click(update_data_now)
+
 radius_scale = Slider(title='Particle Radius', value=1, start=0.1, end=2, step=0.05)
 radius_scale.on_change('value', update_data)
 
@@ -186,7 +190,7 @@ update_data(None, None, None)
 plot_circles(p, source)
 
 controls = widgetbox([directory, fname, index, ordered], width=300)
-layout = row(column(controls, media), p)
+layout = row(column(controls, order_emphasis, media), p)
 
 doc.add_root(layout)
 doc.title = "Configurations"

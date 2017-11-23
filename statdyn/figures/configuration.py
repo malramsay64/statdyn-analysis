@@ -45,6 +45,7 @@ def snapshot2data(snapshot,
                   extra_particles=True,
                   ordering=None,
                   order_list=None,
+                  invert_colours=False,
                   ):
     radii = np.ones(snapshot.particles.N)
     orientation = snapshot.particles.orientation
@@ -60,6 +61,8 @@ def snapshot2data(snapshot,
 
     colour = colour_orientation(angle)
     if order_list is not None:
+        if invert_colours:
+            order = np.logical_not(order)
         colour[order_list] = colour_orientation(angle, light_colours=True)[order_list]
     elif ordering is not None:
         order = ordering(snapshot.configuration.box, position, orientation)
@@ -67,6 +70,8 @@ def snapshot2data(snapshot,
             order = order.astype(bool)
         else:
             order = order != 'liq'
+        if invert_colours:
+            order = np.logical_not(order)
         colour[order] = colour_orientation(angle, light_colours=True)[order]
 
     if extra_particles:
