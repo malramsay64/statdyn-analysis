@@ -128,6 +128,7 @@ class dynamics(object):
             'msd': mean_squared_displacement(delta_displacement),
             'mfd': mean_fourth_displacement(delta_displacement),
             'alpha': alpha_non_gaussian(delta_displacement),
+            'com_struct': structural_relax(delta_displacement, threshold=0.4),
         }
         if self.orientation is not None:
             dynamic_quantities.update({
