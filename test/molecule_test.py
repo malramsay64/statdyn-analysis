@@ -61,16 +61,24 @@ def test_define_potential(mol):
 def test_define_dimensions(mol):
     mol.define_dimensions()
 
+@pytest.mark.parametrize('mol', MOLECULE_LIST)
+def test_define_dimensions(mol):
+    assert mol.positions.flags.writeable == False
+
+def test_position_immutability(mol):
+
 
 @pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_orientation2positions(mol):
     position = np.array([[0, 0, 0]], dtype=np.float32)
     orientation = np.array([[1, 0, 0, 0]], dtype=np.float32)
-    x_inv_pos = mol.position
+    x_inv_pos = np.copy(mol.positions)
     x_inv_pos[:, 0] = -x_inv_pos[:, 0]
+    rotated_pos = mol.orientation2positions(position, orientation)
     assert np.allclose(
-        mol.orientation2positions(position, orientation),
-        mol.positions
+        rotated_pos,
+        x_inv_pos,
+        atol=1e5,
     )
 
 
@@ -78,11 +86,13 @@ def test_orientation2positions(mol):
 def test_orientation2positions_invert_xy(mol):
     position = np.array([[0, 0, 0]], dtype=np.float32)
     orientation = np.array([[0, 0, 0, 1]], dtype=np.float32)
-    xy_inv_pos = mol.position
-    xy_inv_pos[:, :2] = -x_inv_pos[:, :2]
+    xy_inv_pos = np.copy(mol.positions)
+    xy_inv_pos[:, :2] = -xy_inv_pos[:, :2]
+    rotated_pos = mol.orientation2positions(position, orientation)
     assert np.allclose(
-        mol.orientation2positions(position, orientation),
-        xy_inv_pos
+        rotated_pos,
+        xy_inv_pos,
+        atol=1e5,
     )
 
 

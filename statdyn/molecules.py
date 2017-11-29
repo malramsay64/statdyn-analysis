@@ -43,6 +43,7 @@ class Molecule(object):
         self._radii = {'A': 1.}
         self.dimensions = 3
         self.positions = np.array([[0, 0, 0]])
+        self.positions.flags.writeable = False
 
     def __eq__(self, other) -> bool:
         return type(self) == type(other)
@@ -51,7 +52,6 @@ class Molecule(object):
     def num_particles(self) -> int:
         """Count of particles in the molecule."""
         return len(self.particles)
-
 
     def get_types(self) -> List[str]:
         """Get the types of particles present in a molecule."""
@@ -210,6 +210,7 @@ class Trimer(Molecule):
             [-self.distance * np.sin(self.rad_angle/2), self.distance * np.cos(self.rad_angle/2), 0],
             [self.distance * np.sin(self.rad_angle/2), self.distance * np.cos(self.rad_angle/2), 0],
         ])
+        self.positions.flags.writeable = False
         self.moment_inertia = self.compute_moment_intertia(moment_inertia_scale)
 
     @property
@@ -256,4 +257,5 @@ class Dimer(Molecule):
             [0, 0, 0],
             [0, self.distance, 0],
         ])
+        self.positions.flags.writeable = False
         self.moment_inertia = self.compute_moment_intertia()
