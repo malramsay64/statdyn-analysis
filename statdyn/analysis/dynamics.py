@@ -171,18 +171,32 @@ class molecularRelaxation(object):
 
 
 class lastMolecularRelaxation(molecularRelaxation):
+    _is_irreversible = 3
 
-    def __init__(self, num_elements: int, threshold: float) -> None:
+    def __init__(self,
+                 num_elements: int,
+                 threshold: float,
+                 irreversibility: float=1.
+                 ) -> None:
         super().__init__(num_elements, threshold)
-        self._state = np.zeros(self.num_elements, dtype=bool)
-
+        self._state = np.zeros(self.num_elements, dtype=np.uint8)
+        self._irreversibility = irreversibility
 
     def add(self, timediff: int, distance: np.ndarray) -> None:
         assert distance.shape == self._status.shape
         with np.errstate(invalid='ignore'):
             state = np.greater(distance, self.threshold)
-            self._status[state & self._state != state] = timediff
+            state[np.logical_or(self._state == self._is_irreversible,
+                                 np.greater(distance, self._irreversibility)
+                                 )
+                  ] = self._is_irreversible
+            self._status[np.logical_and(state == 1, self._state != state)] = timediff
+            self._state = state
 
+    def get_status(self):
+        state = self._state
+        state[self._state != self._is_irreversible] = np.nan
+        return state
 
 
 class structRelaxations(molecularRelaxation):
