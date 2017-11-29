@@ -65,8 +65,6 @@ def test_define_dimensions(mol):
 def test_define_dimensions(mol):
     assert mol.positions.flags.writeable == False
 
-def test_position_immutability(mol):
-
 
 @pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_orientation2positions(mol):
