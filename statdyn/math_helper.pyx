@@ -119,9 +119,9 @@ cpdef void quaternion_rotation(
                            initial[i, 3] * final[i, 3]
                            )
             if fabs(intermediate - 1.) < QUAT_EPS:
-                result[i] == 0
+                result[i] = 0
             else:
-                result[i] = 2.*acos(intermediate)
+                result[i] = <float>2.*acos(intermediate)
 
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(
