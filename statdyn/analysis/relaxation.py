@@ -61,6 +61,29 @@ def diffusion_constant(time: np.ndarray,
     return popt[0], perr[0]
 
 
+def threshold_relaxation(time: np.ndarray,
+                         value: np.ndarray,
+                         threshold: float=1/np.exp(1),
+                         greater: bool=True,
+                         ) -> Tuple[float, float]:
+    """Compute the relaxation through the reaching of a specific value.
+
+    Args:
+        time (class:`np.ndarray`): The timesteps corresponding to each msd value.
+        value (class:`np.ndarray`): Values of the relaxation paramter
+
+    Returns:
+        relaxation time (float): The relaxation time for the given quantity.
+        error (float): The error in the fit of the relaxation
+
+    """
+    if greater:
+        index = np.argmax(value < threshold)
+    else:
+        index = np.argmin(value > threshold)
+    return time[index], time[index]-time[index-1]
+
+
 def exponential_relaxation(time: np.ndarray,
                            value: np.ndarray,
                            sigma: np.ndarray=None,
