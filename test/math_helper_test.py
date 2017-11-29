@@ -164,4 +164,4 @@ def test_quat_rotation():
     final_q = quaternion.as_quat_array(final)
     result_q = np.array([quaternion.rotation_intrinsic_distance(i, f)
                            for i, f in zip(initial_q, final_q)], dtype=np.float32)
-    assert np.allclose(result, result_q, atol=1e-5)
+    assert np.allclose(result, result_q, atol=2e-5)

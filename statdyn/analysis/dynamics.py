@@ -19,7 +19,7 @@ from ..math_helper import (displacement_periodic, quaternion_rotation,
                            rotate_vectors)
 from ..molecules import Molecule, Trimer
 
-np.seterr(divide='raise', invalid='raise')
+np.seterr(divide='raise', invalid='raise', over='raise')
 
 logger = logging.getLogger(__name__)
 
@@ -115,10 +115,6 @@ class dynamics(object):
                    orientation: np.ndarray=None,
                    ) -> Dict[str, Any]:
         """Compute all dynamics quantities of interest."""
-        if self.orientation is not None:
-            delta_rotation = rotationalDisplacement(self.orientation, orientation)
-        else:
-            delta_rotation = None
 
         delta_displacement = translationalDisplacement(self.box, self.position, position)
 
@@ -131,6 +127,8 @@ class dynamics(object):
             'com_struct': structural_relax(delta_displacement, dist=0.4),
         }
         if self.orientation is not None:
+            delta_rotation = rotationalDisplacement(self.orientation, orientation)
+            logger.debug('Max rotation: %f', delta_rotation.max())
             dynamic_quantities.update({
                 'mean_rotation': mean_rotation(delta_rotation),
                 'rot1': rotational_relax1(delta_rotation),
@@ -138,10 +136,6 @@ class dynamics(object):
                 'gamma': gamma(delta_displacement, delta_rotation),
                 'overlap': mobile_overlap(delta_displacement, delta_rotation),
                 'struct': self.computeStructRelax(position, orientation, threshold=0.3),
-            })
-        if self.spearman:
-            dynamic_quantities.update({
-                'spearman_rank': spearman_rank(delta_displacement, delta_rotation),
             })
         return dynamic_quantities
 
@@ -190,12 +184,14 @@ class lastMolecularRelaxation(molecularRelaxation):
                                  np.greater(distance, self._irreversibility)
                                  )
                   ] = self._is_irreversible
-            self._status[np.logical_and(state == 1, self._state != state)] = timediff
+            self._status[
+                np.logical_and(state == 1, self._state != state)
+            ] = timediff
             self._state = state
 
     def get_status(self):
-        state = self._state
-        state[self._state != self._is_irreversible] = np.nan
+        state = self._status
+        state[self._state != self._is_irreversible] = self._max_value
         return state
 
 

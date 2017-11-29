@@ -62,7 +62,7 @@ def test_define_dimensions(mol):
     mol.define_dimensions()
 
 @pytest.mark.parametrize('mol', MOLECULE_LIST)
-def test_define_dimensions(mol):
+def test_read_only_position(mol):
     assert mol.positions.flags.writeable == False
 
 
