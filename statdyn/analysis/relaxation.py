@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 
 def _msd_function(x: np.ndarray, m: float, b: float) -> np.ndarray:
-    return 0.25*m*x + b
+    return m*x + b
 
 
 def _exponential_decay(x: np.ndarray, a: float, b: float, c: float=0) -> np.ndarray:
@@ -78,9 +78,9 @@ def threshold_relaxation(time: np.ndarray,
 
     """
     if greater:
-        index = np.argmax(value < threshold)
+        index = np.argmax(value > threshold)
     else:
-        index = np.argmin(value > threshold)
+        index = np.argmin(value < threshold)
     return time[index], time[index]-time[index-1]
 
 

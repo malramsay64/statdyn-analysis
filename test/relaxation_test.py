@@ -18,7 +18,7 @@ def test_diffusion_constant():
     known_diffusion = 1e-3
     offset = 1e-4
     time = np.arange(10000)
-    msd = time*known_diffusion/4 + offset
+    msd = time*known_diffusion + offset
     diff, diff_err = relaxation.diffusion_constant(time, msd)
     assert np.isclose(diff, known_diffusion)
     assert np.isclose(diff_err, 0)
@@ -31,3 +31,12 @@ def test_exponential_relax():
     value = np.exp(-time/known_decay)
     relax, *_ = relaxation.exponential_relaxation(time, value)
     assert np.isclose(relax, known_decay)
+
+def test_threshold_relaxation():
+    num_values = 1000
+    time = np.arange(num_values)
+    values = np.arange(num_values)/num_values
+    relax, _ = relaxation.threshold_relaxation(time, values, threshold=0.5, greater=True)
+    assert relax == num_values/2 + 1
+    relax, _ = relaxation.threshold_relaxation(time, values, threshold=0.5, greater=False)
+    assert relax == num_values/2
