@@ -179,20 +179,19 @@ class lastMolecularRelaxation(molecularRelaxation):
     def add(self, timediff: int, distance: np.ndarray) -> None:
         assert distance.shape == self._status.shape
         with np.errstate(invalid='ignore'):
-            state = np.greater(distance, self.threshold)
+            state = np.greater(distance, self.threshold).astype(np.uint8)
             state[np.logical_or(self._state == self._is_irreversible,
-                                 np.greater(distance, self._irreversibility)
-                                 )
-                  ] = self._is_irreversible
+                                np.greater(distance, self._irreversibility)
+                                )] = self._is_irreversible
             self._status[
-                np.logical_and(state == 1, self._state != state)
+                np.logical_and(state == 1, self._state == 0)
             ] = timediff
             self._state = state
 
     def get_status(self):
-        state = self._status
-        state[self._state != self._is_irreversible] = self._max_value
-        return state
+        status = np.copy(self._status)
+        status[self._state != self._is_irreversible] = self._max_value
+        return status
 
 
 class structRelaxations(molecularRelaxation):

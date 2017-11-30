@@ -150,8 +150,86 @@ def test_dynamics():
 
 def test_molecularRelaxation():
     num_elements = 10
-    tau_1 = dynamics.molecularRelaxation(num_elements, 2.)
-    tau_1.add(120, np.zeros(num_elements))
-    assert np.all(tau_1.get_status() == np.full(num_elements, tau_1._max_value))
-    tau_1.add(100, np.ones(num_elements) * 3)
-    assert np.all(tau_1.get_status() == np.full(num_elements, 100))
+    threshold = 0.4
+    tau = dynamics.molecularRelaxation(num_elements, threshold)
+    invalid_values = np.full(num_elements, tau._max_value, dtype=np.uint32)
+
+    def move(dist):
+        return np.ones(num_elements) * dist
+
+    # No motion
+    tau.add(1, move(0))
+    assert np.all(tau.get_status() == invalid_values)
+
+    # Small motion inside threshold
+    tau.add(2, move(threshold - 0.1))
+    assert np.all(tau.get_status() == invalid_values)
+
+    # Move outside threshold
+    tau.add(3, move(threshold + 0.1))
+    assert np.all(tau.get_status() == np.full(num_elements, 3))
+
+    # Move inside threshold
+    tau.add(4, move(threshold - 0.1))
+    assert np.all(tau.get_status() == np.full(num_elements, 3))
+
+    # Move outside threshold again
+    tau.add(4, move(threshold + 0.1))
+    assert np.all(tau.get_status() == np.full(num_elements, 3))
+
+
+def test_lastMolecularRelaxation():
+    num_elements = 10
+    threshold = 0.4
+    tau = dynamics.lastMolecularRelaxation(num_elements, threshold, 1.)
+    invalid_values = np.full(num_elements, tau._max_value, dtype=np.uint32)
+
+    def move(dist):
+        return np.ones(num_elements) * dist
+
+    # No motion
+    tau.add(1, move(0))
+    assert np.all(tau.get_status() == invalid_values)
+    assert np.all(tau._status == invalid_values)
+    assert np.all(tau._state == np.zeros(num_elements, dtype=np.uint8))
+
+    # Move past threshold
+    tau.add(2, move(threshold + 0.1))
+    assert np.all(tau.get_status() == invalid_values)
+    assert np.all(tau._status == np.full(num_elements, 2))
+    assert np.all(tau._state == np.ones(num_elements, dtype=np.uint8))
+
+    # Move inside threshold
+    tau.add(3, move(threshold - 0.1))
+    assert np.all(tau.get_status() == invalid_values)
+    assert np.all(tau._status == np.full(num_elements, 2))
+    assert np.all(tau._state == np.zeros(num_elements, dtype=np.uint8))
+
+    # Move outside threshold again
+    tau.add(4, move(threshold + 0.1))
+    assert np.all(tau.get_status() == invalid_values)
+    assert np.all(tau._status == np.full(num_elements, 4))
+    assert np.all(tau._state == np.ones(num_elements, dtype=np.uint8))
+
+    # Move outside threshold again
+    tau.add(5, move(threshold + 0.2))
+    assert np.all(tau.get_status() == invalid_values)
+    assert np.all(tau._status == np.full(num_elements, 4))
+
+    # Move past irreversibility
+    tau.add(6, move(1.1))
+    assert np.all(tau.get_status() == np.full(num_elements, 4))
+    assert np.all(tau._status == np.full(num_elements, 4))
+    assert np.all(tau._state == np.ones(num_elements, dtype=np.uint8) * tau._is_irreversible)
+
+    # Move inside threshold
+    tau.add(7, move(threshold - 0.1))
+    assert np.all(tau.get_status() == np.full(num_elements, 4))
+    assert np.all(tau._status == np.full(num_elements, 4))
+    assert np.all(tau._state == np.ones(num_elements, dtype=np.uint8) * tau._is_irreversible)
+
+    # Move outside threshold, shouldn't update
+    tau.add(8, move(threshold + 0.1))
+    assert np.all(tau.get_status() == np.full(num_elements, 4))
+    assert np.all(tau._status == np.full(num_elements, 4))
+    assert np.all(tau._state == np.ones(num_elements, dtype=np.uint8) * tau._is_irreversible)
