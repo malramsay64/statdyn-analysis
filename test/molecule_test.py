@@ -118,3 +118,8 @@ def test_moment_inertia_scaling(scaling_factor):
         assert np.allclose(np.array(reference.moment_inertia)*scaling_factor,
                            np.array(scaled.moment_inertia))
 
+
+@pytest.mark.parametrize('mol', MOLECULE_LIST)
+def test_compute_size(mol):
+    size = mol.compute_size()
+    assert size >= 2.

@@ -149,6 +149,18 @@ class Molecule(object):
         return (np.repeat(position, self.num_particles, axis=0)
                 + rotate_vectors(orientation, self.positions.astype(np.float32)))
 
+    def compute_size(self):
+        """Compute the maximum possible size of the moleucule.
+
+        This is a rough estimate of the size of the molecule for the creation
+        of a lattice that contains no overlaps.
+
+        """
+        length = np.max(np.max(self.positions, axis=1) -
+                        np.min(self.positions, axis=1))
+        return length + 2*self.get_radii().max()
+
+
 class Disc(Molecule):
     """Defines a 2D particle."""
 
