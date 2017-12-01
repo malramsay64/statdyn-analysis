@@ -79,9 +79,7 @@ def snapshot2data(snapshot,
 
         logger.debug('Position shape: %s', position.shape)
         radii = np.append([], [radii*r for r in molecule.get_radii()])
-        colour = np.append([], [colour]*molecule.num_particles)
-    else:
-        position = snapshot.particles.position
+        colour = np.tile(colour, molecule.num_particles)
 
     data = {
         'x': position[:, 0],
