@@ -12,7 +12,7 @@ dependencies:
     - scipy=0.19.0
     - scikit-learn=0.19.0
     - libgcc
-    - pandas
+    - pandas=0.20.3
     - pytables
     - bokeh=0.12.9
     - matplotlib
