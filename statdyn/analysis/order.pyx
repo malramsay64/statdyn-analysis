@@ -127,7 +127,8 @@ cpdef np.ndarray[float, ndim=2] relative_orientations(
         float[:] box,
         float[:, :] position,
         float[:, :] orientation,
-        float max_radius=3.5):
+        float max_radius=3.5,
+        unsigned int max_neighbours=8):
     """Compute the relative orientations of molecules
 
     This parameter computed from the relative orientation of the neighbouring
@@ -143,7 +144,6 @@ cpdef np.ndarray[float, ndim=2] relative_orientations(
 
     """
     cdef float no_value = -0.
-    cdef unsigned int max_neighbours = 8
     cdef unsigned int num_mols = position.shape[0]
     cdef Py_ssize_t mol_index, n, num_neighbours, curr_neighbour
 
