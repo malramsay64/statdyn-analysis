@@ -74,7 +74,7 @@ def test_orientational_order():
             frame.particles.orientation,
             max_radius
         )
-    assert np.all(np.logical_not(orient_order))
+    assert np.all(orient_order == 0)
 
 @pytest.mark.parametrize('model', [order.nn_model, order.dt_model, order.knn_model])
 def test_ml_models(model):
