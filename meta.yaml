@@ -8,11 +8,12 @@ about:
     license_file: LICENSE
 
 source:
-    git_url: https://github.com/malramsay64/MD-Molecules-Hoomd.git
+    path: .
+    #git_url: https://github.com/malramsay64/MD-Molecules-Hoomd.git
 
 requirements:
     build:
-        - python 3.6.*
+        - python 3.6.1
         - setuptools 36.*
         - setuptools_scm 1.15*
         - cython 0.26.*
@@ -20,14 +21,13 @@ requirements:
         - numpy 1.13.1
 
     run:
-        - python 3.6.*
-        - hoomd 2.2*
+        - python 3.6.1
         - numpy 1.13.1
         - scipy 0.19.0
         - scikit-learn 0.19.0
         - pandas 0.20.3
         - pytables 3.4*
-        - bokeh 0.12*
+        - bokeh 0.12.9
         - setuptools *
         - freud 0.6.*
         - gsd 1.2.0*
@@ -38,7 +38,7 @@ requirements:
 build:
     entry_points:
         - sdrun = statdyn.sdrun.main:sdrun
-    preserve_egg_dir: False
+    preserve_egg_dir: True
     script: python setup.py install
     number: {{ GIT_DESCRIBE_NUMBER }}
 
@@ -51,4 +51,4 @@ test:
         - test/*
     commands:
         - python -c "import statdyn"
-        - pytest -v
+        - pytest -v -c test/test_setup.cfg

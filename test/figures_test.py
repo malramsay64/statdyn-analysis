@@ -14,9 +14,9 @@ import gsd.hoomd
 from hypothesis import given
 from hypothesis.strategies import floats
 
-from statdyn.analysis.order import compute_voronoi_neighs
-from statdyn.figures import colour
-from statdyn.figures.configuration import plot, snapshot2data
+from sdanalysis.analysis.order import compute_voronoi_neighs
+from sdanalysis.figures import colour
+from sdanalysis.figures.configuration import plot, snapshot2data
 
 
 @given(floats(min_value=-math.pi, max_value=math.pi))

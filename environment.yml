@@ -1,4 +1,4 @@
-name: statdyn-dev
+name: sdanalysis-dev
 channels:
     - defaults
     - glotzer
@@ -16,7 +16,6 @@ dependencies:
     - pytables
     - bokeh=0.12.9
     - matplotlib
-    - hoomd
     - gsd
     - freud
     - voro
@@ -33,4 +32,3 @@ dependencies:
         - pytest-mypy
         - pytest-pylint
         - pytest-cov
-

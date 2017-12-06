@@ -15,9 +15,9 @@ from pathlib import Path
 import pytest
 from hypothesis import example, given, settings
 from hypothesis.strategies import text
-from statdyn.crystals import TrimerP2
-from statdyn.molecules import Dimer, Disc, Molecule, Sphere, Trimer
-from statdyn.simulation.params import SimulationParams, paramsContext
+
+from sdanalysis.molecules import Dimer, Disc, Molecule, Sphere, Trimer
+from sdanalysis.params import SimulationParams, paramsContext
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -54,12 +54,6 @@ def test_molecule(mol):
 
 def test_default_molecule():
     assert SIM_PARAMS.molecule == Trimer()
-
-
-def test_mol_crys():
-    crys = TrimerP2()
-    with paramsContext(SIM_PARAMS, crystal=crys):
-        assert SIM_PARAMS.molecule == crys.molecule
 
 
 @pytest.mark.parametrize('outfile', [

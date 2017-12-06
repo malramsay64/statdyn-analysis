@@ -11,8 +11,8 @@
 import numpy as np
 import pytest
 
-from statdyn.analysis import read
-from statdyn.StepSize import GenerateStepSeries
+from sdanalysis.analysis import read
+from sdanalysis.StepSize import GenerateStepSeries
 
 
 @pytest.mark.parametrize('step_limit', [0, 10, 20, 100])

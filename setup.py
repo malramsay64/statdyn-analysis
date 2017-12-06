@@ -18,29 +18,30 @@ from setuptools.extension import Extension
 
 extensions = [
     Extension(
-        'statdyn.analysis.order',
-        ['statdyn/analysis/order.pyx'],
-        language='c++',
-        libraries=['m', 'voro++'],
-        include_dirs=[np.get_include(), str(Path(get_path('data')) / 'include')],
-    ),
-    Extension(
-        'statdyn.math_helper',
-         ['statdyn/math_helper.pyx'],
+        'sdanalysis.math_helper',
+         ['src/sdanalysis/math_helper.pyx'],
         libraries=['m'],
         include_dirs=[np.get_include()],
+    ),
+    Extension(
+        'sdanalysis.analysis.order',
+        ['src/sdanalysis/analysis/order.pyx'],
+        language='c++',
+        libraries=['m', 'voro++'],
+        include_dirs=[np.get_include(), str(Path(get_path('data')) / 'include'), ],
     ),
 ]
 
 setup(
-    name='statdyn',
+    name='sdanalysis',
     use_scm_version={'version_scheme': 'post-release'},
     setup_requires=['setuptools_scm', ],
-    packages=find_packages(),
-    ext_modules=cythonize(extensions),
+    packages=find_packages('src'),
+    ext_modules=cythonize(extensions, include_path=['src/']),
+    package_dir={'': 'src'},
     include_package_data=True,
     entry_points="""
         [console_scripts]
-        sdrun=statdyn.sdrun.main:sdrun
+        sdrun=sdanalysis.main:sdanalysis
     """,
 )

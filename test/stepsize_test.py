@@ -12,7 +12,8 @@ import numpy as np
 import pytest
 from hypothesis import given, settings, unlimited
 from hypothesis.strategies import integers
-from statdyn.StepSize import GenerateStepSeries, generate_steps
+
+from sdanalysis.StepSize import GenerateStepSeries, generate_steps
 
 
 @pytest.fixture(params=[

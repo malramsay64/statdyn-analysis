@@ -13,9 +13,7 @@ from copy import deepcopy
 from pathlib import Path
 from typing import Any, Dict, Tuple, Union
 
-import hoomd
-
-from ..molecules import Molecule, Trimer
+from .molecules import Molecule, Trimer
 
 logger = logging.getLogger(__name__)
 
@@ -63,22 +61,6 @@ class SimulationParams(object):
         return self.parameters.__delitem__(attr)
 
     @property
-    def temperature(self) -> Union[float, hoomd.variant.linear_interp]:
-        """Temperature of the system."""
-        try:
-            return hoomd.variant.linear_interp([
-                (0, self.init_temp),
-                (int(self.num_steps*0.75), self.parameters.get('temperature', self.init_temp)),
-                (self.num_steps, self.parameters.get('temperature', self.init_temp)),
-            ], zero='now')
-        except AttributeError:
-            return self.parameters.get('temperature')
-
-    @temperature.setter
-    def temperature(self, value: float) -> None:
-        self.parameters['temperature'] = value
-
-    @property
     def molecule(self) -> Molecule:
         """Return the appropriate molecule.
 
@@ -103,14 +85,6 @@ class SimulationParams(object):
         except AttributeError:
             raise AttributeError
 
-    @property
-    def group(self) -> hoomd.group.group:
-        """Return the appropriate group."""
-        if self.parameters.get('group'):
-            return self.parameters.get('group')
-        if self.molecule.num_particles == 1:
-            return hoomd.group.all()
-        return hoomd.group.rigid_center()
 
     @property
     def outfile_path(self) -> Path:

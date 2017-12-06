@@ -14,7 +14,7 @@ from pathlib import Path
 import gsd.hoomd
 import numpy as np
 
-from ..simulation.params import SimulationParams
+from ..params import SimulationParams
 from .order import orientational_order
 from .read import process_gsd
 

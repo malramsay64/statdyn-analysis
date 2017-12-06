@@ -12,18 +12,18 @@ import subprocess
 
 
 def test_interactive_null():
-    import statdyn.figures.interactive_config  # pylint: disable=unused-variable
+    import sdanalysis.figures.interactive_config  # pylint: disable=unused-variable
 
 
 def test_thermodynamics_null():
-    import statdyn.figures.thermodynamics  # pylint: disable=unused-variable
+    import sdanalysis.figures.thermodynamics  # pylint: disable=unused-variable
 
 
 def test_interactive():
-    subprocess.check_call(['python', '-c', 'import statdyn.figures.interactive_config'],
+    subprocess.check_call(['python', '-c', 'import sdanalysis.figures.interactive_config'],
                           cwd='test')
 
 
 def test_thermodynamics():
-    subprocess.check_call(['python', '-c', 'import statdyn.figures.thermodynamics'],
+    subprocess.check_call(['python', '-c', 'import sdanalysis.figures.thermodynamics'],
                           cwd='test/data')

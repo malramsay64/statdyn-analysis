@@ -9,11 +9,8 @@
 """Module to define a molecule to use for simulation."""
 
 import logging
-from itertools import combinations_with_replacement
-from typing import Any, Dict, List, Tuple
+from typing import List, Tuple
 
-import hoomd
-import hoomd.md
 import numpy as np
 
 from .math_helper import rotate_vectors
@@ -37,7 +34,6 @@ class Molecule(object):
     def __init__(self) -> None:
         """Initialise defualt properties."""
         self.moment_inertia = (0., 0., 0.)  # type: Tuple[float, float, float]
-        self.potential = hoomd.md.pair.lj
         self.potential_args = dict()  # type: Dict[Any, Any]
         self.particles = ['A']
         self._radii = {'A': 1.}
@@ -57,69 +53,7 @@ class Molecule(object):
         """Get the types of particles present in a molecule."""
         return sorted(list(self._radii.keys()))
 
-    def define_dimensions(self) -> None:
-        """Set the number of dimensions for the simulation.
 
-        This takes into accout the number of dimensions of the molecule,
-        a 2D molecule can only be a 2D molecule, since there will be no
-        rotations in that 3rd dimension anyway.
-        """
-        if self.dimensions == 2:
-            hoomd.md.update.enforce2d()
-
-    def define_potential(self) -> hoomd.md.pair.pair:
-        r"""Define the potential in the simulation context.
-
-        A helper function that defines the potential to be used by the  hoomd
-        simulation context. The default values for the potential are a
-        Lennard-Jones potential with a cutoff of :math:`2.5\sigma` and
-        interaction parameters of :math:`\epsilon = 1.0` and
-        :math:`\sigma = 2.0`.
-
-        Returns:
-            class:`hoomd.md.pair`: The interaction potential object class.
-
-        """
-        self.potential_args.setdefault('r_cut', 2.5)
-        potential = self.potential(
-            **self.potential_args,
-            nlist=hoomd.md.nlist.cell()
-        )
-        for i, j in combinations_with_replacement(self._radii.keys(), 2):
-            potential.pair_coeff.set(i, j, epsilon=1, sigma=self._radii[i] + self._radii[j])
-        return potential
-
-    def define_rigid(self, params: Dict[Any, Any]=None
-                     ) -> hoomd.md.constrain.rigid:
-        """Define the rigid constraints of the molecule.
-
-        This is a helper function to define the rigid body constraints of the
-        particular molecules within the hoomd context.
-
-        Args:
-            create (bool): Flag that toggles the option of creating the
-                additional particles when creating the rigid bodies. Defaults
-                to False.
-            params (dict): Dictionary defining the rigid body structure. The
-                default values for the `type_name` of A and the `types` of the
-                `self.particles` variable should work for the vast majority of
-                systems, so the only value required should be the topology.
-
-        Returns:
-            class:`hoomd.md.constrain.rigid`: Rigid constraint object
-
-        """
-        if len(self.particles) <= 1:
-            logger.info("Not enough particles for a rigid body")
-            return
-        if not params:
-            params = dict()
-        params['type_name'] = self.particles[0]
-        params['types'] = self.particles[1:]
-        params.setdefault('positions', [tuple(pos) for i, pos in enumerate(self.positions) if i > 0])
-        rigid = hoomd.md.constrain.rigid()
-        rigid.set_param(**params)
-        return rigid
 
     def identify_bodies(self, indexes: np.ndarray) -> np.ndarray:
         """Convert an index of molecules into an index of particles."""

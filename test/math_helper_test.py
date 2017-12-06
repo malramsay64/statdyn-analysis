@@ -15,8 +15,9 @@ from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.extra.numpy import arrays, floating_dtypes
 from hypothesis.strategies import floats
 
-from statdyn.math_helper import (get_quat_eps, quaternion2z, quaternion_angle,
-                                 quaternion_rotation, z2quaternion)
+from sdanalysis.math_helper import (get_quat_eps, quaternion2z,
+                                    quaternion_angle, quaternion_rotation,
+                                    z2quaternion)
 
 np.seterr(invalid='ignore', under='ignore', over='ignore')
 EPS = np.finfo(np.float32).eps * 2

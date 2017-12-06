@@ -13,7 +13,7 @@ import pytest
 from hypothesis import given
 from hypothesis.strategies import floats
 
-from statdyn import molecules
+from sdanalysis import molecules
 
 MOLECULE_LIST = [
     molecules.Molecule(),
@@ -44,23 +44,6 @@ def test_get_radii(mol):
     radii = mol.get_radii()
     assert radii[0] == 1.
 
-
-@pytest.mark.xfail
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
-def test_define_rigid(mol):
-    mol.define_rigid()
-
-
-@pytest.mark.xfail
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
-def test_define_potential(mol):
-    mol.define_potential()
-
-
-@pytest.mark.xfail
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
-def test_define_dimensions(mol):
-    mol.define_dimensions()
 
 @pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_read_only_position(mol):
