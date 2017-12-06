@@ -12,7 +12,7 @@ dist
 build
 
 # Ignore cython generated files
-statdyn/**/*.c
-statdyn/**/*.cpp
-statdyn/**/*.html
-statdyn/**/*.so
+src/sdanalysis/**/*.c
+src/sdanalysis/**/*.cpp
+src/sdanalysis/**/*.html
+src/sdanalysis/**/*.so
