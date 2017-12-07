@@ -42,6 +42,6 @@ setup(
     include_package_data=True,
     entry_points="""
         [console_scripts]
-        sdrun=sdanalysis.main:sdanalysis
+        sdanalysis=sdanalysis.main:sdanalysis
     """,
 )

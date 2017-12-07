@@ -74,6 +74,7 @@ def test_generate_steps(steps):  # pylint: disable=redefined-outer-name
 
 
 @given(integers(min_value=0), integers(min_value=1, max_value=200))
+@settings(deadline=None)
 def test_generate_step_series(total_steps, num_linear):
     """Test generate_steps and generate_step_series.
 

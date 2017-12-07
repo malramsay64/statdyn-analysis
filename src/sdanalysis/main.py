@@ -16,7 +16,7 @@ from typing import Callable, List, Tuple
 
 from pkg_resources import DistributionNotFound, get_distribution
 
-from .analysis.run_analysis import comp_dynamics
+from .analysis.read import process_gsd
 from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
 
@@ -46,6 +46,19 @@ def sdanalysis() -> None:
 
 
 
+def comp_dynamics(sim_params: SimulationParams) -> None:
+    """Compute dynamic properties."""
+    outfile = sim_params.outfile_path / Path(sim_params.infile).with_suffix('.hdf5').name
+    outfile.parent.mkdir(exist_ok=True)
+    step_limit = sim_params.parameters.get('num_steps')
+    process_gsd(sim_params.infile,
+                gen_steps=sim_params.gen_steps,
+                max_gen=sim_params.max_gen,
+                step_limit=step_limit,
+                outfile=str(outfile),
+                )
+
+
 def figure(args) -> None:
     """Start bokeh server with the file passed."""
     fig_file = Path(__file__).parents[1] / 'figures/interactive_config.py'
@@ -58,6 +71,13 @@ def figure(args) -> None:
 def create_parser() -> argparse.ArgumentParser:
     """Create the argument parser."""
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        '-o',
+        '--output',
+        dest='outfile_path',
+        type=str,
+        help='Directory to output files to',
+    )
 
     parse_molecule = parser.add_argument_group('molecule')
     parse_molecule.add_argument(
@@ -99,9 +119,14 @@ def create_parser() -> argparse.ArgumentParser:
         version='sdrun {0}'.format(__version__)
     )
 
+    simtype = argparse.ArgumentParser(add_help=False, parents=[default_parser])
+    subparsers = simtype.add_subparsers()
 
-    simtype = parser.add_subparsers()
-    parse_figure = simtype.add_parser('figure', add_help=True, parents=[default_parser])
+    parse_comp_dynamics = subparsers.add_parser('comp_dynamics', add_help=False, parents=[parser, default_parser])
+    parse_comp_dynamics.add_argument('infile', type=str)
+    parse_comp_dynamics.set_defaults(func=comp_dynamics)
+
+    parse_figure = subparsers.add_parser('figure', add_help=True, parents=[default_parser])
     parse_figure.add_argument(
         'bokeh',
         nargs='*',
