@@ -20,7 +20,7 @@ install:
   - conda info -a
 
   - conda env update
-  - source activate statdyn-dev
+  - source activate sdanalysis-dev
   - python setup.py install
   - python setup.py build_ext --inplace
   - pip install codecov
