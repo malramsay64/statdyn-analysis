@@ -1,15 +1,14 @@
 package:
-    name: statdyn
+    name: sdanalysis
     version: {{ GIT_DESCRIBE_TAG }}
 
 about:
-    home: https://github.com/malramsay64/MD-Molecules-Hoomd
+    home: https://github.com/malramsay64/statdyn-analysis
     license: MIT
     license_file: LICENSE
 
 source:
-    path: .
-    #git_url: https://github.com/malramsay64/MD-Molecules-Hoomd.git
+    git_url: https://github.com/malramsay64/statdyn-analysis
 
 requirements:
     build:
@@ -37,7 +36,7 @@ requirements:
 
 build:
     entry_points:
-        - sdrun = statdyn.sdrun.main:sdrun
+        - sdanalysis = sdanalysis.main:sdanalysis
     preserve_egg_dir: True
     script: python setup.py install
     number: {{ GIT_DESCRIBE_NUMBER }}
@@ -50,5 +49,5 @@ test:
     source_files:
         - test/*
     commands:
-        - python -c "import statdyn"
-        - pytest -v -c test/test_setup.cfg
+        - python -c "import sdanalysis"
+        - pytest -v
