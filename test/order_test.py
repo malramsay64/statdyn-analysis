@@ -12,7 +12,7 @@ import gsd.hoomd
 import numpy as np
 import pytest
 
-from sdanalysis.analysis import order  # type: ignore
+from sdanalysis import order  # type: ignore
 
 
 @pytest.mark.parametrize('infile', [

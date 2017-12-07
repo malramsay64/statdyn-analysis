@@ -10,7 +10,7 @@
 
 import numpy as np
 
-from sdanalysis.analysis import relaxation
+from sdanalysis import relaxation
 
 
 def test_diffusion_constant():

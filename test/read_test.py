@@ -11,7 +11,7 @@
 import numpy as np
 import pytest
 
-from sdanalysis.analysis import read
+from sdanalysis import read
 from sdanalysis.StepSize import GenerateStepSeries
 
 

@@ -16,9 +16,9 @@ from typing import Callable, List, Tuple
 
 from pkg_resources import DistributionNotFound, get_distribution
 
-from .analysis.read import process_gsd
 from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
+from .read import process_gsd
 
 logger = logging.getLogger(__name__)
 

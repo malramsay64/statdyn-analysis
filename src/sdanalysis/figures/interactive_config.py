@@ -22,12 +22,11 @@ from bokeh.models import (Button, ColumnDataSource, RadioButtonGroup, Select,
 from bokeh.plotting import curdoc, figure
 from tornado import gen
 
-from sdanalysis.analysis.order import (compute_ml_order,
-                                       compute_voronoi_neighs, dt_model,
-                                       knn_model, nn_model,
-                                       orientational_order)
 from sdanalysis.figures.configuration import plot, plot_circles, snapshot2data
 from sdanalysis.molecules import Trimer
+from sdanalysis.order import (compute_ml_order, compute_voronoi_neighs,
+                              dt_model, knn_model, nn_model,
+                              orientational_order)
 
 logger = logging.getLogger(__name__)
 

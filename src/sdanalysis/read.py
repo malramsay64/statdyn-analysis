@@ -14,9 +14,9 @@ from typing import Any, Dict, List
 import gsd.hoomd
 import pandas
 
-from ..molecules import Trimer
-from ..StepSize import GenerateStepSeries
 from .dynamics import dynamics, relaxations
+from .molecules import Trimer
+from .StepSize import GenerateStepSeries
 
 logger = logging.getLogger(__name__)
 

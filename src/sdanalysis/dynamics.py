@@ -15,9 +15,9 @@ import numpy as np
 import pandas
 from scipy.stats import spearmanr
 
-from ..math_helper import (displacement_periodic, quaternion_rotation,
-                           rotate_vectors)
-from ..molecules import Molecule, Trimer
+from .math_helper import (displacement_periodic, quaternion_rotation,
+                          rotate_vectors)
+from .molecules import Molecule, Trimer
 
 np.seterr(divide='raise', invalid='raise', over='raise')
 

@@ -23,7 +23,7 @@ from libc.math cimport fabs, cos, M_PI, pow, round, sqrt
 from libc.limits cimport UINT_MAX
 from cython.operator cimport dereference
 
-from ..math_helper cimport single_quat_rotation, single_displacement
+from .math_helper cimport single_quat_rotation, single_displacement
 
 cdef extern from "voro++/voro++.hh" namespace "voro":
     cdef cppclass container_base:

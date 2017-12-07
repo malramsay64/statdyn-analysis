@@ -24,8 +24,8 @@ extensions = [
         include_dirs=[np.get_include()],
     ),
     Extension(
-        'sdanalysis.analysis.order',
-        ['src/sdanalysis/analysis/order.pyx'],
+        'sdanalysis.order',
+        ['src/sdanalysis/order.pyx'],
         language='c++',
         libraries=['m', 'voro++'],
         include_dirs=[np.get_include(), str(Path(get_path('data')) / 'include'), ],
