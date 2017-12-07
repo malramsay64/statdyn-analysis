@@ -76,7 +76,7 @@ def test_orientational_order():
         )
     assert np.all(orient_order == 0)
 
-@pytest.mark.parametrize('model', [order.nn_model, order.dt_model, order.knn_model])
+@pytest.mark.parametrize('model', [order.dt_model, order.knn_model])
 def test_ml_models(model):
     with gsd.hoomd.open('test/data/Trimer-13.50-0.40-p2.gsd') as f:
         frame = f[0]

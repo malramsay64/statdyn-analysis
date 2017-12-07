@@ -25,8 +25,7 @@ from tornado import gen
 from sdanalysis.figures.configuration import plot, plot_circles, snapshot2data
 from sdanalysis.molecules import Trimer
 from sdanalysis.order import (compute_ml_order, compute_voronoi_neighs,
-                              dt_model, knn_model, nn_model,
-                              orientational_order)
+                              dt_model, knn_model, orientational_order)
 
 logger = logging.getLogger(__name__)
 
@@ -145,7 +144,6 @@ index.on_change('value', update_index)
 order_parameters = {
     'None': None,
     'Orient': orientational_order,
-    'Neural Net': functools.partial(compute_ml_order, nn_model()),
     'Decision Tree': functools.partial(compute_ml_order, dt_model()),
     'KNN Model': functools.partial(compute_ml_order, knn_model()),
     'Num Neighs': lambda box, pos, orient: compute_voronoi_neighs(box, pos) == 6,

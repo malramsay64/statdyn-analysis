@@ -50,11 +50,6 @@ cdef extern from "voro++/voro++.hh" namespace "voro":
         int pid() nogil
 
 
-def nn_model():
-    from keras.models import load_model
-    from pathlib import Path
-    return load_model(Path(__file__).parent / 'models/nn-Trimer-model.hdf5')
-
 def dt_model():
     from sklearn.externals import joblib
     from pathlib import Path
@@ -272,10 +267,7 @@ def compute_ml_order(model,
     cdef np.ndarray[float, ndim=2] orientations
 
     orientations = relative_orientations(box, position, orientation, max_radius)
-    try:
-        return model.predict_classes(orientations)
-    except AttributeError:
-        return model.predict(orientations)
+    return model.predict(orientations)
 
 
 cpdef np.ndarray[np.uint16_t, ndim=1] compute_voronoi_neighs(

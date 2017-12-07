@@ -19,7 +19,6 @@ dependencies:
     - gsd
     - freud
     - voro
-    - keras
     - pytest
     - pylint
     - quaternion

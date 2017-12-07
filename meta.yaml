@@ -31,8 +31,6 @@ requirements:
         - freud 0.6.*
         - gsd 1.2.0*
         - cython 0.26.*
-        - keras
-        - scikit-learn
 
 build:
     entry_points:
