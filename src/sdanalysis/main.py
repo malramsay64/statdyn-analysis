@@ -61,7 +61,7 @@ def comp_dynamics(sim_params: SimulationParams) -> None:
 
 def figure(args) -> None:
     """Start bokeh server with the file passed."""
-    fig_file = Path(__file__).parents[1] / 'figures/interactive_config.py'
+    fig_file = Path(__file__).parent / 'figures/interactive_config.py'
     try:
         run(['bokeh', 'serve', '--show', str(fig_file)] + args.bokeh)
     except ProcessLookupError:
