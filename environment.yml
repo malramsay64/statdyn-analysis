@@ -5,26 +5,24 @@ channels:
     - moble
     - malramsay
 dependencies:
-    - python=3.6.1
+    - python=3.6.3
     - numpy=1.13.1
-    - mkl=2017.0.3
-    - libgfortran=3.0.0
-    - scipy=0.19.0
+    - scipy=1.0.0
     - scikit-learn=0.19.0
-    - libgcc
-    - pandas=0.20.3
-    - pytables
-    - bokeh=0.12.9
-    - matplotlib
-    - gsd
-    - freud
-    - voro
-    - pytest
-    - pylint
+    - pandas=0.23.0
+    - pytables=3.4.2
+    - bokeh=0.12.11
+    - matplotlib=2.1.0
+    - gsd=1.4.0
+    - freud=0.6.2
+    - voro=0.4.6
+    - pytest=3.3.0
+    - pylint=1.7.4
     - quaternion
-    - cython
-    - setuptools
-    - hypothesis
+    - cython=0.27.3
+    - setuptools=36.5.0
+    - setuptools_scm
+    - hypothesis=3.38.5
     - coverage
     - pip:
         - mypy
