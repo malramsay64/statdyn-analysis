@@ -13,7 +13,6 @@ import math
 import gsd.hoomd
 from hypothesis import given
 from hypothesis.strategies import floats
-
 from sdanalysis.figures import colour
 from sdanalysis.figures.configuration import plot, snapshot2data
 from sdanalysis.order import compute_voronoi_neighs
