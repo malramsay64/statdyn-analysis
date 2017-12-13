@@ -62,7 +62,6 @@ def angle(num_elements=1):
     return theta
 
 
-@settings(max_examples=1000)
 @given(angle())
 def test_z2quaternion(angles):
     """Ensure quaternions are normalised.
@@ -76,7 +75,7 @@ def test_z2quaternion(angles):
     assert np.allclose(np.linalg.norm(result, axis=1), 1)
 
 
-@settings(max_examples=1000, suppress_health_check=[HealthCheck.filter_too_much])
+@settings(suppress_health_check=[HealthCheck.filter_too_much])
 @given(unit_quaternion_Z())
 def test_quaternion2z(quat):
     """Ensures correct range of angles [-pi, pi].
@@ -103,7 +102,7 @@ def test_quaternion2z(quat):
             np.isclose(q_res, result + 2*np.pi, atol=0.1))
 
 
-@settings(max_examples=1000, suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow])
+@settings(suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow])
 @given(unit_quaternion())
 def test_quaternion_angle_2d(quat):
     """Ensures correct range of angles [pi, pi].
@@ -117,7 +116,6 @@ def test_quaternion_angle_2d(quat):
     assert 0 <= result < 2*(np.pi + EPS)
 
 
-@settings(max_examples=1000)
 @given(arrays(np.float32, 1, elements=floats(min_value=-np.pi, max_value=np.pi)))
 def test_angle_roundtrip(angles):
     """Test the roundtrip of conversion from angle to quat and back.

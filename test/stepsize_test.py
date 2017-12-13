@@ -50,16 +50,14 @@ def test_initial_start_series(initial):
     assert next(gen) == 0
 
 
-@given(integers(min_value=0))
-@settings(deadline=None)
+@pytest.mark.parametrize('final', [100, 10000, 100000, 100001, 99999])
 def test_final_total(final):
     """Ensure the final value produced is the final value."""
     genlist = list(generate_steps(total_steps=final))
     assert genlist[-1] == final
 
 
-@given(integers(min_value=0))
-@settings(deadline=None)
+@pytest.mark.parametrize('final', [100, 10000, 100000, 100001, 99999])
 def test_final_total_series(final):
     """Ensure the final value produced is the final value."""
     genlist = list(GenerateStepSeries(total_steps=final))
@@ -72,8 +70,7 @@ def test_generate_steps(steps):  # pylint: disable=redefined-outer-name
     assert steps['gen'] == steps['def']
 
 
-@given(integers(min_value=0), integers(min_value=1, max_value=200))
-@settings(deadline=None)
+@pytest.mark.parametrize('total_steps, num_linear', [(10000, 100), (1000000, 100)])
 def test_generate_step_series(total_steps, num_linear):
     """Test generate_steps and generate_step_series.
 
@@ -93,14 +90,12 @@ def test_num_linear(num_linear):
 
 
 def test_get_index():
-    max_gen=500
-    gen_steps = 100
-    g = GenerateStepSeries(50000, gen_steps=gen_steps, max_gen=max_gen)
+    max_gen = 500
+    gen_steps = 10
+    g = GenerateStepSeries(5000, gen_steps=gen_steps, max_gen=max_gen)
     for _ in g:
         assert len(g.get_index()) <= max_gen
-        assert len(g.get_index()) <= g._num_generators
         assert np.all(np.array(g.get_index()) <= max_gen)
-        assert np.all(np.array(g.get_index()) <= g._num_generators)
 
 
 def test_generate_step_series_many():
