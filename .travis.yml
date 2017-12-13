@@ -1,7 +1,13 @@
 language: python
 
+python:
+    - "3.6"
+
+os:
+  - linux
+  - osx
+
 cache:
-  pip: true
   directories:
       - $HOME/miniconda
       - $HOME/miniconda.sh
