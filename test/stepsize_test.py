@@ -10,9 +10,8 @@
 
 import numpy as np
 import pytest
-from hypothesis import given, settings, unlimited
+from hypothesis import given, settings
 from hypothesis.strategies import integers
-
 from sdanalysis.StepSize import GenerateStepSeries, generate_steps
 
 
@@ -93,9 +92,8 @@ def test_num_linear(num_linear):
     assert gen_list[:num_linear+1] == list(range(num_linear+1))
 
 
-@given(integers(min_value=1, max_value=500))
-@settings(max_examples=10, deadline=None, timeout=unlimited)
-def test_get_index(max_gen):
+def test_get_index():
+    max_gen=500
     gen_steps = 100
     g = GenerateStepSeries(50000, gen_steps=gen_steps, max_gen=max_gen)
     for _ in g:
@@ -124,8 +122,7 @@ def test_generate_step_series_many():
     assert len(many_gens) > len(single_gen)
 
 
-@given(integers(min_value=0), integers(min_value=1, max_value=300))
-@settings(deadline=None)
+@pytest.mark.parametrize('total_steps, num_linear', [(1_000_000, 100)])
 def test_no_duplicates(total_steps, num_linear):
     """Test generation of a step series works."""
     series_list = list(generate_steps(total_steps=total_steps, num_linear=num_linear))
@@ -133,8 +130,7 @@ def test_no_duplicates(total_steps, num_linear):
     assert len(series_list) == len(series_set)
 
 
-@given(integers(min_value=0), integers(min_value=1, max_value=300))
-@settings(deadline=None)
+@pytest.mark.parametrize('total_steps, num_linear', [(1_000_000, 100)])
 def test_no_duplicates_series(total_steps, num_linear):
     """Test generation of a step series works."""
     series_list = list(GenerateStepSeries(total_steps=total_steps, num_linear=num_linear,
