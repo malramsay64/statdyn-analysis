@@ -11,10 +11,11 @@
 from pathlib import Path
 from sysconfig import get_path
 
-import numpy as np
-from Cython.Build import cythonize
 from setuptools import find_packages, setup
 from setuptools.extension import Extension
+
+import numpy as np
+from Cython.Build import cythonize
 
 extensions = [
     Extension(
@@ -24,11 +25,11 @@ extensions = [
         include_dirs=[np.get_include()],
     ),
     Extension(
-        'sdanalysis.order',
-        ['src/sdanalysis/order.pyx'],
+        'sdanalysis._order',
+        ['src/sdanalysis/_order.pyx', 'src/voro++/voro++.cc'],
         language='c++',
-        libraries=['m', 'voro++'],
-        include_dirs=[np.get_include(), str(Path(get_path('data')) / 'include'), ],
+        libraries=['m'],
+        include_dirs=[np.get_include(), 'src/voro++'],
     ),
 ]
 
