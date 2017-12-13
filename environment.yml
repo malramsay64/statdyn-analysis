@@ -3,8 +3,6 @@ channels:
     - defaults
     - conda-forge
     - moble
-    - malramsay
-    - glotzer
 dependencies:
     - python=3.6.3
     - numpy=1.13.3
@@ -14,9 +12,7 @@ dependencies:
     - pytables=3.4.2
     - bokeh=0.12.11
     - matplotlib=2.1.0
-    - gsd=1.4.0
-    - boost
-    - tbb
+    - gsd=1.3.0
     - pytest=3.3.0
     - pylint=1.7.4
     - quaternion
