@@ -13,7 +13,6 @@ from typing import Any, Dict
 
 import numpy as np
 import pandas
-from scipy.stats import spearmanr
 
 from .math_helper import (displacement_periodic, quaternion_rotation,
                           rotate_vectors)
@@ -35,7 +34,6 @@ class dynamics(object):
                  position: np.ndarray,
                  orientation: np.ndarray=None,
                  molecule: Molecule=Trimer(),
-                 spearman: bool=False,
                  ) -> None:
         """Initialise a dynamics instance.
 
@@ -56,7 +54,6 @@ class dynamics(object):
         self.num_particles = position.shape[0]
         self.orientation = orientation.astype(self.dyn_dtype)
         self.mol_vector = molecule.positions
-        self.spearman = spearman
 
     def computeMSD(self, position: np.ndarray) -> float:
         """Compute the mean squared displacement."""
@@ -428,23 +425,6 @@ def mobile_overlap(displacement: np.ndarray,
     trans_order = np.argsort(displacement)[-num_elements:]
     rot_order = np.argsort(np.abs(rotation))[-num_elements:]
     return len(np.intersect1d(trans_order, rot_order)) / num_elements
-
-
-def spearman_rank(displacement: np.ndarray,
-                  rotation: np.ndarray,
-                  fraction: float=1.) -> float:
-    """Compute the Spearman Rank coefficient for fast molecules.
-
-    This takes the molecules with the fastest 10% of the translations or
-    rotations and uses this subset to compute the Spearman rank coefficient.
-    """
-    num_elements = int(len(displacement) * fraction)
-    # np.argsort will sort from smallest to largest, we are interested in the
-    # largest elements so we will take from the end of the array.
-    trans_order = np.argsort(displacement)[:-num_elements-1:-1]
-    rot_order = np.argsort(np.abs(rotation))[:-num_elements-1:-1]
-    rho, _ = spearmanr(trans_order, rot_order)
-    return rho
 
 
 def rotationalDisplacement(initial: np.ndarray,

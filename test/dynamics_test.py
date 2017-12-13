@@ -136,15 +136,6 @@ def test_overlap(displacement, rotation):
     assert 0. <= overlap <= 1.
 
 
-@given(arrays(HYP_DTYPE, (100), elements=floats(0, 10)),
-       arrays(HYP_DTYPE, (100), elements=floats(0, 2*np.pi)))
-def test_spearman_rank(displacement, rotation):
-    """Test the spearman ranking coefficient."""
-    spearman_same = dynamics.spearman_rank(rotation, rotation)
-    assert np.isclose(spearman_same, 1)
-    spearman = dynamics.spearman_rank(rotation, rotation)
-    assert -1 <= spearman <= 1
-
 def test_dynamics():
     process_gsd('test/data/trajectory-13.50-3.00.gsd')
 
