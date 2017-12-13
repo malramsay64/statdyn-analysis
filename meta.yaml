@@ -36,14 +36,13 @@ build:
     entry_points:
         - sdanalysis = sdanalysis.main:sdanalysis
     preserve_egg_dir: True
-    script: bash scripts/build.sh
+    script: pip install .
     number: {{ GIT_DESCRIBE_NUMBER }}
 
 test:
     import:
         - sdanalysis
     requires:
-        - python
         - pytest 3.3.0
         - hypothesis 3.38.5
         - quaternion
