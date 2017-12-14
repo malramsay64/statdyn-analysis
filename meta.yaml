@@ -1,52 +1,51 @@
 package:
-    name: sdanalysis
-    version: {{ GIT_DESCRIBE_TAG }}
+  name: sdanalysis
+  version: {{ GIT_DESCRIBE_TAG }}
 
 about:
-    home: https://github.com/malramsay64/statdyn-analysis
-    license: MIT
-    license_file: LICENSE
-
+  home: https://github.com/malramsay64/statdyn-analysis
+  license: MIT
+  license_file: LICENSE
 
 source:
-    git_url: https://github.com/malramsay64/statdyn-analysis
+  git_url: https://github.com/malramsay64/statdyn-analysis
 
 requirements:
-    build:
-        - python {{ python }}
-        - numpy {{ numpy }}
-        - setuptools
-        - setuptools_scm
-        - cython >=0.27.3
+  build:
+    - python {{ python }}
+    - numpy {{ numpy }}
+    - setuptools
+    - setuptools_scm
+    - cython >=0.27.3
 
 
-    run:
-        - {{ pin_compatible('python', max_pin='x.x') }}
-        - {{ pin_compatible('numpy', max_pin='x.x.x') }}
-        - scipy >=1.0
-        - scikit-learn ==0.19.0
-        - pandas >=0.21
-        - pytables >=3.4
-        - bokeh >=0.12.11
-        - matplotlib >=2.1
-        - setuptools
-        - gsd >=1.3.0
+  run:
+    - {{ pin_compatible('python', max_pin='x.x') }}
+    - {{ pin_compatible('numpy', max_pin='x.x.x') }}
+    - scipy >=1.0
+    - scikit-learn ==0.19.0
+    - pandas >=0.21
+    - pytables >=3.4
+    - bokeh >=0.12.11
+    - matplotlib >=2.1
+    - setuptools
+    - gsd >=1.3.0
 
 build:
-    entry_points:
-        - sdanalysis = sdanalysis.main:sdanalysis
-    preserve_egg_dir: True
-    script: python setup.py install --single-version-externally-managed --record record.txt
-    number: {{ GIT_DESCRIBE_NUMBER }}
+  entry_points:
+    - sdanalysis = sdanalysis.main:sdanalysis
+  preserve_egg_dir: True
+  script: python setup.py install --single-version-externally-managed --record record.txt
+  number: {{ GIT_DESCRIBE_NUMBER }}
 
 test:
-    import:
-        - sdanalysis
-    requires:
-        - pytest
-        - hypothesis
-        - quaternion
-    source_files:
-        - test/
-    commands:
-        - pytest -v
+  import:
+    - sdanalysis
+  requires:
+    - pytest
+    - hypothesis
+    - quaternion
+  source_files:
+    - test/
+  commands:
+    - pytest -v
