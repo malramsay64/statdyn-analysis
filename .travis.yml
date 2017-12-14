@@ -1,10 +1,8 @@
-language: python
-
-python:
-    - "3.6"
+language: generic
 
 os:
   - linux
+  - osx
 
 cache:
   directories:
@@ -13,7 +11,8 @@ cache:
 before_cache:
   - conda clean --all
 
-install:
+# Prepare environment for install
+before install:
   - wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh;
   - bash miniconda.sh -b -u -p $HOME/miniconda
   - export PATH="$HOME/miniconda/bin:$PATH"
@@ -24,11 +23,13 @@ install:
   # Useful for debugging any issues with conda
   - conda info -a
 
+  # Install dependencies from environment.yml file
   - conda env update
-  - source activate sdanalysis-dev
-  - python setup.py install
-  - python setup.py build_ext --inplace
   - pip install codecov
+
+install:
+  - source activate sdanalysis-dev
+  - python setup.py install --single-version-externally-managed
 
 script:
     - pytest
@@ -39,8 +40,6 @@ after_success:
 before_deploy:
     - conda install -n root anaconda-client conda-build
     - conda config --append channels moble
-    - conda config --append channels glotzer
-    - conda config --append channels malramsay
     - chmod +x scripts/deploy_anaconda.sh
 
 deploy:
