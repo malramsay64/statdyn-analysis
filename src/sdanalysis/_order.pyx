@@ -66,8 +66,8 @@ cpdef np.ndarray[float, ndim=2] _relative_orientations(long [:, :] neighbourlist
 
     """
     cdef float no_value = -0.
-    cdef unsigned int num_mols = orientation.shape[0]
-    cdef unsigned int max_neighbours = orientation.shape[1]
+    cdef unsigned int num_mols = neighbourlist.shape[0]
+    cdef unsigned int max_neighbours = neighbourlist.shape[1]
     cdef Py_ssize_t mol_index, n, num_neighbours, curr_neighbour
 
     cdef np.ndarray[float, ndim=2] rel_orient

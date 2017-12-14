@@ -85,7 +85,6 @@ def test_orientational_order():
     assert np.all(orient_order > 0.85)
 
 
-@pytest.mark.xfail
 @pytest.mark.parametrize('model', ML_MODELS)
 def test_ml_models(model):
     with gsd.hoomd.open('test/data/Trimer-13.50-0.40-p2.gsd') as f:
