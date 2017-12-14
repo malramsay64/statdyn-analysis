@@ -29,7 +29,7 @@ before_install:
 
 install:
   - source activate sdanalysis-dev
-  - python setup.py install --single-version-externally-managed
+  - python setup.py install --single-version-externally-managed --record record.txt
 
 script:
     - pytest
