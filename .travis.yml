@@ -6,10 +6,8 @@ os:
 
 cache:
   directories:
-      - $HOME/miniconda
-      - $HOME/miniconda.sh
-before_cache:
-  - conda clean --all
+    - $HOME/miniconda
+    - $HOME/miniconda.sh
 
 # Prepare environment for install
 before_install:
@@ -31,19 +29,24 @@ install:
   - source activate sdanalysis-dev
   - python setup.py install --single-version-externally-managed --record record.txt
 
+before_cache:
+  # Uninstall sdanalysis package
+  - tr '\n' '\0' < record.txt | xargs -0 sudo rm -f --
+  - conda clean --all
+
 script:
-    - pytest
+  - pytest
 
 after_success:
-    - codecov
+  - codecov
 
 before_deploy:
-    - conda install -n root anaconda-client conda-build
-    - conda config --append channels moble
-    - chmod +x scripts/deploy_anaconda.sh
+  - conda install -n root anaconda-client conda-build
+  - conda config --append channels moble
+  - chmod +x scripts/deploy_anaconda.sh
 
 deploy:
-    provider: script
-    script: ./scripts/deploy_anaconda.sh
-    on:
-        tags: true
+  provider: script
+  script: ./scripts/deploy_anaconda.sh
+  on:
+    tags: true
