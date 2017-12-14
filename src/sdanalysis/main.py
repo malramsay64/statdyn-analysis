@@ -10,8 +10,10 @@
 
 import argparse
 import logging
+import signal
+import subprocess
+import time
 from pathlib import Path
-from subprocess import run
 from typing import Callable, List, Tuple
 
 from pkg_resources import DistributionNotFound, get_distribution
@@ -63,8 +65,11 @@ def figure(args) -> None:
     """Start bokeh server with the file passed."""
     fig_file = Path(__file__).parent / 'figures/interactive_config.py'
     try:
-        run(['bokeh', 'serve', '--show', str(fig_file)] + args.bokeh)
-    except ProcessLookupError:
+        subprocess.Popen(['bokeh', 'serve', '--show', str(fig_file)] + args.bokeh)
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
         logger.info('Bokeh server terminated.')
 
 

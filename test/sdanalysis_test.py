@@ -10,8 +10,6 @@
 
 import subprocess
 
-import pytest
-
 
 def test_comp_dynamics():
     command = ['sdanalysis',
@@ -22,9 +20,3 @@ def test_comp_dynamics():
                ]
     ret = subprocess.run(command)
     assert ret.returncode == 0
-
-
-def test_sdrun_figure():
-    command = ['sdanalysis', 'figure']
-    with pytest.raises(subprocess.TimeoutExpired):
-        subprocess.run(command, timeout=1)
