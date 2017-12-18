@@ -79,8 +79,10 @@ cpdef np.ndarray[float, ndim=2] _relative_orientations(long [:, :] neighbourlist
             curr_neighbour = neighbourlist[mol_index, n]
             if curr_neighbour < num_mols:
                 rel_orient[mol_index, n] = single_quat_rotation(
-                    orientation[curr_neighbour],
-                    orientation[mol_index])
+                    orientation,
+                    curr_neighbour,
+                    mol_index,
+                )
             else:
                 rel_orient[mol_index, n] = no_value
 
@@ -121,7 +123,8 @@ cpdef np.ndarray[float, ndim=1] _orientational_order(long[:, :] neighbourlist,
             curr_neighbour = neighbourlist[mol_index, n]
             if curr_neighbour < num_mols:
                 temp_order += fabs(cos(
-                    angle_factor * single_quat_rotation(orientation[curr_neighbour], orientation[mol_index])
+                    angle_factor *
+                    single_quat_rotation(orientation, curr_neighbour, mol_index)
                 ))
                 num_neighbours += 1
             else:

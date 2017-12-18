@@ -32,17 +32,6 @@ cpdef float get_quat_eps() nogil:
     return QUAT_EPS
 
 
-cdef float single_quat_rotation(
-        const float[:] initial,
-        const float[:] final) nogil:
-    return 2.*acos(fabs(
-        initial[0] * final[0] +
-        initial[1] * final[1] +
-        initial[2] * final[2] +
-        initial[3] * final[3]
-    ))
-
-
 cpdef np.ndarray[float, ndim=2] rotate_vectors(
         float[:, :] q,
         float[:, :] v):
@@ -104,24 +93,39 @@ cdef void quaternion_rotate_vector(
     result[2] = v[2] + two_over_m * (q[1]*w[1] - q[2]*w[0]);
 
 
+cpdef float single_quat_rotation(
+        const float[:, :] orientation,
+        int i,
+        int j
+        ) nogil:
+    intermediate = fabs(orientation[i, 0] * orientation[j, 0] +
+                   orientation[i, 1] * orientation[j, 1] +
+                   orientation[i, 2] * orientation[j, 2] +
+                   orientation[i, 3] * orientation[j, 3]
+                   )
+    if fabs(intermediate - 1.) < QUAT_EPS:
+        return 0
+    else:
+        return <float>2.*acos(intermediate)
+
+
 cpdef void quaternion_rotation(
         float[:, :] initial,
         float[:, :] final,
-        float[:] result):
+        float[:] result) nogil:
     cdef Py_ssize_t nitems = result.shape[0]
     cdef double intermediate
 
-    with nogil:
-        for i in range(nitems):
-            intermediate = fabs(initial[i, 0] * final[i, 0] +
-                           initial[i, 1] * final[i, 1] +
-                           initial[i, 2] * final[i, 2] +
-                           initial[i, 3] * final[i, 3]
-                           )
-            if fabs(intermediate - 1.) < QUAT_EPS:
-                result[i] = 0
-            else:
-                result[i] = <float>2.*acos(intermediate)
+    for i in range(nitems):
+        intermediate = fabs(initial[i, 0] * final[i, 0] +
+                       initial[i, 1] * final[i, 1] +
+                       initial[i, 2] * final[i, 2] +
+                       initial[i, 3] * final[i, 3]
+                       )
+        if fabs(intermediate - 1.) < QUAT_EPS:
+            result[i] = 0
+        else:
+            result[i] = <float>2.*acos(intermediate)
 
 
 cpdef np.ndarray[float, ndim=1] quaternion_angle(

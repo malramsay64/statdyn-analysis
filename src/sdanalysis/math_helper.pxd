@@ -16,9 +16,10 @@ cimport numpy as np
 from libc.math cimport fabs, cos, M_PI, M_2_PI, acos, sqrt
 
 
-cdef float single_quat_rotation(
-        float[:] initial,
-        float[:] final
+cpdef float single_quat_rotation(
+        float[:, :] orientation,
+        int i,
+        int j
 ) nogil
 
 
@@ -26,7 +27,7 @@ cpdef void quaternion_rotation(
         float[:, :] initial,
         float[:, :] final,
         float[:] result,
-)
+) nogil
 
 cpdef np.ndarray[float, ndim=2] rotate_vectors(
         float[:, :] quaternions,

@@ -16,7 +16,7 @@ from hypothesis.extra.numpy import arrays, floating_dtypes
 from hypothesis.strategies import floats
 from sdanalysis.math_helper import (get_quat_eps, quaternion2z,
                                     quaternion_angle, quaternion_rotation,
-                                    z2quaternion)
+                                    single_quat_rotation, z2quaternion)
 
 np.seterr(invalid='ignore', under='ignore', over='ignore')
 EPS = np.finfo(np.float32).eps * 2
@@ -163,3 +163,32 @@ def test_quat_rotation():
     result_q = np.array([quaternion.rotation_intrinsic_distance(i, f)
                            for i, f in zip(initial_q, final_q)], dtype=np.float32)
     assert np.allclose(result, result_q, atol=2e-5)
+
+
+def test_quaternion_zero_rotation():
+    initial = np.array([[1, 0, 0, 0]], dtype=np.float32)
+    result = np.empty(1, dtype=np.float32)
+    quaternion_rotation(initial, initial, result)
+    assert result == 0
+
+
+def test_quaternion_small_rotation():
+    """Small rotations should show up as no rotation."""
+    initial = np.array([[1, 0, 0, 0]], dtype=np.float32)
+    final = z2quaternion(np.array([1e-3], dtype=np.float32))
+    result = np.empty(1, dtype=np.float32)
+    quaternion_rotation(initial, final, result)
+    assert result == 0
+
+
+def test_single_quaternion_zero_rotation():
+    initial = np.array([[1, 0, 0, 0]], dtype=np.float32)
+    assert single_quat_rotation(initial, 0, 0) == 0
+
+
+def test_single_quaternion_small_rotation():
+    """Small rotations should show up as no rotation."""
+    initial = np.append(np.array([[1, 0, 0, 0]], dtype=np.float32),
+                        z2quaternion(np.array([1e-3], dtype=np.float32)),
+                        axis=0)
+    assert single_quat_rotation(initial, 0, 1) == 0

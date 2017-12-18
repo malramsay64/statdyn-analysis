@@ -32,7 +32,6 @@ def compute_ml_order(model,
                      box: np.ndarray,
                      position: np.ndarray,
                      orientation: np.ndarray) -> np.ndarray:
-
     max_radius = 3.5
     max_neighbours = 8
 

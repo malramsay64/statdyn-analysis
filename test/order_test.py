@@ -75,7 +75,16 @@ def test_orientational_order(frame):
         frame.particles.orientation,
         max_radius
     )
-    assert np.all(orient_order > 0.85)
+    assert np.all(orient_order > 0.70)
+
+
+def test_relative_orientations(frame):
+    orientations = order.relative_orientations(
+        frame.configuration.box,
+        frame.particles.position,
+        frame.particles.orientation,
+    )
+    assert np.all(np.isfinite(orientations))
 
 
 @pytest.mark.parametrize('model', ML_MODELS)
