@@ -75,7 +75,7 @@ def test_orientational_order(frame):
         frame.particles.orientation,
         max_radius
     )
-    assert np.all(orient_order > 0.70)
+    assert np.all(orient_order > 0.60)
 
 
 def test_relative_orientations(frame):

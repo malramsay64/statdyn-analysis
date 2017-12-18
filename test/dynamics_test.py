@@ -171,7 +171,7 @@ def test_rotations(dynamics_class, trajectory, step):
     if step == 0:
         assert np.all(rotations == 0.)
     else:
-        assert np.all(displacement >= 0.)
+        assert np.all(rotations >= 0.)
 
 
 def test_dynamics():
