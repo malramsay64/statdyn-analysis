@@ -12,25 +12,27 @@ import numpy as np
 import pytest
 from hypothesis import given
 from hypothesis.strategies import floats
-
 from sdanalysis import molecules
 
 MOLECULE_LIST = [
-    molecules.Molecule(),
-    molecules.Trimer(),
-    molecules.Dimer(),
-    molecules.Disc(),
-    molecules.Sphere(),
+    molecules.Molecule,
+    molecules.Trimer,
+    molecules.Dimer,
+    molecules.Disc,
+    molecules.Sphere,
 ]
 
 
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
+@pytest.fixture(scope='module', params=MOLECULE_LIST)
+def mol(request):
+    return request.param()
+
+
 def test_compute_moment_inertia(mol):
     mom_I = np.array(mol.moment_inertia)
     assert np.all(mom_I[:2] == 0)
 
 
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_scale_moment_inertia(mol):
     scale_factor = 10.
     init_mom_I = np.array(mol.moment_inertia)
@@ -39,18 +41,15 @@ def test_scale_moment_inertia(mol):
     assert np.all(scale_factor*init_mom_I == final_mom_I)
 
 
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_get_radii(mol):
     radii = mol.get_radii()
     assert radii[0] == 1.
 
 
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_read_only_position(mol):
     assert mol.positions.flags.writeable == False
 
 
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_orientation2positions(mol):
     position = np.array([[0, 0, 0]], dtype=np.float32)
     orientation = np.array([[1, 0, 0, 0]], dtype=np.float32)
@@ -64,7 +63,6 @@ def test_orientation2positions(mol):
     )
 
 
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_orientation2positions_invert_xy(mol):
     position = np.array([[0, 0, 0]], dtype=np.float32)
     orientation = np.array([[0, 0, 0, 1]], dtype=np.float32)
@@ -78,7 +76,6 @@ def test_orientation2positions_invert_xy(mol):
     )
 
 
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_orientation2positions_moved(mol):
     position = np.array([[1, 1, 0]], dtype=np.float32)
     orientation = np.array([[1, 0, 0, 0]], dtype=np.float32)
@@ -90,7 +87,6 @@ def test_orientation2positions_moved(mol):
     )
 
 
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_orientation2positions_moved_rot(mol):
     position = np.array([[4, 2, 0]], dtype=np.float32)
     orientation = np.array([[0, 0, 0, 1]], dtype=np.float32)
@@ -104,7 +100,6 @@ def test_orientation2positions_moved_rot(mol):
     )
 
 
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_orientation2positions_moved_rot_multiple(mol):
     position = np.array([[4, 2, 0], [0, 0, 0]], dtype=np.float32)
     orientation = np.array([[0, 0, 0, 1], [0, 0, 0, 1]], dtype=np.float32)
@@ -119,7 +114,6 @@ def test_orientation2positions_moved_rot_multiple(mol):
     )
 
 
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_get_types(mol):
     mol.get_types()
 
@@ -145,7 +139,6 @@ def test_moment_inertia_scaling(scaling_factor):
                            np.array(scaled.moment_inertia))
 
 
-@pytest.mark.parametrize('mol', MOLECULE_LIST)
 def test_compute_size(mol):
     size = mol.compute_size()
     assert size >= 2.
