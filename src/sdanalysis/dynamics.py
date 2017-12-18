@@ -93,7 +93,7 @@ class dynamics(object):
     def get_displacements(self, position: np.ndarray) -> np.ndarray:
         """Get all the displacements."""
         result = translationalDisplacement(self.box, self.position, position)
-        return mean_displacement(result)
+        return result
 
     def computeStructRelax(self, position: np.ndarray,
                            orientation: np.ndarray,

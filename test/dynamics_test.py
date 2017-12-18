@@ -8,12 +8,13 @@
 
 """Testing the dynamics module."""
 
+import gsd.hoomd
 import numpy as np
+import pytest
 import quaternion
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
-
 from sdanalysis import dynamics
 from sdanalysis.read import process_gsd
 
@@ -136,8 +137,46 @@ def test_overlap(displacement, rotation):
     assert 0. <= overlap <= 1.
 
 
+@pytest.fixture(scope='module')
+def trajectory():
+    with gsd.hoomd.open('test/data/trajectory-13.50-3.00.gsd') as trj:
+        yield trj
+
+
+@pytest.fixture(scope='module')
+def dynamics_class(trajectory):
+    snap = trajectory[0]
+    return dynamics.dynamics(snap.configuration.step,
+                             snap.configuration.box,
+                             snap.particles.position,
+                             snap.particles.orientation)
+
+
+@pytest.mark.parametrize('step', [0, 1, 10, 20])
+def test_displacements(dynamics_class, trajectory, step):
+    snap = trajectory[step]
+    displacement = dynamics_class.get_displacements(snap.particles.position)
+    assert displacement.shape == (dynamics_class.num_particles, )
+    if step == 0:
+        assert np.all(displacement == 0.)
+    else:
+        assert np.all(displacement >= 0.)
+
+
+@pytest.mark.parametrize('step', [0, 1, 10, 20])
+def test_rotations(dynamics_class, trajectory, step):
+    snap = trajectory[step]
+    rotations = dynamics_class.get_rotations(snap.particles.orientation)
+    assert rotations.shape == (dynamics_class.num_particles, )
+    if step == 0:
+        assert np.all(rotations == 0.)
+    else:
+        assert np.all(displacement >= 0.)
+
+
 def test_dynamics():
     process_gsd('test/data/trajectory-13.50-3.00.gsd')
+
 
 def test_molecularRelaxation():
     num_elements = 10
@@ -177,12 +216,6 @@ def test_lastMolecularRelaxation():
 
     def move(dist):
         return np.ones(num_elements) * dist
-
-    # No motion
-    tau.add(1, move(0))
-    assert np.all(tau.get_status() == invalid_values)
-    assert np.all(tau._status == invalid_values)
-    assert np.all(tau._state == np.zeros(num_elements, dtype=np.uint8))
 
     # Move past threshold
     tau.add(2, move(threshold + 0.1))
