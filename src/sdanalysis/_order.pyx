@@ -17,7 +17,7 @@ import numpy as np
 cimport numpy as np
 from libc.math cimport fabs, cos, M_PI, pow, round, sqrt
 from libc.limits cimport UINT_MAX
-from cython.operator cimport dereference
+from cython.operator cimport dereference as deref
 
 from .math_helper cimport single_quat_rotation, single_displacement
 
@@ -139,49 +139,69 @@ cpdef np.ndarray[float, ndim=1] _orientational_order(long[:, :] neighbourlist,
 
 
 cpdef np.ndarray[np.uint16_t, ndim=1] compute_voronoi_neighs(float[:] box,
-                                                             float[:, :] position):
-    cdef np.ndarray[np.uint16_t, ndim=1] num_neighs
+                                                             float[:, :] position) except +:
+    cdef unsigned short[:] num_neighs
     cdef Py_ssize_t num_elements = position.shape[0]
     cdef double Lx, Ly, Lz
-    cdef int bx, by, bz
+    cdef int[3] num_blocks
     cdef double N
     num_neighs = np.empty(num_elements, dtype=np.uint16)
 
     cdef container *configuration
     cdef voronoicell_neighbor *cell
-    cdef c_loop_all *vl
+    cdef c_loop_all *voronoi_loop
 
     Lx = box[0]
     Ly = box[1]
     Lz = box[2]
 
-    N = sqrt(num_elements/(Lx * Ly))
+    # Divide cell into N blocks in each dimension
+    # Optimally 5-8 particles per block
+    cdef int particles_per_block = 5
+    N = sqrt(num_elements/(Lx * Ly * particles_per_block))
 
-    bx = max(<int>round(N * Lx), 1)
-    by = max(<int>round(N * Ly), 1)
-    bz = 1
+    num_blocks[0] = max(<int>round(N * Lx), 1)
+    num_blocks[1] = max(<int>round(N * Ly), 1)
+    num_blocks[2] = 1
 
+    # Initialize container
+    # xmin, xmax,
+    # ymin, ymax,
+    # zmin, zmax,
+    # num_blocks x, y, z
+    # periodicity x, y, z
     configuration = new container(
-            -Lx/2, Lx/2, -Ly/2, Ly/2, -Lz/2, Lz/2,
-            bx, by, bz, True, True, False, num_elements
+        -Lx/2, Lx/2,
+        -Ly/2, Ly/2,
+        -Lz/2, Lz/2,
+        num_blocks[0], num_blocks[1], num_blocks[2],
+        True, True, False,
+        num_elements
     )
 
     with nogil:
+        # Add all particles to container
         for i in range(num_elements):
             configuration.put(i, position[i, 0], position[i, 1], position[i, 2])
 
-        cell = new voronoicell_neighbor()
-        vl = new c_loop_all(<container_base&>dereference(configuration))
+        # Instance of a class to loop over all particles in configuration
+        voronoi_loop = new c_loop_all(<container_base &>deref(configuration))
 
-        if not vl.start():
-            del vl
+        # Check constructed properly
+        if not voronoi_loop.start():
+            # cleanup
+            del voronoi_loop, configuration
             with gil:
                 raise ValueError("Failed to start loop")
 
-        while True:
-            if (configuration.compute_cell(dereference(cell), dereference(vl))):
-                num_neighs[vl.pid()] = <int>cell.number_of_faces() - 2
-            if not vl.inc(): break
-        del configuration, cell, vl
+        cell = new voronoicell_neighbor()
 
-    return num_neighs
+        # Loop through all cells
+        while True:
+            if (configuration.compute_cell(deref(cell), deref(voronoi_loop))):
+                num_neighs[voronoi_loop.pid()] = <int>cell.number_of_faces() - 2
+            if not voronoi_loop.inc(): break
+        # cleanup pointers
+        del configuration, cell, voronoi_loop
+
+    return np.asarray(num_neighs)
