@@ -3,8 +3,8 @@ Statdyn Analysis
 
 [![Build Status](https://travis-ci.org/malramsay64/statdyn-analysis.svg?branch=master)](https://travis-ci.org/malramsay64/statdyn-analysis)
 [![codecov](https://codecov.io/gh/malramsay64/statdyn-analysis/branch/master/graph/badge.svg)](https://codecov.io/gh/malramsay64/statdyn-analysis)
-[![Anaconda-Server Badge](https://anaconda.org/malramsay/statdyn-analysis/badges/installer/conda.svg)](https://conda.anaconda.org/malramsay)
-[![Anaconda-Server Badge](https://anaconda.org/malramsay/statdyn-analysis/badges/version.svg)](https://anaconda.org/malramsay/statdyn-analysis)
+[![Anaconda-Server Badge](https://anaconda.org/malramsay/sdanalysis/badges/installer/conda.svg)](https://conda.anaconda.org/malramsay)
+[![Anaconda-Server Badge](https://anaconda.org/malramsay/sdanalysis/badges/version.svg)](https://anaconda.org/malramsay/sdanalysis)
 
 
 This is a set of scripts that use
