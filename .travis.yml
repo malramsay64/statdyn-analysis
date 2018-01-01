@@ -52,12 +52,12 @@ before_deploy:
   - chmod +x scripts/deploy_anaconda.sh
 
 deploy:
-  - provider: script
-    script: ./scripts/deploy_anaconda.sh
-    #on:
-      #tags: true
   - provider: pypi
     user: "$PYPI_UNAME"
     password: "$PYPI_PASSWORD"
+    #on:
+      #tags: true
+  - provider: script
+    script: ./scripts/deploy_anaconda.sh
     #on:
       #tags: true
