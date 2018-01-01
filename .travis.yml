@@ -37,6 +37,8 @@ before_cache:
   # Uninstall sdanalysis package
   - tr '\n' '\0' < record.txt | xargs -0 sudo rm -f --
   - conda clean --all
+  - rm ~/miniconda/conda-meta/history
+  - rm -r ~/miniconda/lib/python3.6/__pycache__
 
 script:
   - pytest
@@ -50,7 +52,12 @@ before_deploy:
   - chmod +x scripts/deploy_anaconda.sh
 
 deploy:
-  provider: script
-  script: ./scripts/deploy_anaconda.sh
-  on:
-    tags: true
+  - provider: script
+    script: ./scripts/deploy_anaconda.sh
+    on:
+      tags: true
+  - provider: pypi
+    user: "$PYPI_UNAME"
+    password: "$PYPI_PASSWORD"
+    on:
+      tags: true
