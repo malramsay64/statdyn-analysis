@@ -16,6 +16,6 @@ EOF
 
 pip install -y twine
 
-python setup.py bdist bdist_wheel
+python setup.py bdist
 
 twine upload dist/*
