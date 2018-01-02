@@ -6,4 +6,6 @@
 # Distributed under terms of the MIT license.
 #
 
-conda build . --token "$CONDA_UPLOAD_TOKEN" --user "$CONDA_USER"
+conda config --set anaconda_upload yes
+
+conda build . -c conda-forge -c moble --token "$CONDA_UPLOAD_TOKEN" --user "$CONDA_USER"
