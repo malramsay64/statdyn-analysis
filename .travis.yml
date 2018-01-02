@@ -9,23 +9,8 @@ cache:
     - "$HOME/miniconda"
     - "$HOME/miniconda.sh"
 
-before_install:
-  - if [[ $(uname -s) == "Darwin" ]]; then wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh
-    -O miniconda.sh; else wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    -O miniconda.sh; fi
-  - bash miniconda.sh -b -u -p $HOME/miniconda
-  - export PATH="$HOME/miniconda/bin:$PATH"
-  - hash -r
-  - conda config --set always_yes yes --set changeps1 no
-  - conda update -q conda
-  - conda install conda-env
-  - conda info -a
-  - conda env update
-  - pip install codecov
-
 install:
-  - source activate sdanalysis-dev
-  - python setup.py install --single-version-externally-managed --record record.txt
+  - make setup
 
 before_cache:
   - tr '\n' '\0' < record.txt | xargs -0 sudo rm -f --
@@ -35,23 +20,11 @@ before_cache:
   - rm -r ~/miniconda/lib/python3.6/__pycache__
 
 script:
-  - pytest
-
-after_success:
-  - codecov
-
-before_deploy:
-  - conda install -n root anaconda-client conda-build
-  - conda config --set anaconda_upload yes
-  - chmod +x scripts/deploy_anaconda.sh
-  - chmod +x scripts/deploy_pypi.sh
+  - make test
 
 deploy:
   - provider: script
-    script: "./scripts/deploy_anaconda.sh"
+    script: make deploy
     on:
-      tags: true
-  - provider: script
-    script: "./scripts/deploy_pypi.sh"
-    on:
-      tags: true
+      #tags: true
+      all_branches: true
