@@ -51,6 +51,7 @@ deploy:
     user: malramsay64
     password:
       secure: "j5NFtYX51pPYpF0QcxulDpWpviKKjualefN5ZPjfoLQXfM+t238ruxYwAqz57a00AELZqOAUItJQWl31JvA01KKX5H4iPZPGtyEx9RNW75kgs8/VVlJkS/HMGZoyf8Jkup2RVjbDPs30Ryf/3BVOdUX60Qg2BJ1ZlV5ZSd+4pAXEktl/G/5j2Ca7Nuxo67OW4BHCq4rp0JzlwwIWJjNnA/9prTeqUKn0Pim4XDSmYEwOfdMYRvRa6biDQbCdpqEoQ+57SMVEnQ1lfcQDqHtVpHoTc6/CiwyPytbkp8bGzFEpeEKbBsdz6RV3dE/hsp6nNey5IInGF7sGzi+3YKX9DhgVLhYR8D+WOCEard8g5lE7LXMhfTbdlnrAmURHu7G/+v6K0TgvMjmyCdEFByOOAr3a2bjAS1TwihSv23zXfW2+bWrJ4Bs8e1sedo7GYtaoaeDB2vJJ3fAX46B60vDJtw1yqTaLCya4LrKRa4JPnEFUeMNm9wV2fOj7Wc3gIniY9RQnYNhiingUBgmJCgYUQWXaeNNMjNo/WvoXj9a38d0a6S/zqXFmYH7ZLKJiKZQIwkaZMLLDSbdjhzrIQrcmYnVttG6x5QZ8k6jpVONyoeYLErHCEU3d11syWnCNjInA9loM9tab/gO8j9GrPiizBpty6G7etnAr+U9HGUuGhTw="
+    distributions: bdist_wheel
     on:
       tags: true
   - provider: script
