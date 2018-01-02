@@ -54,7 +54,7 @@ setup(
         'gsd',
     ],
     packages=find_packages('src'),
-    ext_modules=build_extensions()
+    ext_modules=build_extensions(),
     package_dir={'': 'src'},
     include_package_data=True,
     entry_points="""
