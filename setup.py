@@ -11,24 +11,29 @@
 from setuptools import find_packages, setup
 from setuptools.extension import Extension
 
-import numpy as np
-from Cython.Build import cythonize
 
-extensions = [
-    Extension(
-        'sdanalysis.math_helper',
-        ['src/sdanalysis/math_helper.pyx'],
-        libraries=['m'],
-        include_dirs=[np.get_include()],
-    ),
-    Extension(
-        'sdanalysis._order',
-        ['src/sdanalysis/_order.pyx', 'src/voro++/voro++.cc'],
-        language='c++',
-        libraries=['m'],
-        include_dirs=[np.get_include(), 'src/voro++'],
-    ),
-]
+def build_extensions():
+    import numpy as np
+    from Cython.Build import cythonize
+
+    extensions = [
+        Extension(
+            'sdanalysis.math_helper',
+            ['src/sdanalysis/math_helper.pyx'],
+            libraries=['m'],
+            include_dirs=[np.get_include()],
+        ),
+        Extension(
+            'sdanalysis._order',
+            ['src/sdanalysis/_order.pyx', 'src/voro++/voro++.cc'],
+            language='c++',
+            libraries=['m'],
+            include_dirs=[np.get_include(), 'src/voro++'],
+        ),
+    ]
+
+    return cythonize(extensions, include_path=['src/'])
+
 
 setup(
     name='sdanalysis',
@@ -49,7 +54,7 @@ setup(
         'gsd',
     ],
     packages=find_packages('src'),
-    ext_modules=cythonize(extensions, include_path=['src/']),
+    ext_modules=build_extensions()
     package_dir={'': 'src'},
     include_package_data=True,
     entry_points="""
