@@ -38,6 +38,7 @@ before_cache:
   - tr '\n' '\0' < record.txt | xargs -0 sudo rm -f --
   - conda clean --all
   - rm ~/miniconda/conda-meta/history
+  - rm ~/miniconda/envs/sdanalysis-dev/conda-meta/history
   - rm -r ~/miniconda/lib/python3.6/__pycache__
 
 script:
