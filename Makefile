@@ -35,7 +35,7 @@ deploy: pre-deploy
 	( \
 		export PATH=$(PREFIX):$(PATH); \
 		source activate sdanalysis-dev; \
-		python setup.py bdist \
+		python setup.py bdist; \
 		conda install -c conda-forge twine; \
 		twine upload dist/*.tar.gz \
 	)
