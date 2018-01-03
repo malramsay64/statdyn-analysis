@@ -14,7 +14,7 @@ help:
 setup: install_miniconda
 	bash miniconda.sh -b -u -p "$(HOME)/miniconda"
 	@echo $(PATH)
-	rehash -r
+	hash -r
 	conda config --set always_yes yes --set changeps1 no
 	conda update -q conda
 	conda install conda-env
