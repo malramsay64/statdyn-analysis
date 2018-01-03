@@ -37,7 +37,8 @@ def build_extensions():
 
 setup(
     name='sdanalysis',
-    use_scm_version={'version_scheme': 'post-release'},
+    use_scm_version={'version_scheme': 'post-release',
+                     'local_scheme': lambda x: ''},
     setup_requires=[
         'setuptools_scm',
         'cython',
