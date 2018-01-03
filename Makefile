@@ -12,8 +12,9 @@ help:
 	@echo "    make deploy     deploy application"
 
 setup: install_miniconda
-	echo $(PATH)
 	bash miniconda.sh -b -u -p "$(HOME)/miniconda"
+	@echo $(PATH)
+	rehash -r
 	conda config --set always_yes yes --set changeps1 no
 	conda update -q conda
 	conda install conda-env
