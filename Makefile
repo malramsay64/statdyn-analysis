@@ -2,7 +2,8 @@
 # Makefile
 # Malcolm Ramsay, 2018-01-03 09:24
 #
-export PATH :="$(HOME)/miniconda/bin:$(PATH)"
+
+PREFIX := $(HOME)/miniconda/bin
 
 help:
 	@echo "Usage:"
@@ -11,41 +12,41 @@ help:
 	@echo "    make test       run the test suite"
 	@echo "    make deploy     deploy application"
 
-setup: install_miniconda
-	@echo $(PATH)
-	which conda
-	conda config --set always_yes yes --set changeps1 no
-	conda update -q conda
-	conda install conda-env
-	conda info -a
-	conda env update
-	pip install codecov
-	source activate sdanalysis-dev; \
+setup: $(PREFIX)
+	$(PREFIX)/conda config --set always_yes yes --set changeps1 no
+	$(PREFIX)/conda update -q conda
+	$(PREFIX)/conda install conda-env
+	$(PREFIX)/conda info -a
+	$(PREFIX)/conda env update
+	$(PREFIX)/pip install codecov
+	source $(PREFIX)/activate sdanalysis-dev; \
 	python setup.py install --single-version-externally-managed --record record.txt
 
 test:
-	source activate sdanalysis-dev; pytest
-	codecov
+	source $(PREFIX)/activate sdanalysis-dev; pytest
+	$(PREFIX)/codecov
 
 deploy: pre-deploy
 	@echo "Deploying to PyPI..."
-	source activate sdanalysis-dev; python setup.py bdist
-	twine upload dist/*.tar.gz
+	source $(PREFIX)/activate sdanalysis-dev; python setup.py bdist
+	$(PREFIX)/twine upload dist/*.tar.gz
 	@echo "Deploying to Anaconda..."
-	conda build .
+	$(PREFIX)/conda build .
 
 pre-deploy:
-	conda install -n root anaconda-client conda-build
-	conda install -n root twine
-	conda config --set anaconda_upload yes
+	$(PREFIX)/conda install -n root anaconda-client conda-build
+	$(PREFIX)/conda install -n root twine
+	$(PREFIX)/conda config --set anaconda_upload yes
 
-install_miniconda:
+$(PREFIX): miniconda.sh
+	bash miniconda.sh -b -u -p "$(HOME)/miniconda"
+
+miniconda.sh:
 ifeq ($(uname -s), "Darwin")
 	wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh
 else
 	wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
 endif
-	bash miniconda.sh -b -u -p "$(HOME)/miniconda"
 
 .PHONY: help test
 
