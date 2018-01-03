@@ -9,9 +9,7 @@ matrix:
     - os: osx
       language: generic
       before_install:
-        - brew update
-        - brew install python python3
-        - brew link --overwrite python
+        - brew install python3
 
 install:
   - make setup

@@ -12,7 +12,7 @@ help:
 	@echo "    make deploy     deploy application"
 
 setup:
-	pip install pipenv
+	pip3 install pipenv
 	pipenv install --dev --three
 	pipenv run -- pip install .
 
