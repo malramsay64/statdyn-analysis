@@ -23,7 +23,7 @@ script:
   - make test
 
 before_deploy:
-  - echo -e "[pypi]\nusername = $(TWINE_USERNAME)=\npassword=$(TWINE_PASSWORD)" > ~/.pypirc
+  - echo -e "[pypi]\nusername = $TWINE_USERNAME=\npassword=$TWINE_PASSWORD" > ~/.pypirc
 
 deploy:
   - provider: script
