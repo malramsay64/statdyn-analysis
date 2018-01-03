@@ -3,7 +3,8 @@
 # Malcolm Ramsay, 2018-01-03 09:24
 #
 
-PREFIX := $(HOME)/miniconda/bin
+PREFIX := "$(HOME)/miniconda/bin"
+SHELL := /bin/bash
 
 help:
 	@echo "Usage:"
