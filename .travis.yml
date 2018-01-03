@@ -8,11 +8,10 @@ matrix:
       python: 3.6
     - os: osx
       language: generic
-
-before_install:
-  - if [[ $TRAVIS_OS_NAME == 'osx' ]]; then \
-      brew install python python3; \
-      brew link --overwrite python; fi
+      before_install:
+        - brew update
+        - brew install python python3
+        - brew link --overwrite python
 
 install:
   - make setup
