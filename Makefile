@@ -3,7 +3,7 @@
 # Malcolm Ramsay, 2018-01-03 09:24
 #
 
-PREFIX := "$(HOME)/miniconda/bin"
+PREFIX := $(HOME)/miniconda/bin
 SHELL := /bin/bash
 miniconda := download/miniconda.sh
 
@@ -25,8 +25,7 @@ setup: $(PREFIX)
 	python setup.py install --single-version-externally-managed --record record.txt
 
 test:
-	source $(PREFIX)/activate sdanalysis-dev; pytest
-	$(PREFIX)/codecov
+	source $(PREFIX)/activate sdanalysis-dev; pytest; codecov
 
 deploy: pre-deploy
 	@echo "Deploying to PyPI..."
@@ -37,7 +36,7 @@ deploy: pre-deploy
 
 pre-deploy:
 	$(PREFIX)/conda install -n root anaconda-client conda-build
-	$(PREFIX)/conda install -n root twine
+	$(PREFIX)/conda install -n root -c conda-forge twine
 	$(PREFIX)/conda config --set anaconda_upload yes
 
 $(PREFIX): $(miniconda)
