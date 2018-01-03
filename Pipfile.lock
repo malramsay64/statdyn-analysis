@@ -143,7 +143,7 @@
         "numpy-quaternion": {
             "hashes": [
                 "sha256:3e3cad8e769934628fae9beefdb19418db9519d9b8a8c5eee7c78778fc492988",
-                "sha256:057446053be4ce72a951f919740c83a7c9fb5f2ffac22b2018a2e81a21ad2b72",
+                "sha256:057446053be4ce72a951f919740c83a7c9fb5f2ffac22b2018a2e81a21ad2b72"
             ],
             "version": "==2017.11.26.19.0.13"
         },
