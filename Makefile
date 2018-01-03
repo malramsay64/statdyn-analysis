@@ -3,9 +3,6 @@
 # Malcolm Ramsay, 2018-01-03 09:24
 #
 
-PREFIX := $(HOME)/miniconda/bin
-SHELL := /bin/bash
-miniconda := download/miniconda.sh
 
 help:
 	@echo "Usage:"
@@ -14,51 +11,23 @@ help:
 	@echo "    make test       run the test suite"
 	@echo "    make deploy     deploy application"
 
-setup: $(PREFIX)
-	( \
-		export PATH=$(PREFIX):$(PATH); \
-		conda config --set always_yes yes --set changeps1 no; \
-		conda update -q conda ; \
-		conda install conda-env; \
-		conda info -a; \
-		conda env update; \
-		source activate sdanalysis-dev; \
-		pip install codecov; \
-		python setup.py install --single-version-externally-managed --record record.txt; \
-	)
+setup:
+	pip install pipenv
+	pipenv install --dev --three
+	pipenv run -- pip install .
+
+activate:
+	pipenv shell -c
 
 test:
-	source $(PREFIX)/activate sdanalysis-dev; pytest; codecov
+	pipenv run pytest
 
-deploy: pre-deploy
-	@echo "Deploying to PyPI..."
-	( \
-		export PATH=$(PREFIX):$(PATH); \
-		source activate sdanalysis-dev; \
-		python setup.py bdist \
-		twine upload dist/*.tar.gz \
-	)
-	@echo "Deploying to Anaconda..."
-	$(PREFIX)/conda build .
+deploy:
+	pipenv run python setup.py bdist
+	pipenv run twine upload dist/*.tar.gz
 
-pre-deploy:
-	( \
-		export PATH=$(PREFIX):$(PATH); \
-		conda install -n root anaconda-client conda-build; \
-		conda install -n sdanalysis-dev -c conda-forge twine; \
-		conda config --set anaconda_upload yes; \
-	)
-
-$(PREFIX): $(miniconda)
-	bash $< -b -u -p $(shell dirname "$@")
-
-$(miniconda):
-	mkdir -p $(shell dirname "$@")
-ifeq ($(uname -s), "Darwin")
-	wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O $@
-else
-	wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $@
-endif
+clean:
+	rm dist/*
 
 .PHONY: help test
 

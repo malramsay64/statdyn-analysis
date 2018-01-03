@@ -1,23 +1,22 @@
-language: generic
+language: python
 
-os:
-  - linux
-  - osx
+matrix:
+  include:
+    - os: linux
+      python: 3.6
+    - os: osx
+      language: generic
 
 cache:
-  directories:
-    - "$HOME/miniconda"
-    - "$HOME/download"
+  pip
+
+pre-install:
+  - [ $TRAVIS_OS_NAME == 'osx' ] && \
+    brew install python python3 && \
+    brew link --overwrite python
 
 install:
   - make setup
-
-before_cache:
-  - tr '\n' '\0' < record.txt | xargs -0 sudo rm -f --
-  - conda clean --all
-  - rm ~/miniconda/conda-meta/history
-  - rm ~/miniconda/envs/sdanalysis-dev/conda-meta/history
-  - rm -r ~/miniconda/lib/python3.6/__pycache__
 
 script:
   - make test
