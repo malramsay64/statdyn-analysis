@@ -2,7 +2,7 @@
 # Makefile
 # Malcolm Ramsay, 2018-01-03 09:24
 #
-export PATH :="${HOME}/miniconda/bin:${PATH}"
+export PATH :="$(HOME)/miniconda/bin:$(PATH)"
 
 help:
 	@echo "Usage:"
@@ -12,7 +12,8 @@ help:
 	@echo "    make deploy     deploy application"
 
 setup: install_miniconda
-	bash miniconda.sh -b -u -p "${HOME}/miniconda"
+	echo $(PATH)
+	bash miniconda.sh -b -u -p "$(HOME)/miniconda"
 	conda config --set always_yes yes --set changeps1 no
 	conda update -q conda
 	conda install conda-env
