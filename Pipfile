@@ -1,0 +1,38 @@
+[[source]]
+
+url = "https://pypi.python.org/simple"
+verify_ssl = true
+name = "pypi"
+
+
+[packages]
+
+numpy = "==1.13.3"
+scipy = "==1.0.0"
+scikit-learn = "==0.19.0"
+pandas = "*"
+tables = "*"
+bokeh = "*"
+matplotlib = "*"
+gsd = "*"
+
+
+[dev-packages]
+
+pytest = "*"
+pylint = "*"
+numpy-quaternion = "*"
+cython = "*"
+setuptools = "*"
+setuptools-scm = "*"
+hypothesis = "*"
+coverage = "*"
+mypy = "*"
+pytest-mypy = "*"
+pytest-pylint = "*"
+pytest-cov = "*"
+
+
+[requires]
+
+python_version = "3.6"
