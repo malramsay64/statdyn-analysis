@@ -35,9 +35,7 @@ deploy: pre-deploy
 	( \
 		export PATH=$(PREFIX):$(PATH); \
 		source activate sdanalysis-dev; \
-		python setup.py bdist; \
-		conda install -c conda-forge twine; \
-		twine upload dist/*.tar.gz \
+		python setup.py bdist upload; \
 	)
 	@echo "Deploying to Anaconda..."
 	$(PREFIX)/conda build . -c conda-forge -c moble --user $(CONDA_USER) --token $(CONDA_UPLOAD_TOKEN)
