@@ -36,6 +36,7 @@ deploy: pre-deploy
 		export PATH=$(PREFIX):$(PATH); \
 		source activate sdanalysis-dev; \
 		python setup.py bdist \
+		pip install -y twine; \
 		twine upload dist/*.tar.gz \
 	)
 	@echo "Deploying to Anaconda..."
@@ -45,7 +46,6 @@ pre-deploy:
 	( \
 		export PATH=$(PREFIX):$(PATH); \
 		conda install -n root anaconda-client conda-build; \
-		conda install -n sdanalysis-dev -c conda-forge twine; \
 		conda config --set anaconda_upload yes; \
 	)
 
