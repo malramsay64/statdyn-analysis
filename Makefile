@@ -15,29 +15,39 @@ help:
 	@echo "    make deploy     deploy application"
 
 setup: $(PREFIX)
-	$(PREFIX)/conda config --set always_yes yes --set changeps1 no
-	$(PREFIX)/conda update -q conda
-	$(PREFIX)/conda install conda-env
-	$(PREFIX)/conda info -a
-	$(PREFIX)/conda env update
-	$(PREFIX)/pip install codecov
-	source $(PREFIX)/activate sdanalysis-dev; \
-	python setup.py install --single-version-externally-managed --record record.txt
+	( \
+		export PATH=$(PREFIX):$(PATH); \
+		conda config --set always_yes yes --set changeps1 no; \
+		conda update -q conda ; \
+		conda install conda-env; \
+		conda info -a; \
+		conda env update; \
+		source activate sdanalysis-dev; \
+		pip install codecov; \
+		python setup.py install --single-version-externally-managed --record record.txt; \
+	)
 
 test:
 	source $(PREFIX)/activate sdanalysis-dev; pytest; codecov
 
 deploy: pre-deploy
 	@echo "Deploying to PyPI..."
-	source $(PREFIX)/activate sdanalysis-dev; python setup.py bdist
-	$(PREFIX)/twine upload dist/*.tar.gz
+	( \
+		export PATH=$(PREFIX):$(PATH); \
+		source activate sdanalysis-dev; \
+		python setup.py bdist \
+		twine upload dist/*.tar.gz \
+	)
 	@echo "Deploying to Anaconda..."
 	$(PREFIX)/conda build .
 
 pre-deploy:
-	$(PREFIX)/conda install -n root anaconda-client conda-build
-	$(PREFIX)/conda install -n root -c conda-forge twine
-	$(PREFIX)/conda config --set anaconda_upload yes
+	( \
+		export PATH=$(PREFIX):$(PATH); \
+		conda install -n root anaconda-client conda-build; \
+		conda install -n sdanalysis-dev -c conda-forge twine; \
+		conda config --set anaconda_upload yes; \
+	)
 
 $(PREFIX): $(miniconda)
 	bash $< -b -u -p $(shell dirname "$@")
