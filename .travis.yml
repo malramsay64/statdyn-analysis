@@ -7,7 +7,7 @@ os:
 cache:
   directories:
     - "$HOME/miniconda"
-    - "$HOME/miniconda.sh"
+    - "$HOME/download"
 
 install:
   - make setup

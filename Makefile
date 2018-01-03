@@ -5,6 +5,7 @@
 
 PREFIX := "$(HOME)/miniconda/bin"
 SHELL := /bin/bash
+miniconda := download/miniconda.sh
 
 help:
 	@echo "Usage:"
@@ -39,14 +40,15 @@ pre-deploy:
 	$(PREFIX)/conda install -n root twine
 	$(PREFIX)/conda config --set anaconda_upload yes
 
-$(PREFIX): miniconda.sh
-	bash miniconda.sh -b -u -p "$(HOME)/miniconda"
+$(PREFIX): $(miniconda)
+	bash $< -b -u -p $(shell dirname "$@")
 
-miniconda.sh:
+$(miniconda):
+	mkdir -p $(shell dirname "$@")
 ifeq ($(uname -s), "Darwin")
-	wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O miniconda.sh
+	wget https://repo.continuum.io/miniconda/Miniconda3-latest-MacOSX-x86_64.sh -O $@
 else
-	wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
+	wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O $@
 endif
 
 .PHONY: help test
