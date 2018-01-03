@@ -40,7 +40,7 @@ deploy: pre-deploy
 		twine upload dist/*.tar.gz \
 	)
 	@echo "Deploying to Anaconda..."
-	$(PREFIX)/conda build .
+	$(PREFIX)/conda build . -c conda-forge -c moble
 
 pre-deploy:
 	( \
