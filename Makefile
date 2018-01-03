@@ -12,9 +12,8 @@ help:
 	@echo "    make deploy     deploy application"
 
 setup: install_miniconda
-	bash miniconda.sh -b -u -p "$(HOME)/miniconda"
 	@echo $(PATH)
-	/usr/bin/hash -r
+	which conda
 	conda config --set always_yes yes --set changeps1 no
 	conda update -q conda
 	conda install conda-env
@@ -46,6 +45,7 @@ ifeq ($(uname -s), "Darwin")
 else
 	wget https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh -O miniconda.sh
 endif
+	bash miniconda.sh -b -u -p "$(HOME)/miniconda"
 
 .PHONY: help test
 
