@@ -9,12 +9,12 @@
             "os_name": "posix",
             "platform_machine": "x86_64",
             "platform_python_implementation": "CPython",
-            "platform_release": "4.14.7-300.fc27.x86_64",
-            "platform_system": "Linux",
-            "platform_version": "#1 SMP Mon Dec 18 16:06:12 UTC 2017",
+            "platform_release": "17.3.0",
+            "platform_system": "Darwin",
+            "platform_version": "Darwin Kernel Version 17.3.0: Thu Nov  9 18:09:22 PST 2017; root:xnu-4570.31.3~1/RELEASE_X86_64",
             "python_full_version": "3.6.3",
             "python_version": "3.6",
-            "sys_platform": "linux"
+            "sys_platform": "darwin"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -140,13 +140,6 @@
             ],
             "version": "==1.13.3"
         },
-        "numpy-quaternion": {
-            "hashes": [
-                "sha256:3e3cad8e769934628fae9beefdb19418db9519d9b8a8c5eee7c78778fc492988",
-                "sha256:057446053be4ce72a951f919740c83a7c9fb5f2ffac22b2018a2e81a21ad2b72"
-            ],
-            "version": "==2017.11.26.19.0.13"
-        },
         "pandas": {
             "hashes": [
                 "sha256:68ac484e857dcbbd07ea7c6f516cc67f7f143f5313d9bc661470e7f473528882",
@@ -218,12 +211,6 @@
                 "sha256:5ac82e411044fb129bae5cfbeb3ba626acb2af31a8d17d175004b70862a741a7"
             ],
             "version": "==3.12"
-        },
-        "quaternion": {
-            "hashes": [
-                "sha256:c2a28dfabe1ded237fb1bab491a8a9752893483281629e8a682d4cdc7b5d29a9"
-            ],
-            "version": "==0.3.1"
         },
         "scikit-learn": {
             "hashes": [
@@ -511,7 +498,9 @@
         },
         "numpy-quaternion": {
             "hashes": [
-                "sha256:3e3cad8e769934628fae9beefdb19418db9519d9b8a8c5eee7c78778fc492988"
+                "sha256:3e3cad8e769934628fae9beefdb19418db9519d9b8a8c5eee7c78778fc492988",
+                "sha256:057446053be4ce72a951f919740c83a7c9fb5f2ffac22b2018a2e81a21ad2b72",
+                "sha256:3612c26c4e0a1c16019f6bc80fbfe48ea4318d16d00d2c1d5a0b800e7526334d"
             ],
             "version": "==2017.11.26.19.0.13"
         },

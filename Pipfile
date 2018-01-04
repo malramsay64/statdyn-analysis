@@ -15,9 +15,6 @@ tables = "*"
 bokeh = "*"
 matplotlib = "*"
 gsd = "*"
-quaternion = "*"
-numpy-quaternion = "*"
-
 
 [dev-packages]
 
