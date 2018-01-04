@@ -39,6 +39,7 @@ setup(
     name='sdanalysis',
     use_scm_version={'version_scheme': 'post-release',
                      'local_scheme': 'dirty-tag'},
+    python_requires='>=3.6',
     setup_requires=[
         'setuptools_scm',
         'cython',

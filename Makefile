@@ -20,7 +20,11 @@ test:
 	pipenv run pytest
 
 deploy: clean
-	pipenv run python setup.py bdist
+ifeq ($(shell uname), 'Darwin')
+	pipenv run python setup.py bdist_wheel
+else
+	pipenv run python setup.py sdist
+endif
 	pipenv run twine upload --skip-existing dist/*.tar.gz
 
 clean:
