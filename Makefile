@@ -21,7 +21,7 @@ test:
 
 deploy:
 	pipenv run python setup.py bdist
-	pipenv run twine upload dist/*.tar.gz
+	pipenv run twine upload --skip-existing dist/*.tar.gz
 
 clean:
 	rm dist/*
