@@ -19,14 +19,14 @@ setup:
 test:
 	pipenv run pytest
 
-deploy:
+deploy: clean
 	pipenv run python setup.py bdist
 	pipenv run twine upload --skip-existing dist/*.tar.gz
 
 clean:
-	rm dist/*
+	rm -f dist/*
 
-.PHONY: help test
+.PHONY: help test clean deploy
 
 # vim:ft=make
 #
