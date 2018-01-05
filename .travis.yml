@@ -12,6 +12,7 @@ matrix:
       language: generic
       before_install:
         - brew install python3
+        - uname -s
 
 install:
   - make setup
