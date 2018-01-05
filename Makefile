@@ -3,7 +3,7 @@
 # Malcolm Ramsay, 2018-01-03 09:24
 #
 #
-ifeq ($(shell uname), 'Darwin')
+ifeq ($(shell uname -s), 'Darwin')
 CMD:= pipenv run
 else
 CMD:= docker run -e TWINE_USERNAME=${TWINE_USERNAME} -e TWINE_PASSWORD=${TWINE_PASSWORD} build_wheel
@@ -17,7 +17,7 @@ help:
 	@echo "    make deploy     deploy application"
 
 setup:
-ifeq ($(shell uname), 'Darwin')
+ifeq ($(shell uname -s), 'Darwin')
 	pip3 install pipenv
 	pipenv install --dev --three
 	pipenv run -- pip install .
@@ -29,7 +29,7 @@ test:
 	$(CMD) pytest
 
 deploy:
-ifeq ($(shell uname), 'Darwin')
+ifeq ($(shell uname -s), 'Darwin')
 	pipenv run python setup.py bdist_wheel
 	pipenv run twine upload --skip-existing dist/*
 else
