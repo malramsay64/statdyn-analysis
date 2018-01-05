@@ -6,7 +6,7 @@
 ifeq ($(shell uname), 'Darwin')
 CMD:= pipenv run
 else
-CMD:= docker run build_wheel -e TWINE_USERNAME=${TWINE_USERNAME} -e TWINE_PASSWORD=${TWINE_PASSWORD}
+CMD:= docker run -e TWINE_USERNAME=${TWINE_USERNAME} -e TWINE_PASSWORD=${TWINE_PASSWORD} build_wheel
 endif
 
 help:
