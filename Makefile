@@ -34,7 +34,7 @@ ifeq ($(shell uname), 'Darwin')
 	pipenv run twine upload --skip-existing dist/*
 else
 	$(CMD) bash -c "python setup.py bdist_wheel && \
-		auditwheel repair dist/* && /
+		auditwheel repair dist/* && \
 		twine upload --skip-existing wheelhouse/*"
 endif
 
