@@ -11,10 +11,10 @@
 from setuptools import find_packages, setup
 from setuptools.extension import Extension
 
+import numpy as np
+from Cython.Build import cythonize
 
 def build_extensions():
-    import numpy as np
-    from Cython.Build import cythonize
 
     extensions = [
         Extension(
