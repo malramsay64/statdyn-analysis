@@ -12,9 +12,18 @@ from setuptools import find_packages, setup
 from setuptools.extension import Extension
 
 
+def get_version():
+    g = {}
+    exec(open("src/sdanalysis/version.py").read(), g)
+    return g["__version__"]
+
+
 def build_extensions():
-    import numpy as np
-    from Cython.Build import cythonize
+    try:
+        import numpy as np
+        from Cython.Build import cythonize
+    except ModuleNotFoundError:
+        return
 
     extensions = [
         Extension(
@@ -37,11 +46,9 @@ def build_extensions():
 
 setup(
     name='sdanalysis',
-    use_scm_version={'version_scheme': 'post-release',
-                     'local_scheme': 'dirty-tag'},
+    version=get_version(),
     python_requires='>=3.6',
     setup_requires=[
-        'setuptools_scm',
         'cython',
         'numpy',
     ],

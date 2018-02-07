@@ -18,7 +18,7 @@ dependencies:
     - quaternion
     - cython=0.27.3
     - setuptools=36.5.0
-    - setuptools_scm
+    - bumpversion
     - hypothesis=3.38.5
     - coverage
     - pip:

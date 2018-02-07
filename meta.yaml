@@ -1,6 +1,6 @@
 package:
   name: sdanalysis
-  version: {{ GIT_DESCRIBE_TAG }}
+  version: "{{ load_setup_py_data().version }}"
 
 about:
   home: https://github.com/malramsay64/statdyn-analysis
@@ -15,7 +15,6 @@ requirements:
     - python {{ python }}
     - numpy {{ numpy }}
     - setuptools
-    - setuptools_scm
     - cython >=0.27.3
 
 

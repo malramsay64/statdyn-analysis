@@ -21,15 +21,9 @@ from pkg_resources import DistributionNotFound, get_distribution
 from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
 from .read import process_gsd
+from .version import __version__
 
 logger = logging.getLogger(__name__)
-
-
-try:
-    __version__ = get_distribution('statdyn-analysis').version
-except DistributionNotFound:
-    # package is not installed
-    __version__ = "dev"
 
 
 MOLECULE_OPTIONS = {
@@ -121,7 +115,7 @@ def create_parser() -> argparse.ArgumentParser:
     default_parser.add_argument(
         '--version',
         action='version',
-        version='sdrun {0}'.format(__version__)
+        version='sdanalysis {0}'.format(__version__)
     )
 
     simtype = argparse.ArgumentParser(add_help=False, parents=[default_parser])
