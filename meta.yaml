@@ -1,6 +1,6 @@
 package:
   name: sdanalysis
-  version: "{{ load_setup_py_data().version }}"
+  version: 0.4.8
 
 about:
   home: https://github.com/malramsay64/statdyn-analysis
