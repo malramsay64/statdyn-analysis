@@ -13,10 +13,9 @@ from setuptools.extension import Extension
 try:
     import numpy as np
     from Cython.Build import cythonize
-except ModuleNotFoundError:
+except ModuleNotFoundError as e:
     print('Numpy and Cython are required to install sdanalysis.')
-    raise ModuleNotFoundError
-
+    raise
 
 def get_version():
     g = {}
