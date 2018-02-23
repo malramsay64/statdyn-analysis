@@ -32,10 +32,10 @@ extensions = [
     ),
     Extension(
         'sdanalysis._order',
-        ['src/sdanalysis/_order.pyx', 'src/voro++/voro++.cc'],
+        ['src/sdanalysis/_order.pyx', 'src/voro/voro++.cc'],
         language='c++',
         libraries=['m'],
-        include_dirs=[np.get_include(), 'src/voro++'],
+        include_dirs=[np.get_include(), 'src/voro'],
     ),
 ]
 
