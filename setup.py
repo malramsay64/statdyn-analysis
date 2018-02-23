@@ -60,7 +60,7 @@ setup(
         'gsd',
     ],
     packages=find_packages('src'),
-    ext_modules=cythonize(extensions, include_path=['src/'])
+    ext_modules=cythonize(extensions, include_path=['src/']),
     package_dir={'': 'src'},
     include_package_data=True,
     entry_points="""
