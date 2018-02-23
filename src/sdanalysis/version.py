@@ -6,4 +6,4 @@
 #
 # Distributed under terms of the MIT license.
 
-__version__ = '0.4.8'
+__version__ = '0.4.9'
