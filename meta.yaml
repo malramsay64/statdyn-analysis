@@ -20,7 +20,7 @@ requirements:
 
   run:
     - {{ pin_compatible('python', max_pin='x.x') }}
-    - {{ pin_compatible('numpy', max_pin='x.x.x') }}
+    - {{ pin_compatible('numpy', max_pin='x.x') }}
     - scipy >=1.0
     - scikit-learn ==0.19.0
     - pandas >=0.21
@@ -43,7 +43,7 @@ test:
   requires:
     - pytest
     - hypothesis
-    - quaternion
+    - quaternion = 2018.02*
   source_files:
     - test/
   commands:

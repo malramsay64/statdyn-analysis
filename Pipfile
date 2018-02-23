@@ -7,7 +7,7 @@ name = "pypi"
 
 [packages]
 
-numpy = "==1.13.3"
+numpy = "==1.14"
 scipy = "==1.0.0"
 scikit-learn = "==0.19.0"
 pandas = "*"
@@ -21,7 +21,7 @@ gsd = "*"
 
 pytest = "*"
 pylint = "*"
-numpy-quaternion = "*"
+numpy-quaternion = "2018.02"
 cython = "*"
 setuptools = "*"
 setuptools-scm = "*"
