@@ -22,13 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 def process_gsd(infile: str,
-                structural_length: float = 0.4,
-                gen_steps: int = 20000,
-                max_gen: int = 1000,
-                num_linear: int = 100,
-                step_limit: int = None,
-                outfile: str = None,
-                buffer_multiplier: int = 1,
+                gen_steps: int=20000,
+                max_gen: int=1000,
+                num_linear: int=100,
+                step_limit: int=None,
+                outfile: str=None,
+                buffer_multiplier: int=1,
                 ) -> pandas.DataFrame:
     """Read a gsd file and compute the dynamics quantities.
 
@@ -75,6 +74,7 @@ def process_gsd(infile: str,
                 except RuntimeError:
                     frame_index -= 1
 
+
         logger.debug('Infile: %s contains %d steps', infile, num_steps)
         step_iter = GenerateStepSeries(num_steps,
                                        num_linear=num_linear,
@@ -103,8 +103,7 @@ def process_gsd(infile: str,
                 indexes = step_iter.get_index()
                 for index in indexes:
                     try:
-                        logger.debug('len(keyframes): %d, len(relaxframes): %d',
-                                     len(keyframes), len(relaxframes))
+                        logger.debug(f'len(keyframes): {len(keyframes)}, len(relaxframes): {len(relaxframes)}')
                         mydyn = keyframes[index]
                         myrelax = relaxframes[index]
                     except IndexError:
@@ -147,7 +146,7 @@ def process_gsd(infile: str,
                 if outfile and len(dataframes) >= buffer_size:
                     pandas.DataFrame.from_records(dataframes).to_hdf(
                         outfile,
-                        f'raw/{mol}-{temp}-{press}',
+                        'dynamics',
                         format='table',
                         append=append_file,
                     )
@@ -168,7 +167,7 @@ def process_gsd(infile: str,
         pandas.concat((relax.summary() for relax in relaxframes),
                       keys=range(len(relaxframes))).to_hdf(
                           outfile,
-                          f'single_molecule/{mol}-{temp}-{press}',
+                          'relaxations',
                           format='table',
                           append=False,
                       )
