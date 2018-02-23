@@ -16,6 +16,7 @@ bokeh = "*"
 matplotlib = "*"
 gsd = "*"
 
+
 [dev-packages]
 
 pytest = "*"
@@ -31,6 +32,7 @@ pytest-mypy = "*"
 pytest-pylint = "*"
 pytest-cov = "*"
 twine = "*"
+bumpversion = "*"
 
 
 [requires]
