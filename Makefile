@@ -14,7 +14,8 @@ help:
 setup:
 	pip3 install pipenv
 	pipenv install --dev --three
-	pipenv run -- pip install .
+	pipenv run -- python setup.py sdist
+	pipenv run -- pip install dist/*
 
 test:
 	pipenv run pytest
