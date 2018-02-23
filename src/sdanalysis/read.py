@@ -22,12 +22,12 @@ logger = logging.getLogger(__name__)
 
 
 def process_gsd(infile: str,
-                gen_steps: int=20000,
-                max_gen: int=1000,
-                num_linear: int=100,
-                step_limit: int=None,
-                outfile: str=None,
-                buffer_multiplier: int=1,
+                gen_steps: int = 20000,
+                max_gen: int = 1000,
+                num_linear: int = 100,
+                step_limit: int = None,
+                outfile: str = None,
+                buffer_multiplier: int = 1,
                 ) -> pandas.DataFrame:
     """Read a gsd file and compute the dynamics quantities.
 

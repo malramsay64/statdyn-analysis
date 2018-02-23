@@ -32,8 +32,8 @@ class dynamics(object):
                  timestep: int,
                  box: np.ndarray,
                  position: np.ndarray,
-                 orientation: np.ndarray=None,
-                 molecule: Molecule=Trimer(),
+                 orientation: np.ndarray = None,
+                 molecule: Molecule = Trimer(),
                  ) -> None:
         """Initialise a dynamics instance.
 
@@ -97,7 +97,7 @@ class dynamics(object):
 
     def computeStructRelax(self, position: np.ndarray,
                            orientation: np.ndarray,
-                           threshold: float=0.3
+                           threshold: float = 0.3
                            ) -> float:
         particle_displacement = translationalDisplacement(
             self.box,
@@ -109,7 +109,7 @@ class dynamics(object):
     def computeAll(self,
                    timestep: int,
                    position: np.ndarray,
-                   orientation: np.ndarray=None,
+                   orientation: np.ndarray = None,
                    ) -> Dict[str, Any]:
         """Compute all dynamics quantities of interest."""
 
@@ -167,7 +167,7 @@ class lastMolecularRelaxation(molecularRelaxation):
     def __init__(self,
                  num_elements: int,
                  threshold: float,
-                 irreversibility: float=1.
+                 irreversibility: float = 1.
                  ) -> None:
         super().__init__(num_elements, threshold)
         self._state = np.zeros(self.num_elements, dtype=np.uint8)
@@ -207,7 +207,7 @@ class relaxations(object):
                  box: np.ndarray,
                  position: np.ndarray,
                  orientation: np.ndarray,
-                 molecule: Molecule=None) -> None:
+                 molecule: Molecule = None) -> None:
         self.init_time = timestep
         self.box = box
         num_elements = position.shape[0]
