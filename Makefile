@@ -2,7 +2,12 @@
 # Makefile
 # Malcolm Ramsay, 2018-01-03 09:24
 #
-
+#
+ifeq ($(shell uname -s),Darwin)
+CMD:= pipenv run
+else
+CMD:= docker run -e TWINE_USERNAME=${TWINE_USERNAME} -e TWINE_PASSWORD=${TWINE_PASSWORD} build_wheel
+endif
 
 help:
 	@echo "Usage:"
@@ -12,21 +17,28 @@ help:
 	@echo "    make deploy     deploy application"
 
 setup:
+	echo $(CMD)
+ifeq ($(shell uname -s),Darwin)
 	pip3 install pipenv
 	pipenv install --dev --three
-	pipenv run -- python setup.py sdist
+	pipenv run -- python setup.py bdist_wheel
 	pipenv run -- pip install dist/*
+else
+	docker build -t build_wheel .
+endif
 
 test:
-	pipenv run pytest
+	$(CMD) pytest
 
-deploy: clean
-ifeq ($(shell uname), 'Darwin')
+deploy:
+ifeq ($(shell uname -s),Darwin)
 	pipenv run python setup.py bdist_wheel
+	pipenv run twine upload --skip-existing dist/*
 else
-	pipenv run python setup.py sdist
+	$(CMD) bash -c "python setup.py bdist_wheel && \
+		auditwheel repair dist/*.whl && \
+		twine upload --skip-existing wheelhouse/*"
 endif
-	pipenv run twine upload --skip-existing dist/*.tar.gz
 
 clean:
 	rm -f dist/*
