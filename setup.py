@@ -10,6 +10,12 @@
 
 from setuptools import find_packages, setup
 from setuptools.extension import Extension
+try:
+    import numpy as np
+    from Cython.Build import cythonize
+except ModuleNotFoundError:
+    print('Numpy and Cython are required to install sdanalysis.')
+    raise ModuleNotFoundError
 
 
 def get_version():
@@ -18,30 +24,21 @@ def get_version():
     return g["__version__"]
 
 
-def build_extensions():
-    try:
-        import numpy as np
-        from Cython.Build import cythonize
-    except ModuleNotFoundError:
-        return
-
-    extensions = [
-        Extension(
-            'sdanalysis.math_helper',
-            ['src/sdanalysis/math_helper.pyx'],
-            libraries=['m'],
-            include_dirs=[np.get_include()],
-        ),
-        Extension(
-            'sdanalysis._order',
-            ['src/sdanalysis/_order.pyx', 'src/voro++/voro++.cc'],
-            language='c++',
-            libraries=['m'],
-            include_dirs=[np.get_include(), 'src/voro++'],
-        ),
-    ]
-
-    return cythonize(extensions, include_path=['src/'])
+extensions = [
+    Extension(
+        'sdanalysis.math_helper',
+        ['src/sdanalysis/math_helper.pyx'],
+        libraries=['m'],
+        include_dirs=[np.get_include()],
+    ),
+    Extension(
+        'sdanalysis._order',
+        ['src/sdanalysis/_order.pyx', 'src/voro++/voro++.cc'],
+        language='c++',
+        libraries=['m'],
+        include_dirs=[np.get_include(), 'src/voro++'],
+    ),
+]
 
 
 setup(
@@ -63,7 +60,7 @@ setup(
         'gsd',
     ],
     packages=find_packages('src'),
-    ext_modules=build_extensions(),
+    ext_modules=cythonize(extensions, include_path=['src/'])
     package_dir={'': 'src'},
     include_package_data=True,
     entry_points="""
