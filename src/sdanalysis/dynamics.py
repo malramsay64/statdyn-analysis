@@ -201,6 +201,19 @@ class structRelaxations(molecularRelaxation):
         return self._status.reshape((-1, self.molecule.num_particles)).mean(axis=1)
 
 
+def create_mol_relaxations(num_elements: int
+                           threshold: float,
+                           last_passage: bool = False,
+                           last_passage_cutoff: float = 1.0,
+                           **kwargs,
+                           ) -> Tuple[str, molecularRelaxation]:
+    if last_passage:
+        return lastMolecularRelaxation(num_elements,
+                                       threshold,
+                                       last_passage_cutoff)
+    return molecularRelaxation(num_elements, threshold)
+
+
 class relaxations(object):
 
     def __init__(self, timestep: int,
@@ -210,25 +223,25 @@ class relaxations(object):
                  molecule: Molecule = None) -> None:
         self.init_time = timestep
         self.box = box
-        num_elements = position.shape[0]
+        self._num_elements = position.shape[0]
+
         self.init_position = position
         self.init_orientation = orientation
-        self.mol_relax = {
-            'tau_D1': molecularRelaxation(num_elements, threshold=1.),
-            'tau_D03': molecularRelaxation(num_elements, threshold=0.3),
-            'tau_D04': molecularRelaxation(num_elements, threshold=0.4),
-            'tau_DL04': lastMolecularRelaxation(num_elements, threshold=0.4),
-            'tau_T2': molecularRelaxation(num_elements, threshold=np.pi/2),
-            'tau_T4': molecularRelaxation(num_elements, threshold=np.pi/4),
-        }
-        self.mol_vector = None
-        if molecule:
-            self.mol_vector = molecule.positions.astype(np.float32)
-            self.mol_relax['tau_S03'] = structRelaxations(
-                num_elements,
-                threshold=0.3,
-                molecule=molecule,
-            )
+        # set defualt values for mol_relax
+        self.mol_relax = self.set_mol_relax([
+            {'name': 'tau_D1', 'threshold': 1.},
+            {'name': 'tau_D04', 'threshold': 0.4},
+            {'name': 'tau_DL04', 'threshold': 0.4, 'last_passage': True},
+            {'name': 'tau_T2', 'threshold': np.pi/2},
+            {'name': 'tau_T3', 'threshold': np.pi/3},
+            {'name': 'tau_T4', 'threshold': np.pi/4},
+        ])
+
+    def set_mol_relax(self, definition: str):
+        self.mol_relax = {}
+        for item in definition:
+            self.mol_relax[item.get('name')] = create_mol_relaxations(
+                self.num_elements, **item)
 
     def get_timediff(self, timestep: int):
         return timestep - self.init_time
@@ -239,17 +252,9 @@ class relaxations(object):
             ) -> None:
         displacement = translationalDisplacement(self.box, self.init_position, position)
         rotation = rotationalDisplacement(self.init_orientation, orientation)
-        if self.mol_vector is not None:
-            particle_displacement = translationalDisplacement(
-                self.box,
-                molecule2particles(self.init_position, self.init_orientation, self.mol_vector),
-                molecule2particles(position, orientation, self.mol_vector)
-            )
         for key, func in self.mol_relax.items():
             if 'D' in key:
                 func.add(self.get_timediff(timestep), displacement)
-            elif 'S' in key:
-                func.add(self.get_timediff(timestep), particle_displacement)
             else:
                 func.add(self.get_timediff(timestep), rotation)
 
