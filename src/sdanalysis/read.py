@@ -75,9 +75,9 @@ class writeCache():
         self._append = False
 
     def append(self, item: Any) -> None:
-        self._cache.append(item)
-        if len(self._cache) > self._cache_size:
+        if len(self._cache) == self._cache_size:
             self.flush()
+        self._cache.append(item)
 
     def flush(self) -> None:
         pandas.DataFrame.from_records(self._cache).to_hdf(
