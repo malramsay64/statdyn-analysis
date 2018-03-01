@@ -9,7 +9,7 @@
 """Compute dynamic properties."""
 
 import logging
-from typing import Any, Dict
+from typing import Any, Dict, Tuple
 
 import numpy as np
 import pandas
@@ -201,7 +201,7 @@ class structRelaxations(molecularRelaxation):
         return self._status.reshape((-1, self.molecule.num_particles)).mean(axis=1)
 
 
-def create_mol_relaxations(num_elements: int
+def create_mol_relaxations(num_elements: int,
                            threshold: float,
                            last_passage: bool = False,
                            last_passage_cutoff: float = 1.0,
@@ -228,7 +228,7 @@ class relaxations(object):
         self.init_position = position
         self.init_orientation = orientation
         # set defualt values for mol_relax
-        self.mol_relax = self.set_mol_relax([
+        self.set_mol_relax([
             {'name': 'tau_D1', 'threshold': 1.},
             {'name': 'tau_D04', 'threshold': 0.4},
             {'name': 'tau_DL04', 'threshold': 0.4, 'last_passage': True},
@@ -241,7 +241,7 @@ class relaxations(object):
         self.mol_relax = {}
         for item in definition:
             self.mol_relax[item.get('name')] = create_mol_relaxations(
-                self.num_elements, **item)
+                self._num_elements, **item)
 
     def get_timediff(self, timestep: int):
         return timestep - self.init_time

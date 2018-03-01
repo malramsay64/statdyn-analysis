@@ -9,6 +9,7 @@
 """Read input files and compute dynamic and thermodynamic quantities."""
 
 import logging
+from pathlib import Path
 from typing import Any, Dict, List
 
 import gsd.hoomd
@@ -16,19 +17,80 @@ import pandas
 
 from .dynamics import dynamics, relaxations
 from .molecules import Trimer
+from .params import SimulationParams
 from .StepSize import GenerateStepSeries
 
 logger = logging.getLogger(__name__)
 
 
-def process_gsd(infile: str,
-                gen_steps: int = 20000,
-                max_gen: int = 1000,
-                num_linear: int = 100,
-                step_limit: int = None,
-                outfile: str = None,
-                buffer_multiplier: int = 1,
-                ) -> pandas.DataFrame:
+def process_gsd(sim_params: SimulationParams):
+    with gsd.hoomd.open(sim_params.infile, 'rb') as src:
+        # Compute steps in gsd file
+        if sim_params.parameters.get('step_limit') is not None:
+            num_steps = sim_params.step_limit
+        else:
+            while True:
+                frame_index = -1
+                try:
+                    num_steps = src[-1].configuration.step
+                    break
+                except RuntimeError:
+                    frame_index -= 1
+        logger.debug('Infile: %s contains %d steps', sim_params.infile, num_steps)
+
+        step_iter = GenerateStepSeries(num_steps,
+                                       num_linear=sim_params.num_linear,
+                                       gen_steps=sim_params.gen_steps,
+                                       max_gen=sim_params.max_gen)
+        curr_step = 0
+        for frame in src:
+            logger.debug('Step %d with index %s',
+                         curr_step, step_iter.get_index())
+
+            # This handles when the generators don't match up
+            if curr_step > frame.configuration.step:
+                logger.warning('Step missing in iterator: current %d, frame %d',
+                               curr_step, frame.configuration.step)
+                continue
+
+            elif curr_step < frame.configuration.step:
+                logger.warning('Step missing in gsd trajectory: current %d, frame %d',
+                               curr_step, frame.configuration.step)
+                while curr_step < frame.configuration.step:
+                    curr_step = step_iter.next()
+
+            if curr_step > num_steps:
+                raise StopIteration
+
+            if curr_step == frame.configuration.step:
+                yield curr_step, step_iter.get_index(), frame
+            curr_step = step_iter.next()
+
+
+class writeCache():
+    def __init__(self, filename: Path, cache_multiplier: int = 1) -> None:
+        self._cache_size = 8192 * cache_multiplier
+        self._cache = []
+        self._outfile = filename
+        self._append = False
+
+    def append(self, item: Any) -> None:
+        self._cache.append(item)
+        if len(self._cache) > self._cache_size:
+            self.flush()
+
+    def flush(self) -> None:
+        pandas.DataFrame.from_records(self._cache).to_hdf(
+            self._outfile,
+            'dynamics',
+            format='table',
+            append=self._append,
+        )
+        self._append = True
+        self._cache.clear()
+
+
+def process_file(sim_params: SimulationParams) -> None:
     """Read a gsd file and compute the dynamics quantities.
 
     This computes the dynamic quantities from a gsd file returning the
@@ -55,122 +117,65 @@ def process_gsd(infile: str,
         (py:class:`pandas.DataFrame`): DataFrame with the dynamics quantities.
 
     """
-    dataframes: List[Dict[str, Any]] = []
+
+    try:
+        outfile = sim_params.outfile
+        dataframes = writeCache(outfile)
+    except AttributeError:
+        outfile = ''
+        dataframes = []
     keyframes: List[dynamics] = []
     relaxframes: List[relaxations] = []
-    append_file = False
-    buffer_size = int(buffer_multiplier * 8192)
 
-    curr_step = 0
-    with gsd.hoomd.open(infile, 'rb') as src:
-        if step_limit is not None:
-            num_steps = step_limit
-        else:
-            while True:
-                frame_index = -1
-                try:
-                    num_steps = src[-1].configuration.step
-                    break
-                except RuntimeError:
-                    frame_index -= 1
+    if sim_params.infile.endswith('.gsd'):
+        file_iterator = process_gsd(sim_params)
 
+    for curr_step, indexes, frame in file_iterator:
+        for index in indexes:
+            try:
+                logger.debug(f'len(keyframes): {len(keyframes)}, len(relaxframes): {len(relaxframes)}')
+                mydyn = keyframes[index]
+                myrelax = relaxframes[index]
+            except IndexError:
+                logger.debug('Create keyframe at step %s', curr_step)
+                keyframes.append(dynamics(
+                    timestep=frame.configuration.step,
+                    box=frame.configuration.box,
+                    position=frame.particles.position,
+                    orientation=frame.particles.orientation,
+                ))
+                relaxframes.append(relaxations(
+                    timestep=frame.configuration.step,
+                    box=frame.configuration.box,
+                    position=frame.particles.position,
+                    orientation=frame.particles.orientation,
+                    molecule=Trimer()
+                ))
+                mydyn = keyframes[index]
+                myrelax = relaxframes[index]
 
-        logger.debug('Infile: %s contains %d steps', infile, num_steps)
-        step_iter = GenerateStepSeries(num_steps,
-                                       num_linear=num_linear,
-                                       gen_steps=gen_steps,
-                                       max_gen=max_gen)
-        for frame in src:
-            logger.debug('Step %d with index %s',
-                         curr_step, step_iter.get_index())
-
-            # This handles when the generators don't match up
-            if curr_step > frame.configuration.step:
-                logger.warning('Step missing in iterator: current %d, frame %d',
-                               curr_step, frame.configuration.step)
-                continue
-
-            elif curr_step < frame.configuration.step:
-                logger.warning('Step missing in gsd trajectory: current %d, frame %d',
-                               curr_step, frame.configuration.step)
-                try:
-                    while curr_step < frame.configuration.step:
-                        curr_step = step_iter.next()
-                except StopIteration:
-                    break
-
-            if curr_step == frame.configuration.step:
-                indexes = step_iter.get_index()
-                for index in indexes:
-                    try:
-                        logger.debug(f'len(keyframes): {len(keyframes)}, len(relaxframes): {len(relaxframes)}')
-                        mydyn = keyframes[index]
-                        myrelax = relaxframes[index]
-                    except IndexError:
-                        logger.debug('Create keyframe at step %s', curr_step)
-                        keyframes.append(dynamics(
-                            timestep=frame.configuration.step,
-                            box=frame.configuration.box,
-                            position=frame.particles.position,
-                            orientation=frame.particles.orientation,
-                        ))
-                        relaxframes.append(relaxations(
-                            timestep=frame.configuration.step,
-                            box=frame.configuration.box,
-                            position=frame.particles.position,
-                            orientation=frame.particles.orientation,
-                            molecule=Trimer()
-                        ))
-                        mydyn = keyframes[index]
-                        myrelax = relaxframes[index]
-
-                    dynamics_series = mydyn.computeAll(
-                        curr_step,
-                        frame.particles.position,
-                        frame.particles.orientation,
-                    )
-                    myrelax.add(
-                        curr_step,
-                        frame.particles.position,
-                        frame.particles.orientation,
-                    )
-                    logger.debug('Series: %s', index)
-                    dynamics_series['start_index'] = index
-                    dataframes.append(dynamics_series)
-
-                try:
-                    curr_step = step_iter.next()
-                except StopIteration:
-                    break
-
-                if outfile and len(dataframes) >= buffer_size:
-                    pandas.DataFrame.from_records(dataframes).to_hdf(
-                        outfile,
-                        'dynamics',
-                        format='table',
-                        append=append_file,
-                    )
-                    dataframes.clear()
-
-                    # Once we have written to the file once, append to the
-                    # existing file.
-                    if not append_file:
-                        append_file = True
+            dynamics_series = mydyn.computeAll(
+                curr_step,
+                frame.particles.position,
+                frame.particles.orientation,
+            )
+            myrelax.add(
+                curr_step,
+                frame.particles.position,
+                frame.particles.orientation,
+            )
+            logger.debug('Series: %s', index)
+            dynamics_series['start_index'] = index
+            dataframes.append(dynamics_series)
 
     if outfile:
-        pandas.DataFrame.from_records(dataframes).to_hdf(
-            outfile,
-            'dynamics',
-            format='table',
-            append=append_file,
-        )
+        dataframes.flush()
         pandas.concat((relax.summary() for relax in relaxframes),
                       keys=range(len(relaxframes))).to_hdf(
-                          outfile,
+                          sim_params.outfile,
                           'relaxations',
                           format='table',
                           append=False,
                       )
         return
-
     return pandas.DataFrame.from_records(dataframes)

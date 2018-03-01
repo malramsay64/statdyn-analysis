@@ -10,21 +10,17 @@
 
 import argparse
 import logging
-import signal
 import subprocess
 import time
 from pathlib import Path
 from typing import Callable, List, Tuple
 
-from pkg_resources import DistributionNotFound, get_distribution
-
 from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
-from .read import process_gsd
+from .read import process_file
 from .version import __version__
 
 logger = logging.getLogger(__name__)
-
 
 MOLECULE_OPTIONS = {
     'trimer': Trimer,
@@ -41,18 +37,12 @@ def sdanalysis() -> None:
     func(sim_params)
 
 
-
 def comp_dynamics(sim_params: SimulationParams) -> None:
     """Compute dynamic properties."""
     outfile = sim_params.outfile_path / Path(sim_params.infile).with_suffix('.hdf5').name
     outfile.parent.mkdir(exist_ok=True)
-    step_limit = sim_params.parameters.get('num_steps')
-    process_gsd(sim_params.infile,
-                gen_steps=sim_params.gen_steps,
-                max_gen=sim_params.max_gen,
-                step_limit=step_limit,
-                outfile=str(outfile),
-                )
+    sim_params.outfile = outfile
+    process_file(sim_params)
 
 
 def figure(args) -> None:
@@ -123,6 +113,10 @@ def create_parser() -> argparse.ArgumentParser:
 
     parse_comp_dynamics = subparsers.add_parser('comp_dynamics', add_help=False, parents=[parser, default_parser])
     parse_comp_dynamics.add_argument('infile', type=str)
+    parse_comp_dynamics.add_argument('-m',
+                                     '--mol-relaxations',
+                                     default=None,
+                                     type=str)
     parse_comp_dynamics.set_defaults(func=comp_dynamics)
 
     parse_figure = subparsers.add_parser('figure', add_help=True, parents=[default_parser])

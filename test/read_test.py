@@ -13,9 +13,15 @@ import pytest
 
 from sdanalysis import read
 from sdanalysis.StepSize import GenerateStepSeries
+from sdanalysis.params import SimulationParams, paramsContext
+
+sim_params = SimulationParams(
+    infile='test/data/trajectory-13.50-3.00.gsd',
+)
 
 
 @pytest.mark.parametrize('step_limit', [0, 10, 20, 100])
 def test_stopiter_handling(step_limit):
-    df = read.process_gsd('test/data/trajectory-13.50-3.00.gsd', step_limit=step_limit)
+    with paramsContext(sim_params, step_limit=step_limit):
+        df = read.process_file(sim_params)
     assert np.all(df.time == list(GenerateStepSeries(step_limit)))
