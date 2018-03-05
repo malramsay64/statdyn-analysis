@@ -15,6 +15,7 @@ tables = "*"
 bokeh = "*"
 matplotlib = "*"
 gsd = "*"
+"ruamel.yaml" = "*"
 
 
 [dev-packages]

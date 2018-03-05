@@ -29,6 +29,7 @@ requirements:
     - matplotlib >=2.1
     - setuptools
     - gsd >=1.3.0
+    - ruamel.yaml
 
 build:
   entry_points:

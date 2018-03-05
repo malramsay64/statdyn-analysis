@@ -57,6 +57,7 @@ setup(
         'bokeh',
         'matplotlib',
         'gsd',
+        'ruamel.yaml',
     ],
     packages=find_packages('src'),
     ext_modules=cythonize(extensions, include_path=['src/']),

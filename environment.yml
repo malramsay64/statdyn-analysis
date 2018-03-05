@@ -21,6 +21,7 @@ dependencies:
     - bumpversion
     - hypothesis=3.38.5
     - coverage
+    - ruamel.yaml
     - pip:
         - mypy
         - pytest-mypy
