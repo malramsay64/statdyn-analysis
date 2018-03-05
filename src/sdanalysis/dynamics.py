@@ -9,7 +9,7 @@
 """Compute dynamic properties."""
 
 import logging
-from typing import Any, Dict, Tuple
+from typing import Any, Dict, Tuple, List
 
 import numpy as np
 import pandas
@@ -206,7 +206,7 @@ def create_mol_relaxations(num_elements: int,
                            last_passage: bool = False,
                            last_passage_cutoff: float = 1.0,
                            **kwargs,
-                           ) -> Tuple[str, molecularRelaxation]:
+                           ) -> molecularRelaxation:
     if last_passage:
         return lastMolecularRelaxation(num_elements,
                                        threshold,
@@ -237,8 +237,8 @@ class relaxations(object):
             {'name': 'tau_T4', 'threshold': np.pi/4},
         ])
 
-    def set_mol_relax(self, definition: str):
-        self.mol_relax = {}
+    def set_mol_relax(self, definition: List[Dict[str, Any]]) -> None:
+        self.mol_relax = {}  # type: Dict[str, molecularRelaxation]
         for item in definition:
             self.mol_relax[item.get('name')] = create_mol_relaxations(
                 self._num_elements, **item)

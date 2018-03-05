@@ -9,7 +9,7 @@
 """Module to define a molecule to use for simulation."""
 
 import logging
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 
 import numpy as np
 

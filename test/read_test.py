@@ -49,3 +49,19 @@ def test_writeCache_caching():
         assert len(my_list._cache) == 9000 - 8192
         my_list.flush()
         assert len(my_list._cache) == 0
+
+def test_writeCache_len():
+    with tempfile.TemporaryDirectory() as dst:
+        my_list = read.writeCache(Path(dst) / 'test2.h5')
+        assert len(my_list._cache) == 0
+        for i in range(100):
+            my_list.append({'value': i})
+        assert len(my_list._cache) == 100
+        assert len(my_list) == 100
+
+        for i in range(8900):
+            my_list.append({'value': i})
+        assert len(my_list._cache) == 9000 - 8192
+        assert len(my_list) == 9000
+        my_list.flush()
+        assert len(my_list._cache) == 0

@@ -10,7 +10,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Union
 
 import gsd.hoomd
 import pandas
@@ -70,13 +70,16 @@ def process_gsd(sim_params: SimulationParams):
 class writeCache():
     def __init__(self, filename: Path, cache_multiplier: int = 1) -> None:
         self._cache_size = 8192 * cache_multiplier
-        self._cache = []
+        self._cache = []  # type: List[Any]
         self._outfile = filename
         self._append = False
+        self._emptied = 0
 
     def append(self, item: Any) -> None:
-        if len(self._cache) == self._cache_size:
+        # Cache of size 0 or with val None will act as list
+        if self._cache and len(self._cache) == self._cache_size:
             self.flush()
+            self._emptied += 1
         self._cache.append(item)
 
     def flush(self) -> None:
@@ -88,6 +91,16 @@ class writeCache():
         )
         self._append = True
         self._cache.clear()
+
+    def get_outfile(self) -> Path:
+        return Path(self._outfile)
+
+    def __len__(self) -> int:
+        # Total number of elements added
+        return self._cache_size * self._emptied + len(self._cache)
+
+    def to_dataframe(self):
+        return pandas.DataFrame.from_records(self._cache)
 
 
 def process_file(sim_params: SimulationParams) -> None:
@@ -119,11 +132,11 @@ def process_file(sim_params: SimulationParams) -> None:
     """
 
     try:
-        outfile = sim_params.outfile
+        outfile = Path(sim_params.outfile)
         dataframes = writeCache(outfile)
     except AttributeError:
-        outfile = ''
-        dataframes = []
+        outfile = None
+        dataframes = writeCache(outfile, cache_multiplier=0)
     keyframes: List[dynamics] = []
     relaxframes: List[relaxations] = []
 
@@ -153,6 +166,10 @@ def process_file(sim_params: SimulationParams) -> None:
                 ))
                 mydyn = keyframes[index]
                 myrelax = relaxframes[index]
+                try:
+                    myrelax.set_mol_relax(sim_params.mol_relaxations)
+                except (KeyError, AttributeError):
+                    pass
 
             dynamics_series = mydyn.computeAll(
                 curr_step,
@@ -178,4 +195,4 @@ def process_file(sim_params: SimulationParams) -> None:
                           append=False,
                       )
         return
-    return pandas.DataFrame.from_records(dataframes)
+    return dataframes.to_dataframe()

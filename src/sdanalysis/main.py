@@ -15,10 +15,14 @@ import time
 from pathlib import Path
 from typing import Callable, List, Tuple
 
+from ruamel.yaml import YAML
+
 from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
 from .read import process_file
 from .version import __version__
+
+yaml = YAML()
 
 logger = logging.getLogger(__name__)
 
@@ -41,7 +45,12 @@ def comp_dynamics(sim_params: SimulationParams) -> None:
     """Compute dynamic properties."""
     outfile = sim_params.outfile_path / Path(sim_params.infile).with_suffix('.hdf5').name
     outfile.parent.mkdir(exist_ok=True)
-    sim_params.outfile = outfile
+    sim_params.parameters['outfile'] = outfile
+    try:
+        with sim_params.mol_relaxations as src:
+            sim_params.mol_relaxations = yaml.parse(src)
+    except AttributeError:
+        pass
     process_file(sim_params)
 
 
