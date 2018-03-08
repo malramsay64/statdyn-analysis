@@ -5,7 +5,6 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
-
 """Read input files and compute dynamic and thermodynamic quantities."""
 
 import logging
@@ -93,11 +92,9 @@ def parse_lammpstrj(sim_params: SimulationParams) -> Iterable[Tuple[List[int], F
             line = src.readline()
             assert 'ITEM: ATOMS' in line
             headings = line.split(' ')[2:]
-
             # Create arrays
             frame = pandas.read_table(src, names=headings, nrows=num_atoms)
             frame.sort_values('id')
-
             frame = lammpsFrame()
             yield indexes, frame
 
