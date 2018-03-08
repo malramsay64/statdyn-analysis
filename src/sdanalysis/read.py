@@ -10,7 +10,7 @@
 import logging
 from collections import namedtuple
 from pathlib import Path
-from typing import Any, Dict, List, Union
+from typing import Any, Dict, List, Tuple, Iterable
 
 import gsd.hoomd
 import pandas
@@ -19,11 +19,12 @@ from .dynamics import dynamics, relaxations
 from .molecules import Trimer
 from .params import SimulationParams
 from .StepSize import GenerateStepSeries
+from .frame import Frame, gsdFrame
 
 logger = logging.getLogger(__name__)
 
 
-def process_gsd(sim_params: SimulationParams):
+def process_gsd(sim_params: SimulationParams) -> Iterable[Tuple[List[int], Frame]]:
     with gsd.hoomd.open(sim_params.infile, 'rb') as src:
         # Compute steps in gsd file
         if sim_params.parameters.get('step_limit') is not None:
@@ -68,7 +69,7 @@ def process_gsd(sim_params: SimulationParams):
                 raise StopIteration
 
             if curr_step == frame.configuration.step:
-                yield curr_step, step_iter.get_index(), frame
+                yield step_iter.get_index(), gsdFrame(frame)
 
             curr_step = step_iter.next()
 
@@ -169,21 +170,22 @@ def process_file(sim_params: SimulationParams) -> None:
                 mydyn = keyframes[index]
                 myrelax = relaxframes[index]
             except IndexError:
-                logger.debug('Create keyframe at step %s', curr_step)
+                logger.debug('Frame: %s', frame)
+                logger.debug('Create keyframe at step %s', frame.timestep)
                 keyframes.append(
                     dynamics(
-                        timestep=frame.configuration.step,
-                        box=frame.configuration.box,
-                        position=frame.particles.position,
-                        orientation=frame.particles.orientation,
+                        timestep=frame.timestep,
+                        box=frame.box,
+                        position=frame.position,
+                        orientation=frame.orientation,
                     )
                 )
                 relaxframes.append(
                     relaxations(
-                        timestep=frame.configuration.step,
-                        box=frame.configuration.box,
-                        position=frame.particles.position,
-                        orientation=frame.particles.orientation,
+                        timestep=frame.timestep,
+                        box=frame.box,
+                        position=frame.position,
+                        orientation=frame.orientation,
                         molecule=Trimer(),
                     )
                 )
@@ -194,11 +196,9 @@ def process_file(sim_params: SimulationParams) -> None:
                 except (KeyError, AttributeError):
                     pass
             dynamics_series = mydyn.computeAll(
-                curr_step, frame.particles.position, frame.particles.orientation
+                frame.timestep, frame.position, frame.orientation
             )
-            myrelax.add(
-                curr_step, frame.particles.position, frame.particles.orientation
-            )
+            myrelax.add(frame.timestep, frame.position, frame.orientation)
             logger.debug('Series: %s', index)
             dynamics_series['start_index'] = index
             dynamics_series['temperature'] = variables.temperature
