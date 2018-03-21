@@ -20,8 +20,11 @@ sim_params = SimulationParams(infile='test/data/trajectory-Trimer-P13.50-T3.00.g
 
 
 @pytest.mark.parametrize('step_limit', [0, 10, 20, 100])
-def test_stopiter_handling(step_limit):
-    with paramsContext(sim_params, step_limit=step_limit):
+@pytest.mark.parametrize('infile', ['test/data/trajectory-13.50-3.00.gsd',
+                                    'test/data/short-time-variance.lammpstrj',
+                                    ])
+def test_stopiter_handling(step_limit, infile):
+    with paramsContext(sim_params, infile=infile, step_limit=step_limit):
         df = read.process_file(sim_params)
     assert np.all(df.time == list(GenerateStepSeries(step_limit)))
 
@@ -62,3 +65,18 @@ def test_writeCache_len():
         assert len(my_list) == 9000
         my_list.flush()
         assert len(my_list._cache) == 0
+
+
+def test_process_gsd():
+    indexes, frame = next(read.process_gsd(sim_params))
+    assert isinstance(indexes, list)
+    assert isinstance(frame, read.gsdFrame)
+
+
+def test_process_lammpstrj():
+    pass
+
+
+def test_process_file():
+    pass
+
