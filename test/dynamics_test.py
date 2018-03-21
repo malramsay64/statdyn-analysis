@@ -5,7 +5,6 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
-
 """Testing the dynamics module."""
 
 import gsd.hoomd
@@ -21,16 +20,14 @@ from sdanalysis.read import process_gsd
 from .math_helper_test import unit_quaternion
 
 MAX_BOX = 20.
-
 DTYPE = np.float32
-EPS = 2*np.sqrt(np.finfo(DTYPE).eps)
+EPS = 2 * np.sqrt(np.finfo(DTYPE).eps)
 HYP_DTYPE = DTYPE
 
 
-def translationalDisplacement_reference(box: np.ndarray,
-                                        initial: np.ndarray,
-                                        final: np.ndarray,
-                                        ) -> np.ndarray:
+def translationalDisplacement_reference(
+    box: np.ndarray, initial: np.ndarray, final: np.ndarray
+) -> np.ndarray:
     """Simplified reference implementation for computing the displacement.
 
     This computes the displacment using the shortest path from the original
@@ -41,25 +38,27 @@ def translationalDisplacement_reference(box: np.ndarray,
     for index in range(len(result)):
         temp = initial[index] - final[index]
         for i in range(3):
-            if temp[i] > box[i]/2:
+            if temp[i] > box[i] / 2:
                 temp[i] -= box[i]
-            if temp[i] < -box[i]/2:
+            if temp[i] < -box[i] / 2:
                 temp[i] += box[i]
         result[index] = np.linalg.norm(temp, axis=0)
     return result
 
 
-def rotationalDisplacement_reference(initial: np.ndarray,
-                                     final: np.ndarray,
-                                     ) -> np.ndarray:
+def rotationalDisplacement_reference(
+    initial: np.ndarray, final: np.ndarray
+) -> np.ndarray:
     """Simplified reference implementation of the rotational displacement."""
     init = quaternion.as_quat_array(initial)[0]
     fin = quaternion.as_quat_array(final)[0]
     return quaternion.rotation_intrinsic_distance(init, fin)
 
 
-@given(arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX/4, MAX_BOX/4)),
-       arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX/4, MAX_BOX/4)))
+@given(
+    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 4, MAX_BOX / 4)),
+    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 4, MAX_BOX / 4)),
+)
 def test_translationalDisplacement_noperiod(init, final):
     """Test calculation of the translational displacement.
 
@@ -68,7 +67,7 @@ def test_translationalDisplacement_noperiod(init, final):
     about.
     """
     box = np.array([MAX_BOX, MAX_BOX, MAX_BOX], dtype=DTYPE)
-    np_res = np.linalg.norm(init-final, axis=1)
+    np_res = np.linalg.norm(init - final, axis=1)
     result = dynamics.translationalDisplacement(box, init, final)
     ref_res = translationalDisplacement_reference(box, init, final)
     print(result)
@@ -76,23 +75,27 @@ def test_translationalDisplacement_noperiod(init, final):
     assert np.allclose(result, ref_res, atol=EPS)
 
 
-@given(arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX/2, -MAX_BOX/4-1e-5)),
-       arrays(HYP_DTYPE, (10, 3), elements=floats(MAX_BOX/4, MAX_BOX/2)))
+@given(
+    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, -MAX_BOX / 4 - 1e-5)),
+    arrays(HYP_DTYPE, (10, 3), elements=floats(MAX_BOX / 4, MAX_BOX / 2)),
+)
 def test_translationalDisplacement_periodicity(init, final):
     """Ensure the periodicity is calulated appropriately.
 
     This is testing that periodic boundaries are identified appropriately.
     """
     box = np.array([MAX_BOX, MAX_BOX, MAX_BOX], dtype=DTYPE)
-    np_res = np.square(np.linalg.norm(init-final, axis=1))
+    np_res = np.square(np.linalg.norm(init - final, axis=1))
     result = dynamics.translationalDisplacement(box, init, final)
     ref_res = translationalDisplacement_reference(box, init, final)
     assert np.all(np.logical_not(np.isclose(result, np_res)))
     assert np.allclose(result, ref_res, atol=EPS)
 
 
-@given(arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX/2, MAX_BOX/2)),
-       arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX/2, MAX_BOX/2)))
+@given(
+    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, MAX_BOX / 2)),
+    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, MAX_BOX / 2)),
+)
 def test_translationalDisplacement(init, final):
     """Ensure the periodicity is calulated appropriately.
 
@@ -127,8 +130,10 @@ def test_alpha(displacement):
     assert alpha >= -1
 
 
-@given(arrays(HYP_DTYPE, (100), elements=floats(0, 10)),
-       arrays(HYP_DTYPE, (100), elements=floats(0, 2*np.pi)))
+@given(
+    arrays(HYP_DTYPE, (100), elements=floats(0, 10)),
+    arrays(HYP_DTYPE, (100), elements=floats(0, 2 * np.pi)),
+)
 def test_overlap(displacement, rotation):
     """Test the computation of the overlap of the largest values."""
     overlap_same = dynamics.mobile_overlap(rotation, rotation)
@@ -139,24 +144,26 @@ def test_overlap(displacement, rotation):
 
 @pytest.fixture(scope='module')
 def trajectory():
-    with gsd.hoomd.open('test/data/trajectory-13.50-3.00.gsd') as trj:
+    with gsd.hoomd.open('test/data/trajectory-Trimer-P13.50-T3.00.gsd') as trj:
         yield trj
 
 
 @pytest.fixture(scope='module')
 def dynamics_class(trajectory):
     snap = trajectory[0]
-    return dynamics.dynamics(snap.configuration.step,
-                             snap.configuration.box,
-                             snap.particles.position,
-                             snap.particles.orientation)
+    return dynamics.dynamics(
+        snap.configuration.step,
+        snap.configuration.box,
+        snap.particles.position,
+        snap.particles.orientation,
+    )
 
 
 @pytest.mark.parametrize('step', [0, 1, 10, 20])
 def test_displacements(dynamics_class, trajectory, step):
     snap = trajectory[step]
     displacement = dynamics_class.get_displacements(snap.particles.position)
-    assert displacement.shape == (dynamics_class.num_particles, )
+    assert displacement.shape == (dynamics_class.num_particles,)
     if step == 0:
         assert np.all(displacement == 0.)
     else:
@@ -167,7 +174,7 @@ def test_displacements(dynamics_class, trajectory, step):
 def test_rotations(dynamics_class, trajectory, step):
     snap = trajectory[step]
     rotations = dynamics_class.get_rotations(snap.particles.orientation)
-    assert rotations.shape == (dynamics_class.num_particles, )
+    assert rotations.shape == (dynamics_class.num_particles,)
     if step == 0:
         assert np.all(rotations == 0.)
     else:
@@ -175,7 +182,7 @@ def test_rotations(dynamics_class, trajectory, step):
 
 
 def test_dynamics():
-    process_gsd('test/data/trajectory-13.50-3.00.gsd')
+    process_gsd('test/data/trajectory-Trimer-P13.50-T3.00.gsd')
 
 
 def test_molecularRelaxation():
@@ -190,19 +197,15 @@ def test_molecularRelaxation():
     # No motion
     tau.add(1, move(0))
     assert np.all(tau.get_status() == invalid_values)
-
     # Small motion inside threshold
     tau.add(2, move(threshold - 0.1))
     assert np.all(tau.get_status() == invalid_values)
-
     # Move outside threshold
     tau.add(3, move(threshold + 0.1))
     assert np.all(tau.get_status() == np.full(num_elements, 3))
-
     # Move inside threshold
     tau.add(4, move(threshold - 0.1))
     assert np.all(tau.get_status() == np.full(num_elements, 3))
-
     # Move outside threshold again
     tau.add(4, move(threshold + 0.1))
     assert np.all(tau.get_status() == np.full(num_elements, 3))
@@ -222,38 +225,38 @@ def test_lastMolecularRelaxation():
     assert np.all(tau.get_status() == invalid_values)
     assert np.all(tau._status == np.full(num_elements, 2))
     assert np.all(tau._state == np.ones(num_elements, dtype=np.uint8))
-
     # Move inside threshold
     tau.add(3, move(threshold - 0.1))
     assert np.all(tau.get_status() == invalid_values)
     assert np.all(tau._status == np.full(num_elements, 2))
     assert np.all(tau._state == np.zeros(num_elements, dtype=np.uint8))
-
     # Move outside threshold again
     tau.add(4, move(threshold + 0.1))
     assert np.all(tau.get_status() == invalid_values)
     assert np.all(tau._status == np.full(num_elements, 4))
     assert np.all(tau._state == np.ones(num_elements, dtype=np.uint8))
-
     # Move outside threshold again
     tau.add(5, move(threshold + 0.2))
     assert np.all(tau.get_status() == invalid_values)
     assert np.all(tau._status == np.full(num_elements, 4))
-
     # Move past irreversibility
     tau.add(6, move(1.1))
     assert np.all(tau.get_status() == np.full(num_elements, 4))
     assert np.all(tau._status == np.full(num_elements, 4))
-    assert np.all(tau._state == np.ones(num_elements, dtype=np.uint8) * tau._is_irreversible)
-
+    assert np.all(
+        tau._state == np.ones(num_elements, dtype=np.uint8) * tau._is_irreversible
+    )
     # Move inside threshold
     tau.add(7, move(threshold - 0.1))
     assert np.all(tau.get_status() == np.full(num_elements, 4))
     assert np.all(tau._status == np.full(num_elements, 4))
-    assert np.all(tau._state == np.ones(num_elements, dtype=np.uint8) * tau._is_irreversible)
-
+    assert np.all(
+        tau._state == np.ones(num_elements, dtype=np.uint8) * tau._is_irreversible
+    )
     # Move outside threshold, shouldn't update
     tau.add(8, move(threshold + 0.1))
     assert np.all(tau.get_status() == np.full(num_elements, 4))
     assert np.all(tau._status == np.full(num_elements, 4))
-    assert np.all(tau._state == np.ones(num_elements, dtype=np.uint8) * tau._is_irreversible)
+    assert np.all(
+        tau._state == np.ones(num_elements, dtype=np.uint8) * tau._is_irreversible
+    )

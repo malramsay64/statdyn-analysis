@@ -10,9 +10,8 @@
 import tempfile
 from pathlib import Path
 
-import pytest
-
 import numpy as np
+import pytest
 from sdanalysis import read
 from sdanalysis.params import SimulationParams, paramsContext
 from sdanalysis.StepSize import GenerateStepSeries
