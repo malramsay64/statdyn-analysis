@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-
 """A series of classes that specify various step size functions."""
 
 import logging
@@ -10,14 +9,13 @@ from queue import Empty, PriorityQueue
 from typing import Dict, Iterable, Iterator, List
 
 logger = logging.getLogger(__name__)
-
 iterindex = namedtuple('iterindex', ['index', 'iterator'])
 stepiterindex = namedtuple('stepiterindex', ['step', 'index', 'iterator'])
 
 
-def generate_steps(total_steps: int,
-                   num_linear: int=100,
-                   start: int=0) -> Iterator[int]:
+def generate_steps(
+    total_steps: int, num_linear: int = 100, start: int = 0
+) -> Iterator[int]:
     """Generate a sequence of steps with a power law.
 
     This is a function for generating a sequence of steps such that they create
@@ -45,15 +43,14 @@ def generate_steps(total_steps: int,
     """
     yield from takewhile(
         lambda x: x < total_steps,
-        exp_sequence(start, num_linear, initial_step_size=1, base=10)
+        exp_sequence(start, num_linear, initial_step_size=1, base=10),
     )
     yield total_steps
 
 
-def exp_sequence(start: int=0,
-                 num_linear: int=100,
-                 initial_step_size: int=1,
-                 base: int=10) -> Iterator[int]:
+def exp_sequence(
+    start: int = 0, num_linear: int = 100, initial_step_size: int = 1, base: int = 10
+) -> Iterator[int]:
     """Sequence of integers in an exponential like sequence.
 
     This function generates integers in a sequence consisting of two components,
@@ -81,11 +78,13 @@ def exp_sequence(start: int=0,
     step_size = initial_step_size
     curr_step = start
     yield curr_step
+
     while True:
-        for step in (start + (i)*step_size for i in range(num_linear+1)):
+        for step in (start + (i) * step_size for i in range(num_linear + 1)):
             if step > curr_step:
                 yield step
-        curr_step = start + num_linear*step_size
+
+        curr_step = start + num_linear * step_size
         logger.debug('Current step %d', curr_step)
         step_size *= base
 
@@ -93,11 +92,13 @@ def exp_sequence(start: int=0,
 class GenerateStepSeries(Iterable):
     """Generate a many sequences of steps with different starting values."""
 
-    def __init__(self,
-                 total_steps: int,
-                 num_linear: int=100,
-                 gen_steps: int=200000,
-                 max_gen: int=500) -> None:
+    def __init__(
+        self,
+        total_steps: int,
+        num_linear: int = 100,
+        gen_steps: int = 200000,
+        max_gen: int = 500,
+    ) -> None:
         """"""
         self.total_steps = total_steps
         self.num_linear = num_linear
@@ -105,10 +106,8 @@ class GenerateStepSeries(Iterable):
         self.max_gen = max_gen
         self.curr_step = 0
         self._num_generators = 0
-
         self.values: Dict[int, List[iterindex]] = {}
         self._queue: PriorityQueue = PriorityQueue()
-
         self._add_generator()
 
     def _enqueue(self, iindex: iterindex) -> None:
@@ -145,21 +144,16 @@ class GenerateStepSeries(Iterable):
             del self.values[previous_step]
         elif previous_step != 0:
             pass
-
         # Check for new indexes
         if self.curr_step % self.gen_steps == 0 and self.curr_step > 0:
             if self._num_generators < self.max_gen:
                 self._add_generator()
-
         # Get list of indexes
         iterindexes = self.values.get(self.curr_step)
-        logger.debug('Value of iterindexes: %s at step %d',
-                     iterindexes, self.curr_step)
-
+        logger.debug('Value of iterindexes: %s at step %d', iterindexes, self.curr_step)
         # Add interators back onto queue
         for iindex in iterindexes:
             self._enqueue(iindex)
-
         # Return
         return self.curr_step
 

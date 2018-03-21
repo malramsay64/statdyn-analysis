@@ -5,7 +5,6 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
-
 """Parameters for passing between functions."""
 
 import logging
@@ -20,7 +19,6 @@ logger = logging.getLogger(__name__)
 
 class SimulationParams(object):
     """Store the parameters of the simulation."""
-
     defaults: Dict[str, Any] = {
         'hoomd_args': '',
         'step_size': 0.005,
@@ -47,6 +45,7 @@ class SimulationParams(object):
     def __getattr__(self, key):
         try:
             return self.parameters.__getitem__(key)
+
         except KeyError:
             raise AttributeError
 
@@ -75,7 +74,6 @@ class SimulationParams(object):
             mol = self.crystal.molecule
         else:
             mol = Trimer()
-
         return mol
 
     @property
@@ -83,15 +81,16 @@ class SimulationParams(object):
         try:
             self.crystal
             return self.parameters.get('cell_dimensions')
+
         except AttributeError:
             raise AttributeError
-
 
     @property
     def outfile_path(self) -> Path:
         """Ensure the output directory is a path."""
         if self.parameters.get('outfile_path'):
             return Path(self.parameters.get('outfile_path'))
+
         return Path.cwd()
 
     @property
@@ -99,9 +98,10 @@ class SimulationParams(object):
         """Ensure the output file is a string."""
         if self.parameters.get('outfile') is not None:
             return str(self.parameters.get('outfile'))
+
         raise AttributeError('Outfile does not exist')
 
-    def filename(self, prefix: str=None) -> str:
+    def filename(self, prefix: str = None) -> str:
         """Use the simulation parameters to construct a filename."""
         base_string = '{molecule}-P{pressure:.2f}-T{temperature:.2f}'
         if prefix:
@@ -110,14 +110,13 @@ class SimulationParams(object):
             base_string += '-I{mom_inertia:.2f}'
         if self.parameters.get('space_group') is not None:
             base_string += '-{space_group}'
-
         fname = base_string.format(
             prefix=prefix,
             molecule=self.molecule,
             pressure=self.pressure,
             temperature=self.parameters.get('temperature'),
             mom_inertia=self.parameters.get('moment_inertia_scale'),
-            space_group = self.parameters.get('space_group'),
+            space_group=self.parameters.get('space_group'),
         )
         return str(self.outfile_path / fname)
 
@@ -146,9 +145,11 @@ class paramsContext(object):
         """
         self.params = sim_params
         self.modifications = kwargs
-        self.original = {key: sim_params.parameters.get(key)
-                         for key in kwargs.keys()
-                         if sim_params.parameters.get(key) is not None}
+        self.original = {
+            key: sim_params.parameters.get(key)
+            for key in kwargs.keys()
+            if sim_params.parameters.get(key) is not None
+        }
 
     def __enter__(self) -> SimulationParams:
         for key, val in self.modifications.items():

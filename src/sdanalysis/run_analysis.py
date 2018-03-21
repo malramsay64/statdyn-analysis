@@ -5,7 +5,6 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
-
 """Run an analysis on a trajectory."""
 
 import logging
@@ -29,9 +28,15 @@ def order(infile, outfile):
             except RuntimeError:
                 logger.info('Frame %s corrupted, continuing...', index)
                 continue
+
             order = orientational_order(
                 box=snapshot.configuration.box,
                 position=snapshot.particles.position,
-                orientation=snapshot.particles.orientation
+                orientation=snapshot.particles.orientation,
             )
-            print(snapshot.configuration.step, ',', np.sum(order > 0.9) / len(order), file=dst)
+            print(
+                snapshot.configuration.step,
+                ',',
+                np.sum(order > 0.9) / len(order),
+                file=dst,
+            )

@@ -5,7 +5,6 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
-
 """Module to define a molecule to use for simulation."""
 
 import logging
@@ -53,11 +52,9 @@ class Molecule(object):
         """Get the types of particles present in a molecule."""
         return sorted(list(self._radii.keys()))
 
-
-
     def identify_bodies(self, indexes: np.ndarray) -> np.ndarray:
         """Convert an index of molecules into an index of particles."""
-        return np.append(indexes, [indexes]*(self.num_particles-1))
+        return np.append(indexes, [indexes] * (self.num_particles - 1))
 
     def __str__(self) -> str:
         return type(self).__name__
@@ -65,12 +62,16 @@ class Molecule(object):
     def scale_moment_inertia(self, scale_factor: float) -> None:
         """Scale the moment of inertia by a constant factor."""
         i_x, i_y, i_z = self.moment_inertia
-        self.moment_inertia = (i_x * scale_factor, i_y * scale_factor, i_z * scale_factor)
+        self.moment_inertia = (
+            i_x * scale_factor, i_y * scale_factor, i_z * scale_factor
+        )
 
-    def compute_moment_intertia(self, scale_factor: float=1) -> Tuple[float, float, float]:
+    def compute_moment_intertia(
+        self, scale_factor: float = 1
+    ) -> Tuple[float, float, float]:
         """Compute the moment of inertia from the particle paramters."""
         positions = self.positions
-        COM = np.sum(positions, axis=0)/positions.shape[0]
+        COM = np.sum(positions, axis=0) / positions.shape[0]
         moment_inertia = np.sum(np.square(positions - COM))
         moment_inertia *= scale_factor
         return (0, 0, moment_inertia)
@@ -80,8 +81,10 @@ class Molecule(object):
         return np.array([self._radii[p] for p in self.particles])
 
     def orientation2positions(self, position, orientation):
-        return (np.tile(position, (self.num_particles, 1))
-                + rotate_vectors(orientation, self.positions.astype(np.float32)))
+        return (
+            np.tile(position, (self.num_particles, 1)) +
+            rotate_vectors(orientation, self.positions.astype(np.float32))
+        )
 
     def compute_size(self):
         """Compute the maximum possible size of the moleucule.
@@ -90,9 +93,8 @@ class Molecule(object):
         of a lattice that contains no overlaps.
 
         """
-        length = np.max(np.max(self.positions, axis=1) -
-                        np.min(self.positions, axis=1))
-        return length + 2*self.get_radii().max()
+        length = np.max(np.max(self.positions, axis=1) - np.min(self.positions, axis=1))
+        return length + 2 * self.get_radii().max()
 
 
 class Disc(Molecule):
@@ -127,11 +129,13 @@ class Trimer(Molecule):
         Compute the moment of inertia
     """
 
-    def __init__(self,
-                 radius: float=0.637556,
-                 distance: float=1.0,
-                 angle: float=120,
-                 moment_inertia_scale: float=1.) -> None:
+    def __init__(
+        self,
+        radius: float = 0.637556,
+        distance: float = 1.0,
+        angle: float = 120,
+        moment_inertia_scale: float = 1.,
+    ) -> None:
         """Initialise trimer molecule.
 
         Args:
@@ -151,11 +155,21 @@ class Trimer(Molecule):
         self.particles = ['A', 'B', 'B']
         self._radii.update(B=self.radius)
         self.dimensions = 2
-        self.positions = np.array([
-            [0, 0, 0],
-            [-self.distance * np.sin(self.rad_angle/2), self.distance * np.cos(self.rad_angle/2), 0],
-            [self.distance * np.sin(self.rad_angle/2), self.distance * np.cos(self.rad_angle/2), 0],
-        ])
+        self.positions = np.array(
+            [
+                [0, 0, 0],
+                [
+                    -self.distance * np.sin(self.rad_angle / 2),
+                    self.distance * np.cos(self.rad_angle / 2),
+                    0
+                ],
+                [
+                    self.distance * np.sin(self.rad_angle / 2),
+                    self.distance * np.cos(self.rad_angle / 2),
+                    0
+                ],
+            ]
+        )
         self.positions.flags.writeable = False
         self.moment_inertia = self.compute_moment_intertia(moment_inertia_scale)
 
@@ -165,10 +179,14 @@ class Trimer(Molecule):
 
     def __eq__(self, other) -> bool:
         if super().__eq__(other):
-            return (self.radius == other.radius and
-                    self.distance == other.distance and
-                    self.moment_inertia == other.moment_inertia)
+            return (
+                self.radius == other.radius
+                and self.distance == other.distance
+                and self.moment_inertia == other.moment_inertia
+            )
+
         return False
+
 
 class Dimer(Molecule):
     """Defines a Dimer molecule for initialisation within a hoomd context.
@@ -182,7 +200,7 @@ class Dimer(Molecule):
 
     """
 
-    def __init__(self, radius: float=0.637556, distance: float=1.0) -> None:
+    def __init__(self, radius: float = 0.637556, distance: float = 1.0) -> None:
         """Intialise Dimer molecule.
 
         Args:
@@ -199,9 +217,6 @@ class Dimer(Molecule):
         self.particles = ['A', 'B']
         self._radii.update(B=self.radius)
         self.dimensions = 2
-        self.positions = np.array([
-            [0, 0, 0],
-            [0, self.distance, 0],
-        ])
+        self.positions = np.array([[0, 0, 0], [0, self.distance, 0]])
         self.positions.flags.writeable = False
         self.moment_inertia = self.compute_moment_intertia()

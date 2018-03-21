@@ -5,36 +5,33 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
-
 """Compute dynamic properties."""
 
 import logging
-from typing import Any, Dict, Tuple, List
+from typing import Any, Dict, List
 
 import numpy as np
 import pandas
 
-from .math_helper import (displacement_periodic, quaternion_rotation,
-                          rotate_vectors)
+from .math_helper import (displacement_periodic, quaternion_rotation, rotate_vectors)
 from .molecules import Molecule, Trimer
 
 np.seterr(divide='raise', invalid='raise', over='raise')
-
 logger = logging.getLogger(__name__)
 
 
 class dynamics(object):
     """Compute dynamic properties of a simulation."""
-
     dyn_dtype = np.float32
 
-    def __init__(self,
-                 timestep: int,
-                 box: np.ndarray,
-                 position: np.ndarray,
-                 orientation: np.ndarray = None,
-                 molecule: Molecule = Trimer(),
-                 ) -> None:
+    def __init__(
+        self,
+        timestep: int,
+        box: np.ndarray,
+        position: np.ndarray,
+        orientation: np.ndarray = None,
+        molecule: Molecule =Trimer(),
+    ) -> None:
         """Initialise a dynamics instance.
 
         Args:
@@ -95,26 +92,23 @@ class dynamics(object):
         result = translationalDisplacement(self.box, self.position, position)
         return result
 
-    def computeStructRelax(self, position: np.ndarray,
-                           orientation: np.ndarray,
-                           threshold: float = 0.3
-                           ) -> float:
+    def computeStructRelax(
+        self, position: np.ndarray, orientation: np.ndarray, threshold: float = 0.3
+    ) -> float:
         particle_displacement = translationalDisplacement(
             self.box,
             molecule2particles(self.position, self.orientation, self.mol_vector),
-            molecule2particles(position, orientation, self.mol_vector)
+            molecule2particles(position, orientation, self.mol_vector),
         )
         return structural_relax(particle_displacement, threshold)
 
-    def computeAll(self,
-                   timestep: int,
-                   position: np.ndarray,
-                   orientation: np.ndarray = None,
-                   ) -> Dict[str, Any]:
+    def computeAll(
+        self, timestep: int, position: np.ndarray, orientation: np.ndarray = None
+    ) -> Dict[str, Any]:
         """Compute all dynamics quantities of interest."""
-
-        delta_displacement = translationalDisplacement(self.box, self.position, position)
-
+        delta_displacement = translationalDisplacement(
+            self.box, self.position, position
+        )
         dynamic_quantities = {
             'time': self.computeTimeDelta(timestep),
             'mean_displacement': mean_displacement(delta_displacement),
@@ -126,14 +120,18 @@ class dynamics(object):
         if self.orientation is not None:
             delta_rotation = rotationalDisplacement(self.orientation, orientation)
             logger.debug('Max rotation: %f', delta_rotation.max())
-            dynamic_quantities.update({
-                'mean_rotation': mean_rotation(delta_rotation),
-                'rot1': rotational_relax1(delta_rotation),
-                'rot2': rotational_relax2(delta_rotation),
-                'gamma': gamma(delta_displacement, delta_rotation),
-                'overlap': mobile_overlap(delta_displacement, delta_rotation),
-                'struct': self.computeStructRelax(position, orientation, threshold=0.3),
-            })
+            dynamic_quantities.update(
+                {
+                    'mean_rotation': mean_rotation(delta_rotation),
+                    'rot1': rotational_relax1(delta_rotation),
+                    'rot2': rotational_relax2(delta_rotation),
+                    'gamma': gamma(delta_displacement, delta_rotation),
+                    'overlap': mobile_overlap(delta_displacement, delta_rotation),
+                    'struct': self.computeStructRelax(
+                        position, orientation, threshold=0.3
+                    ),
+                }
+            )
         return dynamic_quantities
 
     def get_molid(self):
@@ -147,7 +145,7 @@ class molecularRelaxation(object):
     def __init__(self, num_elements: int, threshold: float) -> None:
         self.num_elements = num_elements
         self.threshold = threshold
-        self._max_value = 2**32 - 1
+        self._max_value = 2 ** 32 - 1
         self._status = np.full(self.num_elements, self._max_value, dtype=int)
 
     def add(self, timediff: int, distance: np.ndarray) -> None:
@@ -164,11 +162,9 @@ class molecularRelaxation(object):
 class lastMolecularRelaxation(molecularRelaxation):
     _is_irreversible = 3
 
-    def __init__(self,
-                 num_elements: int,
-                 threshold: float,
-                 irreversibility: float = 1.
-                 ) -> None:
+    def __init__(
+        self, num_elements: int, threshold: float, irreversibility: float = 1.
+    ) -> None:
         super().__init__(num_elements, threshold)
         self._state = np.zeros(self.num_elements, dtype=np.uint8)
         self._irreversibility = irreversibility
@@ -177,12 +173,13 @@ class lastMolecularRelaxation(molecularRelaxation):
         assert distance.shape == self._status.shape
         with np.errstate(invalid='ignore'):
             state = np.greater(distance, self.threshold).astype(np.uint8)
-            state[np.logical_or(self._state == self._is_irreversible,
-                                np.greater(distance, self._irreversibility)
-                                )] = self._is_irreversible
-            self._status[
-                np.logical_and(state == 1, self._state == 0)
-            ] = timediff
+            state[
+                np.logical_or(
+                    self._state == self._is_irreversible,
+                    np.greater(distance, self._irreversibility),
+                )
+            ] = self._is_irreversible
+            self._status[np.logical_and(state == 1, self._state == 0)] = timediff
             self._state = state
 
     def get_status(self):
@@ -193,63 +190,66 @@ class lastMolecularRelaxation(molecularRelaxation):
 
 class structRelaxations(molecularRelaxation):
     """Compute the average structural relaxation for a molecule."""
+
     def __init__(self, num_elements: int, threshold: float, molecule: Molecule) -> None:
         self.molecule = molecule
-        super().__init__(num_elements*self.molecule.num_particles, threshold)
+        super().__init__(num_elements * self.molecule.num_particles, threshold)
 
     def get_status(self):
         return self._status.reshape((-1, self.molecule.num_particles)).mean(axis=1)
 
 
-def create_mol_relaxations(num_elements: int,
-                           threshold: float,
-                           last_passage: bool = False,
-                           last_passage_cutoff: float = 1.0,
-                           **kwargs,
-                           ) -> molecularRelaxation:
+def create_mol_relaxations(
+    num_elements: int,
+    threshold: float,
+    last_passage: bool = False,
+    last_passage_cutoff: float = 1.0,
+    **kwargs,
+) -> molecularRelaxation:
     if last_passage:
-        return lastMolecularRelaxation(num_elements,
-                                       threshold,
-                                       last_passage_cutoff)
+        return lastMolecularRelaxation(num_elements, threshold, last_passage_cutoff)
+
     return molecularRelaxation(num_elements, threshold)
 
 
 class relaxations(object):
 
-    def __init__(self, timestep: int,
-                 box: np.ndarray,
-                 position: np.ndarray,
-                 orientation: np.ndarray,
-                 molecule: Molecule = None) -> None:
+    def __init__(
+        self,
+        timestep: int,
+        box: np.ndarray,
+        position: np.ndarray,
+        orientation: np.ndarray,
+        molecule: Molecule = None,
+    ) -> None:
         self.init_time = timestep
         self.box = box
         self._num_elements = position.shape[0]
-
         self.init_position = position
         self.init_orientation = orientation
         # set defualt values for mol_relax
-        self.set_mol_relax([
-            {'name': 'tau_D1', 'threshold': 1.},
-            {'name': 'tau_D04', 'threshold': 0.4},
-            {'name': 'tau_DL04', 'threshold': 0.4, 'last_passage': True},
-            {'name': 'tau_T2', 'threshold': np.pi/2},
-            {'name': 'tau_T3', 'threshold': np.pi/3},
-            {'name': 'tau_T4', 'threshold': np.pi/4},
-        ])
+        self.set_mol_relax(
+            [
+                {'name': 'tau_D1', 'threshold': 1.},
+                {'name': 'tau_D04', 'threshold': 0.4},
+                {'name': 'tau_DL04', 'threshold': 0.4, 'last_passage': True},
+                {'name': 'tau_T2', 'threshold': np.pi / 2},
+                {'name': 'tau_T3', 'threshold': np.pi / 3},
+                {'name': 'tau_T4', 'threshold': np.pi / 4},
+            ]
+        )
 
     def set_mol_relax(self, definition: List[Dict[str, Any]]) -> None:
         self.mol_relax = {}  # type: Dict[str, molecularRelaxation]
         for item in definition:
             self.mol_relax[item.get('name')] = create_mol_relaxations(
-                self._num_elements, **item)
+                self._num_elements, **item
+            )
 
     def get_timediff(self, timestep: int):
         return timestep - self.init_time
 
-    def add(self, timestep: int,
-            position: np.ndarray,
-            orientation: np.ndarray,
-            ) -> None:
+    def add(self, timestep: int, position: np.ndarray, orientation: np.ndarray) -> None:
         displacement = translationalDisplacement(self.box, self.init_position, position)
         rotation = rotationalDisplacement(self.init_orientation, orientation)
         for key, func in self.mol_relax.items():
@@ -259,15 +259,18 @@ class relaxations(object):
                 func.add(self.get_timediff(timestep), rotation)
 
     def summary(self) -> pandas.DataFrame:
-        return pandas.DataFrame({key: func.get_status() for key, func in self.mol_relax.items()})
+        return pandas.DataFrame(
+            {key: func.get_status() for key, func in self.mol_relax.items()}
+        )
 
 
-def molecule2particles(position: np.ndarray,
-                       orientation: np.ndarray,
-                       mol_vector: np.ndarray
-                       ) -> np.ndarray:
-    return (rotate_vectors(orientation, mol_vector.astype(np.float32)) +
-            np.repeat(position, mol_vector.shape[0], axis=0))
+def molecule2particles(
+    position: np.ndarray, orientation: np.ndarray, mol_vector: np.ndarray
+) -> np.ndarray:
+    return (
+        rotate_vectors(orientation, mol_vector.astype(np.float32)) +
+        np.repeat(position, mol_vector.shape[0], axis=0)
+    )
 
 
 def mean_squared_displacement(displacement: np.ndarray) -> float:
@@ -338,14 +341,16 @@ def alpha_non_gaussian(displacement: np.ndarray) -> float:
         float: The non-gaussian parameter :math:`\alpha`
     """
     try:
-        return (np.power(displacement, 4).mean() /
-                (2 * np.square(np.square(displacement).mean()))) - 1
+        return (
+            np.power(displacement, 4).mean() /
+            (2 * np.square(np.square(displacement).mean()))
+        ) - 1
+
     except FloatingPointError:
         return 0
 
 
-def structural_relax(displacement: np.ndarray,
-                     dist: float=0.3) -> float:
+def structural_relax(displacement: np.ndarray, dist: float = 0.3) -> float:
     r"""Compute the structural relaxation.
 
     The structural relaxation is given as the proportion of
@@ -363,8 +368,7 @@ def structural_relax(displacement: np.ndarray,
     return np.mean(displacement < dist)
 
 
-def gamma(displacement: np.ndarray,
-          rotation: np.ndarray) -> float:
+def gamma(displacement: np.ndarray, rotation: np.ndarray) -> float:
     r"""Calculate the second order coupling of translations and rotations.
 
     .. math::
@@ -382,6 +386,7 @@ def gamma(displacement: np.ndarray,
     disp2m_rot2m = disp2.mean() * rot2.mean()
     try:
         return ((disp2 * rot2).mean() - disp2m_rot2m) / disp2m_rot2m
+
     except FloatingPointError:
         with np.errstate(invalid='ignore'):
             res = ((disp2 * rot2).mean() - disp2m_rot2m) / disp2m_rot2m
@@ -415,9 +420,9 @@ def rotational_relax2(rotation: np.ndarray) -> float:
     return np.mean(2 * np.square(np.cos(rotation)) - 1)
 
 
-def mobile_overlap(displacement: np.ndarray,
-                   rotation: np.ndarray,
-                   fraction: float=0.1) -> float:
+def mobile_overlap(
+    displacement: np.ndarray, rotation: np.ndarray, fraction: float = 0.1
+) -> float:
     """Find the overlap of the most mobile translators and rotators.
 
     This finds the proportion of molecules which reside in the top ``fraction``
@@ -432,9 +437,7 @@ def mobile_overlap(displacement: np.ndarray,
     return len(np.intersect1d(trans_order, rot_order)) / num_elements
 
 
-def rotationalDisplacement(initial: np.ndarray,
-                           final: np.ndarray,
-                           ) -> np.ndarray:
+def rotationalDisplacement(initial: np.ndarray, final: np.ndarray) -> np.ndarray:
     r"""Compute the rotational displacement.
 
     Args:
@@ -463,10 +466,9 @@ def rotationalDisplacement(initial: np.ndarray,
     return result
 
 
-def translationalDisplacement(box: np.ndarray,
-                              initial: np.ndarray,
-                              final: np.ndarray,
-                              ) -> np.ndarray:
+def translationalDisplacement(
+    box: np.ndarray, initial: np.ndarray, final: np.ndarray
+) -> np.ndarray:
     """Optimised function for computing the displacement.
 
     This computes the displacement using the shortest path from the original
