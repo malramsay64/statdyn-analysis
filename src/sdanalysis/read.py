@@ -110,6 +110,7 @@ class WriteCache():
 
 
 def get_filename_vars(fname: Path):
+    fname = Path(fname)
     flist = fname.stem.split('-')
     temp = flist[3][1:]
     pressure = flist[2][1:]
@@ -158,7 +159,7 @@ def process_file(sim_params: SimulationParams) -> None:
     relaxframes: List[relaxations] = []
     if sim_params.infile.endswith('.gsd'):
         file_iterator = process_gsd(sim_params)
-    variables = get_filename_vars(sim_params.infile)
+    variables = get_filename_vars(Path(sim_params.infile))
     for curr_step, indexes, frame in file_iterator:
         for index in indexes:
             try:
@@ -209,7 +210,7 @@ def process_file(sim_params: SimulationParams) -> None:
             (relax.summary() for relax in relaxframes), keys=range(len(relaxframes))
         )
         mol_relax['temperature'] = variables.temperature
-        mol_relax['pressure'] - variables.pressure
+        mol_relax['pressure'] = variables.pressure
         mol_relax.to_hdf(
             sim_params.outfile, 'molecular_relaxations', format='table', append=True
         )
