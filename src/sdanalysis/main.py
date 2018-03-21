@@ -35,7 +35,7 @@ def sdanalysis() -> None:
 
 def comp_dynamics(sim_params: SimulationParams) -> None:
     """Compute dynamic properties."""
-    outfile = sim_params.outfile_path / Path(sim_params.infile).with_suffix('.hdf5').name
+    outfile = sim_params.outfile_path / 'dynamics.h5'
     outfile.parent.mkdir(exist_ok=True)
     sim_params.parameters['outfile'] = outfile
     try:

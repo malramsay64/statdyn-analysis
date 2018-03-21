@@ -80,7 +80,7 @@ class writeCache():
         self._cache_size = 8192 * cache_multiplier
         self._cache = []  # type: List[Any]
         self._outfile = filename
-        self._append = False
+        self._append = append
         self._emptied = 0
 
     def append(self, item: Any) -> None:
