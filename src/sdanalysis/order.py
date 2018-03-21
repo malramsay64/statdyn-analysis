@@ -101,10 +101,7 @@ def relative_distances(
 ) -> np.ndarray:
     """Compute the distance to each neighbour."""
     neigh_tree = compute_neighbour_tree(box, position)
-    return neigh_tree.query(
+    distances, *_ = neigh_tree.query(
         neigh_tree.data, max_neighbours + 1, distance_upper_bound=max_radius, n_jobs=-1
-    )[
-        0
-    ][
-        :, 1:
-    ]
+    )
+    return distances[:, 1:]
