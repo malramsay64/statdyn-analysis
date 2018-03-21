@@ -17,7 +17,7 @@ from sdanalysis import read
 from sdanalysis.params import SimulationParams, paramsContext
 from sdanalysis.StepSize import GenerateStepSeries
 
-sim_params = SimulationParams(infile='test/data/trajectory-13.50-3.00.gsd')
+sim_params = SimulationParams(infile='test/data/trajectory-Trimer-P13.50-T3.00.gsd')
 
 
 @pytest.mark.parametrize('step_limit', [0, 10, 20, 100])
