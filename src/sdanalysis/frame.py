@@ -5,7 +5,6 @@
 # Copyright © 2018 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
-
 """Classes which hold frames."""
 
 from typing import Dict
@@ -14,6 +13,7 @@ import numpy as np
 
 
 class Frame(ABC):
+
     @property
     @abstractmethod
     def position(self) -> np.ndarray:
@@ -34,34 +34,42 @@ class Frame(ABC):
     def timestep(self) -> int:
         pass
 
+    @abstractmethod
+    def __len__(self) -> int:
+        pass
+
 
 def lammpsFrame(Frame):
+
     def __init__(self, timestep: int, box, frame: Dict) -> None:
         self.frame = frame
         self._timestep = timestep
-        self._box = box
+        self._box = np.array(box)
 
     @property
     def position(self):
-        return np.array([self.frame['x'],
-                         self.frame['y'],
-                         self.frame['z'],
-                         ])
+        return np.array(
+            [self.frame['x'], self.frame['y'], self.frame['z']], dtype=np.float32
+        ).T
 
     @property
-    def orientation(self):
-        return np.zeros((len(self.frame['x']), 4))
+    def orientation(self) -> np.ndarray:
+        return np.zeros((len(self), 4), dtype=np.float32)
 
     @property
     def timestep(self):
         return self._timestep
 
     @property
-    def box(self):
-        return self._box
+    def box(self) -> np.ndarray:
+        return self._box.astype(np.float32)
+
+    def __len__(self) -> int:
+        return len(self.frame['x'])
 
 
 def gsdFrame(Frame):
+
     def __init__(self, frame) -> None:
         self.frame = frame
 
@@ -80,4 +88,3 @@ def gsdFrame(Frame):
     @property
     def box(self):
         return self.frame.configuration.box
-
