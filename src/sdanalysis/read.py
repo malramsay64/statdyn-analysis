@@ -8,6 +8,7 @@
 """Read input files and compute dynamic and thermodynamic quantities."""
 
 import logging
+from collections import namedtuple
 from pathlib import Path
 from typing import Any, Dict, List, Union
 
@@ -108,6 +109,18 @@ class WriteCache():
         return pandas.DataFrame.from_records(self._cache)
 
 
+def get_filename_vars(fname: Path):
+    flist = fname.stem.split('-')
+    temp = flist[3][1:]
+    pressure = flist[2][1:]
+    try:
+        crys = flist[4]
+    except IndexError:
+        crys = None
+    variables = namedtuple('variables', ['temperature', 'pressure', 'crystal'])
+    return variables(temp, pressure, crys)
+
+
 def process_file(sim_params: SimulationParams) -> None:
     """Read a gsd file and compute the dynamics quantities.
 
@@ -145,6 +158,7 @@ def process_file(sim_params: SimulationParams) -> None:
     relaxframes: List[relaxations] = []
     if sim_params.infile.endswith('.gsd'):
         file_iterator = process_gsd(sim_params)
+    variables = get_filename_vars(sim_params.infile)
     for curr_step, indexes, frame in file_iterator:
         for index in indexes:
             try:
@@ -186,13 +200,18 @@ def process_file(sim_params: SimulationParams) -> None:
             )
             logger.debug('Series: %s', index)
             dynamics_series['start_index'] = index
+            dynamics_series['temperature'] = variables.temperature
+            dynamics_series['pressure'] = variables.pressure
             dataframes.append(dynamics_series)
     if outfile:
         dataframes.flush()
-        pandas.concat(
+        mol_relax = pandas.concat(
             (relax.summary() for relax in relaxframes), keys=range(len(relaxframes))
-        ).to_hdf(
-            sim_params.outfile, 'relaxations', format='table', append=True
+        )
+        mol_relax['temperature'] = variables.temperature
+        mol_relax['pressure'] - variables.pressure
+        mol_relax.to_hdf(
+            sim_params.outfile, 'molecular_relaxations', format='table', append=True
         )
         return
 
