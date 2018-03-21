@@ -72,7 +72,7 @@ def process_gsd(sim_params: SimulationParams):
             curr_step = step_iter.next()
 
 
-class writeCache():
+class WriteCache():
 
     def __init__(
         self, filename: Path, append: bool = True, cache_multiplier: int = 1
@@ -137,10 +137,10 @@ def process_file(sim_params: SimulationParams) -> None:
     """
     try:
         outfile = Path(sim_params.outfile)
-        dataframes = writeCache(outfile, append=True)
+        dataframes = WriteCache(outfile, append=True)
     except AttributeError:
         outfile = None
-        dataframes = writeCache(outfile, append=True, cache_multiplier=0)
+        dataframes = WriteCache(outfile, append=True, cache_multiplier=0)
     keyframes: List[dynamics] = []
     relaxframes: List[relaxations] = []
     if sim_params.infile.endswith('.gsd'):
