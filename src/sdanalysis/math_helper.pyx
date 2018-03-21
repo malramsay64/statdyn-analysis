@@ -94,7 +94,7 @@ cdef void quaternion_rotate_vector(
 
 
 cpdef float single_quat_rotation(
-        const float[:, :] orientation,
+        float[:, :] orientation,
         int i,
         int j
         ) nogil:
