@@ -9,21 +9,22 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Iterable
+from typing import Any, Dict, Iterable, List, Tuple
 
 import gsd.hoomd
+import numpy as np
 import pandas
 
 from .dynamics import dynamics, relaxations
+from .frame import Frame, gsdFrame, lammpsFrame
 from .molecules import Trimer
 from .params import SimulationParams
 from .StepSize import GenerateStepSeries
-from .frame import Frame, lammpsFrame, gsdFrame
 
 logger = logging.getLogger(__name__)
 
 
-def process_gsd(sim_params: SimulationParams) -> Iterable[Tuple[List[int], Frame]]:
+def process_gsd(sim_params: SimulationParams) -> Iterable[Tuple[List[int], gsdFrame]]:
     with gsd.hoomd.open(sim_params.infile, 'rb') as src:
         # Compute steps in gsd file
         if sim_params.parameters.get('step_limit') is not None:
@@ -68,12 +69,14 @@ def process_gsd(sim_params: SimulationParams) -> Iterable[Tuple[List[int], Frame
                 return
 
             if curr_step == frame.configuration.step:
-                yield step_iter.get_index(), ret_frame
+                yield step_iter.get_index(), gsdFrame(frame)
 
             curr_step = step_iter.next()
 
 
-def parse_lammpstrj(sim_params: SimulationParams) -> Iterable[Tuple[List[int], Frame]]:
+def process_lammpstrj(
+    sim_params: SimulationParams
+) -> Iterable[Tuple[List[int], lammpsFrame]]:
     indexes = [0]
     parser = parse_lammpstrj(sim_params)
     frame = next(parser)
@@ -217,12 +220,12 @@ def process_file(sim_params: SimulationParams) -> None:
         dataframes = WriteCache(outfile, append=True, cache_multiplier=0)
     keyframes: List[dynamics] = []
     relaxframes: List[relaxations] = []
+<<<<<<< HEAD
     if sim_params.infile.endswith('.gsd'):
         file_iterator = process_gsd(sim_params)
     elif sim_params.infile.endswith('.lammpstrj'):
-        file_iterator = parse_lammpstrj(sim_params)
-    variables = get_filename_vars(Path(sim_params.infile))
-    for curr_step, indexes, frame in file_iterator:
+        file_iterator = process_lammpstrj(sim_params)
+    for indexes, frame in file_iterator:
         for index in indexes:
             try:
                 logger.debug(
