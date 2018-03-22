@@ -136,3 +136,17 @@ def exponential_relaxation(
     val_min: float = find_root(*(popt - perr))
     val_max: float = find_root(*(popt + perr))
     return val_mean, val_mean - val_min, val_max - val_min
+
+
+def max_relaxation(time: np.ndarray, value: np.ndarray) -> float:
+    """Time at which the maximum value is recorded.
+
+    Args:
+        time (np.ndarray): The time index
+        value (np.ndarray): The value at each of the time indices
+
+    Returns:
+        float: The time at which the maximum value occurs.
+
+    """
+    return time[np.argmax(value)]
