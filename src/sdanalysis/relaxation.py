@@ -93,15 +93,14 @@ def exponential_relaxation(
     value: np.ndarray,
     sigma: np.ndarray = None,
     value_width: float = 0.3,
-) -> Tuple[float, float, float]:
+) -> Tuple[float, float]:
     """Fit a region of the exponential relaxation with an exponential.
 
     This fits an exponential to the small region around the value 1/e.
 
     Returns:
         relaxation_time (float): The relaxation time for the given quantity
-        error_min (float): The minmum error value
-        error_max (float): The maximum error value
+        error (float): Estimated error of the relaxation time.
 
     """
     exp_value = 1 / np.exp(1)
@@ -135,10 +134,10 @@ def exponential_relaxation(
     val_mean: float = find_root(*popt)
     val_min: float = find_root(*(popt - perr))
     val_max: float = find_root(*(popt + perr))
-    return val_mean, val_mean - val_min, val_max - val_min
+    return val_mean, val_max - val_min
 
 
-def max_relaxation(time: np.ndarray, value: np.ndarray) -> float:
+def max_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, float]:
     """Time at which the maximum value is recorded.
 
     Args:
@@ -147,6 +146,8 @@ def max_relaxation(time: np.ndarray, value: np.ndarray) -> float:
 
     Returns:
         float: The time at which the maximum value occurs.
+        float: Value of the maximum.
 
     """
-    return time[np.argmax(value)]
+    max_val_index = np.argmax(value)
+    return time[max_val_index], value[max_val_index]
