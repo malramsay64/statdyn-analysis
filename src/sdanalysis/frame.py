@@ -7,8 +7,9 @@
 # Distributed under terms of the MIT license.
 """Classes which hold frames."""
 
-from typing import Dict
 from abc import ABC, abstractmethod
+from typing import Dict
+
 import numpy as np
 
 

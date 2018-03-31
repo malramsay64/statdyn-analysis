@@ -79,4 +79,3 @@ def test_process_lammpstrj():
 
 def test_process_file():
     pass
-

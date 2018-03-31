@@ -9,7 +9,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Tuple
+from typing import Any, Iterable, List, Tuple
 
 import gsd.hoomd
 import numpy as np
@@ -220,7 +220,6 @@ def process_file(sim_params: SimulationParams) -> None:
         dataframes = WriteCache(outfile, append=True, cache_multiplier=0)
     keyframes: List[dynamics] = []
     relaxframes: List[relaxations] = []
-<<<<<<< HEAD
     if sim_params.infile.endswith('.gsd'):
         file_iterator = process_gsd(sim_params)
     elif sim_params.infile.endswith('.lammpstrj'):
