@@ -44,7 +44,7 @@ class lammpsFrame(Frame):
 
     def __init__(self, frame: Dict) -> None:
         self.frame = frame
-        self.frame.box = np.array(box)
+        self.frame['box'] = np.array(self.frame['box'])
 
     @property
     def position(self):
@@ -58,11 +58,11 @@ class lammpsFrame(Frame):
 
     @property
     def timestep(self):
-        return self.frame.timestep
+        return self.frame['timestep']
 
     @property
     def box(self) -> np.ndarray:
-        return self.frame.box.astype(np.float32)
+        return self.frame['box'].astype(np.float32)
 
     def __len__(self) -> int:
         return len(self.frame['x'])
