@@ -27,4 +27,4 @@ dependencies:
         - pytest-mypy
         - pytest-pylint
         - pytest-cov
-        - black
+        - pytest-lazy-fixture

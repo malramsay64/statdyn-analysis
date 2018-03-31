@@ -5,37 +5,43 @@
 # Copyright © 2018 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
-from sdanalysis import frame
-import pytest
-import pandas
 import gsd.hoomd
 import numpy as np
+import pandas
+import pytest
+from sdanalysis import frame
 
 
 @pytest.fixture
 def lammps_frame():
-    inframe = pandas.DataFrame(
-        {'x': np.random.rand(100), 'y': np.random.rand(100), 'z': np.random.rand(100)}
-    )
-    box = [1, 1, 1]
-    return frame.lammpsFrame(0, box, inframe)
+    inframe = {
+        'x': np.random.rand(100),
+        'y': np.random.rand(100),
+        'z': np.random.rand(100),
+        'box': [1, 1, 1],
+        'timestep': 0,
+    }
+    frame = lammpsFrame(inframe)
+    return frame
 
 
 @pytest.fixture
 def gsd_frame():
     inframe = gsd.hoomd.open('test/data/Trimer-13.50-3.00.gsd')[0]
-    return frame.gsdFrame(inframe)
+    frame = gsdFrame(inframe)
+    return frame
 
 
 @pytest.fixture(
-    params=[pytest.mark.fixture(lammps_frame), pytest.mark.fixture(gsd_frame)]
+    params=[pytest.lazy_fixture('lammps_frame'), pytest.lazy_fixture('gsd_frame')]
 )
 def frametypes(request):
-    return request.param()
+    return request.param
 
 
 def test_frame_len(frametypes):
     assert len(frametypes) > 0
+    assert len(frametypes) == len(frametypes.position)
 
 
 def test_frame_position(frametypes):
