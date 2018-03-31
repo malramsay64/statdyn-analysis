@@ -9,15 +9,11 @@
 """Test the parsing of arguments gives the correct results."""
 
 import pytest
-
 from sdanalysis.main import create_parser
 
 parser = create_parser()
 
-FUNCS = [
-    ('figure', []),
-    ('comp_dynamics', ['infile']),
-]
+FUNCS = [('figure', []), ('comp_dynamics', ['infile'])]
 
 
 @pytest.mark.parametrize('func, extras', FUNCS)
@@ -26,7 +22,7 @@ def test_verbose(func, extras):
     assert args.verbose == 1
     args = parser.parse_args([func, '--verbose'] + extras)
     assert args.verbose == 1
-    args = parser.parse_args([func] + ['-v']*3 + extras)
+    args = parser.parse_args([func] + ['-v'] * 3 + extras)
     assert args.verbose == 3
 
 
@@ -43,12 +39,15 @@ def test_version(func, extras):
         assert e == 0
 
 
-@pytest.mark.parametrize('extras', [
-    ['test'],
-    ['--argument'],
-    ['--argument', 'with_value'],
-    ['-a', '--argument', 'value', '123']
-])
+@pytest.mark.parametrize(
+    'extras',
+    [
+        ['test'],
+        ['--argument'],
+        ['--argument', 'with_value'],
+        ['-a', '--argument', 'value', '123'],
+    ],
+)
 def test_bokeh(extras):
     args = parser.parse_args(['figure', '--'] + extras)
     assert args.bokeh == extras

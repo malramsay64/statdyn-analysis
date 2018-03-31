@@ -30,7 +30,7 @@ class dynamics(object):
         box: np.ndarray,
         position: np.ndarray,
         orientation: np.ndarray = None,
-        molecule: Molecule =Trimer(),
+        molecule: Molecule = Trimer(),
     ) -> None:
         """Initialise a dynamics instance.
 

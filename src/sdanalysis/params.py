@@ -42,6 +42,7 @@ class SimulationParams(object):
     # I am using getattr over getattribute becuase of the lower search priority
     # of getattr. This makes it a fallback, rather than the primary location
     # for looking up attributes.
+
     def __getattr__(self, key):
         try:
             return self.parameters.__getitem__(key)

@@ -1,0 +1,15 @@
+repos:
+- repo: https://github.com/pre-commit/pre-commit-hooks
+  rev: v1.2.3
+  hooks:
+    - id: trailing-whitespace
+
+#- repo: https://github.com/doublify/pre-commit-isort
+  #sha: master
+  #hooks:
+    #- id: isort
+
+- repo: https://github.com/malramsay64/pre-commit-black
+  sha: master
+  hooks:
+    - id: black

@@ -20,10 +20,12 @@ def test_thermodynamics_null():
 
 
 def test_interactive():
-    subprocess.check_call(['python', '-c', 'import sdanalysis.figures.interactive_config'],
-                          cwd='test')
+    subprocess.check_call(
+        ['python', '-c', 'import sdanalysis.figures.interactive_config'], cwd='test'
+    )
 
 
 def test_thermodynamics():
-    subprocess.check_call(['python', '-c', 'import sdanalysis.figures.thermodynamics'],
-                          cwd='test/data')
+    subprocess.check_call(
+        ['python', '-c', 'import sdanalysis.figures.thermodynamics'], cwd='test/data'
+    )
