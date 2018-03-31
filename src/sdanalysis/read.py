@@ -8,6 +8,7 @@
 """Read input files and compute dynamic and thermodynamic quantities."""
 
 import logging
+from collections import namedtuple
 from pathlib import Path
 from typing import Any, Iterable, List, Tuple
 
@@ -78,7 +79,7 @@ def process_lammpstrj(
     sim_params: SimulationParams
 ) -> Iterable[Tuple[List[int], lammpsFrame]]:
     indexes = [0]
-    parser = parse_lammpstrj(sim_params)
+    parser = parse_lammpstrj(sim_params.infile)
     frame = next(parser)
     while frame:
         if frame.timestep > sim_params.step_limit:
@@ -89,8 +90,9 @@ def process_lammpstrj(
         frame = next(parser)
 
 
-def parse_lammpstrj(sim_params: SimulationParams) -> Iterable[lammpsFrame]:
-    with open(sim_params.infile) as src:
+def parse_lammpstrj(filename: Path, mode: str = 'r') -> Iterable[lammpsFrame]:
+    logger.debug("Parse file: %s", filename)
+    with open(filename) as src:
         while True:
             # Timestep
             line = src.readline()
@@ -173,15 +175,18 @@ class WriteCache():
 
 
 def get_filename_vars(fname: Path):
+    variables = namedtuple('variables', ['temperature', 'pressure', 'crystal'])
     fname = Path(fname)
     flist = fname.stem.split('-')
+    if len(flist) < 4:
+        return variables(None, None, None)
+
     temp = flist[3][1:]
     pressure = flist[2][1:]
     try:
         crys = flist[4]
     except IndexError:
         crys = None
-    variables = namedtuple('variables', ['temperature', 'pressure', 'crystal'])
     return variables(temp, pressure, crys)
 
 
@@ -224,7 +229,7 @@ def process_file(sim_params: SimulationParams) -> None:
         file_iterator = process_gsd(sim_params)
     elif sim_params.infile.endswith('.lammpstrj'):
         file_iterator = process_lammpstrj(sim_params)
-    variables = get_filename_vars(sim_params.filename())
+    variables = get_filename_vars(sim_params.infile)
     for indexes, frame in file_iterator:
         for index in indexes:
             try:

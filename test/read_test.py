@@ -22,7 +22,10 @@ sim_params = SimulationParams(infile='test/data/trajectory-Trimer-P13.50-T3.00.g
 @pytest.mark.parametrize('step_limit', [0, 10, 20, 100])
 @pytest.mark.parametrize(
     'infile',
-    ['test/data/trajectory-13.50-3.00.gsd', 'test/data/short-time-variance.lammpstrj'],
+    [
+        'test/data/trajectory-Trimer-P13.50-T3.00.gsd',
+        'test/data/short-time-variance.lammpstrj',
+    ],
 )
 def test_stopiter_handling(step_limit, infile):
     with paramsContext(sim_params, infile=infile, step_limit=step_limit):

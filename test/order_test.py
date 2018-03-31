@@ -14,9 +14,9 @@ import pytest
 from sdanalysis import order  # type: ignore
 
 INFILES = [
-    'test/data/Trimer-13.50-0.40-p2.gsd',
-    'test/data/Trimer-13.50-0.40-p2gg.gsd',
-    'test/data/Trimer-13.50-0.40-pg.gsd',
+    'test/data/dump-Trimer-13.50-0.40-p2.gsd',
+    'test/data/dump-Trimer-13.50-0.40-p2gg.gsd',
+    'test/data/dump-Trimer-13.50-0.40-pg.gsd',
 ]
 
 ML_MODELS = [order.dt_model, order.knn_model]

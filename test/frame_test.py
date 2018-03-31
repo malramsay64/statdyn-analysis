@@ -26,7 +26,7 @@ def lammps_frame():
 
 @pytest.fixture
 def gsd_frame():
-    inframe = gsd.hoomd.open('test/data/Trimer-13.50-3.00.gsd')[0]
+    inframe = gsd.hoomd.open('test/data/trajectory-Trimer-P13.50-T3.00.gsd')[0]
     frame = gsdFrame(inframe)
     return frame
 
