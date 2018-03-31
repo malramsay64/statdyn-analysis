@@ -155,7 +155,7 @@ class WriteCache():
         self._cache.append(item)
 
     def flush(self) -> None:
-        pandas.DataFrame.from_records(self._cache).to_hdf(
+        self.to_dataframe().to_hdf(
             self._outfile, 'dynamics', format='table', append=self._append
         )
         self._append = True
