@@ -124,18 +124,16 @@ def parse_lammpstrj(sim_params: SimulationParams) -> Iterable[lammpsFrame]:
             # Find id column
             id_col = headings.index('id')
             # Create arrays
-            arrays = {
-                field: np.empty(num_atoms, dtype=np.float32) for field in headings
-            }
-            logger.debug('Array shape of "id": %s', arrays['id'].shape)
+            frame = {field: np.empty(num_atoms, dtype=np.float32) for field in headings}
+            logger.debug('Array shape of "id": %s', frame['id'].shape)
             for _ in range(num_atoms):
                 line = src.readline().split(' ')
                 mol_index = int(line[id_col]) - 1  # lammps 1 indexes molecules
-                logger.debug('Molecule index: %s, num_atoms: %s', mol_index, num_atoms)
                 for field, val in zip(headings, line):
-                    arrays[field][mol_index] = float(val)
-            frame = lammpsFrame(timestep, box, arrays)
-            yield frame
+                    frame[field][mol_index] = float(val)
+            frame['box'] = box
+            frame['timestep'] = timestep
+            yield lammpsFrame(frame)
 
 
 class WriteCache():
