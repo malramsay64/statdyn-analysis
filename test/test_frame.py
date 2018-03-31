@@ -7,9 +7,8 @@
 # Distributed under terms of the MIT license.
 import gsd.hoomd
 import numpy as np
-import pandas
 import pytest
-from sdanalysis import frame
+from sdanalysis.frame import gsdFrame, lammpsFrame
 
 
 @pytest.fixture
