@@ -224,6 +224,7 @@ def process_file(sim_params: SimulationParams) -> None:
         file_iterator = process_gsd(sim_params)
     elif sim_params.infile.endswith('.lammpstrj'):
         file_iterator = process_lammpstrj(sim_params)
+    variables = get_filename_vars(sim_params.filename())
     for indexes, frame in file_iterator:
         for index in indexes:
             try:
