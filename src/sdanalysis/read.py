@@ -138,11 +138,13 @@ def parse_lammpstrj(sim_params: SimulationParams) -> Iterable[lammpsFrame]:
 
 class WriteCache():
 
-    def __init__(self, filename: Path, cache_multiplier: int = 1) -> None:
+    def __init__(
+        self, filename: Path, cache_multiplier: int = 1, append: bool = False
+    ) -> None:
         self._cache_size = 8192 * cache_multiplier
         self._cache = []  # type: List[Any]
         self._outfile = filename
-        self._append = False
+        self._append = append
         self._emptied = 0
 
     def append(self, item: Any) -> None:
