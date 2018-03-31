@@ -45,7 +45,7 @@ def plot_circles(mol_plot, source):
 
 def snapshot2data(
     snapshot,
-    molecule: Molecule =Trimer(),
+    molecule: Molecule = Trimer(),
     extra_particles=True,
     ordering=None,
     order_list=None,

@@ -38,7 +38,7 @@ def test_scale_moment_inertia(mol):
     init_mom_I = np.array(mol.moment_inertia)
     mol.scale_moment_inertia(scale_factor)
     final_mom_I = np.array(mol.moment_inertia)
-    assert np.all(scale_factor*init_mom_I == final_mom_I)
+    assert np.all(scale_factor * init_mom_I == final_mom_I)
 
 
 def test_get_radii(mol):
@@ -56,11 +56,7 @@ def test_orientation2positions(mol):
     x_inv_pos = np.copy(mol.positions)
     x_inv_pos[:, 0] = -x_inv_pos[:, 0]
     rotated_pos = mol.orientation2positions(position, orientation)
-    assert np.allclose(
-        rotated_pos,
-        x_inv_pos,
-        atol=1e5,
-    )
+    assert np.allclose(rotated_pos, x_inv_pos, atol=1e5)
 
 
 def test_orientation2positions_invert_xy(mol):
@@ -69,11 +65,7 @@ def test_orientation2positions_invert_xy(mol):
     xy_inv_pos = np.copy(mol.positions)
     xy_inv_pos[:, :2] = -xy_inv_pos[:, :2]
     rotated_pos = mol.orientation2positions(position, orientation)
-    assert np.allclose(
-        rotated_pos,
-        xy_inv_pos,
-        atol=1e5,
-    )
+    assert np.allclose(rotated_pos, xy_inv_pos, atol=1e5)
 
 
 def test_orientation2positions_moved(mol):
@@ -81,10 +73,7 @@ def test_orientation2positions_moved(mol):
     orientation = np.array([[1, 0, 0, 0]], dtype=np.float32)
     rotated_pos = mol.orientation2positions(position, orientation)
     moved_pos = mol.positions + np.repeat(position, mol.num_particles, axis=0)
-    assert np.allclose(
-        rotated_pos,
-        moved_pos,
-    )
+    assert np.allclose(rotated_pos, moved_pos)
 
 
 def test_orientation2positions_moved_rot(mol):
@@ -94,10 +83,7 @@ def test_orientation2positions_moved_rot(mol):
     xy_inv_pos = np.copy(mol.positions)
     xy_inv_pos[:, :2] = -xy_inv_pos[:, :2]
     moved_pos = xy_inv_pos + np.tile(position, (mol.num_particles, 1))
-    assert np.allclose(
-        rotated_pos,
-        moved_pos,
-    )
+    assert np.allclose(rotated_pos, moved_pos)
 
 
 def test_orientation2positions_moved_rot_multiple(mol):
@@ -106,12 +92,11 @@ def test_orientation2positions_moved_rot_multiple(mol):
     rotated_pos = mol.orientation2positions(position, orientation)
     xy_inv_pos = np.copy(mol.positions)
     xy_inv_pos[:, :2] = -xy_inv_pos[:, :2]
-    moved_pos = (np.repeat(xy_inv_pos, position.shape[0], axis=0)
-                 + np.tile(position, (mol.num_particles, 1)))
-    assert np.allclose(
-        rotated_pos,
-        moved_pos,
+    moved_pos = (
+        np.repeat(xy_inv_pos, position.shape[0], axis=0) +
+        np.tile(position, (mol.num_particles, 1))
     )
+    assert np.allclose(rotated_pos, moved_pos)
 
 
 def test_get_types(mol):
@@ -135,8 +120,10 @@ def test_moment_inertia_scaling(scaling_factor):
     with np.errstate(over='ignore'):
         scaled = molecules.Trimer(moment_inertia_scale=scaling_factor)
         assert len(reference.moment_inertia) == len(scaled.moment_inertia)
-        assert np.allclose(np.array(reference.moment_inertia)*scaling_factor,
-                           np.array(scaled.moment_inertia))
+        assert np.allclose(
+            np.array(reference.moment_inertia) * scaling_factor,
+            np.array(scaled.moment_inertia)
+        )
 
 
 def test_compute_size(mol):

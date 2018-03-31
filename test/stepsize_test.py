@@ -15,22 +15,39 @@ from hypothesis.strategies import integers
 from sdanalysis.StepSize import GenerateStepSeries, generate_steps
 
 
-@pytest.fixture(params=[
-    {'max': 100, 'lin': 10, 'start': 0,
-     'def':
-     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100]},
-    {'max': 99, 'lin': 10, 'start': 0,
-     'def':
-     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99]},
-    {'max': 87, 'lin': 10, 'start': 0,
-     'def':
-     [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 87]},
-])
+@pytest.fixture(
+    params=[
+        {
+            'max': 100,
+            'lin': 10,
+            'start': 0,
+            'def': [
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100
+            ],
+        },
+        {
+            'max': 99,
+            'lin': 10,
+            'start': 0,
+            'def': [
+                0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99
+            ],
+        },
+        {
+            'max': 87,
+            'lin': 10,
+            'start': 0,
+            'def': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 87],
+        },
+    ]
+)
 def steps(request):
     """Generate the steps lists."""
-    request.param['gen'] = list(generate_steps(request.param['max'],
-                                               request.param['lin'],
-                                               request.param['start']))
+    request.param['gen'] = list(
+        generate_steps(
+            request.param['max'], request.param['lin'], request.param['start']
+        )
+    )
     return request.param
 
 
@@ -38,7 +55,7 @@ def steps(request):
 @settings(deadline=None)
 def test_initial_start(initial):
     """Ensure the first value produced is the initial value."""
-    gen = generate_steps(total_steps=initial+10, start=initial)
+    gen = generate_steps(total_steps=initial + 10, start=initial)
     assert next(gen) == initial
 
 
@@ -46,7 +63,7 @@ def test_initial_start(initial):
 @settings(deadline=None)
 def test_initial_start_series(initial):
     """Ensure the first value produced is the initial value."""
-    gen = GenerateStepSeries(total_steps=initial+10)
+    gen = GenerateStepSeries(total_steps=initial + 10)
     assert next(gen) == 0
 
 
@@ -77,8 +94,12 @@ def test_generate_step_series(total_steps, num_linear):
     This ensures that both functions give same results for case of only a
     single series
     """
-    single = list(generate_steps(total_steps=total_steps, num_linear=num_linear, start=0))
-    series = list(GenerateStepSeries(total_steps=total_steps, num_linear=num_linear, max_gen=1))
+    single = list(
+        generate_steps(total_steps=total_steps, num_linear=num_linear, start=0)
+    )
+    series = list(
+        GenerateStepSeries(total_steps=total_steps, num_linear=num_linear, max_gen=1)
+    )
     assert single == series
 
 
@@ -86,7 +107,7 @@ def test_generate_step_series(total_steps, num_linear):
 def test_num_linear(num_linear):
     """Test a range of values of num_linear will work."""
     gen_list = list(generate_steps(total_steps=1e7, num_linear=num_linear))
-    assert gen_list[:num_linear+1] == list(range(num_linear+1))
+    assert gen_list[:num_linear + 1] == list(range(num_linear + 1))
 
 
 def test_get_index():
@@ -102,18 +123,16 @@ def test_generate_step_series_many():
     """Test generation of a step series works."""
     total_steps = 1000000
     num_linear = 10
-    many_gens = list(GenerateStepSeries(
-        total_steps=total_steps,
-        num_linear=num_linear,
-        gen_steps=1000,
-        max_gen=10,
-    ))
-    single_gen = list(GenerateStepSeries(
-        total_steps=total_steps,
-        num_linear=num_linear,
-        gen_steps=1000,
-        max_gen=1,
-    ))
+    many_gens = list(
+        GenerateStepSeries(
+            total_steps=total_steps, num_linear=num_linear, gen_steps=1000, max_gen=10
+        )
+    )
+    single_gen = list(
+        GenerateStepSeries(
+            total_steps=total_steps, num_linear=num_linear, gen_steps=1000, max_gen=1
+        )
+    )
     assert len(many_gens) > len(single_gen)
 
 
@@ -128,8 +147,11 @@ def test_no_duplicates(total_steps, num_linear):
 @pytest.mark.parametrize('total_steps, num_linear', [(1_000_000, 100)])
 def test_no_duplicates_series(total_steps, num_linear):
     """Test generation of a step series works."""
-    series_list = list(GenerateStepSeries(total_steps=total_steps, num_linear=num_linear,
-                                          gen_steps=1000, max_gen=10))
+    series_list = list(
+        GenerateStepSeries(
+            total_steps=total_steps, num_linear=num_linear, gen_steps=1000, max_gen=10
+        )
+    )
     series_set = set(series_list)
     assert len(series_list) == len(series_set)
 
@@ -144,4 +166,5 @@ def test_next():
             next_iter.append(next(gen))
         except StopIteration:
             break
+
     assert list_iter == next_iter

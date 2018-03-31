@@ -15,7 +15,6 @@ from pathlib import Path
 import pytest
 from hypothesis import example, given, settings
 from hypothesis.strategies import text
-
 from sdanalysis.molecules import Dimer, Disc, Molecule, Sphere, Trimer
 from sdanalysis.params import SimulationParams, paramsContext
 
@@ -56,20 +55,14 @@ def test_default_molecule():
     assert SIM_PARAMS.molecule == Trimer()
 
 
-@pytest.mark.parametrize('outfile', [
-    'test/data',
-    Path('test/data')
-])
+@pytest.mark.parametrize('outfile', ['test/data', Path('test/data')])
 def test_outfile(outfile):
     with paramsContext(SIM_PARAMS, outfile=outfile):
         assert SIM_PARAMS.parameters.get('outfile') == outfile
         assert str(outfile) == SIM_PARAMS.outfile
 
 
-@pytest.mark.parametrize('outfile_path', [
-    'test/output',
-    Path('test/output')
-])
+@pytest.mark.parametrize('outfile_path', ['test/output', Path('test/output')])
 def test_outdir(outfile_path):
     with paramsContext(SIM_PARAMS, outfile_path=outfile_path):
         assert SIM_PARAMS.parameters.get('outfile_path') == outfile_path
@@ -88,4 +81,3 @@ def test_function_passing(sim_params):
         assert sim_params.num_steps == 2000
     assert func(sim_params, 'num_steps') == 1000
     assert sim_params.num_steps == 1000
-

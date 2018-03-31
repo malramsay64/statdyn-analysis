@@ -67,7 +67,7 @@ def diffusion_constant(
 def threshold_relaxation(
     time: np.ndarray,
     value: np.ndarray,
-    threshold: float =1 / np.exp(1),
+    threshold: float = 1 / np.exp(1),
     greater: bool = True,
 ) -> Tuple[float, float]:
     """Compute the relaxation through the reaching of a specific value.
