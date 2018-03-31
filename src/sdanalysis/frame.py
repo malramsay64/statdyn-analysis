@@ -35,6 +35,32 @@ class Frame(ABC):
         pass
 
 
+def lammpsFrame(Frame):
+    def __init__(self, timestep: int, box, frame: Dict) -> None:
+        self.frame = frame
+        self._timestep = timestep
+        self._box = box
+
+    @property
+    def position(self):
+        return np.array([self.frame['x'],
+                         self.frame['y'],
+                         self.frame['z'],
+                         ])
+
+    @property
+    def orientation(self):
+        return np.zeros((len(self.frame['x']), 4))
+
+    @property
+    def timestep(self):
+        return self._timestep
+
+    @property
+    def box(self):
+        return self._box
+
+
 def gsdFrame(Frame):
     def __init__(self, frame) -> None:
         self.frame = frame

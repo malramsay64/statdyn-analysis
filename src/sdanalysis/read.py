@@ -5,6 +5,7 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+
 """Read input files and compute dynamic and thermodynamic quantities."""
 
 import logging
@@ -19,7 +20,7 @@ from .dynamics import dynamics, relaxations
 from .molecules import Trimer
 from .params import SimulationParams
 from .StepSize import GenerateStepSeries
-from .frame import Frame, gsdFrame
+from .frame import Frame, lammpsFrame, gsdFrame
 
 logger = logging.getLogger(__name__)
 
@@ -66,12 +67,39 @@ def process_gsd(sim_params: SimulationParams) -> Iterable[Tuple[List[int], Frame
                 while curr_step < frame.configuration.step:
                     curr_step = step_iter.next()
             if curr_step > num_steps:
-                raise StopIteration
+                return
 
             if curr_step == frame.configuration.step:
-                yield step_iter.get_index(), gsdFrame(frame)
+                yield step_iter.get_index(), ret_frame
 
             curr_step = step_iter.next()
+
+
+def parse_lammpstrj(sim_params: SimulationParams) -> Iterable[Tuple[List[int], Frame]]:
+    indexes = [0]
+    with open(sim_params.infile) as src:
+        while True:
+            # Timestep
+            line = src.readline()
+            assert line == 'ITEM: TIMESTEP'
+            timestep = int(src.readline().strip())
+            # Num Atoms
+            line = src.readline()
+            assert line == 'ITEM: NUMBER OF ATOMS'
+            num_atoms = int(src.readline().strip())
+            # Box Bounds
+            src.readlines(4)
+            # Atoms
+            line = src.readline()
+            assert 'ITEM: ATOMS' in line
+            headings = line.split(' ')[2:]
+
+            # Create arrays
+            frame = pandas.read_table(src, names=headings, nrows=num_atoms)
+            frame.sort_values('id')
+
+            frame = lammpsFrame()
+            yield indexes, frame
 
 
 class WriteCache():
@@ -160,6 +188,8 @@ def process_file(sim_params: SimulationParams) -> None:
     relaxframes: List[relaxations] = []
     if sim_params.infile.endswith('.gsd'):
         file_iterator = process_gsd(sim_params)
+    elif sim_params.infile.endswith('.lammpstrj'):
+        file_iterator = parse_lammpstrj(sim_params)
     variables = get_filename_vars(Path(sim_params.infile))
     for curr_step, indexes, frame in file_iterator:
         for index in indexes:
