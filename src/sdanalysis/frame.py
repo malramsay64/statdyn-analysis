@@ -72,14 +72,20 @@ class gsdFrame(Frame):
 
     def __init__(self, frame) -> None:
         self.frame = frame
+        try:
+            self._num_mols = min(
+                max(self.frame.particles.body) + 1, len(self.frame.particles.body)
+            )
+        except AttributeError:
+            self._num_mols = self.particles.N
 
     @property
     def position(self):
-        return self.frame.particles.position
+        return self.frame.particles.position[:self._num_mols]
 
     @property
     def orientation(self):
-        return self.frame.particles.orientation
+        return self.frame.particles.orientation[:self._num_mols]
 
     @property
     def timestep(self):
@@ -88,3 +94,6 @@ class gsdFrame(Frame):
     @property
     def box(self):
         return self.frame.configuration.box
+
+    def __len__(self):
+        return self._num_mols
