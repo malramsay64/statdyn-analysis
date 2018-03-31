@@ -40,9 +40,9 @@ class Frame(ABC):
         pass
 
 
-def lammpsFrame(Frame):
+class lammpsFrame(Frame):
 
-    def __init__(self, timestep: int, box, frame: Dict) -> None:
+    def __init__(self, frame: Dict) -> None:
         self.frame = frame
         self.frame.box = np.array(box)
 
@@ -68,7 +68,7 @@ def lammpsFrame(Frame):
         return len(self.frame['x'])
 
 
-def gsdFrame(Frame):
+class gsdFrame(Frame):
 
     def __init__(self, frame) -> None:
         self.frame = frame
