@@ -48,13 +48,17 @@ def comp_dynamics(sim_params: SimulationParams) -> None:
 
 def figure(args) -> None:
     """Start bokeh server with the file passed."""
-    fig_file = Path(__file__).parent / 'figures/interactive_config.py'
-    try:
-        subprocess.Popen(['bokeh', 'serve', '--show', str(fig_file)] + args.bokeh)
-        while True:
-            time.sleep(1)
-    except KeyboardInterrupt:
-        logger.info('Bokeh server terminated.')
+    from bokeh.server.server import Server
+    from bokeh.command.util import build_single_handler_application
+
+    fig_file = Path(__file__).parent / "figures/interactive_config.py"
+    application = build_single_handler_application(fig_file)
+    address_string = "localhost"
+    server = Server(application)
+    url = f"http://{address_string}:{server.port}{server.prefix}"
+    logger.info("Bokeh app running at: %s", url)
+    server.run_until_shutdown()
+    logger.info("Bokeh server terminated.")
 
 
 def create_parser() -> argparse.ArgumentParser:
