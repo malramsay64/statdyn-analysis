@@ -22,6 +22,21 @@ class Frame(ABC):
 
     @property
     @abstractmethod
+    def x_position(self) -> np.ndarray:
+        pass
+
+    @property
+    @abstractmethod
+    def y_position(self) -> np.ndarray:
+        pass
+
+    @property
+    @abstractmethod
+    def z_position(self) -> np.ndarray:
+        pass
+
+    @property
+    @abstractmethod
     def orientation(self) -> np.ndarray:
         pass
 
@@ -53,6 +68,18 @@ class lammpsFrame(Frame):
         ).T
 
     @property
+    def x_position(self) -> np.ndarray:
+        return self.frame["x"].astype(np.float32)
+
+    @property
+    def y_position(self) -> np.ndarray:
+        return self.frame["y"].astype(np.float32)
+
+    @property
+    def z_position(self) -> np.ndarray:
+        return self.frame["z"].astype(np.float32)
+
+    @property
     def orientation(self) -> np.ndarray:
         return np.zeros((len(self), 4), dtype=np.float32)
 
@@ -82,6 +109,18 @@ class gsdFrame(Frame):
     @property
     def position(self) -> np.ndarray:
         return self.frame.particles.position[:self._num_mols]
+
+    @property
+    def x_position(self) -> np.ndarray:
+        return self.frame.particles.position[:self._num_mols, 0]
+
+    @property
+    def y_position(self) -> np.ndarray:
+        return self.frame.particles.position[:self._num_mols, 1]
+
+    @property
+    def z_position(self) -> np.ndarray:
+        return self.frame.particles.position[:self._num_mols, 2]
 
     @property
     def orientation(self) -> np.ndarray:
