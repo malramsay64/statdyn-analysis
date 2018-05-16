@@ -8,109 +8,109 @@
 """Plot configuration."""
 
 import logging
+from typing import Callable, List
 
 import numpy as np
+from bokeh.colors import HSL, Color
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.plotting import figure
 
+from ..frame import Frame, gsdFrame
 from ..math_helper import quaternion2z
 from ..molecules import Molecule, Trimer
-from .colour import colour_orientation
+from .trimer import Trimer as TrimerGlyph
 
 logger = logging.getLogger(__name__)
 
 
-def plot_circles(mol_plot, source):
+def plotTrimer(mol_plot: figure, source: ColumnDataSource) -> figure:
     """Add the points to a bokeh figure to render the trimer molecule.
 
     This enables the trimer molecules to be drawn on the figure using only
     the position and the orientations of the central molecule.
 
     """
-    mol_plot.circle(
-        'x',
-        'y',
-        radius='radius',
+    glyph = TrimerGlyph(
+        "x",
+        "y",
+        angle="orientation",
+        radius="radius",
         fill_alpha=1,
-        fill_color='colour',
-        line_color=None,
-        source=source,
+        fill_color="colour",
     )
+    mol_plot.add_glyph(source, glyph=glyph)
     mol_plot.add_tools(
-        HoverTool(tooltips=[('index', '$index'), ('x:', '@x'), ('y:', '@y')])
+        HoverTool(
+            tooltips=[
+                ("index", "$index"),
+                ("x:", "@x"),
+                ("y:", "@y"),
+                ("orientation:", "@angle"),
+            ]
+        )
     )
     mol_plot.toolbar.active_inspect = None
     return mol_plot
 
 
-def snapshot2data(
-    snapshot,
+def colourOrientation(orientations: np.ndarray, light_colours=False) -> List[Color]:
+    saturation = 0.85
+    luminance = 0.6
+    if light_colours:
+        luminance = 0.75
+    return [
+        HSL(int(s_orient), saturation, luminance)
+        for s_orient in orientations * 256 / (2 * np.pi)
+    ]
+
+
+def frame2data(
+    frame: Frame,
     molecule: Molecule = Trimer(),
-    extra_particles=True,
-    ordering=None,
-    order_list=None,
-    invert_colours=False,
+    order_function: Callable = None,
+    order_list: np.ndarray = None,
 ):
-    radii = np.ones(snapshot.particles.N)
-    orientation = snapshot.particles.orientation
-    angle = quaternion2z(orientation)
-    position = snapshot.particles.position
-    nmols = max(snapshot.particles.body) + 1
-    if snapshot.particles.N > nmols:
-        orientation = orientation[:nmols]
-        angle = angle[:nmols]
-        position = position[:nmols]
-        radii = radii[:nmols]
-    colour = colour_orientation(angle)
+    angle = quaternion2z(frame.orientation)
+    # Colour all particles with the darker shade
+    colour = colourOrientation(angle)
     if order_list is not None:
-        if invert_colours:
-            order_list = np.logical_not(order_list)
-        colour[order_list] = colour_orientation(angle, light_colours=True)[order_list]
-    elif ordering is not None:
-        order = ordering(snapshot.configuration.box, position, orientation)
+        order_list = np.logical_not(order_list)
+        # Colour unordered molecules lighter
+        colour[order_list] = colourOrientation(angle, light_colours=True)[order_list]
+    elif order_function is not None:
+        order = order_function(frame.box, frame.position, frame.orientation)
         if order.dtype in [int, bool]:
             order = order.astype(bool)
         else:
-            order = order != 'liq'
-        if invert_colours:
-            order = np.logical_not(order)
-        colour[order] = colour_orientation(angle, light_colours=True)[order]
-    if extra_particles:
-        position = molecule.orientation2positions(position, orientation)
-        logger.debug('Position shape: %s', position.shape)
-        radii = np.append([], [radii * r for r in molecule.get_radii()])
-        colour = np.tile(colour, molecule.num_particles)
-    data = {'x': position[:, 0], 'y': position[:, 1], 'radius': radii, 'colour': colour}
+            order = np.not_equal(order, "liq")
+        colour[order] = colourOrientation(angle, light_colours=True)[order]
+    data = {
+        "x": frame.x_position,
+        "y": frame.y_position,
+        "orientation": frame.orientation,
+        "colour": colour,
+    }
     return data
 
 
-def plot(
-    snapshot,
-    repeat=False,
-    offset=False,
-    order=None,
-    extra_particles=True,
-    source=None,
-    order_list=None,
+def plotFrame(
+    frame: Frame,
+    order_function: Callable = None,
+    order_list: np.ndarray = None,
+    source: ColumnDataSource = None,
 ):
     """Plot snapshot using bokeh."""
-    data = snapshot2data(
-        snapshot,
-        molecule=Trimer(),
-        extra_particles=extra_particles,
-        ordering=order,
-        order_list=order_list,
-    )
-    p = figure(
+    data = frame2data(frame, order_function=order_function, order_list=order_list)
+    plot = figure(
         aspect_scale=1,
         match_aspect=True,
         width=920,
         height=800,
-        active_scroll='wheel_zoom',
+        active_scroll="wheel_zoom",
     )
     if source:
         source.data = data
     else:
         source = ColumnDataSource(data=data)
-    plot_circles(p, source)
-    return p
+    plotTrimer(plot, source)
+    return plot
