@@ -5,11 +5,11 @@ repos:
     - id: trailing-whitespace
 
 - repo: https://github.com/doublify/pre-commit-isort
-  sha: master
+  rev: v4.3.0
   hooks:
     - id: isort
 
 - repo: https://github.com/ambv/black
-  sha: master
+  rev: 18.4a4
   hooks:
     - id: black
