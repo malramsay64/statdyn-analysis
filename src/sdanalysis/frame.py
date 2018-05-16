@@ -44,12 +44,12 @@ class lammpsFrame(Frame):
 
     def __init__(self, frame: Dict) -> None:
         self.frame = frame
-        self.frame['box'] = np.array(self.frame['box'])
+        self.frame["box"] = np.array(self.frame["box"])
 
     @property
-    def position(self):
+    def position(self) -> np.ndarray:
         return np.array(
-            [self.frame['x'], self.frame['y'], self.frame['z']], dtype=np.float32
+            [self.frame["x"], self.frame["y"], self.frame["z"]], dtype=np.float32
         ).T
 
     @property
@@ -57,15 +57,15 @@ class lammpsFrame(Frame):
         return np.zeros((len(self), 4), dtype=np.float32)
 
     @property
-    def timestep(self):
-        return self.frame['timestep']
+    def timestep(self) -> int:
+        return self.frame["timestep"]
 
     @property
     def box(self) -> np.ndarray:
-        return self.frame['box'].astype(np.float32)
+        return self.frame["box"].astype(np.float32)
 
     def __len__(self) -> int:
-        return len(self.frame['x'])
+        return len(self.frame["x"])
 
 
 class gsdFrame(Frame):
@@ -80,20 +80,20 @@ class gsdFrame(Frame):
             self._num_mols = self.particles.N
 
     @property
-    def position(self):
+    def position(self) -> np.ndarray:
         return self.frame.particles.position[:self._num_mols]
 
     @property
-    def orientation(self):
+    def orientation(self) -> np.ndarray:
         return self.frame.particles.orientation[:self._num_mols]
 
     @property
-    def timestep(self):
+    def timestep(self) -> int:
         return self.frame.configuration.step
 
     @property
-    def box(self):
+    def box(self) -> np.ndarray:
         return self.frame.configuration.box
 
-    def __len__(self):
+    def __len__(self) -> int:
         return self._num_mols
