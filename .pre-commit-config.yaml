@@ -4,12 +4,12 @@ repos:
   hooks:
     - id: trailing-whitespace
 
-#- repo: https://github.com/doublify/pre-commit-isort
-  #sha: master
-  #hooks:
-    #- id: isort
+- repo: https://github.com/doublify/pre-commit-isort
+  sha: master
+  hooks:
+    - id: isort
 
-- repo: https://github.com/malramsay64/pre-commit-black
+- repo: https://github.com/ambv/black
   sha: master
   hooks:
     - id: black
