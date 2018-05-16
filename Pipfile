@@ -1,25 +1,21 @@
 [[source]]
-
 url = "https://pypi.python.org/simple"
 verify_ssl = true
 name = "pypi"
 
-
 [packages]
-
 numpy = "==1.14"
-scipy = "==1.0.0"
+scipy = "==1.1.0"
 scikit-learn = "==0.19.0"
 pandas = "*"
 tables = "*"
-bokeh = "*"
+bokeh = "==0.12.16"
 matplotlib = "*"
 gsd = "*"
 "ruamel.yaml" = "*"
-
+"e1839a8" = {path = ".", editable = true}
 
 [dev-packages]
-
 pytest = "*"
 pylint = "*"
 numpy-quaternion = "==2018.02.22.22.24.39"
@@ -35,7 +31,5 @@ pytest-lazy-fixture = "*"
 twine = "*"
 bumpversion = "*"
 
-
 [requires]
-
 python_version = "3.6"
