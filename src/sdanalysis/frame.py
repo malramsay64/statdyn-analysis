@@ -104,7 +104,7 @@ class gsdFrame(Frame):
                 max(self.frame.particles.body) + 1, len(self.frame.particles.body)
             )
         except AttributeError:
-            self._num_mols = self.particles.N
+            self._num_mols = self.frame.particles.N
 
     @property
     def position(self) -> np.ndarray:
