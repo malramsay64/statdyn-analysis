@@ -11,9 +11,10 @@ import logging
 from typing import Callable, List
 
 import numpy as np
-from bokeh.colors import HSL, Color
+from bokeh.colors import RGB, Color
 from bokeh.models import ColumnDataSource, HoverTool
 from bokeh.plotting import figure
+from hsluv import hsluv_to_rgb
 
 from ..frame import Frame, gsdFrame
 from ..math_helper import quaternion2z
@@ -53,15 +54,20 @@ def plotTrimer(mol_plot: figure, source: ColumnDataSource) -> figure:
     return mol_plot
 
 
-def colourOrientation(orientations: np.ndarray, light_colours=False) -> List[Color]:
-    saturation = 0.85
-    luminance = 0.6
+@np.vectorize
+def colour_from_angle(angle: float, saturation: float, luminance: float) -> Color:
+    r, g, b = hsluv_to_rgb((angle, saturation, luminance))
+    return RGB(r * 256, g * 256, b * 256)
+
+
+def colour_orientation(orientations: np.ndarray, light_colours=False) -> List[Color]:
+    saturation = 85
+    luminance = 60
     if light_colours:
-        luminance = 0.75
-    return [
-        HSL(int(s_orient), saturation, luminance)
-        for s_orient in orientations * 256 / (2 * np.pi)
-    ]
+        luminance = 85
+    return colour_from_angle(
+        np.rad2deg(orientations).astype(int), saturation, luminance
+    )
 
 
 def frame2data(
@@ -72,22 +78,23 @@ def frame2data(
 ):
     angle = quaternion2z(frame.orientation)
     # Colour all particles with the darker shade
-    colour = colourOrientation(angle)
+    colour = colour_orientation(angle)
     if order_list is not None:
         order_list = np.logical_not(order_list)
         # Colour unordered molecules lighter
-        colour[order_list] = colourOrientation(angle, light_colours=True)[order_list]
+        colour[order_list] = colour_orientation(angle, light_colours=True)[order_list]
     elif order_function is not None:
         order = order_function(frame.box, frame.position, frame.orientation)
         if order.dtype in [int, bool]:
             order = order.astype(bool)
         else:
-            order = np.not_equal(order, "liq")
-        colour[order] = colourOrientation(angle, light_colours=True)[order]
+            logger.debug("Order dtype: %s", order.dtype)
+            order = order != "liq"
+        colour[order] = colour_orientation(angle, light_colours=True)[order]
     data = {
         "x": frame.x_position,
         "y": frame.y_position,
-        "orientation": frame.orientation,
+        "orientation": angle,
         "colour": colour,
     }
     return data
