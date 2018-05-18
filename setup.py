@@ -10,12 +10,14 @@
 
 from setuptools import find_packages, setup
 from setuptools.extension import Extension
+
 try:
     import numpy as np
     from Cython.Build import cythonize
 except ModuleNotFoundError as e:
-    print('Numpy and Cython are required to install sdanalysis.')
+    print("Numpy and Cython are required to install sdanalysis.")
     raise
+
 
 def get_version():
     g = {}
@@ -25,44 +27,41 @@ def get_version():
 
 extensions = [
     Extension(
-        'sdanalysis.math_helper',
-        ['src/sdanalysis/math_helper.pyx'],
-        libraries=['m'],
+        "sdanalysis.math_helper",
+        ["src/sdanalysis/math_helper.pyx"],
+        libraries=["m"],
         include_dirs=[np.get_include()],
     ),
     Extension(
-        'sdanalysis._order',
-        ['src/sdanalysis/_order.pyx', 'src/voro/voro++.cc'],
-        language='c++',
-        libraries=['m'],
-        include_dirs=[np.get_include(), 'src/voro'],
+        "sdanalysis._order",
+        ["src/sdanalysis/_order.pyx", "src/voro/voro++.cc"],
+        language="c++",
+        libraries=["m"],
+        include_dirs=[np.get_include(), "src/voro"],
     ),
 ]
 
 
 setup(
-    name='sdanalysis',
+    name="sdanalysis",
     version=get_version(),
-    python_requires='>=3.6',
-    setup_requires=[
-        'cython',
-        'numpy',
-    ],
+    python_requires=">=3.6",
+    setup_requires=["cython", "numpy"],
     install_requires=[
-        'numpy',
-        'scipy',
-        'scikit-learn',
-        'pandas',
-        'tables',
-        'bokeh',
-        'matplotlib',
-        'gsd',
-        'ruamel.yaml',
-        'hsluv',
+        "numpy",
+        "scipy",
+        "scikit-learn",
+        "pandas",
+        "tables",
+        "bokeh",
+        "matplotlib",
+        "gsd",
+        "ruamel.yaml",
+        "hsluv",
     ],
-    packages=find_packages('src'),
-    ext_modules=cythonize(extensions, include_path=['src/']),
-    package_dir={'': 'src'},
+    packages=find_packages("src"),
+    ext_modules=cythonize(extensions, include_path=["src/"]),
+    package_dir={"": "src"},
     include_package_data=True,
     entry_points="""
         [console_scripts]
@@ -73,14 +72,14 @@ setup(
     author_email="malramsay64@gmail.com",
     description="Statistical dynamics analysis of molecular dynamics trajectories.",
     classifiers=[
-        'Development Status :: 3 - Alpha',
-        'Environment :: Console',
-        'Intended Audience :: Developers',
-        'Intended Audience :: Science/Research',
-        'License :: OSI Approved :: MIT License',
-        'Operating System :: MacOS :: MacOS X',
-        'Operating System :: POSIX :: Linux',
-        'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.6',
+        "Development Status :: 3 - Alpha",
+        "Environment :: Console",
+        "Intended Audience :: Developers",
+        "Intended Audience :: Science/Research",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: MacOS :: MacOS X",
+        "Operating System :: POSIX :: Linux",
+        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
     ],
 )
