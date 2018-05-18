@@ -49,14 +49,15 @@ def comp_dynamics(sim_params: SimulationParams) -> None:
 def figure(args) -> None:
     """Start bokeh server with the file passed."""
     from bokeh.server.server import Server
-    from bokeh.command.util import build_single_handler_application
+    from bokeh.application import Application
+    from bokeh.application.handlers.function import FunctionHandler
 
-    fig_file = Path(__file__).parent / "figures/interactive_config.py"
-    application = build_single_handler_application(fig_file)
-    address_string = "localhost"
-    server = Server(application)
-    url = f"http://{address_string}:{server.port}{server.prefix}"
-    logger.info("Bokeh app running at: %s", url)
+    from .figures.interactive_config import make_document
+
+    _verbosity(level=2)
+
+    apps = {"/": Application(FunctionHandler(make_document))}
+    server = Server(apps)
     server.run_until_shutdown()
     logger.info("Bokeh server terminated.")
 
