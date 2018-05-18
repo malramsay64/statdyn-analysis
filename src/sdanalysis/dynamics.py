@@ -13,10 +13,10 @@ from typing import Any, Dict, List
 import numpy as np
 import pandas
 
-from .math_helper import (displacement_periodic, quaternion_rotation, rotate_vectors)
+from .math_helper import displacement_periodic, quaternion_rotation, rotate_vectors
 from .molecules import Molecule, Trimer
 
-np.seterr(divide='raise', invalid='raise', over='raise')
+np.seterr(divide="raise", invalid="raise", over="raise")
 logger = logging.getLogger(__name__)
 
 
@@ -110,24 +110,24 @@ class dynamics(object):
             self.box, self.position, position
         )
         dynamic_quantities = {
-            'time': self.computeTimeDelta(timestep),
-            'mean_displacement': mean_displacement(delta_displacement),
-            'msd': mean_squared_displacement(delta_displacement),
-            'mfd': mean_fourth_displacement(delta_displacement),
-            'alpha': alpha_non_gaussian(delta_displacement),
-            'com_struct': structural_relax(delta_displacement, dist=0.4),
+            "time": self.computeTimeDelta(timestep),
+            "mean_displacement": mean_displacement(delta_displacement),
+            "msd": mean_squared_displacement(delta_displacement),
+            "mfd": mean_fourth_displacement(delta_displacement),
+            "alpha": alpha_non_gaussian(delta_displacement),
+            "com_struct": structural_relax(delta_displacement, dist=0.4),
         }
         if self.orientation is not None:
             delta_rotation = rotationalDisplacement(self.orientation, orientation)
-            logger.debug('Max rotation: %f', delta_rotation.max())
+            logger.debug("Max rotation: %f", delta_rotation.max())
             dynamic_quantities.update(
                 {
-                    'mean_rotation': mean_rotation(delta_rotation),
-                    'rot1': rotational_relax1(delta_rotation),
-                    'rot2': rotational_relax2(delta_rotation),
-                    'gamma': gamma(delta_displacement, delta_rotation),
-                    'overlap': mobile_overlap(delta_displacement, delta_rotation),
-                    'struct': self.computeStructRelax(
+                    "mean_rotation": mean_rotation(delta_rotation),
+                    "rot1": rotational_relax1(delta_rotation),
+                    "rot2": rotational_relax2(delta_rotation),
+                    "gamma": gamma(delta_displacement, delta_rotation),
+                    "overlap": mobile_overlap(delta_displacement, delta_rotation),
+                    "struct": self.computeStructRelax(
                         position, orientation, threshold=0.3
                     ),
                 }
@@ -150,7 +150,7 @@ class molecularRelaxation(object):
 
     def add(self, timediff: int, distance: np.ndarray) -> None:
         assert distance.shape == self._status.shape
-        with np.errstate(invalid='ignore'):
+        with np.errstate(invalid="ignore"):
             moved = np.greater(distance, self.threshold)
             moveable = np.greater(self._status, timediff)
             self._status[np.logical_and(moved, moveable)] = timediff
@@ -171,7 +171,7 @@ class lastMolecularRelaxation(molecularRelaxation):
 
     def add(self, timediff: int, distance: np.ndarray) -> None:
         assert distance.shape == self._status.shape
-        with np.errstate(invalid='ignore'):
+        with np.errstate(invalid="ignore"):
             state = np.greater(distance, self.threshold).astype(np.uint8)
             state[
                 np.logical_or(
@@ -230,19 +230,19 @@ class relaxations(object):
         # set defualt values for mol_relax
         self.set_mol_relax(
             [
-                {'name': 'tau_D1', 'threshold': 1.},
-                {'name': 'tau_D04', 'threshold': 0.4},
-                {'name': 'tau_DL04', 'threshold': 0.4, 'last_passage': True},
-                {'name': 'tau_T2', 'threshold': np.pi / 2},
-                {'name': 'tau_T3', 'threshold': np.pi / 3},
-                {'name': 'tau_T4', 'threshold': np.pi / 4},
+                {"name": "tau_D1", "threshold": 1.},
+                {"name": "tau_D04", "threshold": 0.4},
+                {"name": "tau_DL04", "threshold": 0.4, "last_passage": True},
+                {"name": "tau_T2", "threshold": np.pi / 2},
+                {"name": "tau_T3", "threshold": np.pi / 3},
+                {"name": "tau_T4", "threshold": np.pi / 4},
             ]
         )
 
     def set_mol_relax(self, definition: List[Dict[str, Any]]) -> None:
         self.mol_relax = {}  # type: Dict[str, molecularRelaxation]
         for item in definition:
-            self.mol_relax[item.get('name')] = create_mol_relaxations(
+            self.mol_relax[item.get("name")] = create_mol_relaxations(
                 self._num_elements, **item
             )
 
@@ -253,7 +253,7 @@ class relaxations(object):
         displacement = translationalDisplacement(self.box, self.init_position, position)
         rotation = rotationalDisplacement(self.init_orientation, orientation)
         for key, func in self.mol_relax.items():
-            if 'D' in key:
+            if "D" in key:
                 func.add(self.get_timediff(timestep), displacement)
             else:
                 func.add(self.get_timediff(timestep), rotation)
@@ -268,8 +268,8 @@ def molecule2particles(
     position: np.ndarray, orientation: np.ndarray, mol_vector: np.ndarray
 ) -> np.ndarray:
     return (
-        rotate_vectors(orientation, mol_vector.astype(np.float32)) +
-        np.repeat(position, mol_vector.shape[0], axis=0)
+        rotate_vectors(orientation, mol_vector.astype(np.float32))
+        + np.repeat(position, mol_vector.shape[0], axis=0)
     )
 
 
@@ -342,8 +342,8 @@ def alpha_non_gaussian(displacement: np.ndarray) -> float:
     """
     try:
         return (
-            np.power(displacement, 4).mean() /
-            (2 * np.square(np.square(displacement).mean()))
+            np.power(displacement, 4).mean()
+            / (2 * np.square(np.square(displacement).mean()))
         ) - 1
 
     except FloatingPointError:
@@ -388,7 +388,7 @@ def gamma(displacement: np.ndarray, rotation: np.ndarray) -> float:
         return ((disp2 * rot2).mean() - disp2m_rot2m) / disp2m_rot2m
 
     except FloatingPointError:
-        with np.errstate(invalid='ignore'):
+        with np.errstate(invalid="ignore"):
             res = ((disp2 * rot2).mean() - disp2m_rot2m) / disp2m_rot2m
             np.nan_to_num(res, copy=False)
             return res

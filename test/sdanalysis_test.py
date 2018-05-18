@@ -12,12 +12,12 @@ import subprocess
 
 def test_comp_dynamics():
     command = [
-        'sdanalysis',
-        'comp_dynamics',
-        '-v',
-        '-o',
-        'test/output',
-        'test/data/trajectory-Trimer-P13.50-T3.00.gsd',
+        "sdanalysis",
+        "comp_dynamics",
+        "-v",
+        "-o",
+        "test/output",
+        "test/data/trajectory-Trimer-P13.50-T3.00.gsd",
     ]
     ret = subprocess.run(command)
     assert ret.returncode == 0

@@ -18,34 +18,34 @@ from sdanalysis.StepSize import GenerateStepSeries, generate_steps
 @pytest.fixture(
     params=[
         {
-            'max': 100,
-            'lin': 10,
-            'start': 0,
-            'def': [
+            "max": 100,
+            "lin": 10,
+            "start": 0,
+            "def": [
                 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100
             ],
         },
         {
-            'max': 99,
-            'lin': 10,
-            'start': 0,
-            'def': [
+            "max": 99,
+            "lin": 10,
+            "start": 0,
+            "def": [
                 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 90, 99
             ],
         },
         {
-            'max': 87,
-            'lin': 10,
-            'start': 0,
-            'def': [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 87],
+            "max": 87,
+            "lin": 10,
+            "start": 0,
+            "def": [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 30, 40, 50, 60, 70, 80, 87],
         },
     ]
 )
 def steps(request):
     """Generate the steps lists."""
-    request.param['gen'] = list(
+    request.param["gen"] = list(
         generate_steps(
-            request.param['max'], request.param['lin'], request.param['start']
+            request.param["max"], request.param["lin"], request.param["start"]
         )
     )
     return request.param
@@ -67,14 +67,14 @@ def test_initial_start_series(initial):
     assert next(gen) == 0
 
 
-@pytest.mark.parametrize('final', [100, 10000, 100000, 100001, 99999])
+@pytest.mark.parametrize("final", [100, 10000, 100000, 100001, 99999])
 def test_final_total(final):
     """Ensure the final value produced is the final value."""
     genlist = list(generate_steps(total_steps=final))
     assert genlist[-1] == final
 
 
-@pytest.mark.parametrize('final', [100, 10000, 100000, 100001, 99999])
+@pytest.mark.parametrize("final", [100, 10000, 100000, 100001, 99999])
 def test_final_total_series(final):
     """Ensure the final value produced is the final value."""
     genlist = list(GenerateStepSeries(total_steps=final))
@@ -83,11 +83,11 @@ def test_final_total_series(final):
 
 def test_generate_steps(steps):  # pylint: disable=redefined-outer-name
     """Test generation of steps."""
-    assert steps['gen'][-1] == steps['max']
-    assert steps['gen'] == steps['def']
+    assert steps["gen"][-1] == steps["max"]
+    assert steps["gen"] == steps["def"]
 
 
-@pytest.mark.parametrize('total_steps, num_linear', [(10000, 100), (1000000, 100)])
+@pytest.mark.parametrize("total_steps, num_linear", [(10000, 100), (1000000, 100)])
 def test_generate_step_series(total_steps, num_linear):
     """Test generate_steps and generate_step_series.
 
@@ -136,7 +136,7 @@ def test_generate_step_series_many():
     assert len(many_gens) > len(single_gen)
 
 
-@pytest.mark.parametrize('total_steps, num_linear', [(1_000_000, 100)])
+@pytest.mark.parametrize("total_steps, num_linear", [(1_000_000, 100)])
 def test_no_duplicates(total_steps, num_linear):
     """Test generation of a step series works."""
     series_list = list(generate_steps(total_steps=total_steps, num_linear=num_linear))
@@ -144,7 +144,7 @@ def test_no_duplicates(total_steps, num_linear):
     assert len(series_list) == len(series_set)
 
 
-@pytest.mark.parametrize('total_steps, num_linear', [(1_000_000, 100)])
+@pytest.mark.parametrize("total_steps, num_linear", [(1_000_000, 100)])
 def test_no_duplicates_series(total_steps, num_linear):
     """Test generation of a step series works."""
     series_list = list(

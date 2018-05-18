@@ -19,14 +19,14 @@ logger = logging.getLogger(__name__)
 
 def order(infile, outfile):
     """Compute the orientational order for each frame of a trajectory."""
-    trajectory = gsd.hoomd.open(infile, 'rb')
-    with open(outfile, 'w') as dst:
-        print('Timestep, OrientOrder', file=dst)
+    trajectory = gsd.hoomd.open(infile, "rb")
+    with open(outfile, "w") as dst:
+        print("Timestep, OrientOrder", file=dst)
         for index in range(len(trajectory)):
             try:
                 snapshot = trajectory[index]
             except RuntimeError:
-                logger.info('Frame %s corrupted, continuing...', index)
+                logger.info("Frame %s corrupted, continuing...", index)
                 continue
 
             order = orientational_order(
@@ -36,7 +36,7 @@ def order(infile, outfile):
             )
             print(
                 snapshot.configuration.step,
-                ',',
+                ",",
                 np.sum(order > 0.9) / len(order),
                 file=dst,
             )

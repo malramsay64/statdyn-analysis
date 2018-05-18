@@ -34,8 +34,8 @@ class Molecule(object):
         """Initialise defualt properties."""
         self.moment_inertia = (0., 0., 0.)  # type: Tuple[float, float, float]
         self.potential_args = dict()  # type: Dict[Any, Any]
-        self.particles = ['A']
-        self._radii = {'A': 1.}
+        self.particles = ["A"]
+        self._radii = {"A": 1.}
         self.dimensions = 3
         self.positions = np.array([[0, 0, 0]])
         self.positions.flags.writeable = False
@@ -82,8 +82,8 @@ class Molecule(object):
 
     def orientation2positions(self, position, orientation):
         return (
-            np.tile(position, (self.num_particles, 1)) +
-            rotate_vectors(orientation, self.positions.astype(np.float32))
+            np.tile(position, (self.num_particles, 1))
+            + rotate_vectors(orientation, self.positions.astype(np.float32))
         )
 
     def compute_size(self):
@@ -152,7 +152,7 @@ class Trimer(Molecule):
         self.radius = radius
         self.distance = distance
         self.angle = angle
-        self.particles = ['A', 'B', 'B']
+        self.particles = ["A", "B", "B"]
         self._radii.update(B=self.radius)
         self.dimensions = 2
         self.positions = np.array(
@@ -161,12 +161,12 @@ class Trimer(Molecule):
                 [
                     -self.distance * np.sin(self.rad_angle / 2),
                     self.distance * np.cos(self.rad_angle / 2),
-                    0
+                    0,
                 ],
                 [
                     self.distance * np.sin(self.rad_angle / 2),
                     self.distance * np.cos(self.rad_angle / 2),
-                    0
+                    0,
                 ],
             ]
         )
@@ -214,7 +214,7 @@ class Dimer(Molecule):
         super(Dimer, self).__init__()
         self.radius = radius
         self.distance = distance
-        self.particles = ['A', 'B']
+        self.particles = ["A", "B"]
         self._radii.update(B=self.radius)
         self.dimensions = 2
         self.positions = np.array([[0, 0, 0], [0, self.distance, 0]])

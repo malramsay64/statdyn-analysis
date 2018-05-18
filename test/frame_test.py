@@ -14,11 +14,11 @@ from sdanalysis.frame import gsdFrame, lammpsFrame
 @pytest.fixture
 def lammps_frame():
     inframe = {
-        'x': np.random.rand(100),
-        'y': np.random.rand(100),
-        'z': np.random.rand(100),
-        'box': [1, 1, 1],
-        'timestep': 0,
+        "x": np.random.rand(100),
+        "y": np.random.rand(100),
+        "z": np.random.rand(100),
+        "box": [1, 1, 1],
+        "timestep": 0,
     }
     frame = lammpsFrame(inframe)
     return frame
@@ -26,13 +26,13 @@ def lammps_frame():
 
 @pytest.fixture
 def gsd_frame():
-    inframe = gsd.hoomd.open('test/data/trajectory-Trimer-P13.50-T3.00.gsd')[0]
+    inframe = gsd.hoomd.open("test/data/trajectory-Trimer-P13.50-T3.00.gsd")[0]
     frame = gsdFrame(inframe)
     return frame
 
 
 @pytest.fixture(
-    params=[pytest.lazy_fixture('lammps_frame'), pytest.lazy_fixture('gsd_frame')]
+    params=[pytest.lazy_fixture("lammps_frame"), pytest.lazy_fixture("gsd_frame")]
 )
 def frametypes(request):
     return request.param

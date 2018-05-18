@@ -142,13 +142,13 @@ def test_overlap(displacement, rotation):
     assert 0. <= overlap <= 1.
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def trajectory():
-    with gsd.hoomd.open('test/data/trajectory-Trimer-P13.50-T3.00.gsd') as trj:
+    with gsd.hoomd.open("test/data/trajectory-Trimer-P13.50-T3.00.gsd") as trj:
         yield trj
 
 
-@pytest.fixture(scope='module')
+@pytest.fixture(scope="module")
 def dynamics_class(trajectory):
     snap = trajectory[0]
     return dynamics.dynamics(
@@ -159,7 +159,7 @@ def dynamics_class(trajectory):
     )
 
 
-@pytest.mark.parametrize('step', [0, 1, 10, 20])
+@pytest.mark.parametrize("step", [0, 1, 10, 20])
 def test_displacements(dynamics_class, trajectory, step):
     snap = trajectory[step]
     displacement = dynamics_class.get_displacements(snap.particles.position)
@@ -170,7 +170,7 @@ def test_displacements(dynamics_class, trajectory, step):
         assert np.all(displacement >= 0.)
 
 
-@pytest.mark.parametrize('step', [0, 1, 10, 20])
+@pytest.mark.parametrize("step", [0, 1, 10, 20])
 def test_rotations(dynamics_class, trajectory, step):
     snap = trajectory[step]
     rotations = dynamics_class.get_rotations(snap.particles.orientation)
@@ -182,7 +182,7 @@ def test_rotations(dynamics_class, trajectory, step):
 
 
 def test_dynamics():
-    process_gsd('test/data/trajectory-Trimer-P13.50-T3.00.gsd')
+    process_gsd("test/data/trajectory-Trimer-P13.50-T3.00.gsd")
 
 
 def test_molecularRelaxation():

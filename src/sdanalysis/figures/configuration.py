@@ -32,13 +32,9 @@ def plotTrimer(mol_plot: figure, source: ColumnDataSource) -> figure:
 
     """
     glyph = TrimerGlyph(
-        "x",
-        "y",
-        angle="orientation",
-        radius="radius",
-        fill_alpha=1,
-        fill_color="colour",
+        x="x", y="y", angle="orientation", fill_alpha=1, fill_color="colour"
     )
+
     mol_plot.add_glyph(source, glyph=glyph)
     mol_plot.add_tools(
         HoverTool(
@@ -114,6 +110,7 @@ def plotFrame(
         width=920,
         height=800,
         active_scroll="wheel_zoom",
+        output_backend="webgl",
     )
     if source:
         source.data = data

@@ -107,7 +107,7 @@ def exponential_relaxation(
     fit_region = np.logical_and(
         (exp_value - value_width / 2) < value, (exp_value + value_width / 2) > value
     )
-    logger.debug('Num elements: %d', np.sum(fit_region))
+    logger.debug("Num elements: %d", np.sum(fit_region))
     zero_est = time[np.argmin(np.abs(value - exp_value))]
     if sigma is not None:
         sigma = sigma[fit_region]
@@ -119,7 +119,7 @@ def exponential_relaxation(
         sigma=sigma,
     )
     perr = 2 * np.sqrt(np.diag(pcov))
-    logger.debug('Fit Parameters: %s', popt)
+    logger.debug("Fit Parameters: %s", popt)
 
     def find_root(a, b):
         return newton(

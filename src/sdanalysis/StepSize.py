@@ -9,8 +9,8 @@ from queue import Empty, PriorityQueue
 from typing import Dict, Iterable, Iterator, List
 
 logger = logging.getLogger(__name__)
-iterindex = namedtuple('iterindex', ['index', 'iterator'])
-stepiterindex = namedtuple('stepiterindex', ['step', 'index', 'iterator'])
+iterindex = namedtuple("iterindex", ["index", "iterator"])
+stepiterindex = namedtuple("stepiterindex", ["step", "index", "iterator"])
 
 
 def generate_steps(
@@ -85,7 +85,7 @@ def exp_sequence(
                 yield step
 
         curr_step = start + num_linear * step_size
-        logger.debug('Current step %d', curr_step)
+        logger.debug("Current step %d", curr_step)
         step_size *= base
 
 
@@ -125,7 +125,7 @@ class GenerateStepSeries(Iterable):
     def _add_generator(self) -> None:
         new_gen = generate_steps(self.total_steps, self.num_linear, self.curr_step)
         self._enqueue(iterindex(self._num_generators, new_gen))
-        logger.debug('Generator added with index %d', self._num_generators)
+        logger.debug("Generator added with index %d", self._num_generators)
         self._num_generators += 1
 
     def __iter__(self):
@@ -150,7 +150,7 @@ class GenerateStepSeries(Iterable):
                 self._add_generator()
         # Get list of indexes
         iterindexes = self.values.get(self.curr_step)
-        logger.debug('Value of iterindexes: %s at step %d', iterindexes, self.curr_step)
+        logger.debug("Value of iterindexes: %s at step %d", iterindexes, self.curr_step)
         # Add interators back onto queue
         for iindex in iterindexes:
             self._enqueue(iindex)

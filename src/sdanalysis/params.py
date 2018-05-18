@@ -20,18 +20,18 @@ logger = logging.getLogger(__name__)
 class SimulationParams(object):
     """Store the parameters of the simulation."""
     defaults: Dict[str, Any] = {
-        'hoomd_args': '',
-        'step_size': 0.005,
-        'temperature': 0.4,
-        'tau': 1.0,
-        'pressure': 13.5,
-        'tauP': 1.0,
-        'cell_dimensions': (30, 42),
-        'outfile_path': Path.cwd(),
-        'max_gen': 500,
-        'num_linear': 100,
-        'gen_steps': 20000,
-        'output_interval': 10000,
+        "hoomd_args": "",
+        "step_size": 0.005,
+        "temperature": 0.4,
+        "tau": 1.0,
+        "pressure": 13.5,
+        "tauP": 1.0,
+        "cell_dimensions": (30, 42),
+        "outfile_path": Path.cwd(),
+        "max_gen": 500,
+        "num_linear": 100,
+        "gen_steps": 20000,
+        "output_interval": 10000,
     }
 
     def __init__(self, **kwargs) -> None:
@@ -53,7 +53,7 @@ class SimulationParams(object):
     def __setattr__(self, key, value):
         # setattr has a higher search priority than other functions, custom
         # setters need to be added to the list below
-        if key in ['parameters']:
+        if key in ["parameters"]:
             super().__setattr__(key, value)
         else:
             self.parameters.__setitem__(key, value)
@@ -69,9 +69,9 @@ class SimulationParams(object):
         the crystal.
 
         """
-        if self.parameters.get('molecule') is not None:
-            mol = self.parameters.get('molecule')
-        elif self.parameters.get('crystal') is not None:
+        if self.parameters.get("molecule") is not None:
+            mol = self.parameters.get("molecule")
+        elif self.parameters.get("crystal") is not None:
             mol = self.crystal.molecule
         else:
             mol = Trimer()
@@ -81,7 +81,7 @@ class SimulationParams(object):
     def cell_dimensions(self) -> Tuple[int, int]:
         try:
             self.crystal
-            return self.parameters.get('cell_dimensions')
+            return self.parameters.get("cell_dimensions")
 
         except AttributeError:
             raise AttributeError
@@ -89,35 +89,35 @@ class SimulationParams(object):
     @property
     def outfile_path(self) -> Path:
         """Ensure the output directory is a path."""
-        if self.parameters.get('outfile_path'):
-            return Path(self.parameters.get('outfile_path'))
+        if self.parameters.get("outfile_path"):
+            return Path(self.parameters.get("outfile_path"))
 
         return Path.cwd()
 
     @property
     def outfile(self) -> str:
         """Ensure the output file is a string."""
-        if self.parameters.get('outfile') is not None:
-            return str(self.parameters.get('outfile'))
+        if self.parameters.get("outfile") is not None:
+            return str(self.parameters.get("outfile"))
 
-        raise AttributeError('Outfile does not exist')
+        raise AttributeError("Outfile does not exist")
 
     def filename(self, prefix: str = None) -> str:
         """Use the simulation parameters to construct a filename."""
-        base_string = '{molecule}-P{pressure:.2f}-T{temperature:.2f}'
+        base_string = "{molecule}-P{pressure:.2f}-T{temperature:.2f}"
         if prefix:
-            base_string = '{prefix}-' + base_string
-        if self.parameters.get('moment_inertia_scale') is not None:
-            base_string += '-I{mom_inertia:.2f}'
-        if self.parameters.get('space_group') is not None:
-            base_string += '-{space_group}'
+            base_string = "{prefix}-" + base_string
+        if self.parameters.get("moment_inertia_scale") is not None:
+            base_string += "-I{mom_inertia:.2f}"
+        if self.parameters.get("space_group") is not None:
+            base_string += "-{space_group}"
         fname = base_string.format(
             prefix=prefix,
             molecule=self.molecule,
             pressure=self.pressure,
-            temperature=self.parameters.get('temperature'),
-            mom_inertia=self.parameters.get('moment_inertia_scale'),
-            space_group=self.parameters.get('space_group'),
+            temperature=self.parameters.get("temperature"),
+            mom_inertia=self.parameters.get("moment_inertia_scale"),
+            space_group=self.parameters.get("space_group"),
         )
         return str(self.outfile_path / fname)
 
@@ -155,7 +155,7 @@ class paramsContext(object):
     def __enter__(self) -> SimulationParams:
         for key, val in self.modifications.items():
             self.params.parameters[key] = val
-        logger.debug('Parameter on entry %s', str(self.params.parameters))
+        logger.debug("Parameter on entry %s", str(self.params.parameters))
         return self.params
 
     def __exit__(self, exc_type, exc_value, traceback) -> None:

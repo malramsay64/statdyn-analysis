@@ -23,6 +23,8 @@ from .version import __version__
 
 yaml = YAML()  # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
+logger.setLevel("DEBUG")
+logging.basicConfig(level="DEBUG")
 MOLECULE_OPTIONS = {"trimer": Trimer, "disc": Disc, "sphere": Sphere, "dimer": Dimer}
 
 

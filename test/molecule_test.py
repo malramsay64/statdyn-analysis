@@ -23,7 +23,7 @@ MOLECULE_LIST = [
 ]
 
 
-@pytest.fixture(scope='module', params=MOLECULE_LIST)
+@pytest.fixture(scope="module", params=MOLECULE_LIST)
 def mol(request):
     return request.param()
 
@@ -93,8 +93,8 @@ def test_orientation2positions_moved_rot_multiple(mol):
     xy_inv_pos = np.copy(mol.positions)
     xy_inv_pos[:, :2] = -xy_inv_pos[:, :2]
     moved_pos = (
-        np.repeat(xy_inv_pos, position.shape[0], axis=0) +
-        np.tile(position, (mol.num_particles, 1))
+        np.repeat(xy_inv_pos, position.shape[0], axis=0)
+        + np.tile(position, (mol.num_particles, 1))
     )
     assert np.allclose(rotated_pos, moved_pos)
 
@@ -117,12 +117,12 @@ def test_moment_inertia_trimer():
 def test_moment_inertia_scaling(scaling_factor):
     """Test that the scaling factor is working properly."""
     reference = molecules.Trimer()
-    with np.errstate(over='ignore'):
+    with np.errstate(over="ignore"):
         scaled = molecules.Trimer(moment_inertia_scale=scaling_factor)
         assert len(reference.moment_inertia) == len(scaled.moment_inertia)
         assert np.allclose(
             np.array(reference.moment_inertia) * scaling_factor,
-            np.array(scaled.moment_inertia)
+            np.array(scaled.moment_inertia),
         )
 
 

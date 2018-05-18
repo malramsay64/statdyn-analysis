@@ -23,7 +23,7 @@ from sdanalysis.math_helper import (
     z2quaternion,
 )
 
-np.seterr(invalid='ignore', under='ignore', over='ignore')
+np.seterr(invalid="ignore", under="ignore", over="ignore")
 EPS = np.finfo(np.float32).eps * 2
 
 
@@ -151,7 +151,7 @@ def test_angle_roundtrip(angles):
 
 
 @pytest.mark.parametrize(
-    'quaternion, angle',
+    "quaternion, angle",
     [
         ([0.98246199, 0., 0., 0.18646298], 0.37512138),
         ([0.20939827, 0., 0., 0.97783041], 2.7196734),

@@ -14,17 +14,17 @@ import pytest
 from sdanalysis import order  # type: ignore
 
 INFILES = [
-    'test/data/dump-Trimer-13.50-0.40-p2.gsd',
-    'test/data/dump-Trimer-13.50-0.40-p2gg.gsd',
-    'test/data/dump-Trimer-13.50-0.40-pg.gsd',
+    "test/data/dump-Trimer-13.50-0.40-p2.gsd",
+    "test/data/dump-Trimer-13.50-0.40-p2gg.gsd",
+    "test/data/dump-Trimer-13.50-0.40-pg.gsd",
 ]
 
 ML_MODELS = [order.dt_model, order.knn_model]
 
 
-@pytest.fixture(scope='module', params=INFILES)
+@pytest.fixture(scope="module", params=INFILES)
 def frame(request):
-    with gsd.hoomd.open(request.param, 'rb') as f:
+    with gsd.hoomd.open(request.param, "rb") as f:
         yield f[0]
 
 
@@ -77,7 +77,7 @@ def test_relative_orientations(frame):
     assert np.all(np.isfinite(orientations))
 
 
-@pytest.mark.parametrize('model', ML_MODELS)
+@pytest.mark.parametrize("model", ML_MODELS)
 def test_ml_models(frame, model):
     ordering = order.compute_ml_order(
         model(),

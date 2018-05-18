@@ -27,9 +27,9 @@ logger = logging.getLogger(__name__)
 
 
 def process_gsd(sim_params: SimulationParams) -> Iterable[Tuple[List[int], gsdFrame]]:
-    with gsd.hoomd.open(sim_params.infile, 'rb') as src:
+    with gsd.hoomd.open(sim_params.infile, "rb") as src:
         # Compute steps in gsd file
-        if sim_params.parameters.get('step_limit') is not None:
+        if sim_params.parameters.get("step_limit") is not None:
             num_steps = sim_params.step_limit
         else:
             while True:
@@ -40,7 +40,7 @@ def process_gsd(sim_params: SimulationParams) -> Iterable[Tuple[List[int], gsdFr
 
                 except RuntimeError:
                     frame_index -= 1
-        logger.debug('Infile: %s contains %d steps', sim_params.infile, num_steps)
+        logger.debug("Infile: %s contains %d steps", sim_params.infile, num_steps)
         step_iter = GenerateStepSeries(
             num_steps,
             num_linear=sim_params.num_linear,
@@ -49,11 +49,11 @@ def process_gsd(sim_params: SimulationParams) -> Iterable[Tuple[List[int], gsdFr
         )
         curr_step = 0
         for frame in src:
-            logger.debug('Step %d with index %s', curr_step, step_iter.get_index())
+            logger.debug("Step %d with index %s", curr_step, step_iter.get_index())
             # This handles when the generators don't match up
             if curr_step > frame.configuration.step:
                 logger.warning(
-                    'Step missing in iterator: current %d, frame %d',
+                    "Step missing in iterator: current %d, frame %d",
                     curr_step,
                     frame.configuration.step,
                 )
@@ -61,7 +61,7 @@ def process_gsd(sim_params: SimulationParams) -> Iterable[Tuple[List[int], gsdFr
 
             elif curr_step < frame.configuration.step:
                 logger.warning(
-                    'Step missing in gsd trajectory: current %d, frame %d',
+                    "Step missing in gsd trajectory: current %d, frame %d",
                     curr_step,
                     frame.configuration.step,
                 )
@@ -91,23 +91,23 @@ def process_lammpstrj(
         frame = next(parser)
 
 
-def parse_lammpstrj(filename: Path, mode: str = 'r') -> Iterable[lammpsFrame]:
+def parse_lammpstrj(filename: Path, mode: str = "r") -> Iterable[lammpsFrame]:
     logger.debug("Parse file: %s", filename)
     with open(filename) as src:
         while True:
             # Timestep
             line = src.readline()
-            assert line == 'ITEM: TIMESTEP\n', line
+            assert line == "ITEM: TIMESTEP\n", line
             timestep = int(src.readline().strip())
-            logger.debug('Timestep: %d', timestep)
+            logger.debug("Timestep: %d", timestep)
             # Num Atoms
             line = src.readline()
-            assert line == 'ITEM: NUMBER OF ATOMS\n', line
+            assert line == "ITEM: NUMBER OF ATOMS\n", line
             num_atoms = int(src.readline().strip())
-            logger.debug('num_atoms: %d', num_atoms)
+            logger.debug("num_atoms: %d", num_atoms)
             # Box Bounds
             line = src.readline()
-            assert 'ITEM: BOX BOUNDS' in line, line
+            assert "ITEM: BOX BOUNDS" in line, line
             box_x = src.readline().split()
             box_y = src.readline().split()
             box_z = src.readline().split()
@@ -118,24 +118,24 @@ def parse_lammpstrj(filename: Path, mode: str = 'r') -> Iterable[lammpsFrame]:
                     float(box_z[1]) - float(box_z[0]),
                 ]
             )
-            logger.debug('box: %s', box)
+            logger.debug("box: %s", box)
             # Atoms
             line = src.readline()
-            assert 'ITEM: ATOMS' in line, line
-            headings = line.strip().split(' ')[2:]
-            logger.debug('headings: %s', headings)
+            assert "ITEM: ATOMS" in line, line
+            headings = line.strip().split(" ")[2:]
+            logger.debug("headings: %s", headings)
             # Find id column
-            id_col = headings.index('id')
+            id_col = headings.index("id")
             # Create arrays
             frame = {field: np.empty(num_atoms, dtype=np.float32) for field in headings}
-            logger.debug('Array shape of "id": %s', frame['id'].shape)
+            logger.debug('Array shape of "id": %s', frame["id"].shape)
             for _ in range(num_atoms):
-                line = src.readline().split(' ')
+                line = src.readline().split(" ")
                 mol_index = int(line[id_col]) - 1  # lammps 1 indexes molecules
                 for field, val in zip(headings, line):
                     frame[field][mol_index] = float(val)
-            frame['box'] = box
-            frame['timestep'] = timestep
+            frame["box"] = box
+            frame["timestep"] = timestep
             yield lammpsFrame(frame)
 
 
@@ -159,7 +159,7 @@ class WriteCache():
 
     def flush(self) -> None:
         self.to_dataframe().to_hdf(
-            self._outfile, 'dynamics', format='table', append=self._append
+            self._outfile, "dynamics", format="table", append=self._append
         )
         self._append = True
         self._cache.clear()
@@ -210,22 +210,22 @@ def process_file(sim_params: SimulationParams) -> None:
         dataframes = WriteCache(outfile, append=True, cache_multiplier=0)
     keyframes: List[dynamics] = []
     relaxframes: List[relaxations] = []
-    if sim_params.infile.endswith('.gsd'):
+    if sim_params.infile.endswith(".gsd"):
         file_iterator = process_gsd(sim_params)
-    elif sim_params.infile.endswith('.lammpstrj'):
+    elif sim_params.infile.endswith(".lammpstrj"):
         file_iterator = process_lammpstrj(sim_params)
     variables = get_filename_vars(sim_params.infile)
     for indexes, frame in file_iterator:
         for index in indexes:
             try:
                 logger.debug(
-                    f'len(keyframes): {len(keyframes)}, len(relaxframes): {len(relaxframes)}'
+                    f"len(keyframes): {len(keyframes)}, len(relaxframes): {len(relaxframes)}"
                 )
                 mydyn = keyframes[index]
                 myrelax = relaxframes[index]
             except IndexError:
-                logger.debug('Frame: %s', frame)
-                logger.debug('Create keyframe at step %s', frame.timestep)
+                logger.debug("Frame: %s", frame)
+                logger.debug("Create keyframe at step %s", frame.timestep)
                 keyframes.append(
                     dynamics(
                         timestep=frame.timestep,
@@ -253,20 +253,20 @@ def process_file(sim_params: SimulationParams) -> None:
                 frame.timestep, frame.position, frame.orientation
             )
             myrelax.add(frame.timestep, frame.position, frame.orientation)
-            logger.debug('Series: %s', index)
-            dynamics_series['start_index'] = index
-            dynamics_series['temperature'] = variables.temperature
-            dynamics_series['pressure'] = variables.pressure
+            logger.debug("Series: %s", index)
+            dynamics_series["start_index"] = index
+            dynamics_series["temperature"] = variables.temperature
+            dynamics_series["pressure"] = variables.pressure
             dataframes.append(dynamics_series)
     if outfile:
         dataframes.flush()
         mol_relax = pandas.concat(
             (relax.summary() for relax in relaxframes), keys=range(len(relaxframes))
         )
-        mol_relax['temperature'] = variables.temperature
-        mol_relax['pressure'] = variables.pressure
+        mol_relax["temperature"] = variables.temperature
+        mol_relax["pressure"] = variables.pressure
         mol_relax.to_hdf(
-            sim_params.outfile, 'molecular_relaxations', format='table', append=True
+            sim_params.outfile, "molecular_relaxations", format="table", append=True
         )
         return
 
