@@ -2,7 +2,7 @@
 
 from __future__ import absolute_import
 
-from bokeh.core.properties import AngleSpec, DistanceSpec
+from bokeh.core.properties import AngleSpec, DistanceSpec, NumberSpec, Include
 from bokeh.core.property_mixins import FillProps, LineProps
 from bokeh.models.glyphs import XYGlyph
 

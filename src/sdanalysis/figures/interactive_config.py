@@ -13,188 +13,307 @@ import functools
 import logging
 from functools import partial
 from pathlib import Path
+from typing import Callable, Dict, List
 
 import gsd.hoomd
 from bokeh.layouts import column, row, widgetbox
 from bokeh.models import (
     Button,
     ColumnDataSource,
+    Div,
     RadioButtonGroup,
     Select,
     Slider,
     Toggle,
 )
 from bokeh.plotting import curdoc, figure
-from sdanalysis.figures.configuration import plot, plot_circles, snapshot2data
-from sdanalysis.molecules import Trimer
-from sdanalysis.order import (
+from tornado import gen
+
+from ..frame import gsdFrame
+from ..molecules import Trimer
+from ..order import (
     compute_ml_order,
     compute_voronoi_neighs,
     dt_model,
     knn_model,
     orientational_order,
 )
-from tornado import gen
+from ..util import get_filename_vars, variables
+from .configuration import frame2data, plotFrame, plotTrimer
 
 logger = logging.getLogger(__name__)
-# Definition of initial state
-trj = None
-snapshot = None
-extra_particles = True
-molecule = Trimer()
-default_dir = "."
-timestep = 0
-Lx, Ly = (60, 60)
-source = ColumnDataSource(data={"x": [0], "y": [0], "radius": [1], "colour": ["red"]})
-play = False
-doc = curdoc()
+gsdlogger = logging.getLogger("gsd")
+gsdlogger.setLevel("WARN")
 
 
-def get_filename():
-    return str(Path.cwd() / directory.value / fname.value)
+def parse_directory(directory: Path, glob: str = "*.gsd") -> Dict[str, List]:
+    all_values = {}
+    files = directory.glob(glob)
+    for fname in files:
+        file_vars = get_filename_vars(fname)
+        # Convert named tuples to a dict of lists
+        for var_name in file_vars._fields:
+            curr_list = all_values.get(var_name)
+            if curr_list is None:
+                curr_list = []
+            curr_list.append(getattr(file_vars, var_name))
+            all_values[var_name] = curr_list
+    for key, value in all_values.items():
+        logger.debug("Key: %s has value: %s", key, value)
+        all_values[key] = sorted(list(set(value)))
+    return all_values
 
 
-def update_files(attr, old, new):
-    fname.options = new
-    if new:
-        fname.value = new[0]
-    update_trajectory(None, None, fname.value)
-
-
-def update_trajectory(attr, old, new):
-    global trj
-    trj = gsd.hoomd.open(get_filename(), "rb")
-    # Bokeh will handle and IndexError in file but not beginning and end
-    # of slider being the same value.
-    index.end = max(len(trj) - 1, 1)
-    if index.value > len(trj) - 1:
-        update_index(None, None, len(trj) - 1)
+def variables_to_file(file_vars: variables, directory: Path):
+    if file_vars.crystal is not None:
+        glob_pattern = f"dump-Trimer-P{file_vars.pressure}-T{file_vars.temperature}-{file_vars.crystal}.gsd"
     else:
-        update_index(None, None, index.value)
+        glob_pattern = f"-P{file_vars.pressure}-T{file_vars.temperature}"
+    return next(directory.glob(glob_pattern))
 
 
-def update_index(attr, old, new):
-    update_snapshot(attr, old, int(new))
+def compute_neigh_ordering(box, positions, orientations):
+    return compute_voronoi_neighs(box, positions) == 6
 
 
-def incr_index():
-    if index.value < index.end:
-        index.value += increment_size.value
+class TrimerFigure(object):
+    order_functions = {
+        "None": None,
+        "Orient": functools.partial(orientational_order, order_threshold=0.75),
+        "Decision Tree": functools.partial(compute_ml_order, dt_model()),
+        "KNN Model": functools.partial(compute_ml_order, knn_model()),
+        "Num Neighs": compute_neigh_ordering,
+    }
+    controls_width = 400
 
+    def __init__(self, doc, directory: Path = None) -> None:
 
-def decr_index():
-    if index.value > index.start:
-        index.value -= increment_size.value
+        self._doc = doc
+        self.plot = None
+        self._trajectory = [None]
 
-
-def update_snapshot(attr, old, new):
-    if old != new:
-        global snapshot
-        try:
-            snapshot = trj[new]
-        except IndexError:
-            pass
-        update_data(None, None, None)
-
-
-@gen.coroutine
-def update_source(data):
-    source.data = data
-
-
-def update_data(attr, old, new):
-    try:
-        plot.title.text = "Timestep: {:.5g}".format(snapshot.configuration.step)
-        data = snapshot2data(
-            snapshot,
-            molecule=molecule,
-            extra_particles=extra_particles,
-            ordering=order_parameters[OP_KEYS[ordered.active]],
-            invert_colours=order_emphasis.active,
+        if directory is None:
+            directory = Path.cwd()
+        self._source = ColumnDataSource(
+            {"x": [], "y": [], "orientation": [], "colour": []}
         )
-        source.data = data
-    except AttributeError:
-        pass
+        self.directory = directory
+        self.initialise_directory()
+
+        self.initialise_trajectory_interface()
+        self.update_current_trajectory(None, None, None)
+        self._playing = False
+
+        # Initialise user interface
+        self.initialise_media_interface()
+
+        self.initialise_doc()
+
+    def initialise_directory(self) -> None:
+        self.variable_selection = parse_directory(self.directory, glob="*.gsd")
+        logger.debug("Variables present: %s", self.variable_selection.keys())
+
+        self._pressure_button = RadioButtonGroup(
+            name="Pressure",
+            labels=self.variable_selection["pressure"],
+            active=0,
+            width=self.controls_width,
+        )
+        self._temperature_button = RadioButtonGroup(
+            name="Temperature",
+            labels=self.variable_selection["temperature"],
+            active=0,
+            width=self.controls_width,
+        )
+        self._crystal_button = RadioButtonGroup(
+            name="Crystal",
+            labels=self.variable_selection["crystal"],
+            active=0,
+            width=self.controls_width,
+        )
+
+        self._pressure_button.on_change("active", self.update_current_trajectory)
+        self._temperature_button.on_change("active", self.update_current_trajectory)
+        self._crystal_button.on_change("active", self.update_current_trajectory)
+
+    def create_files_interface(self) -> None:
+        directory_name = Div(
+            text=f"<b>Current Directory:</b><br/>{self.directory.stem}",
+            width=self.controls_width,
+        )
+        file_selection = column(
+            directory_name,
+            Div(text="<b>Pressure:</b>"),
+            self._pressure_button,
+            Div(text="<b>Temperature:</b>"),
+            self._temperature_button,
+            Div(text="<b>Crystal Structure:</b>"),
+            self._crystal_button,
+            Div(text="<hr/>", width=self.controls_width, height=10),
+            height=380,
+        )
+        return file_selection
+
+    def get_selected_variables(self) -> None:
+        return variables(
+            temperature=self.variable_selection["temperature"][
+                self._temperature_button.active
+            ],
+            pressure=self.variable_selection["pressure"][self._pressure_button.active],
+            crystal=self.variable_selection["crystal"][self._crystal_button.active],
+        )
+
+    def get_selected_file(self) -> None:
+        return variables_to_file(self.get_selected_variables(), self.directory)
+
+    def update_frame(self, attr, old, new) -> None:
+        self._frame = gsdFrame(self._trajectory[self.index])
+        self.update_data(None, None, None)
+
+    def radio_update_frame(self, attr) -> None:
+        self.update_frame(attr, None, None)
+
+    @property
+    def index(self) -> None:
+        try:
+            return self._trajectory_slider.value
+        except AttributeError:
+            return 0
+
+    def initialise_trajectory_interface(self) -> None:
+        self._trajectory_slider = Slider(
+            title="Trajectory Index:",
+            value=0,
+            start=0,
+            end=max(len(self._trajectory), 1),
+            step=1,
+            width=self.controls_width,
+        )
+        self._trajectory_slider.on_change("value", self.update_frame)
+
+        self._order_parameter = RadioButtonGroup(
+            name="Classification algorithm:",
+            labels=list(self.order_functions.keys()),
+            active=0,
+            width=self.controls_width,
+        )
+        self._order_parameter.on_click(self.radio_update_frame)
+
+    def create_trajectory_interface(self) -> None:
+        return column(
+            [
+                self._trajectory_slider,
+                Div(text="<b>Classification Algorithm:<b>"),
+                self._order_parameter,
+                Div(text="<hr/>", width=self.controls_width, height=10),
+            ],
+            height=150,
+        )
+
+    def update_current_trajectory(self, attr, old, new) -> None:
+        self._trajectory = gsd.hoomd.open(str(self.get_selected_file()), "rb")
+        self.update_frame(attr, old, new)
+
+    def initialise_media_interface(self) -> None:
+        self._play_pause = Toggle(
+            name="Play/Pause", label="Play/Pause", width=int(self.controls_width / 3)
+        )
+        self._play_pause.on_click(self._play_pause_toggle)
+        self._nextFrame = Button(label="Next", width=int(self.controls_width / 3))
+        self._nextFrame.on_click(self._incr_index)
+        self._prevFrame = Button(label="Previous", width=int(self.controls_width / 3))
+        self._prevFrame.on_click(self._decr_index)
+        self._increment_size = Slider(
+            title="Increment Size",
+            value=10,
+            start=1,
+            end=100,
+            step=1,
+            width=self.controls_width,
+        )
+
+    def _incr_index(self) -> None:
+        if self._trajectory_slider.value < self._trajectory_slider.end:
+            self._trajectory_slider.value = min(
+                self._trajectory_slider.value + self._increment_size.value,
+                self._trajectory_slider.end,
+            )
+
+    def _decr_index(self) -> None:
+        if self._trajectory_slider.value > self._trajectory_slider.start:
+            self._trajectory_slider.value = max(
+                self._trajectory_slider.value - self._increment_size.value,
+                self._trajectory_slider.start,
+            )
+
+    def create_media_interface(self):
+        #  return widgetbox([prevFrame, play_pause, nextFrame, increment_size], width=300)
+        return column(
+            Div(text="<b>Media Controls:</b>"),
+            row(
+                [self._prevFrame, self._play_pause, self._nextFrame],
+                width=int(self.controls_width),
+            ),
+            self._increment_size,
+        )
+        # When using webgl as the backend the save option doesn't work for some reason.
+
+    def _update_source(self, data):
+        logger.debug("Data Keys: %s", data.keys())
+        self._source.data = data
+
+    def get_order_function(self) -> Callable:
+        return self.order_functions[
+            list(self.order_functions.keys())[self._order_parameter.active]
+        ]
+
+    def update_data(self, attr, old, new):
+        if self.plot:
+            self.plot.title.text = f"Timestep {self._frame.timestep:.5g}"
+        data = frame2data(self._frame, order_function=self.get_order_function())
+        self._update_source(data)
+
+    def update_data_attr(self, attr):
+        self.update_data(attr, None, None)
+
+    def _play_pause_toggle(self, attr):
+        if self._playing:
+            self._doc.remove_periodic_callback(self._incr_index)
+        else:
+            self._doc.add_periodic_callback(self._incr_index, 100)
+
+    def initialise_doc(self):
+        self.plot = figure(
+            width=920,
+            height=800,
+            aspect_scale=1,
+            match_aspect=True,
+            title=f"Timestep {self._frame.timestep:.5g}",
+            output_backend="webgl",
+            active_scroll="wheel_zoom",
+        )
+        self.plot.xgrid.grid_line_color = None
+        self.plot.ygrid.grid_line_color = None
+        self.plot.x_range.start = -30
+        self.plot.x_range.end = 30
+        self.plot.y_range.start = -30
+        self.plot.y_range.end = 30
+        plotTrimer(self.plot, self._source)
+
+    def create_doc(self):
+        self.update_data(None, None, None)
+        controls = column(
+            [
+                self.create_files_interface(),
+                self.create_trajectory_interface(),
+                self.create_media_interface(),
+            ],
+            width=int(self.controls_width * 1.1),
+        )
+        self._doc.add_root(row([controls, self.plot]))
+        self._doc.title = "Configurations"
 
 
-def update_data_now(arg):
-    update_data(None, None, None)
-
-
-def update_directory(attr, old, new):
-    files = sorted(
-        [filename.name for filename in Path(directory.value).glob("dump*.gsd")]
-    )
-    if files:
-        update_files(None, None, files)
-
-
-def play_pause_toggle(arg):
-    if arg:
-        doc.add_periodic_callback(incr_index, 100)
-    else:
-        doc.remove_periodic_callback(incr_index)
-
-
-DIR_OPTIONS = sorted(
-    [
-        d.parts[-1]
-        for d in Path.cwd().glob("*/")
-        if d.is_dir() and len(list(d.glob("dump*.gsd")))
-    ]
-)
-try:
-    directory = Select(
-        value=DIR_OPTIONS[-1], title="Source directory", options=DIR_OPTIONS
-    )
-except IndexError:
-    directory = Select(title="Source directory", options=DIR_OPTIONS)
-directory.on_change("value", update_directory)
-fname = Select(title="File", value="", options=[])
-fname.on_change("value", update_trajectory)
-index = Slider(title="Index", value=0, start=0, end=1, step=1)
-index.on_change("value", update_index)
-order_parameters = {
-    "None": None,
-    "Orient": orientational_order,
-    "Decision Tree": functools.partial(compute_ml_order, dt_model()),
-    "KNN Model": functools.partial(compute_ml_order, knn_model()),
-    "Num Neighs": lambda box, pos, orient: compute_voronoi_neighs(box, pos) == 6,
-}
-OP_KEYS = list(order_parameters.keys())
-ordered = RadioButtonGroup(labels=OP_KEYS, active=0)
-ordered.on_click(update_data_now)
-order_emphasis = Toggle(name="emphaisis", label="Toggle Emphasis", active=True)
-order_emphasis.on_click(update_data_now)
-radius_scale = Slider(title="Particle Radius", value=1, start=0.1, end=2, step=0.05)
-radius_scale.on_change("value", update_data)
-play_pause = Toggle(name="Play/Pause", label="Play/Pause")
-play_pause.on_click(play_pause_toggle)
-nextFrame = Button(label="Next")
-nextFrame.on_click(incr_index)
-prevFrame = Button(label="Previous")
-prevFrame.on_click(decr_index)
-increment_size = Slider(title="Increment Size", value=1, start=1, end=100, step=1)
-media = widgetbox([prevFrame, play_pause, nextFrame, increment_size], width=300)
-# When using webgl as the backend the save option doesn't work for some reason.
-
-
-plot = figure(
-    width=920,
-    height=800,
-    aspect_scale=1,
-    match_aspect=True,
-    title="Timestep: {:.2g}".format(timestep),
-    output_backend="webgl",
-    active_scroll="wheel_zoom",
-)
-plot.xgrid.grid_line_color = None
-plot.ygrid.grid_line_color = None
-
-update_directory(None, None, default_dir)
-update_data(None, None, None)
-plot_circles(plot, source)
-controls = widgetbox([directory, fname, index, ordered], width=300)
-layout = row(column(controls, order_emphasis, media), plot)
-doc.add_root(layout)
-doc.title = "Configurations"
+def make_document(doc):
+    fig = TrimerFigure(doc)
+    fig.create_doc()
