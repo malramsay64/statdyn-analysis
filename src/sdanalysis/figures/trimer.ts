@@ -10,6 +10,10 @@ import {Context2d} from "core/util/canvas"
 
 export interface TrimerData extends XYGlyphData {
     _angle: Arrayable<number>
+    _sx1: Arrayable<number>
+    _sy1: Arrayable<number>
+    _sx2: Arrayable<number>
+    _sy2: Arrayable<number>
 
     distance: number
     radius: number
@@ -17,6 +21,11 @@ export interface TrimerData extends XYGlyphData {
     theta: number
 
     size2: number
+    sradius: number
+    sdistance: number
+    eta: number
+    alpha: number
+
 }
 
 export interface TrimerView extends TrimerData {}
@@ -28,33 +37,34 @@ export class TrimerView extends XYGlyphView {
     protected _set_data(): void {
         this.size2 = 1.3
         this.distance = 1.0
-        this.radius = 0.6
+        this.radius = 0.675
         this.theta = 2*Math.PI/3
+
+        // Precalculate angles
+        //
+        // eta = angle between 0 and center of small particle
+        this.eta = (Math.PI - this.theta)/2
+        // alpha = angle between points of intersection of small particle
+        this.alpha = 4*Math.asin(this.radius/2)
+        // arc = half length of arc of small particle
+        this.arc = Math.PI/2 + this.alpha/4
+        // beta = angle betwee small particle intersection
+        this.beta = this.theta - this.alpha
+        // delta = angle opposite beta
+        this.delta = 2*Math.PI - 2*this.alpha - this.beta
     }
 
     protected _map_data(): void {
         // Calculate the scaling factor of the figure
         this.scale = this.sdist(this.renderer.xscale, this._x, [1], 'center')[0] * 0.95
+        // Quantities in screen units
+        this.sradius = this.scale * this.radius
+        this.sdistance = this.scale * this.distance
+
+
     }
 
     protected _render(ctx: Context2d, indices: number[], {sx, sy, scale}: TrimerData): void {
-        // Quantities in screen units
-        const sradius: number = scale * this.radius
-        const sdist: number = scale * this.distance
-
-        // Precalculate angles
-        //
-        // eta = angle between 0 and center of small particle
-        const eta: number = (Math.PI - this.theta)/2
-        // alpha = angle between points of intersection of small particle
-        const alpha: number = 4*Math.asin(this.radius/2)
-        // arc = half length of arc of small particle
-        const arc: number = Math.PI/2 + alpha/4
-        // beta = angle betwee small particle intersection
-        const beta: number = this.theta - alpha
-        // delta = angle opposite beta
-        const delta: number = 2*Math.PI - 2*alpha - beta
-
         const corrected_angle: number
 
         for (const i of indices) {
@@ -64,41 +74,34 @@ export class TrimerView extends XYGlyphView {
             corrected_angle = this._angle[i] + Math.PI
 
             ctx.beginPath()
-            ctx.ellipse(
+            ctx.arc(
                 sx[i],
                 sy[i],
-                scale,
-                scale,
-                corrected_angle - Math.PI/2,
-                -delta/2,
-                delta/2
+                this.scale,
+                corrected_angle - Math.PI/2 - this.delta/2,
+                corrected_angle - Math.PI/2 + this.delta/2,
             )
-            ctx.ellipse(
-                sx[i] + sdist * Math.cos(corrected_angle + eta),
-                sy[i] + sdist * Math.sin(corrected_angle + eta),
-                sradius,
-                sradius,
-                corrected_angle + eta,
-                - arc,
-                + arc,
+            ctx.arc(
+                sx[i] + this.sdistance * Math.cos(corrected_angle + this.eta),
+                sy[i] + this.sdistance * Math.sin(corrected_angle + this.eta),
+                this.sradius,
+                corrected_angle + this.eta - this.arc,
+                corrected_angle + this.eta + this.arc,
             )
-            ctx.ellipse(
+
+            ctx.arc(
                 sx[i],
                 sy[i],
-                scale,
-                scale,
-                corrected_angle + Math.PI/2,
-                -beta/2,
-                beta/2
+                this.scale,
+                corrected_angle + Math.PI/2 - this.beta/2,
+                corrected_angle + Math.PI/2 + this.beta/2,
             )
-            ctx.ellipse(
-                sx[i] + sdist * Math.cos(corrected_angle + Math.PI - eta),
-                sy[i] + sdist * Math.sin(corrected_angle + Math.PI - eta),
-                sradius,
-                sradius,
-                corrected_angle + Math.PI - eta,
-                - arc,
-                + arc,
+            ctx.arc(
+                sx[i] + this.sdistance * Math.cos(corrected_angle + Math.PI - this.eta),
+                sy[i] + this.sdistance * Math.sin(corrected_angle + Math.PI - this.eta),
+                this.sradius,
+                corrected_angle + Math.PI - this.eta - this.arc,
+                corrected_angle + Math.PI - this.eta + this.arc
             )
 
             if (this.visuals.fill.doit) {
