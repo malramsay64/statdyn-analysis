@@ -11,21 +11,21 @@
 import numpy as np
 from scipy.spatial import cKDTree
 
-from ._order import (
-    _orientational_order, _relative_orientations, compute_voronoi_neighs
-)
+from ._order import _orientational_order, _relative_orientations, compute_voronoi_neighs
 
 
 def dt_model():
     from sklearn.externals import joblib
     from pathlib import Path
-    return joblib.load(Path(__file__).parent / 'models/dt-Trimer-model.pkl')
+
+    return joblib.load(Path(__file__).parent / "models/dt-Trimer-model.pkl")
 
 
 def knn_model():
     from sklearn.externals import joblib
     from pathlib import Path
-    return joblib.load(Path(__file__).parent / 'models/knn-Trimer-model.pkl')
+
+    return joblib.load(Path(__file__).parent / "models/knn-Trimer-model.pkl")
 
 
 def compute_ml_order(
@@ -53,13 +53,10 @@ def compute_neighbours(
 ) -> np.ndarray:
     """Compute the neighbours of each molecule."""
     neigh_tree = compute_neighbour_tree(box, position)
-    return neigh_tree.query(
+    _, neighbours = neigh_tree.query(
         neigh_tree.data, max_neighbours + 1, distance_upper_bound=max_radius, n_jobs=-1
-    )[
-        1
-    ][
-        :, 1:
-    ]
+    )
+    return neighbours[:, 1:]
 
 
 def relative_orientations(
@@ -79,8 +76,12 @@ def orientational_order(
     orientation: np.ndarray,
     max_radius: float = 3.5,
     max_neighbours: int = 8,
+    order_threshold: float = None,
 ) -> np.ndarray:
     neighbours = compute_neighbours(box, position, max_radius, max_neighbours)
+    if order_threshold is not None:
+        return _orientational_order(neighbours, orientation) > order_threshold
+
     return _orientational_order(neighbours, orientation)
 
 

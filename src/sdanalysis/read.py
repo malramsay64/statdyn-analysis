@@ -21,6 +21,7 @@ from .frame import Frame, gsdFrame, lammpsFrame
 from .molecules import Trimer
 from .params import SimulationParams
 from .StepSize import GenerateStepSeries
+from .util import get_filename_vars
 
 logger = logging.getLogger(__name__)
 
@@ -172,22 +173,6 @@ class WriteCache():
 
     def to_dataframe(self):
         return pandas.DataFrame.from_records(self._cache)
-
-
-def get_filename_vars(fname: Path):
-    variables = namedtuple('variables', ['temperature', 'pressure', 'crystal'])
-    fname = Path(fname)
-    flist = fname.stem.split('-')
-    if len(flist) < 4:
-        return variables(None, None, None)
-
-    temp = flist[3][1:]
-    pressure = flist[2][1:]
-    try:
-        crys = flist[4]
-    except IndexError:
-        crys = None
-    return variables(temp, pressure, crys)
 
 
 def process_file(sim_params: SimulationParams) -> None:
