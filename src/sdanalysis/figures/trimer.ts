@@ -14,7 +14,7 @@ export interface TrimerData extends XYGlyphData {
     distance: number
     radius: number
     scale: number
-    ang: number
+    theta: number
 
     size2: number
 }
@@ -29,67 +29,86 @@ export class TrimerView extends XYGlyphView {
         this.size2 = 1.3
         this.distance = 1.0
         this.radius = 0.6
-        this.ang = Math.PI/3
+        this.theta = 2*Math.PI/3
     }
 
     protected _map_data(): void {
         // Calculate the scaling factor of the figure
-        this.scale = this.sdist(this.renderer.xscale, this._x, [1], 'center')[0]
+        this.scale = this.sdist(this.renderer.xscale, this._x, [1], 'center')[0] * 0.95
     }
 
     protected _render(ctx: Context2d, indices: number[], {sx, sy, scale}: TrimerData): void {
+        // Quantities in screen units
         const sradius: number = scale * this.radius
         const sdist: number = scale * this.distance
+
+        // Precalculate angles
+        //
+        // eta = angle between 0 and center of small particle
+        const eta: number = (Math.PI - this.theta)/2
+        // alpha = angle between points of intersection of small particle
+        const alpha: number = 4*Math.asin(this.radius/2)
+        // arc = half length of arc of small particle
+        const arc: number = Math.PI/2 + alpha/4
+        // beta = angle betwee small particle intersection
+        const beta: number = this.theta - alpha
+        // delta = angle opposite beta
+        const delta: number = 2*Math.PI - 2*alpha - beta
+
+        const corrected_angle: number
+
         for (const i of indices) {
             if (isNaN(sx[i] + sy[i] + this._angle[i]))
                 continue
 
-            ctx.beginPath()
-            ctx.arc(sx[i], sy[i], scale, 0, 2 * Math.PI)
-            if (this.visuals.fill.doit) {
-                this.visuals.fill.set_vectorize(ctx, i)
-                ctx.fill()
-            }
-            if (this.visuals.line.doit) {
-                this.visuals.line.set_vectorize(ctx, i)
-            }
-            ctx.stroke()
+            corrected_angle = this._angle[i] + Math.PI
 
             ctx.beginPath()
             ctx.ellipse(
-                sx[i] + sdist * Math.sin(this._angle[i] - this.ang),
-                sy[i] + sdist * Math.cos(this._angle[i] - this.ang),
-                sradius,
-                sradius,
-                Math.PI-this.ang/2-this._angle[i],
-                -2.0 , 2.0
+                sx[i],
+                sy[i],
+                scale,
+                scale,
+                corrected_angle - Math.PI/2,
+                -delta/2,
+                delta/2
             )
-            if (this.visuals.fill.doit) {
-                this.visuals.fill.set_vectorize(ctx, i)
-                ctx.fill()
-            }
-            if (this.visuals.line.doit) {
-                this.visuals.line.set_vectorize(ctx, i)
-            }
-            ctx.stroke()
-
-            ctx.beginPath()
             ctx.ellipse(
-                sx[i] + sdist * Math.sin(this._angle[i] + this.ang),
-                sy[i] + sdist * Math.cos(this._angle[i] + this.ang),
+                sx[i] + sdist * Math.cos(corrected_angle + eta),
+                sy[i] + sdist * Math.sin(corrected_angle + eta),
                 sradius,
                 sradius,
-                this.ang/2-this._angle[i],
-                -2.0 , 2.0
+                corrected_angle + eta,
+                - arc,
+                + arc,
             )
+            ctx.ellipse(
+                sx[i],
+                sy[i],
+                scale,
+                scale,
+                corrected_angle + Math.PI/2,
+                -beta/2,
+                beta/2
+            )
+            ctx.ellipse(
+                sx[i] + sdist * Math.cos(corrected_angle + Math.PI - eta),
+                sy[i] + sdist * Math.sin(corrected_angle + Math.PI - eta),
+                sradius,
+                sradius,
+                corrected_angle + Math.PI - eta,
+                - arc,
+                + arc,
+            )
+
             if (this.visuals.fill.doit) {
                 this.visuals.fill.set_vectorize(ctx, i)
                 ctx.fill()
             }
             if (this.visuals.line.doit) {
                 this.visuals.line.set_vectorize(ctx, i)
+                ctx.stroke()
             }
-            ctx.stroke()
         }
     }
 
