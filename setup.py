@@ -58,6 +58,7 @@ setup(
         'matplotlib',
         'gsd',
         'ruamel.yaml',
+        'hsluv',
     ],
     packages=find_packages('src'),
     ext_modules=cythonize(extensions, include_path=['src/']),
