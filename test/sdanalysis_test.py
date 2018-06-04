@@ -8,15 +8,23 @@
 """Test the sdrun command line tools."""
 
 import subprocess
+from tempfile import TemporaryDirectory
+import pytest
 
 
-def test_comp_dynamics():
+@pytest.fixture
+def output_directory():
+    with TemporaryDirectory() as tmpdir:
+        yield tmpdir
+
+
+def test_comp_dynamics(output_directory):
     command = [
         "sdanalysis",
         "comp_dynamics",
         "-v",
         "-o",
-        "test/output",
+        output_directory,
         "test/data/trajectory-Trimer-P13.50-T3.00.gsd",
     ]
     ret = subprocess.run(command)
