@@ -76,6 +76,7 @@ setup(
     ext_modules=cythonize(extensions, include_path=["src/"]),
     package_dir={"": "src"},
     include_package_data=True,
+    extras_require={"docs": docs_require, "tests": test_require, "dev": dev_require},
     entry_points="""
         [console_scripts]
         sdanalysis=sdanalysis.main:sdanalysis
