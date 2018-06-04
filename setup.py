@@ -41,12 +41,25 @@ extensions = [
     ),
 ]
 
+test_require = [
+    "pytest",
+    "pylint",
+    "numpy-quaternion",
+    "hypothesis",
+    "coverage",
+    "mypy",
+    "pytest-mypy",
+    "pytest-pylint",
+    "pytest-cov",
+    "pytest-lazy-fixture",
+]
+docs_require = []
+dev_require = docs_require + test_require
 
 setup(
     name="sdanalysis",
     version=get_version(),
     python_requires=">=3.6",
-    setup_requires=["cython", "numpy"],
     install_requires=[
         "numpy",
         "scipy",
