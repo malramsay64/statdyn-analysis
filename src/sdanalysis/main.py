@@ -25,6 +25,10 @@ yaml = YAML()  # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")
 logging.basicConfig(level="DEBUG")
+
+gsd_logger = logging.getLogger("gsd")
+gsd_logger.setLevel(logging.WARNING)
+
 MOLECULE_OPTIONS = {"trimer": Trimer, "disc": Disc, "sphere": Sphere, "dimer": Dimer}
 
 
