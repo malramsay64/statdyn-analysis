@@ -10,10 +10,6 @@ import {Context2d} from "core/util/canvas"
 
 export interface TrimerData extends XYGlyphData {
     _angle: Arrayable<number>
-    _sx1: Arrayable<number>
-    _sy1: Arrayable<number>
-    _sx2: Arrayable<number>
-    _sy2: Arrayable<number>
 
     distance: number
     radius: number
