@@ -67,7 +67,9 @@ def parse_directory(directory: Path, glob: str = "*.gsd") -> Dict[str, List]:
 
 def variables_to_file(file_vars: variables, directory: Path) -> Path:
     if file_vars.crystal is not None:
-        glob_pattern = f"dump-Trimer-P{file_vars.pressure}-T{file_vars.temperature}-{file_vars.crystal}.gsd"
+        glob_pattern = (
+            f"dump-Trimer-P{file_vars.pressure}-T{file_vars.temperature}-{file_vars.crystal}.gsd"
+        )
     else:
         glob_pattern = f"-P{file_vars.pressure}-T{file_vars.temperature}"
     return next(directory.glob(glob_pattern))

@@ -139,8 +139,7 @@ def parse_lammpstrj(filename: Path, mode: str = "r") -> Iterable[lammpsFrame]:
             yield lammpsFrame(frame)
 
 
-class WriteCache():
-
+class WriteCache:
     def __init__(
         self, filename: Path, cache_multiplier: int = 1, append: bool = False
     ) -> None:

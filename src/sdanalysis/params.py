@@ -19,6 +19,7 @@ logger = logging.getLogger(__name__)
 
 class SimulationParams(object):
     """Store the parameters of the simulation."""
+
     defaults: Dict[str, Any] = {
         "hoomd_args": "",
         "step_size": 0.005,

@@ -92,9 +92,8 @@ def test_orientation2positions_moved_rot_multiple(mol):
     rotated_pos = mol.orientation2positions(position, orientation)
     xy_inv_pos = np.copy(mol.positions)
     xy_inv_pos[:, :2] = -xy_inv_pos[:, :2]
-    moved_pos = (
-        np.repeat(xy_inv_pos, position.shape[0], axis=0)
-        + np.tile(position, (mol.num_particles, 1))
+    moved_pos = np.repeat(xy_inv_pos, position.shape[0], axis=0) + np.tile(
+        position, (mol.num_particles, 1)
     )
     assert np.allclose(rotated_pos, moved_pos)
 

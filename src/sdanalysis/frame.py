@@ -14,7 +14,6 @@ import numpy as np
 
 
 class Frame(ABC):
-
     @property
     @abstractmethod
     def position(self) -> np.ndarray:
@@ -56,7 +55,6 @@ class Frame(ABC):
 
 
 class lammpsFrame(Frame):
-
     def __init__(self, frame: Dict) -> None:
         self.frame = frame
         self.frame["box"] = np.array(self.frame["box"])
@@ -96,7 +94,6 @@ class lammpsFrame(Frame):
 
 
 class gsdFrame(Frame):
-
     def __init__(self, frame) -> None:
         self.frame = frame
         try:
@@ -108,23 +105,23 @@ class gsdFrame(Frame):
 
     @property
     def position(self) -> np.ndarray:
-        return self.frame.particles.position[:self._num_mols]
+        return self.frame.particles.position[: self._num_mols]
 
     @property
     def x_position(self) -> np.ndarray:
-        return self.frame.particles.position[:self._num_mols, 0]
+        return self.frame.particles.position[: self._num_mols, 0]
 
     @property
     def y_position(self) -> np.ndarray:
-        return self.frame.particles.position[:self._num_mols, 1]
+        return self.frame.particles.position[: self._num_mols, 1]
 
     @property
     def z_position(self) -> np.ndarray:
-        return self.frame.particles.position[:self._num_mols, 2]
+        return self.frame.particles.position[: self._num_mols, 2]
 
     @property
     def orientation(self) -> np.ndarray:
-        return self.frame.particles.orientation[:self._num_mols]
+        return self.frame.particles.orientation[: self._num_mols]
 
     @property
     def timestep(self) -> int:

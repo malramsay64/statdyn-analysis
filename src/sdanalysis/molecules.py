@@ -63,7 +63,9 @@ class Molecule(object):
         """Scale the moment of inertia by a constant factor."""
         i_x, i_y, i_z = self.moment_inertia
         self.moment_inertia = (
-            i_x * scale_factor, i_y * scale_factor, i_z * scale_factor
+            i_x * scale_factor,
+            i_y * scale_factor,
+            i_z * scale_factor,
         )
 
     def compute_moment_intertia(
@@ -81,9 +83,8 @@ class Molecule(object):
         return np.array([self._radii[p] for p in self.particles])
 
     def orientation2positions(self, position, orientation):
-        return (
-            np.tile(position, (self.num_particles, 1))
-            + rotate_vectors(orientation, self.positions.astype(np.float32))
+        return np.tile(position, (self.num_particles, 1)) + rotate_vectors(
+            orientation, self.positions.astype(np.float32)
         )
 
     def compute_size(self):

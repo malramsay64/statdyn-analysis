@@ -74,7 +74,8 @@ def update_datacolumns(attr, old, new):
         "kinetic_energy": dataframe.kinetic_energy.values,
     }
     datacolumns.data = {
-        "x": dataframe.timestep.values, "y": dataframe[factors.value].values
+        "x": dataframe.timestep.values,
+        "y": dataframe[factors.value].values,
     }
 
 

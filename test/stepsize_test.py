@@ -14,7 +14,7 @@ from hypothesis import given, settings
 from hypothesis.strategies import integers
 from sdanalysis.StepSize import GenerateStepSeries, generate_steps
 
-
+# fmt: off
 @pytest.fixture(
     params=[
         {
@@ -49,6 +49,9 @@ def steps(request):
         )
     )
     return request.param
+
+
+# fmt: on
 
 
 @given(integers(min_value=0))
@@ -107,7 +110,7 @@ def test_generate_step_series(total_steps, num_linear):
 def test_num_linear(num_linear):
     """Test a range of values of num_linear will work."""
     gen_list = list(generate_steps(total_steps=1e7, num_linear=num_linear))
-    assert gen_list[:num_linear + 1] == list(range(num_linear + 1))
+    assert gen_list[: num_linear + 1] == list(range(num_linear + 1))
 
 
 def test_get_index():

@@ -22,6 +22,7 @@ logger = logging.getLogger(__name__)
 
 class dynamics(object):
     """Compute dynamic properties of a simulation."""
+
     dyn_dtype = np.float32
 
     def __init__(
@@ -213,7 +214,6 @@ def create_mol_relaxations(
 
 
 class relaxations(object):
-
     def __init__(
         self,
         timestep: int,
@@ -267,9 +267,8 @@ class relaxations(object):
 def molecule2particles(
     position: np.ndarray, orientation: np.ndarray, mol_vector: np.ndarray
 ) -> np.ndarray:
-    return (
-        rotate_vectors(orientation, mol_vector.astype(np.float32))
-        + np.repeat(position, mol_vector.shape[0], axis=0)
+    return rotate_vectors(orientation, mol_vector.astype(np.float32)) + np.repeat(
+        position, mol_vector.shape[0], axis=0
     )
 
 

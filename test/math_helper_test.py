@@ -46,18 +46,20 @@ def _increase_dims(a):
 
 
 def unit_quaternion_Z():
-    return arrays(floating_dtypes(sizes=32), 1).map(_normalize_quat).filter(
-        lambda x: not np.any(np.isnan(x))
-    ).map(
-        _increase_dims
+    return (
+        arrays(floating_dtypes(sizes=32), 1)
+        .map(_normalize_quat)
+        .filter(lambda x: not np.any(np.isnan(x)))
+        .map(_increase_dims)
     )
 
 
 def unit_quaternion(num_elements=1):
-    return arrays(floating_dtypes(sizes=32), 3).map(_normalize_quat).filter(
-        lambda x: not np.any(np.isnan(x))
-    ).map(
-        _increase_dims
+    return (
+        arrays(floating_dtypes(sizes=32), 3)
+        .map(_normalize_quat)
+        .filter(lambda x: not np.any(np.isnan(x)))
+        .map(_increase_dims)
     )
 
 
