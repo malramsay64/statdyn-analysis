@@ -8,7 +8,7 @@
 """Plot configuration."""
 
 import logging
-from typing import Callable, List
+from typing import Any, Callable, Dict, List
 
 import numpy as np
 from bokeh.colors import RGB, Color
@@ -82,7 +82,7 @@ def colour_from_angle(angle: float, saturation: float, luminance: float) -> Colo
     return RGB(r * 256, g * 256, b * 256)
 
 
-def colour_orientation(orientations: np.ndarray, light_colours=False) -> List[Color]:
+def colour_orientation(orientations: np.ndarray, light_colours=False) -> np.ndarray:
     saturation = 85
     luminance = 60
     if light_colours:
@@ -100,7 +100,7 @@ def frame2data(
 ) -> Dict[str, Any]:
     angle = quaternion2z(frame.orientation)
     # Colour all particles with the darker shade
-    colour = colour_orientation(angle)
+    colour: np.ndarray = colour_orientation(angle)
     if order_list is not None:
         order_list = np.logical_not(order_list)
         # Colour unordered molecules lighter

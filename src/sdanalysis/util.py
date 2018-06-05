@@ -10,13 +10,13 @@
 
 from collections import namedtuple
 from pathlib import Path
-from typing import NamedTuple
+from typing import NamedTuple, Optional
 
 
 class variables(NamedTuple):
-    temperature: float
-    pressure: float
-    crystal: str
+    temperature: Optional[str]
+    pressure: Optional[str]
+    crystal: Optional[str]
 
 
 def get_filename_vars(fname: Path):

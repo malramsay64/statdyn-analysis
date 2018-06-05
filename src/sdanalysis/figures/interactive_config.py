@@ -13,9 +13,10 @@ import functools
 import logging
 from functools import partial
 from pathlib import Path
-from typing import Callable, Dict, List
+from typing import Callable, Dict, List, Optional
 
 import gsd.hoomd
+import numpy as np
 from bokeh.layouts import column, row, widgetbox
 from bokeh.models import (
     Button,
@@ -47,7 +48,7 @@ gsdlogger.setLevel("WARN")
 
 
 def parse_directory(directory: Path, glob: str = "*.gsd") -> Dict[str, List]:
-    all_values = {}
+    all_values: Dict[str, np.ndarray] = {}
     files = directory.glob(glob)
     for fname in files:
         file_vars = get_filename_vars(fname)
@@ -64,7 +65,7 @@ def parse_directory(directory: Path, glob: str = "*.gsd") -> Dict[str, List]:
     return all_values
 
 
-def variables_to_file(file_vars: variables, directory: Path):
+def variables_to_file(file_vars: variables, directory: Path) -> Path:
     if file_vars.crystal is not None:
         glob_pattern = f"dump-Trimer-P{file_vars.pressure}-T{file_vars.temperature}-{file_vars.crystal}.gsd"
     else:
@@ -154,7 +155,7 @@ class TrimerFigure(object):
         )
         return file_selection
 
-    def get_selected_variables(self) -> None:
+    def get_selected_variables(self) -> variables:
         return variables(
             temperature=self.variable_selection["temperature"][
                 self._temperature_button.active
@@ -163,7 +164,7 @@ class TrimerFigure(object):
             crystal=self.variable_selection["crystal"][self._crystal_button.active],
         )
 
-    def get_selected_file(self) -> None:
+    def get_selected_file(self) -> Path:
         return variables_to_file(self.get_selected_variables(), self.directory)
 
     def update_frame(self, attr, old, new) -> None:
@@ -174,7 +175,7 @@ class TrimerFigure(object):
         self.update_frame(attr, None, None)
 
     @property
-    def index(self) -> None:
+    def index(self) -> int:
         try:
             return self._trajectory_slider.value
         except AttributeError:
@@ -262,7 +263,7 @@ class TrimerFigure(object):
         logger.debug("Data Keys: %s", data.keys())
         self._source.data = data
 
-    def get_order_function(self) -> Callable:
+    def get_order_function(self) -> Optional[Callable]:
         return self.order_functions[
             list(self.order_functions.keys())[self._order_parameter.active]
         ]
