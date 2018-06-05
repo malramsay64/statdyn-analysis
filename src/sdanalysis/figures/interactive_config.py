@@ -182,16 +182,6 @@ class TrimerFigure(object):
             return 0
 
     def initialise_trajectory_interface(self) -> None:
-        self._trajectory_slider = Slider(
-            title="Trajectory Index:",
-            value=0,
-            start=0,
-            end=max(len(self._trajectory), 1),
-            step=1,
-            width=self.controls_width,
-        )
-        self._trajectory_slider.on_change("value", self.update_frame)
-
         self._order_parameter = RadioButtonGroup(
             name="Classification algorithm:",
             labels=list(self.order_functions.keys()),
@@ -202,12 +192,9 @@ class TrimerFigure(object):
 
     def create_trajectory_interface(self) -> None:
         return column(
-            [
-                self._trajectory_slider,
-                Div(text="<b>Classification Algorithm:<b>"),
-                self._order_parameter,
-                Div(text="<hr/>", width=self.controls_width, height=10),
-            ],
+            Div(text="<b>Classification Algorithm:<b>"),
+            self._order_parameter,
+            Div(text="<hr/>", width=self.controls_width, height=10),
             height=150,
         )
 
@@ -216,6 +203,16 @@ class TrimerFigure(object):
         self.update_frame(attr, old, new)
 
     def initialise_media_interface(self) -> None:
+        self._trajectory_slider = Slider(
+            title="Trajectory Index",
+            value=0,
+            start=0,
+            end=max(len(self._trajectory), 1),
+            step=1,
+            width=self.controls_width,
+        )
+        self._trajectory_slider.on_change("value", self.update_frame)
+
         self._play_pause = Toggle(
             name="Play/Pause", label="Play/Pause", width=int(self.controls_width / 3)
         )
@@ -251,6 +248,7 @@ class TrimerFigure(object):
         #  return widgetbox([prevFrame, play_pause, nextFrame, increment_size], width=300)
         return column(
             Div(text="<b>Media Controls:</b>"),
+            self._trajectory_slider,
             row(
                 [self._prevFrame, self._play_pause, self._nextFrame],
                 width=int(self.controls_width),
