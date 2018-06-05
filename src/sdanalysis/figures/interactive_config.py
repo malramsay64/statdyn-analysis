@@ -270,7 +270,9 @@ class TrimerFigure(object):
     def update_data(self, attr, old, new):
         if self.plot:
             self.plot.title.text = f"Timestep {self._frame.timestep:.5g}"
-        data = frame2data(self._frame, order_function=self.get_order_function())
+        data = frame2data(
+            self._frame, order_function=self.get_order_function(), molecule=Trimer()
+        )
         self._update_source(data)
 
     def update_data_attr(self, attr):
@@ -298,7 +300,7 @@ class TrimerFigure(object):
         self.plot.x_range.end = 30
         self.plot.y_range.start = -30
         self.plot.y_range.end = 30
-        plot_trimer(self.plot, self._source)
+        plot_circles(self.plot, self._source)
 
     def create_doc(self):
         self.update_data(None, None, None)

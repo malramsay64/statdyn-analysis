@@ -10,27 +10,26 @@
 import math
 
 import gsd.hoomd
+import pytest
 from hypothesis import given
 from hypothesis.strategies import floats
-from sdanalysis.figures import colour
-from sdanalysis.figures.configuration import plot, snapshot2data
+
+from sdanalysis.figures.configuration import colour_orientation, plot_frame
+from sdanalysis.frame import gsdFrame
+from sdanalysis.molecules import Trimer
 from sdanalysis.order import compute_voronoi_neighs
 
 
 @given(floats(min_value=-math.pi, max_value=math.pi))
 def test_colour_orientation(orientation):
-    """Ensure hex values being returned by colour_orientation."""
-    int(colour.colour_orientation(orientation)[1:], 16)
+    """Ensure Color objects values being returned by colour_orientation."""
+    colour_orientation(orientation)
 
 
-def test_plot():
+@pytest.mark.parametrize("molecule", [None, Trimer()])
+def test_plot_frame(molecule):
     with gsd.hoomd.open("test/data/trajectory-Trimer-P13.50-T3.00.gsd") as trj:
-        plot(trj[0], repeat=True, offset=True)
-
-
-def test_snapshot2data():
-    with gsd.hoomd.open("test/data/trajectory-Trimer-P13.50-T3.00.gsd") as trj:
-        snapshot2data(trj[0])
+        plot_frame(gsdFrame(trj[0]), molecule=molecule)
 
 
 def test_order():
