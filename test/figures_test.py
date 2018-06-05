@@ -38,4 +38,4 @@ def test_order():
         order_list = compute_voronoi_neighs(
             trj[0].configuration.box, trj[0].particles.position
         )
-        plot(trj[0], repeat=True, offset=True, order_list=order_list)
+        plot_frame(gsdFrame(trj[0]), order_list=order_list)

@@ -24,7 +24,7 @@ from .trimer import Trimer as TrimerGlyph
 logger = logging.getLogger(__name__)
 
 
-def plotTrimer(mol_plot: figure, source: ColumnDataSource) -> figure:
+def plot_trimer(mol_plot: figure, source: ColumnDataSource) -> figure:
     """Add the points to a bokeh figure to render the trimer molecule.
 
     This enables the trimer molecules to be drawn on the figure using only
@@ -96,7 +96,7 @@ def frame2data(
     return data
 
 
-def plotFrame(
+def plot_frame(
     frame: Frame,
     order_function: Callable = None,
     order_list: np.ndarray = None,
@@ -116,5 +116,5 @@ def plotFrame(
         source.data = data
     else:
         source = ColumnDataSource(data=data)
-    plotTrimer(plot, source)
+    plot_trimer(plot, source)
     return plot

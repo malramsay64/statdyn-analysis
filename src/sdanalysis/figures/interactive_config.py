@@ -39,7 +39,7 @@ from ..order import (
     orientational_order,
 )
 from ..util import get_filename_vars, variables
-from .configuration import frame2data, plotFrame, plotTrimer
+from .configuration import frame2data, plot_circles, plot_frame
 
 logger = logging.getLogger(__name__)
 gsdlogger = logging.getLogger("gsd")
@@ -298,7 +298,7 @@ class TrimerFigure(object):
         self.plot.x_range.end = 30
         self.plot.y_range.start = -30
         self.plot.y_range.end = 30
-        plotTrimer(self.plot, self._source)
+        plot_trimer(self.plot, self._source)
 
     def create_doc(self):
         self.update_data(None, None, None)
