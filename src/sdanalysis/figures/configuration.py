@@ -109,10 +109,10 @@ def frame2data(
     elif order_function is not None:
         order = order_function(frame.box, frame.position, frame.orientation)
         if order.dtype in [int, bool]:
-            order = order.astype(bool)
+            order = np.logical_not(order.astype(bool))
         else:
             logger.debug("Order dtype: %s", order.dtype)
-            order = order != "liq"
+            order = order == "liq"
         colour[order] = colour_orientation(angle, light_colours=True)[order]
     if molecule is not None:
         positions = molecule.orientation2positions(frame.position, frame.orientation)
