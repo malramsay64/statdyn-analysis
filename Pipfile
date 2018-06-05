@@ -13,8 +13,8 @@ bokeh = "==0.12.16"
 matplotlib = "*"
 gsd = "*"
 "ruamel.yaml" = "*"
-"e1839a8" = {path = ".", editable = true}
 hsluv = "*"
+"e1839a8" = {path = ".", editable = true}
 
 [dev-packages]
 pytest = "*"
@@ -29,8 +29,7 @@ pytest-mypy = "*"
 pytest-pylint = "*"
 pytest-cov = "*"
 pytest-lazy-fixture = "*"
-twine = "*"
-bumpversion = "*"
+black = "==18.5b1"
 
 [requires]
 python_version = "3.6"
