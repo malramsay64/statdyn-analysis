@@ -14,7 +14,7 @@ import numpy as np
 from bokeh.colors import RGB, Color
 from bokeh.models import Circle, ColumnDataSource, HoverTool
 from bokeh.plotting import figure
-from hsluv import hsluv_to_rgb
+from hsluv import hpluv_to_rgb
 
 from ..frame import Frame, gsdFrame
 from ..math_helper import quaternion2z
@@ -78,15 +78,16 @@ def plot_circles(mol_plot: figure, source: ColumnDataSource) -> figure:
 
 @np.vectorize
 def colour_from_angle(angle: float, saturation: float, luminance: float) -> Color:
-    r, g, b = hsluv_to_rgb((angle, saturation, luminance))
+    r, g, b = hpluv_to_rgb((angle, saturation, luminance))
     return RGB(r * 256, g * 256, b * 256)
 
 
 def colour_orientation(orientations: np.ndarray, light_colours=False) -> np.ndarray:
-    saturation = 85
+    saturation = 100
     luminance = 60
     if light_colours:
-        luminance = 85
+        luminance = 80
+        saturation = 80
     return colour_from_angle(
         np.rad2deg(orientations).astype(int), saturation, luminance
     )
