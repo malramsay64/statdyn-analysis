@@ -24,6 +24,23 @@ from .trimer import Trimer as TrimerGlyph
 logger = logging.getLogger(__name__)
 
 
+def _create_colours(light_colours=False) -> np.ndarray:
+    saturation = 100
+    luminance = 60
+    if light_colours:
+        saturation = 80
+        luminance = 80
+    colours = []
+    for hue in range(360):
+        r, g, b = hpluv_to_rgb((hue, saturation, luminance))
+        colours.append(RGB(r * 256, g * 256, b * 256))
+    return np.array(colours)
+
+
+LIGHT_COLOURS = _create_colours(light_colours=True)
+DARK_COLOURS = _create_colours(light_colours=False)
+
+
 def plot_trimer(mol_plot: figure, source: ColumnDataSource) -> figure:
     """Add the points to a bokeh figure to render the trimer molecule.
 
@@ -76,21 +93,10 @@ def plot_circles(mol_plot: figure, source: ColumnDataSource) -> figure:
     return mol_plot
 
 
-@np.vectorize
-def colour_from_angle(angle: float, saturation: float, luminance: float) -> Color:
-    r, g, b = hpluv_to_rgb((angle, saturation, luminance))
-    return RGB(r * 256, g * 256, b * 256)
-
-
 def colour_orientation(orientations: np.ndarray, light_colours=False) -> np.ndarray:
-    saturation = 100
-    luminance = 60
     if light_colours:
-        luminance = 80
-        saturation = 80
-    return colour_from_angle(
-        np.rad2deg(orientations).astype(int), saturation, luminance
-    )
+        return LIGHT_COLOURS[np.rad2deg(orientations).astype(int)]
+    return DARK_COLOURS[np.rad2deg(orientations).astype(int)]
 
 
 def frame2data(
