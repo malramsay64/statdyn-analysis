@@ -85,7 +85,7 @@ def plot_circles(mol_plot: figure, source: ColumnDataSource) -> figure:
                 ("index", "$index"),
                 ("x:", "@x"),
                 ("y:", "@y"),
-                ("orientation:", "@angle"),
+                ("orientation:", "@orientation"),
             ]
         )
     )

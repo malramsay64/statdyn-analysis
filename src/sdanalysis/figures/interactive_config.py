@@ -20,14 +20,18 @@ import numpy as np
 from bokeh.layouts import column, row, widgetbox
 from bokeh.models import (
     Button,
+    ColorBar,
     ColumnDataSource,
     Div,
+    FixedTicker,
+    LinearColorMapper,
     RadioButtonGroup,
     Select,
     Slider,
     Toggle,
 )
 from bokeh.plotting import curdoc, figure
+from husl import huslp_to_hex
 from tornado import gen
 
 from ..frame import gsdFrame
@@ -40,7 +44,7 @@ from ..order import (
     orientational_order,
 )
 from ..util import get_filename_vars, variables
-from .configuration import frame2data, plot_circles, plot_frame
+from .configuration import DARK_COLOURS, frame2data, plot_circles, plot_frame
 
 logger = logging.getLogger(__name__)
 gsdlogger = logging.getLogger("gsd")
@@ -284,6 +288,48 @@ class TrimerFigure(object):
             self._doc.remove_periodic_callback(self._incr_index)
         else:
             self._doc.add_periodic_callback(self._incr_index, 100)
+
+    def create_legend(self):
+        cm_orient = LinearColorMapper(palette=DARK_COLOURS, low=-np.pi, high=np.pi)
+        cm_class = LinearColorMapper(
+            palette=[huslp_to_hex(h=0, s=0, l=60), huslp_to_hex(h=0, s=0, l=80)],
+            low=0,
+            high=2,
+        )
+
+        plot = figure(width=200, height=250)
+        plot.toolbar_location = None
+        plot.border_fill_color = "#FFFFFF"
+        plot.outline_line_alpha = 0
+        cb_orient = ColorBar(
+            title="Orientation",
+            major_label_text_font_size="10pt",
+            title_text_font_style="bold",
+            color_mapper=cm_orient,
+            orientation="horizontal",
+            ticker=FixedTicker(ticks=[-np.pi, 0, np.pi]),
+            major_label_overrides={-np.pi: "-π", 0: "0", np.pi: "π"},
+            width=100,
+            major_tick_line_color=None,
+            location=(0, 120),
+        )
+        cb_class = ColorBar(
+            color_mapper=cm_class,
+            title="Classification",
+            major_label_text_font_size="10pt",
+            title_text_font_style="bold",
+            orientation="vertical",
+            ticker=FixedTicker(ticks=[0.5, 1.5]),
+            major_label_overrides={0.5: "Crystal", 1.5: "Liquid"},
+            label_standoff=15,
+            major_tick_line_color=None,
+            width=20,
+            height=80,
+            location=(0, 0),
+        )
+        plot.add_layout(cb_orient)
+        plot.add_layout(cb_class)
+        return plot
 
     def initialise_doc(self):
         self.plot = figure(
