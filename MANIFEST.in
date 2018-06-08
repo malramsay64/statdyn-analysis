@@ -1,3 +1,6 @@
 include src/voro/*
 include src/sdanalysis/models/*
 recursive-include src/sdanalysis  *.pyx *.pxd
+include pyproject.toml
+include src/sdanalysis/figures/trimer.ts
+include LICENSE
