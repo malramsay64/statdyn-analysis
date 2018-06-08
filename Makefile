@@ -19,10 +19,9 @@ help:
 setup:
 	echo $(CMD)
 ifeq ($(shell uname -s),Darwin)
+	pip3 install -U pip
 	pip3 install pipenv
 	pipenv install --dev --three
-	pipenv run -- python setup.py bdist_wheel
-	pipenv run -- pip install dist/*
 else
 	docker build -t build_wheel .
 endif

@@ -30,6 +30,7 @@ pytest-pylint = "*"
 pytest-cov = "*"
 pytest-lazy-fixture = "*"
 black = "==18.5b1"
+wheel = "*"
 
 [requires]
 python_version = "3.6"
