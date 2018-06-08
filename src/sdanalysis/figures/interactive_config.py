@@ -157,7 +157,7 @@ class TrimerFigure(object):
             Div(text="<b>Crystal Structure:</b>"),
             self._crystal_button,
             Div(text="<hr/>", width=self.controls_width, height=10),
-            height=380,
+            height=400,
         )
         return file_selection
 
@@ -201,7 +201,7 @@ class TrimerFigure(object):
             Div(text="<b>Classification Algorithm:<b>"),
             self._order_parameter,
             Div(text="<hr/>", width=self.controls_width, height=10),
-            height=150,
+            height=120,
         )
 
     def update_current_trajectory(self, attr, old, new) -> None:
