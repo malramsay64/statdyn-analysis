@@ -1,6 +1,6 @@
 package:
   name: sdanalysis
-  version: 0.4.12
+  version: 0.5.0
 
 about:
   home: https://github.com/malramsay64/statdyn-analysis
