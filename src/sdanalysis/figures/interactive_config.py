@@ -31,7 +31,7 @@ from bokeh.models import (
     Toggle,
 )
 from bokeh.plotting import curdoc, figure
-from husl import huslp_to_hex
+from hsluv import hpluv_to_hex
 from tornado import gen
 
 from ..frame import gsdFrame
@@ -294,7 +294,7 @@ class TrimerFigure(object):
     def create_legend(self):
         cm_orient = LinearColorMapper(palette=DARK_COLOURS, low=-np.pi, high=np.pi)
         cm_class = LinearColorMapper(
-            palette=[huslp_to_hex(h=0, s=0, l=60), huslp_to_hex(h=0, s=0, l=80)],
+            palette=[hpluv_to_hex(h=0, s=0, l=60), hpluv_to_hex(h=0, s=0, l=80)],
             low=0,
             high=2,
         )
