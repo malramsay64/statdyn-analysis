@@ -294,9 +294,7 @@ class TrimerFigure(object):
     def create_legend(self):
         cm_orient = LinearColorMapper(palette=DARK_COLOURS, low=-np.pi, high=np.pi)
         cm_class = LinearColorMapper(
-            palette=[hpluv_to_hex(h=0, s=0, l=60), hpluv_to_hex(h=0, s=0, l=80)],
-            low=0,
-            high=2,
+            palette=[hpluv_to_hex((0, 0, 60)), hpluv_to_hex((0, 0, 80))], low=0, high=2
         )
 
         plot = figure(width=200, height=250)
