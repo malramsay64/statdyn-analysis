@@ -119,6 +119,7 @@ def frame2data(
         else:
             logger.debug("Order dtype: %s", order.dtype)
             order = order == "liq"
+        logger.debug("Order fraction %.2f", np.mean(order))
         colour[order] = colour_orientation(angle, light_colours=True)[order]
     if molecule is not None:
         positions = molecule.orientation2positions(frame.position, frame.orientation)
