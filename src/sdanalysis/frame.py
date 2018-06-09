@@ -8,7 +8,7 @@
 """Classes which hold frames."""
 
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, NamedTuple
 
 import numpy as np
 from dataclasses import dataclass
@@ -103,13 +103,24 @@ class gsdFrame(Frame):
     _num_mols: int = 0
 
     def __post_init__(self):
+        self._num_mols = self._get_num_bodies(self.frame)
+
+    @classmethod
+    def _get_num_bodies(cls, snapshot: Snapshot) -> int:
         num_particles = snapshot.particles.N
         try:
-            self._num_mols = min(
-                max(self.frame.particles.body) + 1, len(self.frame.particles.body)
-            )
-        except AttributeError:
-            self._num_mols = self.frame.particles.N
+            num_mols = max(snapshot.particles.body) + 1
+        except (AttributeError, ValueError, TypeError):
+            num_mols = num_particles
+        if num_mols > num_particles:
+            num_mols = num_particles
+
+        assert (
+            num_mols <= num_particles
+        ), f"Num molecule: {num_mols}, Num particles {num_particles}"
+        assert num_particles == len(snapshot.particles.position)
+
+        return num_mols
 
     @property
     def position(self) -> np.ndarray:
