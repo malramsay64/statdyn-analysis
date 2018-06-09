@@ -15,6 +15,7 @@ gsd = "*"
 "ruamel.yaml" = "*"
 hsluv = "*"
 "e1839a8" = {path = ".", editable = true}
+dataclasses = "*"
 
 [dev-packages]
 pytest = "*"

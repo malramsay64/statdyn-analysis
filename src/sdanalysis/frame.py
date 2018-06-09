@@ -11,6 +11,8 @@ from abc import ABC, abstractmethod
 from typing import Dict
 
 import numpy as np
+from dataclasses import dataclass
+from gsd.hoomd import Snapshot
 
 
 class Frame(ABC):
@@ -54,9 +56,11 @@ class Frame(ABC):
         pass
 
 
+@dataclass
 class lammpsFrame(Frame):
-    def __init__(self, frame: Dict) -> None:
-        self.frame = frame
+    frame: Dict
+
+    def __post_init__(self):
         self.frame["box"] = np.array(self.frame["box"])
 
     @property
@@ -93,9 +97,13 @@ class lammpsFrame(Frame):
         return len(self.frame["x"])
 
 
+@dataclass
 class gsdFrame(Frame):
-    def __init__(self, frame) -> None:
-        self.frame = frame
+    frame: Snapshot
+    _num_mols: int = 0
+
+    def __post_init__(self):
+        num_particles = snapshot.particles.N
         try:
             self._num_mols = min(
                 max(self.frame.particles.body) + 1, len(self.frame.particles.body)
