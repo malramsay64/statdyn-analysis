@@ -479,5 +479,6 @@ def translationalDisplacement(
     negligible so not including it.
     """
     result = np.empty(final.shape[0], dtype=final.dtype)
-    displacement_periodic(box.astype(np.float32), initial, final, result)
+    box_f32 = box.astype(np.float32)
+    displacement_periodic(box_f32, initial, final, result)
     return result

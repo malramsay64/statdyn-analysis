@@ -181,6 +181,15 @@ def test_rotations(dynamics_class, trajectory, step):
         assert np.all(rotations >= 0.)
 
 
+def test_float64_box():
+    box = np.ones(3, dtype=np.float64)
+    box.flags.writeable = False
+    init = np.random.random((100, 3)).astype(np.float32)
+    final = np.random.random((100, 3)).astype(np.float32)
+    result = dynamics.translationalDisplacement(box, init, final)
+    assert np.all(result < 1)
+
+
 def test_dynamics():
     process_gsd("test/data/trajectory-Trimer-P13.50-T3.00.gsd")
 
