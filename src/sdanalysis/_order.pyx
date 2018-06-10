@@ -50,8 +50,8 @@ cdef extern from "voro++.hh" namespace "voro":
 
 
 cpdef np.ndarray[float, ndim=2] _relative_orientations(
-    long [:, :] neighbourlist,
-    float[:, :] orientation
+    const long [:, :] neighbourlist,
+    const float[:, :] orientation
 ):
     """Compute the relative orientations of molecules
 
@@ -92,9 +92,9 @@ cpdef np.ndarray[float, ndim=2] _relative_orientations(
 
 
 cpdef np.ndarray[float, ndim=1] _orientational_order(
-    long[:, :] neighbourlist,
-    float[:, :] orientation,
-    float angle_factor=1.
+    const long[:, :] neighbourlist,
+    const float[:, :] orientation,
+    const float angle_factor=1.
 ):
     """Compute the orientational order parameter.
 
@@ -143,8 +143,8 @@ cpdef np.ndarray[float, ndim=1] _orientational_order(
 
 
 cpdef np.ndarray[np.uint16_t, ndim=1] compute_voronoi_neighs(
-        float[:] box,
-        float[:, :] position
+        const float[:] box,
+        const float[:, :] position
 ) except +:
     cdef unsigned short[:] num_neighs
     cdef Py_ssize_t num_elements = position.shape[0]
