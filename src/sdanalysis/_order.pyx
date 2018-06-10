@@ -67,12 +67,14 @@ cpdef np.ndarray[float, ndim=2] _relative_orientations(
             for this function to apply to angles other than 180 deg.
 
     """
-    cdef float no_value = -0.
-    cdef unsigned int num_mols = neighbourlist.shape[0]
-    cdef unsigned int max_neighbours = neighbourlist.shape[1]
-    cdef Py_ssize_t mol_index, n, num_neighbours, curr_neighbour
+    cdef:
+        float no_value = -0.
+        unsigned int num_mols = neighbourlist.shape[0]
+        unsigned int max_neighbours = neighbourlist.shape[1]
+        Py_ssize_t mol_index, n, num_neighbours, curr_neighbour
 
-    cdef np.ndarray[float, ndim=2] rel_orient
+        np.ndarray[float, ndim=2] rel_orient
+
     rel_orient = np.empty((num_mols, max_neighbours), dtype=np.float32)
 
     for mol_index in range(num_mols):
@@ -110,13 +112,14 @@ cpdef np.ndarray[float, ndim=1] _orientational_order(
             for this function to apply to angles other than 180 deg.
 
     """
-    cdef unsigned int no_value = UINT_MAX
-    cdef unsigned int num_mols = orientation.shape[0]
-    cdef unsigned int max_neighbours = orientation.shape[1]
-    cdef Py_ssize_t mol_index, n, num_neighbours, curr_neighbour
+    cdef:
+        unsigned int no_value = UINT_MAX
+        unsigned int num_mols = orientation.shape[0]
+        unsigned int max_neighbours = orientation.shape[1]
+        Py_ssize_t mol_index, n, num_neighbours, curr_neighbour
 
-    cdef np.ndarray[float, ndim=1] order_parameter
-    cdef double temp_order
+        np.ndarray[float, ndim=1] order_parameter
+        double temp_order
 
     order_parameter = np.empty(num_mols, dtype=np.float32)
 
@@ -134,7 +137,7 @@ cpdef np.ndarray[float, ndim=1] _orientational_order(
             else:
                 break
         if num_neighbours > 1:
-            order_parameter[mol_index] = <float>temp_order / num_neighbours
+            order_parameter[mol_index] = <float>(temp_order / num_neighbours)
         else:
             order_parameter[mol_index] = 0.
         if isnan(order_parameter[mol_index]):
@@ -146,20 +149,20 @@ cpdef np.ndarray[np.uint16_t, ndim=1] compute_voronoi_neighs(
         const float[:] box,
         const float[:, :] position
 ) except +:
-    cdef unsigned short[:] num_neighs
-    cdef Py_ssize_t num_elements = position.shape[0]
-    cdef double Lx, Ly, Lz
-    cdef int[3] num_blocks
-    cdef double N
+    cdef:
+        unsigned short[:] num_neighs
+        Py_ssize_t num_elements = position.shape[0]
+        double Lx = box[0]
+        double Ly = box[1]
+        double Lz = box[2]
+        int[3] num_blocks
+        double N
+
+        container *configuration
+        voronoicell_neighbor *cell
+        c_loop_all *voronoi_loop
+
     num_neighs = np.empty(num_elements, dtype=np.uint16)
-
-    cdef container *configuration
-    cdef voronoicell_neighbor *cell
-    cdef c_loop_all *voronoi_loop
-
-    Lx = box[0]
-    Ly = box[1]
-    Lz = box[2]
 
     # Divide cell into N blocks in each dimension
     # Optimally 5-8 particles per block

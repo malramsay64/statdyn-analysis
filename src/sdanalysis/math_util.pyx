@@ -83,8 +83,9 @@ cdef void quaternion_rotate_vector(
     another function.
 
     """
-    cdef float w[3]
-    cdef float two_over_m = 2
+    cdef:
+        float w[3]
+        float two_over_m = 2
 
     w[0] = q[0] * v[0] + q[2]*v[2] - q[3]*v[1];
     w[1] = q[0] * v[1] + q[3]*v[0] - q[1]*v[2];
@@ -100,6 +101,7 @@ cpdef float single_quat_rotation(
     const int i,
     const int j
 ) nogil:
+    cdef double intermediate
     intermediate = fabs(orientation[i, 0] * orientation[j, 0] +
                    orientation[i, 1] * orientation[j, 1] +
                    orientation[i, 2] * orientation[j, 2] +
@@ -116,8 +118,9 @@ cpdef void quaternion_rotation(
     const float[:, :] final,
     float[:] result
 ) nogil:
-    cdef Py_ssize_t nitems = result.shape[0]
-    cdef double intermediate
+    cdef:
+        Py_ssize_t nitems = result.shape[0]
+        double intermediate
 
     for i in range(nitems):
         intermediate = fabs(initial[i, 0] * final[i, 0] +
@@ -131,11 +134,11 @@ cpdef void quaternion_rotation(
             result[i] = <float>2.*acos(intermediate)
 
 
-cpdef np.ndarray[float, ndim=1] quaternion_angle(
-    const float[:, :] quat
-):
-    cdef Py_ssize_t nitems = quat.shape[0]
-    cdef np.ndarray[float, ndim=1] result
+cpdef np.ndarray[float, ndim=1] quaternion_angle(const float[:, :] quat):
+    cdef:
+        Py_ssize_t nitems = quat.shape[0]
+        np.ndarray[float, ndim=1] result
+
     result = np.empty(nitems, dtype=np.float32)
 
     with nogil:
@@ -145,15 +148,13 @@ cpdef np.ndarray[float, ndim=1] quaternion_angle(
     return result
 
 
-
 cpdef np.ndarray[float, ndim=2] z2quaternion(const float[:] theta):
-    cdef Py_ssize_t i
-    cdef Py_ssize_t nitems = theta.shape[0]
-    cdef Py_ssize_t w_pos = 0, z_pos = 3
-    # Use double for intermediate value in computation
-    cdef double angle
-
-    cdef np.ndarray[float, ndim=2] result
+    cdef:
+        Py_ssize_t i
+        Py_ssize_t nitems = theta.shape[0]
+        Py_ssize_t w_pos = 0, z_pos = 3
+        double angle  # double for intermediate values
+        np.ndarray[float, ndim=2] result
 
     result = np.zeros([nitems, 4], dtype=np.float32)
     with nogil:
@@ -168,11 +169,13 @@ cpdef np.ndarray[float, ndim=2] z2quaternion(const float[:] theta):
 
 
 cpdef np.ndarray[float, ndim=1] quaternion2z(const float[:, :] orientations):
-    cdef Py_ssize_t nitems = orientations.shape[0]
-    cdef np.ndarray[float, ndim=1] result
+    cdef:
+        Py_ssize_t nitems = orientations.shape[0]
+        np.ndarray[float, ndim=1] result
+        double q_w, q_x, q_y, q_z
+
     result = np.empty(nitems, dtype=np.float32)
 
-    cdef double q_w, q_x, q_y, q_z
     with nogil:
         for i in range(nitems):
             q_w = orientations[i, 0]
@@ -193,9 +196,10 @@ cpdef float single_displacement(
     const float[:] initial,
     const float[:] final
 ) nogil:
-    cdef int j
-    cdef double[3] x, inv_box
-    cdef double images
+    cdef:
+        int j
+        double[3] x, inv_box
+        double images
 
     inv_box[0] = 1./box[0]
     inv_box[1] = 1./box[1]
@@ -216,12 +220,13 @@ cpdef void displacement_periodic(
     const float[:, :] final,
     float[:] result
 ) nogil:
-    cdef int n_elements = result.shape[0]
-    cdef int i, j
+    cdef:
+        int n_elements = result.shape[0]
+        int i, j
 
-    # Use doubles for intermediate values of computation
-    cdef double[3] x, inv_box
-    cdef double images
+        # Use doubles for intermediate values of computation
+        double[3] x, inv_box
+        double images
 
     inv_box[0] = 1./box[0]
     inv_box[1] = 1./box[1]
