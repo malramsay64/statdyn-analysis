@@ -17,52 +17,44 @@ from libc.math cimport fabs, cos, M_PI, M_2_PI, acos, sqrt
 
 
 cpdef float single_quat_rotation(
-        const float[:, :] orientation,
-        const int i,
-        const int j
+    const float[:, :] orientation,
+    const int i,
+    const int j
 ) nogil
 
 
 cpdef void quaternion_rotation(
-        const float[:, :] initial,
-        const float[:, :] final,
-        float[:] result,
+    const float[:, :] initial,
+    const float[:, :] final,
+    float[:] result,
 ) nogil
 
 cpdef np.ndarray[float, ndim=2] rotate_vectors(
-        const float[:, :] quaternions,
-        const float[:, :] vectors
+    const float[:, :] quaternions,
+    const float[:, :] vectors
 )
 
 cdef void quaternion_rotate_vector(
-        const float[:] q,
-        const float[:] v,
-        float[:] result
+    const float[:] q,
+    const float[:] v,
+    float[:] result
 ) nogil
 
-cpdef np.ndarray[float, ndim=1] quaternion_angle(
-        const float[:, :] quat
-)
+cpdef np.ndarray[float, ndim=1] quaternion_angle(const float[:, :] quat)
 
+cpdef np.ndarray[float, ndim=2] z2quaternion(const float[:] theta)
 
-cpdef np.ndarray[float, ndim=2] z2quaternion(
-        const float[:] theta
-)
-
-
-cpdef np.ndarray[float, ndim=1] quaternion2z(
-        const float[:, :] orientations
-)
+cpdef np.ndarray[float, ndim=1] quaternion2z(const float[:, :] orientations)
 
 cpdef float single_displacement(
-        const float[:] box,
-        const float[:] initial,
-        const float[:] final
+    const float[:] box,
+    const float[:] initial,
+    const float[:] final
 ) nogil
 
 cpdef void displacement_periodic(
-        const float[:] box,
-        const float[:, :] initial,
-        const float[:, :] final,
-        float[:] result
+    const float[:] box,
+    const float[:, :] initial,
+    const float[:, :] final,
+    float[:] result
 ) nogil
