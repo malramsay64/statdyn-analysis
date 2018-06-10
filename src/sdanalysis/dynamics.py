@@ -46,11 +46,14 @@ class dynamics(object):
                 calculated.
 
         """
+        assert position.shape[0] > 0
         self.timestep = timestep
         self.box = box[:3]
         self.position = position.astype(self.dyn_dtype)
         self.num_particles = position.shape[0]
-        self.orientation = orientation.astype(self.dyn_dtype)
+        if orientation is not None:
+            assert orientation.shape[0] > 0
+            self.orientation = orientation.astype(self.dyn_dtype)
         self.mol_vector = molecule.positions
 
     def computeMSD(self, position: np.ndarray) -> float:
