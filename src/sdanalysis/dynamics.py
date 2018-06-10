@@ -283,7 +283,10 @@ def mean_squared_displacement(displacement: np.ndarray) -> float:
         float: Mean value
 
     """
-    return np.square(displacement).mean()
+    if displacement.shape[0] > 0:
+        return np.square(displacement).mean()
+    logger.info("displacement has shape: %s", displacement.shape)
+    return 0
 
 
 def mean_fourth_displacement(displacement: np.ndarray) -> float:
@@ -297,7 +300,10 @@ def mean_fourth_displacement(displacement: np.ndarray) -> float:
         float: Mean value of the fourth power
 
     """
-    return np.power(displacement, 4).mean()
+    if displacement.shape[0] > 0:
+        return np.power(displacement, 4).mean()
+    logger.info("displacement has shape: %s", displacement.shape)
+    return 0
 
 
 def mean_displacement(displacement: np.ndarray) -> float:
@@ -311,7 +317,10 @@ def mean_displacement(displacement: np.ndarray) -> float:
         float: Mean value of the displacement
 
     """
-    return displacement.mean()
+    if displacement.shape[0] > 0:
+        return displacement.mean()
+    logger.info("displacement has shape: %s", displacement.shape)
+    return 0
 
 
 def mean_rotation(rotation: np.ndarray) -> float:
@@ -324,7 +333,10 @@ def mean_rotation(rotation: np.ndarray) -> float:
         float: Mean value of the rotation
 
     """
-    return rotation.mean()
+    if rotation.shape[0] > 0:
+        return rotation.mean()
+    logger.info("displacement has shape: %s", rotation.shape)
+    return 0
 
 
 def alpha_non_gaussian(displacement: np.ndarray) -> float:
@@ -460,6 +472,8 @@ def rotationalDisplacement(initial: np.ndarray, final: np.ndarray) -> np.ndarray
     .. [Jim Belk]: https://math.stackexchange.com/questions/90081/quaternion-distance
 
     """
+    assert final.shape[0] > 0
+    assert initial.shape[0] >= final.shape[0]
     result = np.empty(final.shape[0], dtype=final.dtype)
     quaternion_rotation(initial, final, result)
     return result
@@ -478,6 +492,8 @@ def translationalDisplacement(
     which breaks slightly when the frame size changes. I am assuming this is
     negligible so not including it.
     """
+    assert final.shape[0] > 0
+    assert initial.shape[0] >= final.shape[0]
     result = np.empty(final.shape[0], dtype=final.dtype)
     box_f32 = box.astype(np.float32)
     displacement_periodic(box_f32, initial, final, result)
