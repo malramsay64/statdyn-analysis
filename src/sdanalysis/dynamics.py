@@ -8,7 +8,7 @@
 """Compute dynamic properties."""
 
 import logging
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas
@@ -30,7 +30,7 @@ class dynamics(object):
         timestep: int,
         box: np.ndarray,
         position: np.ndarray,
-        orientation: np.ndarray = None,
+        orientation: Optional[np.ndarray] = None,
         molecule: Molecule = Trimer(),
     ) -> None:
         """Initialise a dynamics instance.
