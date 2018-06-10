@@ -16,7 +16,7 @@ dependencies:
     - pytest
     - pylint
     - quaternion=2018.02
-    - cython
+    - cython>=0.28
     - setuptools
     - hypothesis
     - coverage
