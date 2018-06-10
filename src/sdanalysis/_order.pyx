@@ -96,7 +96,7 @@ cpdef np.ndarray[float, ndim=2] _relative_orientations(
 cpdef np.ndarray[float, ndim=1] _orientational_order(
     const long[:, :] neighbourlist,
     const float[:, :] orientation,
-    const float angle_factor=1.
+    float angle_factor=1.
 ):
     """Compute the orientational order parameter.
 
