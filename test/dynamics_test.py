@@ -190,6 +190,17 @@ def test_float64_box():
     assert np.all(result < 1)
 
 
+def test_read_only_arrays():
+    box = np.ones(3, dtype=np.float64)
+    box.flags.writeable = False
+    init = np.random.random((100, 3)).astype(np.float32)
+    init.flags.writeable = False
+    final = np.random.random((100, 3)).astype(np.float32)
+    final.flags.writeable = False
+    result = dynamics.translationalDisplacement(box, init, final)
+    assert np.all(result < 1)
+
+
 def test_dynamics():
     process_gsd("test/data/trajectory-Trimer-P13.50-T3.00.gsd")
 
