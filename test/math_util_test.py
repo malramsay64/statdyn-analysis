@@ -14,7 +14,7 @@ import quaternion
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.extra.numpy import arrays, floating_dtypes
 from hypothesis.strategies import floats
-from sdanalysis.math_helper import (
+from sdanalysis.math_util import (
     get_quat_eps,
     quaternion2z,
     quaternion_angle,

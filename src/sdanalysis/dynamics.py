@@ -13,7 +13,7 @@ from typing import Any, Dict, List
 import numpy as np
 import pandas
 
-from .math_helper import displacement_periodic, quaternion_rotation, rotate_vectors
+from .math_util import displacement_periodic, quaternion_rotation, rotate_vectors
 from .molecules import Molecule, Trimer
 
 np.seterr(divide="raise", invalid="raise", over="raise")

@@ -17,7 +17,7 @@ from bokeh.plotting import figure
 from hsluv import hpluv_to_rgb
 
 from ..frame import Frame, gsdFrame
-from ..math_helper import quaternion2z
+from ..math_util import quaternion2z
 from ..molecules import Molecule, Trimer
 from .trimer import Trimer as TrimerGlyph
 

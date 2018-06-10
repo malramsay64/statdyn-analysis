@@ -27,8 +27,8 @@ def get_version():
 
 extensions = [
     Extension(
-        "sdanalysis.math_helper",
-        ["src/sdanalysis/math_helper.pyx"],
+        "sdanalysis.math_util",
+        ["src/sdanalysis/math_util.pyx"],
         libraries=["m"],
         include_dirs=[np.get_include()],
     ),

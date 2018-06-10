@@ -12,7 +12,7 @@ from typing import List, Tuple, Dict, Any
 
 import numpy as np
 
-from .math_helper import rotate_vectors
+from .math_util import rotate_vectors
 
 logger = logging.getLogger(__name__)
 

@@ -17,7 +17,7 @@ from hypothesis.strategies import floats
 from sdanalysis import dynamics
 from sdanalysis.read import process_gsd
 
-from .math_helper_test import unit_quaternion
+from .math_util_test import unit_quaternion
 
 MAX_BOX = 20.
 DTYPE = np.float32
