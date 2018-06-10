@@ -30,6 +30,7 @@ requirements:
     - setuptools
     - gsd >=1.3.0
     - ruamel.yaml
+    - dataclasses
 
 build:
   entry_points:
