@@ -1,6 +1,8 @@
+{% set version = "0.5.2" %}
+
 package:
   name: sdanalysis
-  version: 0.5.2
+  version: {{ version }}
 
 about:
   home: https://github.com/malramsay64/statdyn-analysis
@@ -8,7 +10,9 @@ about:
   license_file: LICENSE
 
 source:
-  path: .
+  git_url: https://github.com/malramsay64/statdyn-analysis
+  git_rev: v{{ version }}
+
 
 requirements:
   build:
