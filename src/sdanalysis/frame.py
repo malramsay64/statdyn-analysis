@@ -8,10 +8,10 @@
 """Classes which hold frames."""
 
 from abc import ABC, abstractmethod
-from typing import Dict, NamedTuple
+from typing import Dict
 
+import attr
 import numpy as np
-from dataclasses import dataclass
 from gsd.hoomd import Snapshot
 
 
@@ -56,12 +56,9 @@ class Frame(ABC):
         pass
 
 
-@dataclass
-class lammpsFrame(Frame):
+@attr.s(auto_attribs=True)
+class LammpsFrame(Frame):
     frame: Dict
-
-    def __post_init__(self):
-        self.frame["box"] = np.array(self.frame["box"])
 
     @property
     def position(self) -> np.ndarray:
@@ -91,18 +88,18 @@ class lammpsFrame(Frame):
 
     @property
     def box(self) -> np.ndarray:
-        return self.frame["box"].astype(np.float32)
+        return np.array(self.frame["box"], dtype=np.float32)
 
     def __len__(self) -> int:
         return len(self.frame["x"])
 
 
-@dataclass
-class gsdFrame(Frame):
+@attr.s(auto_attribs=True)
+class HoomdFrame(Frame):
     frame: Snapshot
-    _num_mols: int = 0
+    _num_mols: int = attr.ib(init=False, default=0)
 
-    def __post_init__(self):
+    def __attrs_post_init__(self):
         self._num_mols = self._get_num_bodies(self.frame)
 
     @classmethod
@@ -121,6 +118,10 @@ class gsdFrame(Frame):
         assert num_particles == len(snapshot.particles.position)
 
         return num_mols
+
+    @property
+    def num_mols(self):
+        return self._num_mols
 
     @property
     def position(self) -> np.ndarray:
