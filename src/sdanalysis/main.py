@@ -55,6 +55,9 @@ def _verbosity(ctx, param, value) -> None:
     "-s", "--num-steps", type=int, help="Maximum number of steps for analysis"
 )
 @click.option("--gen-steps", type=int, help="Steps between keyframes in simulation")
+@click.option(
+    "--linear-steps", type=int, help="Number of steps between exponential increase."
+)
 @click.option("--max-gen", type=int, help="Maximum number of keyframes")
 @click.option(
     "--molecule",

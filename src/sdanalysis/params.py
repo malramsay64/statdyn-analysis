@@ -37,7 +37,7 @@ class SimulationParams(object):
 
     # Step Params
     num_steps: Optional[int] = None
-    step_size: float = 0.005
+    linear_steps: int = attr.ib(default=100, repr=False)
     max_gen: int = attr.ib(default=500, repr=False)
     gen_steps: int = attr.ib(default=20_000, repr=False)
     output_interval: int = attr.ib(default=10_000, repr=False)
