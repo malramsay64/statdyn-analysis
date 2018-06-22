@@ -21,10 +21,10 @@ def output_directory():
 def test_comp_dynamics(output_directory):
     command = [
         "sdanalysis",
-        "comp_dynamics",
         "-v",
         "-o",
         output_directory,
+        "comp_dynamics",
         "test/data/trajectory-Trimer-P13.50-T3.00.gsd",
     ]
     ret = subprocess.run(command)
