@@ -47,3 +47,11 @@ build:
 test:
   import:
     - sdanalysis
+  requires:
+    - pytest
+    - hypothesis
+    - quaternion = 2018.02*
+  source_files:
+    - test/
+  commands:
+    - pytest -v
