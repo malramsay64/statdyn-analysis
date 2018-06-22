@@ -12,7 +12,9 @@ import numpy as np
 import pytest
 from hypothesis import given, settings
 from hypothesis.strategies import integers
+
 from sdanalysis.StepSize import GenerateStepSeries, generate_steps
+
 
 # fmt: off
 @pytest.fixture(

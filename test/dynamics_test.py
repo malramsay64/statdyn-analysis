@@ -14,6 +14,7 @@ import quaternion
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
+
 from sdanalysis import dynamics
 from sdanalysis.read import process_gsd
 

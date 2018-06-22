@@ -9,6 +9,7 @@
 """Test the relaxation module."""
 
 import numpy as np
+
 from sdanalysis import relaxation
 
 

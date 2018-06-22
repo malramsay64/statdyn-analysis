@@ -8,7 +8,7 @@
 """Module to define a molecule to use for simulation."""
 
 import logging
-from typing import List, Tuple, Dict, Any
+from typing import Any, Dict, List, Tuple
 
 import numpy as np
 

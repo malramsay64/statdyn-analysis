@@ -9,6 +9,8 @@ from queue import Empty, PriorityQueue
 from typing import Dict, Iterable, Iterator, List
 
 logger = logging.getLogger(__name__)
+
+
 iterindex = namedtuple("iterindex", ["index", "iterator"])
 stepiterindex = namedtuple("stepiterindex", ["step", "index", "iterator"])
 

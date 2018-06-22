@@ -11,6 +11,7 @@
 import gsd.hoomd
 import numpy as np
 import pytest
+
 from sdanalysis import order  # type: ignore
 
 INFILES = [
