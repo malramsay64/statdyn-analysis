@@ -9,7 +9,7 @@
 
 import logging
 from pprint import pformat
-from typing import Callable, List
+from typing import Callable
 
 import click
 from ruamel.yaml import YAML
