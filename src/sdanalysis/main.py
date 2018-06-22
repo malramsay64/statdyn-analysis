@@ -7,13 +7,11 @@
 # Distributed under terms of the MIT license.
 """Run simulation with boilerplate taken care of by the statdyn library."""
 
-import argparse
 import logging
-import subprocess
-import time
-from pathlib import Path
-from typing import Callable, List, Tuple
+from pprint import pformat
+from typing import Callable, List
 
+import click
 from ruamel.yaml import YAML
 
 from .molecules import Dimer, Disc, Sphere, Trimer
@@ -32,27 +30,72 @@ gsd_logger.setLevel(logging.WARNING)
 MOLECULE_OPTIONS = {"trimer": Trimer, "disc": Disc, "sphere": Sphere, "dimer": Dimer}
 
 
-def sdanalysis() -> None:
+def _verbosity(ctx, param, value) -> None:
+    root_logger = logging.getLogger("statdyn")
+    levels = {0: "WARNING", 1: "INFO", 2: "DEBUG"}
+    log_level = levels.get(value, "DEBUG")
+    logging.basicConfig(level=log_level)
+    root_logger.setLevel(log_level)
+    logger.debug(f"Setting log level to %s", log_level)
+
+
+@click.group()
+@click.version_option(__version__)
+@click.option(
+    "-v",
+    "--verbose",
+    count=True,
+    default=0,
+    callback=_verbosity,
+    expose_value=False,
+    is_eager=True,
+    help="Increase debug level",
+)
+@click.option(
+    "-s", "--num-steps", type=int, help="Maximum number of steps for analysis"
+)
+@click.option("--gen-steps", type=int, help="Steps between keyframes in simulation")
+@click.option("--max-gen", type=int, help="Maximum number of keyframes")
+@click.option(
+    "--molecule",
+    type=click.Choice(MOLECULE_OPTIONS),
+    help="Molecule to use for simnulation",
+)
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(file_okay=False, dir_okay=True, writable=True),
+    help="Location to save all output files; required to be a directory.",
+)
+@click.pass_context
+def sdanalysis(ctx, **kwargs) -> None:
     """Run main function."""
     logging.debug("Running main function")
-    func, sim_params = parse_args()
-    func(sim_params)
+    logging.debug("Creating SimulationParams with values:\n%s", pformat(kwargs))
+    ctx.obj = SimulationParams(
+        **{key: val for key, val in kwargs.items() if val is not None}
+    )
+    if ctx.obj.output is not None:
+        ctx.obj.output.mkdir(exist_ok=True)
 
 
-def comp_dynamics(sim_params: SimulationParams) -> None:
+@sdanalysis.command()
+@click.pass_obj
+@click.option("--mol-relaxations", type=click.Path(exists=True, dir_okay=False))
+@click.argument("outfile", type=click.Path(exists=None, file_okay=True, dir_okay=False))
+def comp_dynamics(sim_params: SimulationParams, mol_relaxations, outfile) -> None:
     """Compute dynamic properties."""
-    outfile = sim_params.outfile_path / "dynamics.h5"
-    outfile.parent.mkdir(exist_ok=True)
-    sim_params.parameters["outfile"] = outfile
-    try:
-        with sim_params.mol_relaxations as src:
-            sim_params.mol_relaxations = yaml.parse(src)
-    except AttributeError:
-        pass
+    sim_params.outfile = outfile
+    if mol_relaxations is not None:
+        compute_relaxations = yaml.parse(mol_relaxations)
+    else:
+        compute_relaxations = None
     process_file(sim_params)
 
 
-def figure(args) -> None:
+@sdanalysis.command()
+@click.pass_obj
+def figure(sim_params: SimulationParams) -> None:
     """Start bokeh server with the file passed."""
     from bokeh.server.server import Server
     from bokeh.application import Application
@@ -60,95 +103,7 @@ def figure(args) -> None:
 
     from .figures.interactive_config import make_document
 
-    _verbosity(level=2)
-
     apps = {"/": Application(FunctionHandler(make_document))}
     server = Server(apps)
     server.run_until_shutdown()
     logger.info("Bokeh server terminated.")
-
-
-def create_parser() -> argparse.ArgumentParser:
-    """Create the argument parser."""
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "-o",
-        "--output",
-        dest="outfile_path",
-        type=str,
-        help="Directory to output files to",
-    )
-    parse_molecule = parser.add_argument_group("molecule")
-    parse_molecule.add_argument("--molecule", choices=MOLECULE_OPTIONS.keys())
-    parse_molecule.add_argument(
-        "--distance", type=float, help="Distance at which small particles are situated"
-    )
-    parse_molecule.add_argument(
-        "--moment-inertia-scale",
-        type=float,
-        help="Scaling factor for the moment of inertia.",
-    )
-    parse_steps = parser.add_argument_group("steps")
-    parse_steps.add_argument("--gen-steps", type=int)
-    parse_steps.add_argument("--max-gen", type=int)
-    default_parser = argparse.ArgumentParser(add_help=False)
-    default_parser.add_argument(
-        "-v", "--verbose", action="count", default=0, help="Enable debug logging flags."
-    )
-    default_parser.add_argument(
-        "--version", action="version", version="sdanalysis {0}".format(__version__)
-    )
-    simtype = argparse.ArgumentParser(add_help=False, parents=[default_parser])
-    subparsers = simtype.add_subparsers()
-    parse_comp_dynamics = subparsers.add_parser(
-        "comp_dynamics", add_help=False, parents=[parser, default_parser]
-    )
-    parse_comp_dynamics.add_argument("infile", type=str)
-    parse_comp_dynamics.add_argument("-m", "--mol-relaxations", default=None, type=str)
-    parse_comp_dynamics.set_defaults(func=comp_dynamics)
-    parse_figure = subparsers.add_parser(
-        "figure", add_help=True, parents=[default_parser]
-    )
-    parse_figure.add_argument("bokeh", nargs="*", default=[])
-    parse_figure.set_defaults(func=figure)
-    return simtype
-
-
-def _verbosity(level: int = 1) -> None:
-    root_logger = logging.getLogger("statdyn")
-    levels = {0: logging.WARNING, 1: logging.INFO, 2: logging.DEBUG}
-    log_level = levels.get(level, logging.DEBUG)
-    logging.basicConfig(level=log_level)
-    root_logger.setLevel(log_level)
-
-
-def parse_args(
-    input_args: List[str] = None
-) -> Tuple[Callable[[SimulationParams], None], SimulationParams]:
-    """Logic to parse the input arguments."""
-    parser = create_parser()
-    if input_args is None:
-        args = parser.parse_args()
-    else:
-        args = parser.parse_args(input_args)
-    # Handle verbosity
-    _verbosity(args.verbose)
-    del args.verbose
-    # Handle subparser function
-    try:
-        func = args.func
-        del args.func
-    except AttributeError:
-        parser.print_help()
-        exit()
-    # Parse Molecules
-    my_mol = MOLECULE_OPTIONS.get(getattr(args, "molecule", None))
-    if my_mol is None:
-        my_mol = Trimer
-    mol_kwargs = {}
-    for attr in ["distance", "moment_inertia_scale"]:
-        if getattr(args, attr, None) is not None:
-            mol_kwargs[attr] = getattr(args, attr)
-    args.molecule = my_mol(**mol_kwargs)
-    set_args = {key: val for key, val in vars(args).items() if val is not None}
-    return func, SimulationParams(**set_args)
