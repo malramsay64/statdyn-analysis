@@ -1,11 +1,7 @@
 {
     "_meta": {
         "hash": {
-<<<<<<< HEAD
-            "sha256": "7c799c35cd1c97a07a292a3f1e705de150548b8e7d0354695ff2f48645fed317"
-=======
-            "sha256": "5600e12eca592aaede6aed7856d2dcaa0d0c5dd486e7c1ab91ef09356957c065"
->>>>>>> ENH Use attrs for params class
+            "sha256": "b1d90e061ce908aeebd0262c4306570538bb6f6fe7de8488bea4c3ca8e7bab8a"
         },
         "pipfile-spec": 6,
         "requires": {
