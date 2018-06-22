@@ -123,7 +123,6 @@ class dynamics(object):
         }
         if self.orientation is not None:
             delta_rotation = rotationalDisplacement(self.orientation, orientation)
-            logger.debug("Max rotation: %f", delta_rotation.max())
             dynamic_quantities.update(
                 {
                     "mean_rotation": mean_rotation(delta_rotation),
