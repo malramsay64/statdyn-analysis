@@ -4,9 +4,16 @@
 #
 #
 ifeq ($(shell uname -s),Darwin)
-CMD:= pipenv run
+	USE_DOCKER:=
 else
+	USE_DOCKER:=true
+endif
+
+ifdef USE_DOCKER
+# Run docker container 'build_wheel' passing environment variables to it
 CMD:= docker run -e TWINE_USERNAME=${TWINE_USERNAME} -e TWINE_PASSWORD=${TWINE_PASSWORD} build_wheel
+else
+CMD:= pipenv run
 endif
 
 help:
@@ -18,25 +25,32 @@ help:
 
 setup:
 	echo $(CMD)
-ifeq ($(shell uname -s),Darwin)
+ifdef USE_DOCKER
+	docker build -t build_wheel .
+else
 	pip3 install -U pip
 	pip3 install pipenv
 	pipenv install --dev --three
-else
-	docker build -t build_wheel .
+	pipenv run pip install codecov
 endif
 
 test:
-	$(CMD) pytest
+ifdef USE_DOCKER
+	$(CMD) bash -c "pytest && codecov"
+else
+	pipenv run pytest
+	pipenv run codecov
+endif
+
 
 deploy:
-ifeq ($(shell uname -s),Darwin)
-	pipenv run python setup.py bdist_wheel
-	pipenv run twine upload --skip-existing dist/*
-else
+ifdef USE_DOCKER
 	$(CMD) bash -c "python setup.py bdist_wheel && \
 		auditwheel repair dist/*.whl && \
 		twine upload --skip-existing wheelhouse/*"
+else
+	pipenv run python setup.py bdist_wheel
+	pipenv run twine upload --skip-existing dist/*
 endif
 
 clean:
