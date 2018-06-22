@@ -82,15 +82,15 @@ def sdanalysis(ctx, **kwargs) -> None:
 @sdanalysis.command()
 @click.pass_obj
 @click.option("--mol-relaxations", type=click.Path(exists=True, dir_okay=False))
-@click.argument("outfile", type=click.Path(exists=None, file_okay=True, dir_okay=False))
-def comp_dynamics(sim_params: SimulationParams, mol_relaxations, outfile) -> None:
+@click.argument("infile", type=click.Path(file_okay=True, dir_okay=False))
+def comp_dynamics(sim_params: SimulationParams, mol_relaxations, infile) -> None:
     """Compute dynamic properties."""
-    sim_params.outfile = outfile
+    sim_params.infile = infile
     if mol_relaxations is not None:
         compute_relaxations = yaml.parse(mol_relaxations)
     else:
         compute_relaxations = None
-    process_file(sim_params)
+    process_file(sim_params, compute_relaxations)
 
 
 @sdanalysis.command()
