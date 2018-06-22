@@ -8,7 +8,8 @@
 import gsd.hoomd
 import numpy as np
 import pytest
-from sdanalysis.frame import gsdFrame, lammpsFrame
+
+from sdanalysis.frame import HoomdFrame, LammpsFrame
 
 
 @pytest.fixture
@@ -20,7 +21,7 @@ def lammps_frame():
         "box": [1, 1, 1],
         "timestep": 0,
     }
-    frame = lammpsFrame(inframe)
+    frame = LammpsFrame(inframe)
     return frame
 
 
@@ -28,7 +29,7 @@ def lammps_frame():
 def gsd_frame():
     with gsd.hoomd.open("test/data/trajectory-Trimer-P13.50-T3.00.gsd") as trj:
         inframe = trj[0]
-    frame = gsdFrame(inframe)
+    frame = HoomdFrame(inframe)
     return frame
 
 
@@ -93,4 +94,4 @@ def gsd_test_frames(request):
 
 def test_gsd_num_bodies(gsd_test_frames):
     num_mols, snap = gsd_test_frames
-    assert gsdFrame._get_num_bodies(snap) == num_mols
+    assert HoomdFrame._get_num_bodies(snap) == num_mols

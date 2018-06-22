@@ -34,7 +34,7 @@ from bokeh.plotting import curdoc, figure
 from hsluv import hpluv_to_hex
 from tornado import gen
 
-from ..frame import gsdFrame
+from ..frame import HoomdFrame
 from ..molecules import Trimer
 from ..order import (
     compute_ml_order,
@@ -174,7 +174,7 @@ class TrimerFigure(object):
         return variables_to_file(self.get_selected_variables(), self.directory)
 
     def update_frame(self, attr, old, new) -> None:
-        self._frame = gsdFrame(self._trajectory[self.index])
+        self._frame = HoomdFrame(self._trajectory[self.index])
         self.update_data(None, None, None)
 
     def radio_update_frame(self, attr) -> None:

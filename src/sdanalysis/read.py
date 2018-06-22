@@ -17,7 +17,7 @@ import numpy as np
 import pandas
 
 from .dynamics import dynamics, relaxations
-from .frame import Frame, gsdFrame, lammpsFrame
+from .frame import Frame, HoomdFrame, LammpsFrame
 from .molecules import Trimer
 from .params import SimulationParams
 from .StepSize import GenerateStepSeries
@@ -71,14 +71,14 @@ def process_gsd(sim_params: SimulationParams) -> Iterable[Tuple[List[int], gsdFr
                 return
 
             if curr_step == frame.configuration.step:
-                yield step_iter.get_index(), gsdFrame(frame)
+                yield step_iter.get_index(), HoomdFrame(frame)
 
             curr_step = step_iter.next()
 
 
 def process_lammpstrj(
     sim_params: SimulationParams
-) -> Iterable[Tuple[List[int], lammpsFrame]]:
+) -> Iterator[Tuple[List[int], LammpsFrame]]:
     indexes = [0]
     parser = parse_lammpstrj(sim_params.infile)
     frame = next(parser)
@@ -91,7 +91,7 @@ def process_lammpstrj(
         frame = next(parser)
 
 
-def parse_lammpstrj(filename: Path, mode: str = "r") -> Iterable[lammpsFrame]:
+def parse_lammpstrj(filename: Path, mode: str = "r") -> Iterator[LammpsFrame]:
     logger.debug("Parse file: %s", filename)
     with open(filename) as src:
         while True:

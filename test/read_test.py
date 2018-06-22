@@ -75,7 +75,7 @@ def test_writeCache_len():
 def test_process_gsd():
     indexes, frame = next(read.process_gsd(sim_params))
     assert isinstance(indexes, list)
-    assert isinstance(frame, read.gsdFrame)
+    assert isinstance(frame, read.HoomdFrame)
 
 
 def test_process_lammpstrj():

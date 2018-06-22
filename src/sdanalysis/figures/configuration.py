@@ -16,7 +16,7 @@ from bokeh.models import Circle, ColumnDataSource, HoverTool
 from bokeh.plotting import figure
 from hsluv import hpluv_to_rgb
 
-from ..frame import Frame, gsdFrame
+from ..frame import Frame, HoomdFrame
 from ..math_util import quaternion2z
 from ..molecules import Molecule, Trimer
 from .trimer import Trimer as TrimerGlyph
