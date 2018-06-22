@@ -9,7 +9,7 @@
 
 import logging
 from pathlib import Path
-from typing import Any, Dict, Iterator, List, Optional, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
 import attr
 import gsd.hoomd
@@ -109,7 +109,7 @@ def parse_lammpstrj(filename: Path, mode: str = "r") -> Iterator[LammpsFrame]:
     with open(filename) as src:
         while True:
             # Timestep
-            line = src.readline()
+            line: Union[str, List[str]] = src.readline()
             assert line == "ITEM: TIMESTEP\n", line
             timestep = int(src.readline().strip())
             logger.debug("Timestep: %d", timestep)
@@ -158,7 +158,7 @@ class WriteCache:
     cache_multiplier: int = 1
     to_append: bool = False
 
-    _cache: List[Any] = attr.ib(factory=list, init=False)
+    _cache: List[Any] = attr.ib(default=attr.Factory(list), init=False)
     _cache_default: int = attr.ib(default=8192, init=False)
     _emptied_count: int = attr.ib(default=0, init=False)
 

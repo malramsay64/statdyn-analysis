@@ -242,11 +242,11 @@ class relaxations(object):
         )
 
     def set_mol_relax(self, definition: List[Dict[str, Any]]) -> None:
-        self.mol_relax = {}  # type: Dict[str, molecularRelaxation]
+        self.mol_relax: Dict[str, molecularRelaxation] = {}
         for item in definition:
-            self.mol_relax[item.get("name")] = create_mol_relaxations(
-                self._num_elements, **item
-            )
+            index = item.get("name")
+            assert index is not None
+            self.mol_relax[index] = create_mol_relaxations(self._num_elements, **item)
 
     def get_timediff(self, timestep: int):
         return timestep - self.init_time

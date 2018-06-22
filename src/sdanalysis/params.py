@@ -10,7 +10,7 @@
 import logging
 from contextlib import contextmanager
 from pathlib import Path
-from typing import Optional, Tuple
+from typing import Optional
 
 import attr
 

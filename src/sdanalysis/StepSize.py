@@ -117,7 +117,9 @@ class GenerateStepSeries(Iterable):
             return
 
         if step in self.values:
-            self.values.get(step).append(iindex)
+            temp = self.values.get(step)
+            assert temp is not None
+            temp.append(iindex)
         else:
             self.values[step] = [iindex]
             self._queue.put(step)
@@ -151,6 +153,7 @@ class GenerateStepSeries(Iterable):
         # Get list of indexes
         iterindexes = self.values.get(self.curr_step)
         logger.debug("Value of iterindexes: %s at step %d", iterindexes, self.curr_step)
+        assert iterindexes is not None
         # Add interators back onto queue
         for iindex in iterindexes:
             self._enqueue(iindex)
