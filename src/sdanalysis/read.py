@@ -24,26 +24,38 @@ from .StepSize import GenerateStepSeries
 from .util import get_filename_vars
 
 logger = logging.getLogger(__name__)
+logger.setLevel("INFO")
+
+gsd_logger = logging.getLogger("gsd")
+gsd_logger.setLevel("WARNING")
 
 
-def process_gsd(sim_params: SimulationParams) -> Iterable[Tuple[List[int], gsdFrame]]:
-    with gsd.hoomd.open(sim_params.infile, "rb") as src:
+FileIterator = Iterator[Tuple[List[int], Frame]]
+
+
+def _get_num_steps(trajectory):
+    while True:
+        frame_index = -1
+        try:
+            return trajectory[frame_index].configuration.step
+
+        # The final configuration is malformed
+        except RuntimeError:
+            frame_index -= 1
+
+
+def process_gsd(sim_params: SimulationParams) -> Iterator[Tuple[List[int], HoomdFrame]]:
+    with gsd.hoomd.open(str(sim_params.infile), "rb") as src:
         # Compute steps in gsd file
-        if sim_params.parameters.get("step_limit") is not None:
-            num_steps = sim_params.step_limit
+        if sim_params.num_steps is not None:
+            num_steps = sim_params.num_steps
         else:
-            while True:
-                frame_index = -1
-                try:
-                    num_steps = src[-1].configuration.step
-                    break
+            num_steps = _get_num_steps(src)
 
-                except RuntimeError:
-                    frame_index -= 1
         logger.debug("Infile: %s contains %d steps", sim_params.infile, num_steps)
         step_iter = GenerateStepSeries(
             num_steps,
-            num_linear=sim_params.num_linear,
+            num_linear=sim_params.linear_steps,
             gen_steps=sim_params.gen_steps,
             max_gen=sim_params.max_gen,
         )
@@ -80,10 +92,11 @@ def process_lammpstrj(
     sim_params: SimulationParams
 ) -> Iterator[Tuple[List[int], LammpsFrame]]:
     indexes = [0]
+    assert sim_params.infile is not None
     parser = parse_lammpstrj(sim_params.infile)
-    frame = next(parser)
+    frame: LammpsFrame = next(parser)
     while frame:
-        if frame.timestep > sim_params.step_limit:
+        if sim_params.num_steps is not None and frame.timestep > sim_params.num_steps:
             return
 
         yield indexes, frame
@@ -136,7 +149,7 @@ def parse_lammpstrj(filename: Path, mode: str = "r") -> Iterator[LammpsFrame]:
                     frame[field][mol_index] = float(val)
             frame["box"] = box
             frame["timestep"] = timestep
-            yield lammpsFrame(frame)
+            yield LammpsFrame(frame)
 
 
 @attr.s(auto_attribs=True)
@@ -181,7 +194,9 @@ class WriteCache:
         return pandas.DataFrame.from_records(self._cache)
 
 
-def process_file(sim_params: SimulationParams) -> None:
+def process_file(
+    sim_params: SimulationParams, mol_relaxations: List[Dict[str, Any]] = None
+) -> None:
     """Read a gsd file and compute the dynamics quantities.
 
     This computes the dynamic quantities from a gsd file returning the
@@ -189,36 +204,21 @@ def process_file(sim_params: SimulationParams) -> None:
     all the data will fit in memory, as there is no writing to a file.
 
     Args:
-        infile (str): The filename of the gsd file from which to read the
-            configurations.
-        gen_steps (int): The value of the parameter `gen_steps` used when
-            running the dynamics simulation. (default: 20000)
-        step_limit (int): Limit the timescale of the processing. A value of
-            ``None`` (default) will process all steps in the file.
-        outfile (str): When present write the results to a file rather than
-            returning from the function. The hdf5 file is written throughout the
-            analysis allowing for results that are too large to completely
-            fit in memory. The write process is buffered to improve performance.
-        buffer_multiplier (int): When writing a file this is a multiplier for
-            the number of dataframes to buffer before writing. This should be
-            tailored to the specific memory requirements of the machine being
-            used. A multiplier of 1 (default) uses about 150 MB of RAM.
 
     Returns:
         (py:class:`pandas.DataFrame`): DataFrame with the dynamics quantities.
 
     """
-    try:
-        outfile = Path(sim_params.outfile)
-        dataframes = WriteCache(outfile, append=True)
-    except AttributeError:
-        outfile = None
-        dataframes = WriteCache(outfile, append=True, cache_multiplier=0)
+    assert sim_params.infile is not None
+    if sim_params.outfile is not None:
+        dataframes = WriteCache(sim_params.outfile, to_append=True)
+    else:
+        dataframes = WriteCache(sim_params.outfile, to_append=True, cache_multiplier=0)
     keyframes: List[dynamics] = []
     relaxframes: List[relaxations] = []
-    if sim_params.infile.endswith(".gsd"):
-        file_iterator = process_gsd(sim_params)
-    elif sim_params.infile.endswith(".lammpstrj"):
+    if sim_params.infile.suffix == ".gsd":
+        file_iterator: FileIterator = process_gsd(sim_params)
+    elif sim_params.infile.suffix == ".lammpstrj":
         file_iterator = process_lammpstrj(sim_params)
     variables = get_filename_vars(sim_params.infile)
     for indexes, frame in file_iterator:
@@ -234,27 +234,22 @@ def process_file(sim_params: SimulationParams) -> None:
                 logger.debug("Create keyframe at step %s", frame.timestep)
                 keyframes.append(
                     dynamics(
-                        timestep=frame.timestep,
-                        box=frame.box,
-                        position=frame.position,
-                        orientation=frame.orientation,
+                        frame.timestep, frame.box, frame.position, frame.orientation
                     )
                 )
                 relaxframes.append(
                     relaxations(
-                        timestep=frame.timestep,
-                        box=frame.box,
-                        position=frame.position,
-                        orientation=frame.orientation,
-                        molecule=Trimer(),
+                        frame.timestep,
+                        frame.box,
+                        frame.position,
+                        frame.orientation,
+                        Trimer(),
                     )
                 )
                 mydyn = keyframes[index]
                 myrelax = relaxframes[index]
-                try:
-                    myrelax.set_mol_relax(sim_params.mol_relaxations)
-                except (KeyError, AttributeError):
-                    pass
+                if mol_relaxations is not None:
+                    myrelax.set_mol_relax(mol_relaxations)
             dynamics_series = mydyn.computeAll(
                 frame.timestep, frame.position, frame.orientation
             )
@@ -264,7 +259,7 @@ def process_file(sim_params: SimulationParams) -> None:
             dynamics_series["temperature"] = variables.temperature
             dynamics_series["pressure"] = variables.pressure
             dataframes.append(dynamics_series)
-    if outfile:
+    if sim_params.outfile is not None:
         dataframes.flush()
         mol_relax = pandas.concat(
             (relax.summary() for relax in relaxframes), keys=range(len(relaxframes))
@@ -272,7 +267,7 @@ def process_file(sim_params: SimulationParams) -> None:
         mol_relax["temperature"] = variables.temperature
         mol_relax["pressure"] = variables.pressure
         mol_relax.to_hdf(
-            sim_params.outfile, "molecular_relaxations", format="table", append=True
+            sim_params.outfile, "molecular_relaxations", format="table", to_append=True
         )
         return
 
