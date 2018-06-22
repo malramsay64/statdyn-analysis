@@ -8,10 +8,10 @@
 """Read input files and compute dynamic and thermodynamic quantities."""
 
 import logging
-from collections import namedtuple
 from pathlib import Path
-from typing import Any, Iterable, List, Tuple
+from typing import Any, Dict, Iterator, List, Optional, Tuple
 
+import attr
 import gsd.hoomd
 import numpy as np
 import pandas
@@ -139,36 +139,43 @@ def parse_lammpstrj(filename: Path, mode: str = "r") -> Iterable[lammpsFrame]:
             yield lammpsFrame(frame)
 
 
+@attr.s(auto_attribs=True)
 class WriteCache:
-    def __init__(
-        self, filename: Path, cache_multiplier: int = 1, append: bool = False
-    ) -> None:
-        self._cache_size = 8192 * cache_multiplier
-        self._cache = []  # type: List[Any]
-        self._outfile = filename
-        self._append = append
-        self._emptied = 0
+    _filename: Optional[Path] = None
+    cache_multiplier: int = 1
+    to_append: bool = False
+
+    _cache: List[Any] = attr.ib(factory=list, init=False)
+    _cache_default: int = attr.ib(default=8192, init=False)
+    _emptied_count: int = attr.ib(default=0, init=False)
+
+    @property
+    def _cache_size(self) -> int:
+        return self.cache_multiplier * self._cache_default
 
     def append(self, item: Any) -> None:
         # Cache of size 0 or with val None will act as list
         if self._cache and len(self._cache) == self._cache_size:
             self.flush()
-            self._emptied += 1
+            self._emptied_count += 1
         self._cache.append(item)
 
     def flush(self) -> None:
         self.to_dataframe().to_hdf(
-            self._outfile, "dynamics", format="table", append=self._append
+            self.filename, "dynamics", format="table", append=self.to_append
         )
-        self._append = True
+        self.to_append = True
         self._cache.clear()
 
-    def get_outfile(self) -> Path:
-        return Path(self._outfile)
+    @property
+    def filename(self) -> Optional[Path]:
+        if self._filename is not None:
+            return Path(self._filename)
+        return None
 
     def __len__(self) -> int:
         # Total number of elements added
-        return self._cache_size * self._emptied + len(self._cache)
+        return self._cache_size * self._emptied_count + len(self._cache)
 
     def to_dataframe(self):
         return pandas.DataFrame.from_records(self._cache)
