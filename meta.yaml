@@ -19,7 +19,7 @@ requirements:
     - python {{ python }}
     - numpy {{ numpy }}
     - setuptools
-    - cython >=0.28
+    - cython >=0.27.3
 
 
   run:
@@ -35,7 +35,7 @@ requirements:
     - gsd >=1.3.0
     - ruamel.yaml
     - hsluv
-    - dataclasses
+    - attrs
 
 build:
   entry_points:

@@ -8,158 +8,119 @@
 """Parameters for passing between functions."""
 
 import logging
-from copy import deepcopy
+from contextlib import contextmanager
 from pathlib import Path
-from typing import Any, Dict, Tuple, Union
+from typing import Optional, Tuple
+
+import attr
 
 from .molecules import Molecule, Trimer
 
 logger = logging.getLogger(__name__)
 
 
+@attr.s(auto_attribs=True)
 class SimulationParams(object):
     """Store the parameters of the simulation."""
 
-    defaults: Dict[str, Any] = {
-        "hoomd_args": "",
-        "step_size": 0.005,
-        "temperature": 0.4,
-        "tau": 1.0,
-        "pressure": 13.5,
-        "tauP": 1.0,
-        "cell_dimensions": (30, 42),
-        "outfile_path": Path.cwd(),
-        "max_gen": 500,
-        "num_linear": 100,
-        "gen_steps": 20000,
-        "output_interval": 10000,
-    }
+    # Thermodynamic Params
+    temperature: float = 0.4
+    pressure: float = 13.5
 
-    def __init__(self, **kwargs) -> None:
-        """Create SimulationParams instance."""
-        self.parameters: Dict[str, Any] = deepcopy(self.defaults)
-        self.parameters.update(kwargs)
+    # Molecule params
+    molecule: Molecule = Trimer()
+    moment_inertia_scale: Optional[float] = None
+    harmonic_force: Optional[float] = None
 
-    # I am using getattr over getattribute becuase of the lower search priority
-    # of getattr. This makes it a fallback, rather than the primary location
-    # for looking up attributes.
+    # Crystal Params
+    space_group: Optional[str] = None
 
-    def __getattr__(self, key):
-        try:
-            return self.parameters.__getitem__(key)
+    # Step Params
+    num_steps: Optional[int] = None
+    step_size: float = 0.005
+    max_gen: int = attr.ib(default=500, repr=False)
+    gen_steps: int = attr.ib(default=20_000, repr=False)
+    output_interval: int = attr.ib(default=10_000, repr=False)
 
-        except KeyError:
-            raise AttributeError
-
-    def __setattr__(self, key, value):
-        # setattr has a higher search priority than other functions, custom
-        # setters need to be added to the list below
-        if key in ["parameters"]:
-            super().__setattr__(key, value)
-        else:
-            self.parameters.__setitem__(key, value)
-
-    def __delattr__(self, attr):
-        return self.parameters.__delitem__(attr)
+    # File Params
+    _infile: Optional[Path] = attr.ib(
+        default=None, converter=attr.converters.optional(Path), repr=False
+    )
+    _outfile: Optional[Path] = attr.ib(
+        default=None, converter=attr.converters.optional(Path), repr=False
+    )
+    _output: Path = attr.ib(
+        default=Path.cwd(), converter=attr.converters.optional(Path), repr=False
+    )
 
     @property
-    def molecule(self) -> Molecule:
-        """Return the appropriate molecule.
+    def infile(self) -> Optional[Path]:
+        return self._infile
 
-        Where there is no custom molecule defined then we return the molecule of
-        the crystal.
-
-        """
-        if self.parameters.get("molecule") is not None:
-            mol = self.parameters.get("molecule")
-        elif self.parameters.get("crystal") is not None:
-            mol = self.crystal.molecule
-        else:
-            mol = Trimer()
-        return mol
+    @infile.setter
+    def infile(self, value: Path) -> None:
+        # Ensure value is a Path
+        self._infile = Path(value)
 
     @property
-    def cell_dimensions(self) -> Tuple[int, int]:
-        try:
-            self.crystal
-            return self.parameters.get("cell_dimensions")
+    def outfile(self) -> Optional[Path]:
+        return self._outfile
 
-        except AttributeError:
-            raise AttributeError
-
-    @property
-    def outfile_path(self) -> Path:
-        """Ensure the output directory is a path."""
-        if self.parameters.get("outfile_path"):
-            return Path(self.parameters.get("outfile_path"))
-
-        return Path.cwd()
+    @outfile.setter
+    def outfile(self, value: Optional[Path]) -> None:
+        # Ensure value is a Path
+        if value is not None:
+            self._outfile = Path(value)
 
     @property
-    def outfile(self) -> str:
-        """Ensure the output file is a string."""
-        if self.parameters.get("outfile") is not None:
-            return str(self.parameters.get("outfile"))
+    def output(self) -> Path:
+        return self._output
 
-        raise AttributeError("Outfile does not exist")
+    @output.setter
+    def output(self, value: Optional[Path]) -> None:
+        # Ensure value is a Path
+        if value is not None:
+            self._output = Path(value)
 
-    def filename(self, prefix: str = None) -> str:
+    def filename(self, prefix: str = None) -> Path:
         """Use the simulation parameters to construct a filename."""
         base_string = "{molecule}-P{pressure:.2f}-T{temperature:.2f}"
-        if prefix:
+        if prefix is not None:
             base_string = "{prefix}-" + base_string
-        if self.parameters.get("moment_inertia_scale") is not None:
+        if self.moment_inertia_scale is not None:
             base_string += "-I{mom_inertia:.2f}"
-        if self.parameters.get("space_group") is not None:
+        if self.harmonic_force is not None:
+            base_string += "-K{harmonic_force:.2f}"
+
+        if self.space_group is not None:
             base_string += "-{space_group}"
+
+        logger.debug("filename base string: %s", base_string)
+        logger.debug("Temperature: %.2f", self.temperature)
+
+        # Default extension, required as with_suffix replaces existsing extension
+        # which is mistaken for the final decimal points.
+        base_string += ".gsd"
+
         fname = base_string.format(
             prefix=prefix,
             molecule=self.molecule,
             pressure=self.pressure,
-            temperature=self.parameters.get("temperature"),
-            mom_inertia=self.parameters.get("moment_inertia_scale"),
-            space_group=self.parameters.get("space_group"),
+            temperature=self.temperature,
+            mom_inertia=self.moment_inertia_scale,
+            space_group=self.space_group,
+            harmonic_force=self.harmonic_force,
         )
-        return str(self.outfile_path / fname)
+        return self.output / fname
 
-
-class paramsContext(object):
-    """Temporarily set parameter values with a context manager.
-
-    This is a context manager that can be used to temporarily set the values of a
-    SimulationParams instance. This simplifies the setup allowing for a single global
-    instance that is modified with every test. The modifications also make it clear
-    what is actually being tested.
-
-    """
-
-    def __init__(self, sim_params: SimulationParams, **kwargs) -> None:
-        """Initialise setValues class.
-
-        Args:
-            sim_params (class:`statdyn.simulation.params.SimulationParams`): The
-                instance that is to be temporarily modified.
-
-        Kwargs:
-            key: value
-
-        Any of the keys and values that are held by a SimulationParams instance.
-        """
-        self.params = sim_params
-        self.modifications = kwargs
-        self.original = {
-            key: sim_params.parameters.get(key)
-            for key in kwargs.keys()
-            if sim_params.parameters.get(key) is not None
+    @contextmanager
+    def temp_context(self, **kwargs):
+        old_params = {
+            key: val
+            for key, val in self.__dict__.items()
+            if not isinstance(val, property)
         }
-
-    def __enter__(self) -> SimulationParams:
-        for key, val in self.modifications.items():
-            self.params.parameters[key] = val
-        logger.debug("Parameter on entry %s", str(self.params.parameters))
-        return self.params
-
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
-        for key, _ in self.modifications.items():
-            del self.params.parameters[key]
-        self.params.parameters.update(self.original)
+        for key, value in kwargs.items():
+            setattr(self, key, value)
+        yield self
+        self.__dict__.update(old_params)

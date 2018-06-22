@@ -71,6 +71,7 @@ setup(
         "gsd",
         "ruamel.yaml",
         "hsluv",
+        "attrs",
     ],
     packages=find_packages("src"),
     ext_modules=cythonize(extensions, include_path=["src/"]),

@@ -16,6 +16,7 @@ gsd = "*"
 hsluv = "*"
 "e1839a8" = {path = ".", editable = true}
 dataclasses = "*"
+attrs = "*"
 
 [dev-packages]
 pytest = "*"

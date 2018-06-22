@@ -12,8 +12,9 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+
 from sdanalysis import read
-from sdanalysis.params import SimulationParams, paramsContext
+from sdanalysis.params import SimulationParams
 from sdanalysis.StepSize import GenerateStepSeries
 
 sim_params = SimulationParams(infile="test/data/trajectory-Trimer-P13.50-T3.00.gsd")
@@ -28,7 +29,7 @@ sim_params = SimulationParams(infile="test/data/trajectory-Trimer-P13.50-T3.00.g
     ],
 )
 def test_stopiter_handling(step_limit, infile):
-    with paramsContext(sim_params, infile=infile, step_limit=step_limit):
+    with sim_params.temp_context(infile=infile, step_limit=step_limit):
         df = read.process_file(sim_params)
     assert np.all(df.time == list(GenerateStepSeries(step_limit)))
 
