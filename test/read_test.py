@@ -20,7 +20,7 @@ from sdanalysis.StepSize import GenerateStepSeries
 sim_params = SimulationParams(infile="test/data/trajectory-Trimer-P13.50-T3.00.gsd")
 
 
-@pytest.mark.parametrize("step_limit", [0, 10, 20, 100])
+@pytest.mark.parametrize("num_steps", [0, 10, 20, 100])
 @pytest.mark.parametrize(
     "infile",
     [
@@ -28,10 +28,10 @@ sim_params = SimulationParams(infile="test/data/trajectory-Trimer-P13.50-T3.00.g
         "test/data/short-time-variance.lammpstrj",
     ],
 )
-def test_stopiter_handling(step_limit, infile):
-    with sim_params.temp_context(infile=infile, step_limit=step_limit):
+def test_stopiter_handling(num_steps, infile):
+    with sim_params.temp_context(infile=infile, num_steps=num_steps):
         df = read.process_file(sim_params)
-    assert np.all(df.time == list(GenerateStepSeries(step_limit)))
+    assert np.all(df.time == list(GenerateStepSeries(num_steps)))
 
 
 def test_writeCache():
