@@ -9,7 +9,6 @@
 
 import logging
 from pprint import pformat
-from typing import Callable
 
 import click
 from ruamel.yaml import YAML
@@ -30,7 +29,7 @@ gsd_logger.setLevel(logging.WARNING)
 MOLECULE_OPTIONS = {"trimer": Trimer, "disc": Disc, "sphere": Sphere, "dimer": Dimer}
 
 
-def _verbosity(ctx, param, value) -> None:
+def _verbosity(_, __, value) -> None:
     root_logger = logging.getLogger("statdyn")
     levels = {0: "WARNING", 1: "INFO", 2: "DEBUG"}
     log_level = levels.get(value, "DEBUG")
@@ -67,7 +66,7 @@ def _verbosity(ctx, param, value) -> None:
 @click.option(
     "-o",
     "--output",
-    type=click.Path(file_okay=False, dir_okay=True, writable=True),
+    type=click.Path(file_okay=False, dir_okay=True),
     help="Location to save all output files; required to be a directory.",
 )
 @click.pass_context
