@@ -9,6 +9,7 @@
 """Test the SimulationParams class."""
 
 import logging
+from itertools import product
 from pathlib import Path
 
 import pytest
@@ -65,3 +66,58 @@ def test_function_passing(sim_params):
         assert sim_params.num_steps == 2000
     assert func(sim_params, "num_steps") == 1000
     assert sim_params.num_steps == 1000
+
+
+def create_params():
+    all_params = [
+        "molecule",
+        "pressure",
+        "temperature",
+        "moment_inertia_scale",
+        "harmonic_force",
+        "space_group",
+    ]
+    space_groups = ["p2", "p2gg", "pg"]
+    molecules = [Trimer()]
+    values1 = [None, 0, 0.1, 1]
+    values2 = [0, 0.1, 1]
+    for space_group, molecule, value1, value2 in product(
+        space_groups, molecules, values1, values2
+    ):
+        params = {}
+        for param in all_params:
+            if param == "molecule":
+                params["molecule"] = molecule
+            elif param == "space_group":
+                params["space_group"] = space_group
+            elif param in ["temperature", "pressure"]:
+                params[param] = value2
+            else:
+                params[param] = value1
+        yield params
+
+
+def get_filename_prefix(key):
+    prefixes = {
+        "temperature": "T",
+        "pressure": "P",
+        "moment_inertia_scale": "I",
+        "harmonic_force": "K",
+    }
+    return prefixes.get(key, "")
+
+
+@pytest.mark.parametrize("params", create_params())
+def test_filename(sim_params, params):
+
+    with sim_params.temp_context(**params):
+        fname = sim_params.filename().stem
+    for key, value in params.items():
+        if value is not None:
+            prefix = get_filename_prefix(key)
+            assert isinstance(prefix, str)
+            logger.debug("Prefix: %s, Value: %s", prefix, value)
+            if isinstance(value, (int, float)):
+                assert f"{prefix}{value:.2f}" in fname
+            else:
+                assert f"{prefix}{value}" in fname
