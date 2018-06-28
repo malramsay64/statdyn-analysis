@@ -31,6 +31,7 @@ else
 	pip3 install -U pip
 	pip3 install pipenv
 	pipenv install --dev --three
+	pipenv run pip install -e .
 	pipenv run pip install codecov
 endif
 

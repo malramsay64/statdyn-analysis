@@ -10,6 +10,7 @@ COPY . statdyn-analysis
 WORKDIR statdyn-analysis
 
 RUN pipenv install --dev --three
+RUN pipenv run pip install -e .
 RUN pipenv run pip install codecov
 
 ENV SHELL=/bin/bash
