@@ -50,6 +50,14 @@ def test_linear_sequence(sim_params):
             assert index == [0]
 
 
+def test_linear_sequence_keyframes(sim_params):
+    with sim_params.temp_context(linear_steps=None, gen_steps=10):
+        for index, frame in read.process_gsd(sim_params):
+            index_len = int(np.floor(frame.timestep / 10) + 1)
+            assert len(index) == index_len
+            assert index == list(range(index_len))
+
+
 def test_writeCache():
     with tempfile.TemporaryDirectory() as dst:
         my_list = read.WriteCache(Path(dst) / "test1.h5")

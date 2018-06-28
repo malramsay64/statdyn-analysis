@@ -45,7 +45,11 @@ def _get_num_steps(trajectory):
 
 
 def process_gsd(sim_params: SimulationParams) -> Iterator[Tuple[List[int], HoomdFrame]]:
+    assert sim_params.infile is not None
+    assert sim_params.gen_steps is not None
+    assert sim_params.max_gen is not None
     with gsd.hoomd.open(str(sim_params.infile), "rb") as src:
+
         # Compute steps in gsd file
         if sim_params.num_steps is not None:
             num_steps = sim_params.num_steps
@@ -54,10 +58,16 @@ def process_gsd(sim_params: SimulationParams) -> Iterator[Tuple[List[int], Hoomd
 
         # Return the steps in sequence. This allows a linear sequence of steps.
         if sim_params.linear_steps is None:
+            index_list = []
             for frame in src:
+                if (
+                    frame.configuration.step % sim_params.gen_steps == 0
+                    and len(index_list) <= sim_params.max_gen
+                ):
+                    index_list.append(len(index_list))
                 if frame.configuration.step > num_steps:
                     return
-                yield [0], HoomdFrame(frame)
+                yield index_list, HoomdFrame(frame)
             return
 
         # Exponential sequence of steps
