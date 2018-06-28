@@ -17,7 +17,10 @@ from sdanalysis import read
 from sdanalysis.params import SimulationParams
 from sdanalysis.StepSize import GenerateStepSeries
 
-sim_params = SimulationParams(infile="test/data/trajectory-Trimer-P13.50-T3.00.gsd")
+
+@pytest.fixture
+def sim_params():
+    yield SimulationParams(infile="test/data/trajectory-Trimer-P13.50-T3.00.gsd")
 
 
 @pytest.mark.parametrize("num_steps", [0, 10, 20, 100])
@@ -28,10 +31,23 @@ sim_params = SimulationParams(infile="test/data/trajectory-Trimer-P13.50-T3.00.g
         "test/data/short-time-variance.lammpstrj",
     ],
 )
-def test_stopiter_handling(num_steps, infile):
+def test_stopiter_handling(sim_params, num_steps, infile):
     with sim_params.temp_context(infile=infile, num_steps=num_steps):
         df = read.process_file(sim_params)
     assert np.all(df.time == list(GenerateStepSeries(num_steps)))
+
+
+@pytest.mark.parametrize("num_steps", [0, 10, 20, 100])
+def test_linear_steps_stopiter(sim_params, num_steps):
+    with sim_params.temp_context(num_steps=num_steps, linear_steps=None):
+        df = read.process_file(sim_params)
+    assert df.time.max() == num_steps
+
+
+def test_linear_sequence(sim_params):
+    with sim_params.temp_context(linear_steps=None):
+        for index, _ in read.process_gsd(sim_params):
+            assert index == [0]
 
 
 def test_writeCache():
@@ -72,7 +88,7 @@ def test_writeCache_len():
         assert len(my_list._cache) == 0
 
 
-def test_process_gsd():
+def test_process_gsd(sim_params):
     indexes, frame = next(read.process_gsd(sim_params))
     assert isinstance(indexes, list)
     assert isinstance(frame, read.HoomdFrame)

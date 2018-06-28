@@ -85,10 +85,19 @@ def sdanalysis(ctx, **kwargs) -> None:
 @sdanalysis.command()
 @click.pass_obj
 @click.option("--mol-relaxations", type=click.Path(exists=True, dir_okay=False))
-@click.argument("infile", type=click.Path(file_okay=True, dir_okay=False))
-def comp_dynamics(sim_params: SimulationParams, mol_relaxations, infile) -> None:
+@click.option(
+    "--linear-dynamics",
+    type=bool,
+    default=False,
+    is_flag=True,
+    help="Flag to specify the configurations in a trajectory have linear steps between them.",
+)
+@click.argument("infile", type=click.Path(exists=True, file_okay=True, dir_okay=False))
+def comp_dynamics(sim_params, mol_relaxations, linear_dynamics, infile) -> None:
     """Compute dynamic properties."""
     sim_params.infile = infile
+    if linear_dynamics:
+        sim_params.linear_steps = None
     if mol_relaxations is not None:
         compute_relaxations = yaml.parse(mol_relaxations)
     else:

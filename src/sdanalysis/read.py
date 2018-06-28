@@ -52,6 +52,15 @@ def process_gsd(sim_params: SimulationParams) -> Iterator[Tuple[List[int], Hoomd
         else:
             num_steps = _get_num_steps(src)
 
+        # Return the steps in sequence. This allows a linear sequence of steps.
+        if sim_params.linear_steps is None:
+            for frame in src:
+                if frame.configuration.step > num_steps:
+                    return
+                yield [0], HoomdFrame(frame)
+            return
+
+        # Exponential sequence of steps
         logger.debug("Infile: %s contains %d steps", sim_params.infile, num_steps)
         step_iter = GenerateStepSeries(
             num_steps,
@@ -248,6 +257,7 @@ def process_file(
                 )
                 mydyn = keyframes[index]
                 myrelax = relaxframes[index]
+                # Set custom relaxation functions
                 if mol_relaxations is not None:
                     myrelax.set_mol_relax(mol_relaxations)
             dynamics_series = mydyn.computeAll(

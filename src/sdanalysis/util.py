@@ -8,7 +8,6 @@
 
 """A collection of utility functions."""
 
-from collections import namedtuple
 from pathlib import Path
 from typing import NamedTuple, Optional
 
