@@ -36,6 +36,7 @@ requirements:
     - ruamel.yaml
     - hsluv
     - attrs
+    - click
 
 build:
   entry_points:
