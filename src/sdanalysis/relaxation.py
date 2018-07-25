@@ -137,7 +137,7 @@ def exponential_relaxation(
     return val_mean, val_max - val_min
 
 
-def max_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, float]:
+def max_time_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, float]:
     """Time at which the maximum value is recorded.
 
     Args:
@@ -149,5 +149,54 @@ def max_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, float]:
         float: Value of the maximum.
 
     """
-    max_val_index = np.argmax(value)
-    return time[max_val_index], value[max_val_index]
+    max_val_index = np.nanargmax(value)
+    error = (time[max_val_index + 1] - time[max_val_index - 1]) / 2
+    return time[max_val_index], error
+
+
+def max_value_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, float]:
+    """Maximum value recorded.
+
+    Args:
+        time (np.ndarray): The time index
+        value (np.ndarray): The value at each of the time indices
+
+    Returns:
+        float: The time at which the maximum value occurs.
+        float: Value of the maximum.
+
+    """
+    max_val_index = np.nanargmax(value)
+    error = (
+        value[max_val_index]
+        - value[max_val_index - 1]
+        + value[max_val_index]
+        - value[max_val_index + 1]
+    ) / 2
+    return value[max_val_index], error
+
+
+def translate_relaxation(quantity: str) -> str:
+    translation = {
+        "alpha": "max_alpha_time",
+        "gamma": "max_gamma_time",
+        "com_struct": "tau_F",
+        "msd": "diffusion_constant",
+        "rot1": "tau_R1",
+        "rot2": "tau_R2",
+        "struct": "tau_S",
+    }
+    return translation.get(quantity, quantity)
+
+
+def compute_relaxation_value(
+    timesteps: np.ndarray, values: np.ndarray, relax_type: str
+) -> Tuple[float, float]:
+    """Compute a single representative value for each dynamic quantity."""
+    if relax_type in ["msd"]:
+        return diffusion_constant(timesteps, values)
+    if relax_type in ["struct_msd"]:
+        return threshold_relaxation(timesteps, values, threshold=0.16, greater=False)
+    if relax_type in ["alpha", "gamma"]:
+        return max_time_relaxation(timesteps, values)
+    return exponential_relaxation(timesteps, values)
