@@ -45,3 +45,37 @@ def test_threshold_relaxation():
         time, values, threshold=0.5, greater=False
     )
     assert relax == num_values / 2
+
+
+def test_max_time_relaxation():
+    time = np.arange(101)
+    value = 50 - np.abs(np.arange(-50, 50))
+    max_time, error = relaxation.max_time_relaxation(time, value)
+    assert max_time == 50
+    assert error == 1
+
+
+def test_max_time_relaxation_nan():
+    time = np.arange(101)
+    value = 50. - np.abs(np.arange(-50, 50))
+    value[0] = np.nan
+    max_time, error = relaxation.max_time_relaxation(time, value)
+    assert max_time == 50
+    assert error == 1
+
+
+def test_max_value_relaxation():
+    time = np.arange(101)
+    value = 50 - np.abs(np.arange(-50, 50))
+    max_value, error = relaxation.max_value_relaxation(time, value)
+    assert max_value == 50
+    assert error == 1
+
+
+def test_max_value_relaxation_nan():
+    time = np.arange(101)
+    value = 50. - np.abs(np.arange(-50, 50))
+    value[0] = np.nan
+    max_value, error = relaxation.max_value_relaxation(time, value)
+    assert max_value == 50
+    assert error == 1
