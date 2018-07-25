@@ -11,11 +11,15 @@ import logging
 from pprint import pformat
 
 import click
+import numpy as np
+import pandas
+from scipy.stats import hmean
 from ruamel.yaml import YAML
 
 from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
 from .read import process_file
+from .relaxation import compute_relaxation_value, translate_relaxation
 from .version import __version__
 
 yaml = YAML()  # pylint: disable=invalid-name
@@ -102,6 +106,38 @@ def comp_dynamics(sim_params, mol_relaxations, linear_dynamics, infile) -> None:
     else:
         compute_relaxations = None
     process_file(sim_params, compute_relaxations)
+
+
+@sdanalysis.command()
+@click.pass_obj
+@click.argument("infile", type=click.Path(exists=True, file_okay=True, dir_okay=False))
+def comp_relaxations(sim_params, infile) -> None:
+    assert infile.suffix in [".hdf5", ".h5"]
+    df_dyn = pandas.read_hdf(infile, "dynamics")
+    # Remove columns with no relaxation value to calculate
+    df_dyn.drop(
+        ["mean_displacement", "mean_rotation", "mfd", "overlap", "start_index"],
+        inplace=True,
+    )
+    # Average over all intial times
+    df_dyn = df_dyn.groupby(["time", "temperature", "pressure"]).mean()
+
+    relaxations = df_dyn.groupby(["temperature", "pressure"]).aggregate(
+        compute_relaxation_value
+    )
+    relaxations.columns = [
+        translate_relaxation(quantity) for quantity in relaxations.columns
+    ]
+
+    df_mol = pandas.read_hdf(infile, "molecular_relaxations")
+    df_mol.replace(2 ** 32 - 1, np.nan, inplace=True)
+    df_mol.index.names = ["init_frame", "molecule"]
+    df_mol = df_mol.groupby(["init_frame", "temperature", "pressure"]).agg(np.mean)
+    df_mol = df_mol.groupby(["temperature", "pressure"]).agg(["mean", hmean])
+    df_mol.columns = ["_".join(f) for f in df_mol.columns.tolist()]
+    pandas.concat([df_mol, relaxations], axis=1).to_hdf(
+        "data/analysis/dynamics.h5", "relaxations"
+    )
 
 
 @sdanalysis.command()
