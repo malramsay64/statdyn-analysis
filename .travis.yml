@@ -2,16 +2,9 @@ language: python
 
 cache: pip
 
-matrix:
-  include:
-    - os: linux
-      python: 3.6
-      services: docker
-    - os: osx
-      language: generic
-      before_install:
-        - brew upgrade python
-        - uname -s
+os: linux
+python: 3.6
+services: docker
 
 install:
   - make setup
