@@ -69,7 +69,7 @@ setup(
         "bokeh>=0.12.11",
         "matplotlib>=2.1",
         "gsd>=1.3.0",
-        "ruamel.yaml",
+        "pyyaml",
         "hsluv",
         "attrs",
     ],

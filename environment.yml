@@ -20,7 +20,7 @@ dependencies:
     - setuptools
     - hypothesis
     - coverage
-    - ruamel.yaml
+    - pyyaml
     - pip:
         - mypy
         - pytest-mypy

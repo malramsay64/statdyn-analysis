@@ -12,7 +12,7 @@ tables = "*"
 bokeh = "==0.12.16"
 matplotlib = "*"
 gsd = "*"
-"ruamel.yaml" = "*"
+pyyaml = "*"
 hsluv = "*"
 attrs = "*"
 

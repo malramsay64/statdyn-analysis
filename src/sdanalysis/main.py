@@ -14,7 +14,7 @@ import click
 import numpy as np
 import pandas
 from scipy.stats import hmean
-from ruamel.yaml import YAML
+import yaml
 
 from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
@@ -22,7 +22,6 @@ from .read import process_file
 from .relaxation import compute_relaxation_value, translate_relaxation
 from .version import __version__
 
-yaml = YAML()  # pylint: disable=invalid-name
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")
 logging.basicConfig(level="DEBUG")
