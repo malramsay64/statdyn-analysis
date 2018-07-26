@@ -26,7 +26,7 @@ def test_colour_orientation(orientation):
     colour_orientation(orientation)
 
 
-@pytest.mark.parametrize("molecule", [None, Trimer()])
+@pytest.mark.parametrize("molecule", [Trimer()])
 def test_plot_frame(molecule):
     with gsd.hoomd.open("test/data/trajectory-Trimer-P13.50-T3.00.gsd") as trj:
         plot_frame(HoomdFrame(trj[0]), molecule=molecule)
