@@ -8,18 +8,17 @@
 """Plot configuration."""
 
 import logging
-from typing import Any, Callable, Dict, List
+from typing import Any, Callable, Dict
 
 import numpy as np
-from bokeh.colors import RGB, Color
+from bokeh.colors import RGB
 from bokeh.models import Circle, ColumnDataSource, HoverTool
 from bokeh.plotting import figure
 from hsluv import hpluv_to_rgb
 
-from ..frame import Frame, HoomdFrame
+from ..frame import Frame
 from ..math_util import quaternion2z
 from ..molecules import Molecule, Trimer
-from .trimer import Trimer as TrimerGlyph
 
 logger = logging.getLogger(__name__)
 
@@ -39,32 +38,6 @@ def _create_colours(light_colours=False) -> np.ndarray:
 
 LIGHT_COLOURS = _create_colours(light_colours=True)
 DARK_COLOURS = _create_colours(light_colours=False)
-
-
-def plot_trimer(mol_plot: figure, source: ColumnDataSource) -> figure:
-    """Add the points to a bokeh figure to render the trimer molecule.
-
-    This enables the trimer molecules to be drawn on the figure using only
-    the position and the orientations of the central molecule.
-
-    """
-    glyph = TrimerGlyph(
-        x="x", y="y", angle="orientation", fill_alpha=1, fill_color="colour"
-    )
-
-    mol_plot.add_glyph(source, glyph=glyph)
-    mol_plot.add_tools(
-        HoverTool(
-            tooltips=[
-                ("index", "$index"),
-                ("x:", "@x"),
-                ("y:", "@y"),
-                ("orientation:", "@angle"),
-            ]
-        )
-    )
-    mol_plot.toolbar.active_inspect = None
-    return mol_plot
 
 
 def plot_circles(mol_plot: figure, source: ColumnDataSource) -> figure:
@@ -103,7 +76,7 @@ def frame2data(
     frame: Frame,
     order_function: Callable = None,
     order_list: np.ndarray = None,
-    molecule: Molecule = None,
+    molecule: Molecule = Trimer(),
 ) -> Dict[str, Any]:
     angle = quaternion2z(frame.orientation)
     # Colour all particles with the darker shade
@@ -121,22 +94,15 @@ def frame2data(
             order = order == "liq"
         logger.debug("Order fraction %.2f", np.mean(order))
         colour[order] = colour_orientation(angle, light_colours=True)[order]
-    if molecule is not None:
-        positions = molecule.orientation2positions(frame.position, frame.orientation)
-        data = {
-            "x": positions[:, 0],
-            "y": positions[:, 1],
-            "orientation": np.tile(angle, molecule.num_particles),
-            "radius": np.repeat(molecule.get_radii(), len(frame)) * 0.98,
-            "colour": np.tile(colour, molecule.num_particles),
-        }
-    else:
-        data = {
-            "x": frame.x_position,
-            "y": frame.y_position,
-            "orientation": angle,
-            "colour": colour,
-        }
+
+    positions = molecule.orientation2positions(frame.position, frame.orientation)
+    data = {
+        "x": positions[:, 0],
+        "y": positions[:, 1],
+        "orientation": np.tile(angle, molecule.num_particles),
+        "radius": np.repeat(molecule.get_radii(), len(frame)) * 0.98,
+        "colour": np.tile(colour, molecule.num_particles),
+    }
     return data
 
 
@@ -145,7 +111,7 @@ def plot_frame(
     order_function: Callable = None,
     order_list: np.ndarray = None,
     source: ColumnDataSource = None,
-    molecule: Molecule = None,
+    molecule: Molecule = Trimer(),
 ):
     """Plot snapshot using bokeh."""
     data = frame2data(
@@ -163,8 +129,5 @@ def plot_frame(
         source.data = data
     else:
         source = ColumnDataSource(data=data)
-    if molecule is not None:
-        plot_circles(plot, source)
-    else:
-        plot_trimer(plot, source)
-    return plot
+
+    return plot_circles(plot, source)
