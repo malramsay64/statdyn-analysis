@@ -78,6 +78,7 @@ def frame2data(
     order_list: np.ndarray = None,
     molecule: Molecule = Trimer(),
 ) -> Dict[str, Any]:
+    assert Molecule is not None
     angle = quaternion2z(frame.orientation)
     # Colour all particles with the darker shade
     colour: np.ndarray = colour_orientation(angle)
