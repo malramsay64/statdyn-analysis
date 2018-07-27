@@ -2,9 +2,7 @@ language: python
 
 cache: pip
 
-os: linux
 python: 3.6
-services: docker
 
 install:
   - make setup
