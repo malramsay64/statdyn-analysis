@@ -67,7 +67,6 @@ setup(
         "pandas",
         "tables",
         "bokeh>=0.12.11",
-        "matplotlib>=2.1",
         "gsd>=1.3.0",
         "pyyaml",
         "hsluv",
