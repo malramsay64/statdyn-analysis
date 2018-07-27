@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "54594ac1fdc0dddce9df4f5a1b42117d8d79d2b40f249e055055201a6d829f11"
+            "sha256": "0012481610c5d3431789087b388f8695398aadacca41f98eaf5f4c13b0b3b3d9"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -38,6 +38,10 @@
             ],
             "index": "pypi",
             "version": "==6.7"
+        },
+        "e1839a8": {
+            "editable": true,
+            "path": "."
         },
         "gsd": {
             "hashes": [
@@ -449,6 +453,7 @@
         },
         "hypothesis": {
             "hashes": [
+                "sha256:592aa323cb2df63d4394dff7362b7f97742c5a211e981bb6095d1dd7decc641c",
                 "sha256:ebf771edbeaeea9fa4162556925f13cfcc41a2358adf73e69ee663197eb6ad99"
             ],
             "index": "pypi",
@@ -674,6 +679,7 @@
                 "sha256:edb04bdd45bfd76c8292c4d9654568efaedf76fe78eb246dde69bdb13b2dad87",
                 "sha256:f19f2a4f547505fe9072e15f6f4ae714af51b5a681a97f187971f50c283193b6"
             ],
+            "markers": "python_version < '3.7' and implementation_name == 'cpython'",
             "version": "==1.1.0"
         },
         "urllib3": {

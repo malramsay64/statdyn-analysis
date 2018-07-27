@@ -15,6 +15,7 @@ pyyaml = "*"
 hsluv = "*"
 attrs = "*"
 click = "*"
+"e1839a8" = {path = ".", editable = true}
 
 [dev-packages]
 pytest = "*"
