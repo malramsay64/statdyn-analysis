@@ -71,6 +71,7 @@ setup(
         "pyyaml",
         "hsluv",
         "attrs",
+        "click",
     ],
     packages=find_packages("src"),
     ext_modules=cythonize(extensions, include_path=["src/"]),
