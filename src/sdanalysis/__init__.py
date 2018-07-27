@@ -6,7 +6,6 @@
 #
 # Distributed under terms of the MIT license.
 
-from .figures.configuration import plot_frame
 from .frame import Frame, HoomdFrame, LammpsFrame
 from .molecules import Dimer, Disc, Molecule, Trimer
 from .params import SimulationParams
