@@ -43,7 +43,8 @@ build:
   entry_points:
     - sdanalysis = sdanalysis.main:sdanalysis
   script: python setup.py install --single-version-externally-managed --record record.txt
-  number: {{ GIT_DESCRIBE_NUMBER }}
+  number: 1
+  include_recipe: False
 
 test:
   import:
