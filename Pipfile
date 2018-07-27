@@ -33,6 +33,3 @@ pytest-lazy-fixture = "*"
 black = "==18.5b1"
 wheel = "*"
 twine = "*"
-
-[requires]
-python_version = ">=3.6"
