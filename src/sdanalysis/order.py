@@ -9,7 +9,9 @@
 """
 
 import numpy as np
-from scipy.spatial import cKDTree
+
+from freud.box import Box
+from freud.locality import NearestNeighbors as NearestNeighbours
 
 from ._order import _orientational_order, _relative_orientations, compute_voronoi_neighs
 
@@ -39,10 +41,28 @@ def compute_ml_order(
     return model.predict(orientations)
 
 
-def compute_neighbour_tree(box: np.ndarray, position: np.ndarray) -> cKDTree:
-    """Initialise a cKDTree to compute neighbours from."""
-    pos_position = position + box[:3] / 2
-    return cKDTree(pos_position, boxsize=box[:3])
+def create_freud_box(box: np.ndarray, is_2D=True) -> Box:
+    # pylint: disable=invalid-name
+    Lx, Ly, Lz = box[:3]
+    xy = xz = yz = 0
+    if len(box) == 6:
+        xy, xz, yz = box[3:6]
+    if is_2D:
+        return Box(Lx=Lx, Ly=Ly, xy=xy, is2D=is_2D)
+    return Box(Lx=Lx, Ly=Ly, Lz=Lz, xy=xy, xz=xz, yz=yz)
+    # pylint: disable=invalid-name
+
+
+def setup_neighbours(
+    box: np.ndarray,
+    position: np.ndarray,
+    max_radius: float = 3.5,
+    max_neighbours: int = 8,
+    is_2D: bool = True,
+) -> NearestNeighbours:
+    nn = NearestNeighbours(max_radius, max_neighbours, strict_cut=True)
+    nn.compute(create_freud_box(box, is_2D), position)
+    return nn
 
 
 def compute_neighbours(
@@ -52,11 +72,8 @@ def compute_neighbours(
     max_neighbours: int = 8,
 ) -> np.ndarray:
     """Compute the neighbours of each molecule."""
-    neigh_tree = compute_neighbour_tree(box, position)
-    _, neighbours = neigh_tree.query(
-        neigh_tree.data, max_neighbours + 1, distance_upper_bound=max_radius, n_jobs=-1
-    )
-    return neighbours[:, 1:]
+    neighs = setup_neighbours(box, position, max_radius, max_neighbours)
+    return neighs.getNeighborList().astype(np.long)
 
 
 def relative_orientations(
@@ -89,9 +106,9 @@ def num_neighbours(
     box: np.ndarray, position: np.ndarray, max_radius: float = 3.5
 ) -> np.ndarray:
     """Compute the number of neighbours of each molecule."""
-    max_neighbours = 8
-    dist = relative_distances(box, position, max_radius, max_neighbours)
-    return max_neighbours - np.isinf(dist).sum(axis=1)
+    max_neighbours = 9
+    neighs = setup_neighbours(box, position, max_radius, max_neighbours)
+    return np.sum(neighs.getNeighborList() != neighs.UINTMAX, axis=1)
 
 
 def relative_distances(
@@ -101,8 +118,5 @@ def relative_distances(
     max_neighbours: int = 8,
 ) -> np.ndarray:
     """Compute the distance to each neighbour."""
-    neigh_tree = compute_neighbour_tree(box, position)
-    distances, *_ = neigh_tree.query(
-        neigh_tree.data, max_neighbours + 1, distance_upper_bound=max_radius, n_jobs=-1
-    )
-    return distances[:, 1:]
+    neighbours = setup_neighbours(box, position, max_radius, max_neighbours)
+    return np.sqrt(neighbours.getRsqList())
