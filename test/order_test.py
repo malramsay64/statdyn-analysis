@@ -29,11 +29,6 @@ def frame(request):
         yield f[0]
 
 
-def test_neighbour_tree(frame):
-    order.compute_neighbour_tree(frame.configuration.box, frame.particles.position)
-    assert True
-
-
 def test_compute_neighbours(frame):
     max_radius = 10
     max_neighbours = 6
