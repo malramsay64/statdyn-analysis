@@ -108,7 +108,7 @@ def num_neighbours(
     """Compute the number of neighbours of each molecule."""
     max_neighbours = 9
     neighs = setup_neighbours(box, position, max_radius, max_neighbours)
-    return np.sum(neighs.getNeighborList() != neighs.UINTMAX, axis=1)
+    return neighs.nlist.neighbor_counts
 
 
 def relative_distances(
