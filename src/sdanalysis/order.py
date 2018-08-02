@@ -9,11 +9,11 @@
 """
 
 import numpy as np
-
 from freud.box import Box
 from freud.locality import NearestNeighbors as NearestNeighbours
+from freud.voronoi import Voronoi
 
-from ._order import _orientational_order, _relative_orientations, compute_voronoi_neighs
+from ._order import _orientational_order, _relative_orientations
 
 
 def dt_model():
@@ -120,3 +120,9 @@ def relative_distances(
     """Compute the distance to each neighbour."""
     neighbours = setup_neighbours(box, position, max_radius, max_neighbours)
     return np.sqrt(neighbours.getRsqList())
+
+
+def compute_voronoi_neighs(box: np.ndarray, position: np.ndarray) -> np.ndarray:
+    vor = Voronoi(create_freud_box(box), buff=5)
+    nlist = vor.computeNeighbors(position).getNeighborList()
+    return nlist.neighbor_counts
