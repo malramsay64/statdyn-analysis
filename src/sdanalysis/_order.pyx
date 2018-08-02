@@ -15,39 +15,13 @@ import cython
 import numpy as np
 
 cimport numpy as np
-from libc.math cimport fabs, cos, M_PI, pow, round, sqrt
+from libc.math cimport fabs, cos
 from libc.limits cimport UINT_MAX
-from cython.operator cimport dereference as deref
 
-from .math_util cimport single_quat_rotation, single_displacement
+from .math_util cimport single_quat_rotation
 
 cdef extern from "<cmath>" namespace "std":
      bint isnan(float x) nogil
-
-cdef extern from "voro++.hh" namespace "voro":
-    cdef cppclass container_base:
-        pass
-
-
-    cdef cppclass container:
-        container(double,double, double,double, double,double,
-                int,int,int, bint,bint,bint, int) except +
-        bint compute_cell(voronoicell_neighbor &c, c_loop_all &vl) nogil
-
-        void put(int, double, double, double) nogil
-        int total_particles()
-
-
-    cdef cppclass voronoicell_neighbor:
-        voronoicell_neighbor() nogil
-        double number_of_faces() nogil
-
-    cdef cppclass c_loop_all:
-        c_loop_all(container_base&) nogil
-        bint start() nogil
-        bint inc() nogil
-        int pid() nogil
-
 
 cpdef np.ndarray[float, ndim=2] _relative_orientations(
     const long [:, :] neighbourlist,
@@ -144,73 +118,3 @@ cpdef np.ndarray[float, ndim=1] _orientational_order(
             order_parameter[mol_index] = 0.
     return order_parameter
 
-
-cpdef np.ndarray[np.uint16_t, ndim=1] compute_voronoi_neighs(
-        const float[:] box,
-        const float[:, :] position
-) except +:
-    cdef:
-        unsigned short[:] num_neighs
-        Py_ssize_t num_elements = position.shape[0]
-        double Lx = box[0]
-        double Ly = box[1]
-        double Lz = box[2]
-        int[3] num_blocks
-        double N
-
-        container *configuration
-        voronoicell_neighbor *cell
-        c_loop_all *voronoi_loop
-
-    num_neighs = np.empty(num_elements, dtype=np.uint16)
-
-    # Divide cell into N blocks in each dimension
-    # Optimally 5-8 particles per block
-    cdef int particles_per_block = 5
-    N = sqrt(num_elements/(Lx * Ly * particles_per_block))
-
-    num_blocks[0] = max(<int>round(N * Lx), 1)
-    num_blocks[1] = max(<int>round(N * Ly), 1)
-    num_blocks[2] = 1
-
-    # Initialize container
-    # xmin, xmax,
-    # ymin, ymax,
-    # zmin, zmax,
-    # num_blocks x, y, z
-    # periodicity x, y, z
-    configuration = new container(
-        -Lx/2, Lx/2,
-        -Ly/2, Ly/2,
-        -Lz/2, Lz/2,
-        num_blocks[0], num_blocks[1], num_blocks[2],
-        True, True, False,
-        num_elements
-    )
-
-    with nogil:
-        # Add all particles to container
-        for i in range(num_elements):
-            configuration.put(i, position[i, 0], position[i, 1], position[i, 2])
-
-        # Instance of a class to loop over all particles in configuration
-        voronoi_loop = new c_loop_all(<container_base &>deref(configuration))
-
-        # Check constructed properly
-        if not voronoi_loop.start():
-            # cleanup
-            del voronoi_loop, configuration
-            with gil:
-                raise ValueError("Failed to start loop")
-
-        cell = new voronoicell_neighbor()
-
-        # Loop through all cells
-        while True:
-            if (configuration.compute_cell(deref(cell), deref(voronoi_loop))):
-                num_neighs[voronoi_loop.pid()] = <int>cell.number_of_faces() - 2
-            if not voronoi_loop.inc(): break
-        # cleanup pointers
-        del configuration, cell, voronoi_loop
-
-    return np.asarray(num_neighs)

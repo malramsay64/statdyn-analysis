@@ -12,7 +12,7 @@ import gsd.hoomd
 import numpy as np
 import pytest
 
-from sdanalysis import order  # type: ignore
+from sdanalysis import order
 
 INFILES = [
     "test/data/dump-Trimer-13.50-0.40-p2.gsd",
