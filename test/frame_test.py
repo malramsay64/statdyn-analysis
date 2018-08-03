@@ -5,6 +5,8 @@
 # Copyright © 2018 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+from typing import NamedTuple
+
 import gsd.hoomd
 import numpy as np
 import pytest
@@ -68,6 +70,22 @@ def test_frame_box(frametypes):
     assert len(frametypes.box) >= 3
     assert np.all(frametypes.box >= 0)
     assert frametypes.box.dtype == np.float32
+
+
+def test_frame_box_hoomd(gsd_frame):
+    class Box(NamedTuple):
+        Lx: float
+        Ly: float
+        Lz: float
+        xy: float
+        xz: float
+        yz: float
+
+    box = Box(3, 2, 1, 0, 0, 0)
+    gsd_frame.frame.box = box
+    assert np.all(
+        gsd_frame.box == np.array([box.Lx, box.Ly, box.Lz, box.xy, box.xz, box.yz])
+    )
 
 
 @pytest.fixture(
