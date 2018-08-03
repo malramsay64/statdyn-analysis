@@ -35,7 +35,6 @@ before_deploy:
     - conda config --append channels moble
     - conda config --append channels glotzer
     - conda config --append channels malramsay
-    - chmod +x scripts/deploy_anaconda.sh
     - conda config --set anaconda_upload yes
     - source activate base
 
