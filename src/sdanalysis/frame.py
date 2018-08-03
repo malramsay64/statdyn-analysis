@@ -149,6 +149,10 @@ class HoomdFrame(Frame):
 
     @property
     def box(self) -> np.ndarray:
+        # The snapshot from hoomd (vs gsd) has a different configuration
+        if hasattr(self.frame, "box"):
+            box = self.frame.box
+            return np.ndarray([box.Lx, box.Ly, box.Lz, box.xy, box.xz, box.yz])
         return self.frame.configuration.box
 
     def __len__(self) -> int:
