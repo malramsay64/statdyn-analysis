@@ -7,41 +7,39 @@
 # Distributed under terms of the MIT license.
 """Test the sdrun command line tools."""
 
-import subprocess
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import pytest
 from click.testing import CliRunner
 from tables import open_file
 
-from sdanalysis.main import comp_relaxations
+from sdanalysis.main import comp_dynamics, comp_relaxations
+from sdanalysis.params import SimulationParams
 
 
 @pytest.fixture
 def runner():
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        yield runner
+    runner_ = CliRunner()
+    with runner_.isolated_filesystem():
+        yield runner_
 
 
-@pytest.fixture
-def output_directory():
-    with TemporaryDirectory() as tmpdir:
-        yield tmpdir
+class TestCompDynamics:
 
+    datafile = Path("test/data/trajectory-Trimer-P13.50-T3.00.gsd").resolve()
 
-def test_comp_dynamics(output_directory):
-    command = [
-        "sdanalysis",
-        "-v",
-        "-o",
-        output_directory,
-        "comp_dynamics",
-        "test/data/trajectory-Trimer-P13.50-T3.00.gsd",
-    ]
-    ret = subprocess.run(command)
-    assert ret.returncode == 0
+    def test_datafile(self, runner):
+        print(self.datafile)
+        assert self.datafile.is_file()
+
+    def test_missing_file(self, runner):
+        result = runner.invoke(comp_dynamics, ["fail"])
+        assert result.exit_code != 0
+        assert isinstance(result.exception, SystemExit)
+
+    def test_real_data(self, runner):
+        result = runner.invoke(comp_dynamics, [str(self.datafile)])
+        assert result.exit_code == 0
 
 
 class TestCompRelaxations:
@@ -55,7 +53,6 @@ class TestCompRelaxations:
         Path("fail").write_text("text")
         result = runner.invoke(comp_relaxations, ["fail"])
         assert result.exit_code != 0
-        print(result.output)
         assert isinstance(result.exception, ValueError)
 
     def test_non_hdf5_file(self, runner):

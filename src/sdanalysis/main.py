@@ -87,6 +87,12 @@ def sdanalysis(ctx, **kwargs) -> None:
 
 @sdanalysis.command()
 @click.pass_obj
+@click.option(
+    "-o",
+    "--output",
+    type=click.Path(file_okay=False, dir_okay=True),
+    help="Location to save all output files; required to be a directory.",
+)
 @click.option("--mol-relaxations", type=click.Path(exists=True, dir_okay=False))
 @click.option(
     "--linear-dynamics",
@@ -96,8 +102,12 @@ def sdanalysis(ctx, **kwargs) -> None:
     help="Flag to specify the configurations in a trajectory have linear steps between them.",
 )
 @click.argument("infile", type=click.Path(exists=True, file_okay=True, dir_okay=False))
-def comp_dynamics(sim_params, mol_relaxations, linear_dynamics, infile) -> None:
+def comp_dynamics(sim_params, output, mol_relaxations, linear_dynamics, infile) -> None:
     """Compute dynamic properties."""
+    if sim_params is None:
+        sim_params = SimulationParams()
+    if output is not None:
+        sim_params.output = output
     sim_params.infile = infile
     if linear_dynamics:
         sim_params.linear_steps = None
