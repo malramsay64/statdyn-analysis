@@ -8,8 +8,8 @@
 
 """Utility functions for mathematical operations."""
 
-import rowan
 import numpy as np
+import rowan
 
 
 def quaternion_rotation(initial, final, result):
@@ -18,6 +18,10 @@ def quaternion_rotation(initial, final, result):
 
 def rotate_vectors(quaternion, vector):
     return rowan.rotate(quaternion, vector)
+
+
+def quaternion_angle(quaternion) -> np.ndarray:
+    return rowan.geometry.angle(quaternion)
 
 
 def z2quaternion(theta: np.ndarray) -> np.ndarray:
@@ -41,5 +45,12 @@ def quaternion2z(quaternion: np.ndarray) -> np.ndarray:
 
 
 def displacement_periodic(box, initial, final, result):
-    distance = np.abs(initial - final)
-    result[:] = np.linalg.norm(np.minimum(distance, distance - box), axis=1)
+    if len(box) > 3 and np.any(box[3:] != 0.):
+        raise NotImplementedError(
+            "Periodic distances for non-orthorhombic boxes are not yet implemented."
+            f"Got xy: {box[3]}, xz: {box[4]}, yz: {box[5]}"
+        )
+    delta = np.abs(final - initial)
+    result[:] = np.linalg.norm(
+        np.where(delta > 0.5 * box[:3], delta - box[:3], delta), axis=1
+    )
