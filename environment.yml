@@ -15,6 +15,7 @@ dependencies:
     - gsd
     - pyyaml
     - freud=0.9.0
+    - rowan
     - malramsay::hsluv
     # Development requirements
     - pytest

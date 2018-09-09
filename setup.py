@@ -17,7 +17,7 @@ def get_version():
     return g["__version__"]
 
 
-setup_requires = ["numpy>=1.13", "cython"]
+setup_requires = []
 install_requires = [
     "numpy>=1.13",
     "scipy>=1.0",
@@ -30,6 +30,8 @@ install_requires = [
     "hsluv",
     "attrs",
     "click",
+    "freud",
+    "rowan",
 ]
 test_requires = [
     "pytest",
