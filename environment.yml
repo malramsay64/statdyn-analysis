@@ -2,9 +2,10 @@ name: sdanalysis-dev
 channels:
     - defaults
     - conda-forge
-    - moble
 dependencies:
+    # Install Requirements
     - python=3.6
+    - cython>=0.28
     - numpy=1.14
     - scipy=1.1.0
     - scikit-learn=0.19.0
@@ -12,19 +13,15 @@ dependencies:
     - pytables=3.4.2
     - bokeh=0.12.16
     - gsd
-    - pytest
-    - pylint
-    - quaternion=2018.02
-    - cython>=0.28
-    - setuptools
-    - hypothesis
-    - coverage
     - pyyaml
     - freud=0.9.0
-    - pip:
-        - mypy
-        - pytest-mypy
-        - pytest-pylint
-        - pytest-cov
-        - pytest-lazy-fixture
-        - hsluv
+    - malramsay::hsluv
+    # Development requirements
+    - pytest
+    - coverage
+    - pytest-cov
+    - pytest-lazy-fixture
+    - hypothesis
+    - mypy
+    - pylint
+    - moble::quaternion=2018.02
