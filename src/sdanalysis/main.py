@@ -121,21 +121,24 @@ def comp_relaxations(infile) -> None:
     The output is written to the table 'relaxations' in INFILE.
 
     """
+    from tables import open_file, HDF5ExtError
+
     infile = Path(infile)
-    if infile.suffix not in [".hdf5", ".h5"]:
-        raise ValueError(
-            "The argument 'infile' requires an hdf5 input file with extension '.hdf5' or '.h5'"
-        )
-    from tables import open_file
+    # Check is actually an HDF5 file
+    try:
+        with open_file(str(infile)):
+            pass
+    except HDF5ExtError:
+        raise ValueError("The argument 'infile' requires an hdf5 input file.")
 
     # Check input file contains the tables required
-    with open_file(infile) as src:
-        if "dynamics" not in src:
+    with open_file(str(infile)) as src:
+        if "/dynamics" not in src:
             raise KeyError(
                 "Table 'dynamics' not found in input file,"
                 " try rerunning `sdanalysis comp_dynamics`."
             )
-        if "molecular_relaxations" not in src:
+        if "/molecular_relaxations" not in src:
             raise KeyError(
                 f"Table 'molecular_relaxations' not found in input file,"
                 " try rerunning `sdanalysis comp_dynamics`."
