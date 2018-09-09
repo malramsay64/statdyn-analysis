@@ -18,7 +18,7 @@ before_install:
   - conda info -a
 
   - conda env update
-  - conda activate sdanalysis-dev
+  - source activate sdanalysis-dev
   - conda install -c conda-forge codecov
 
 install:
@@ -38,7 +38,7 @@ before_deploy:
     - conda config --append channels glotzer
     - conda config --append channels malramsay
     - conda config --set anaconda_upload yes
-    - conda activate root
+    - source activate base
 
 deploy:
   - provider: script
