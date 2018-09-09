@@ -8,12 +8,22 @@
 """
 """
 
+import numpy as np
 import rowan
 from freud.box import Box
 from freud.locality import NearestNeighbors as NearestNeighbours
 from freud.voronoi import Voronoi
 
-import numpy as np
+
+def _neighbour_relative_angle(
+    neighbourlist: np.ndarray, orientation: np.ndarray
+) -> np.ndarray:
+    num_mols = len(orientation)
+    default_vals = np.arange(num_mols).reshape(-1, 1)
+    neighbourlist = np.where(neighbourlist < num_mols, neighbourlist, default_vals)
+    return rowan.geometry.intrinsic_distance(
+        orientation[neighbourlist], orientation.reshape(-1, 1, 4)
+    )
 
 
 def _orientational_order(
@@ -31,10 +41,7 @@ def _orientational_order(
             for this function to apply to angles other than 180 deg.
 
     """
-    num_mols = len(orientation)
-    mask = neighbourlist > num_mols
-    neighbourlist[mask] = np.arange(num_mols)[np.any(mask, axis=1)]
-    angles = rowan.geometry.intrinsic_distance(orientation[neighbourlist], orientation)
+    angles = _neighbour_relative_angle(neighbourlist, orientation)
     return np.cos(angles.mean() * angle_factor)
 
 
@@ -106,7 +113,7 @@ def relative_orientations(
     max_neighbours: int = 8,
 ) -> np.ndarray:
     neighbours = compute_neighbours(box, position, max_radius, max_neighbours)
-    return rowan.geometry.intrinsic_distance(neighbours, orientation)
+    return _neighbour_relative_angle(neighbours, orientation)
 
 
 def orientational_order(
