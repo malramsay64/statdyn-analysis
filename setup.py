@@ -9,14 +9,6 @@
 """Command line tool to run simulations."""
 
 from setuptools import find_packages, setup
-from setuptools.extension import Extension
-
-try:
-    import numpy as np
-    from Cython.Build import cythonize
-except ModuleNotFoundError as e:
-    print("Numpy and Cython are required to install sdanalysis.")
-    raise
 
 
 def get_version():
@@ -25,26 +17,9 @@ def get_version():
     return g["__version__"]
 
 
-extensions = [
-    Extension(
-        "sdanalysis.math_util",
-        ["src/sdanalysis/math_util.pyx"],
-        libraries=["m"],
-        include_dirs=[np.get_include()],
-    ),
-    Extension(
-        "sdanalysis._order",
-        ["src/sdanalysis/_order.pyx"],
-        language="c++",
-        libraries=["m"],
-        include_dirs=[np.get_include()],
-    ),
-]
-
 test_require = [
     "pytest",
     "pylint",
-    "numpy-quaternion",
     "hypothesis",
     "coverage",
     "mypy",
