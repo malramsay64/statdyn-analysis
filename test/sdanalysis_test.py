@@ -13,15 +13,33 @@ import pytest
 from click.testing import CliRunner
 from tables import open_file
 
-from sdanalysis.main import comp_dynamics, comp_relaxations
+from sdanalysis.main import comp_dynamics, comp_relaxations, sdanalysis
 from sdanalysis.params import SimulationParams
 
 
 @pytest.fixture
 def runner():
-    runner_ = CliRunner()
-    with runner_.isolated_filesystem():
-        yield runner_
+    runner = CliRunner()
+    with runner.isolated_filesystem():
+        yield runner
+
+
+class TestSdanalysis:
+    def test_default_log_level(self):
+        import logging
+
+        logger = logging.getLogger("sdanalysis")
+        assert logger.getEffectiveLevel() == logging.WARNING
+
+    def test_verbosity_info(self, runner):
+        result = runner.invoke(sdanalysis, ["-v"])
+        assert result.exit_code == 2
+        assert "DEBUG" not in result.output
+
+    def test_verbosity_debug(self, runner):
+        result = runner.invoke(sdanalysis, ["-vv"])
+        assert result.exit_code == 2
+        assert "DEBUG" in result.output
 
 
 class TestCompDynamics:

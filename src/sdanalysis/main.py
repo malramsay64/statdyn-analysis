@@ -25,7 +25,6 @@ from .version import __version__
 
 logger = logging.getLogger(__name__)
 logger.setLevel("DEBUG")
-logging.basicConfig(level="DEBUG")
 
 gsd_logger = logging.getLogger("gsd")
 gsd_logger.setLevel(logging.WARNING)
@@ -37,6 +36,7 @@ def _verbosity(_, __, value) -> None:
     root_logger = logging.getLogger("statdyn")
     levels = {0: "WARNING", 1: "INFO", 2: "DEBUG"}
     log_level = levels.get(value, "DEBUG")
+    print(f"value: {value}, log_level: {log_level}")
     logging.basicConfig(level=log_level)
     root_logger.setLevel(log_level)
     logger.debug(f"Setting log level to %s", log_level)
