@@ -24,7 +24,7 @@ requirements:
 
   run:
     - {{ pin_compatible('python', max_pin='x.x') }}
-    - {{ pin_compatible('numpy', max_pin='x.x') }}
+    - numpy >=1.11
     - scipy >=1.0
     - scikit-learn ==0.19.0
     - pandas >=0.21
@@ -53,4 +53,4 @@ test:
   source_files:
     - test/
   commands:
-    - pytest -v
+    - make test
