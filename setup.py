@@ -41,26 +41,8 @@ extensions = [
     ),
 ]
 
-test_require = [
-    "pytest",
-    "pylint",
-    "numpy-quaternion",
-    "hypothesis",
-    "coverage",
-    "mypy",
-    "pytest-mypy",
-    "pytest-pylint",
-    "pytest-cov",
-    "pytest-lazy-fixture",
-]
-docs_require = []
-dev_require = docs_require + test_require
-
-setup(
-    name="sdanalysis",
-    version=get_version(),
-    python_requires=">=3.6",
-    install_requires=[
+setup_requires = ["numpy>=1.13", "cython"]
+install_requires = [
         "numpy>=1.13",
         "scipy>=1.0",
         "scikit-learn==0.19.0",
@@ -72,12 +54,33 @@ setup(
         "hsluv",
         "attrs",
         "click",
-    ],
+]
+test_requires = [
+    "pytest",
+    "pylint",
+    "numpy-quaternion",
+    "hypothesis",
+    "coverage",
+    "mypy",
+    "pytest-mypy",
+    "pytest-pylint",
+    "pytest-cov",
+    "pytest-lazy-fixture",
+]
+docs_requires = []
+dev_requires = docs_requires + test_requires
+
+setup(
+    name="sdanalysis",
+    version=get_version(),
+    python_requires=">=3.6",
+    setup_requires=setup_requires,
+    install_requires=install_requires,
     packages=find_packages("src"),
     ext_modules=cythonize(extensions, include_path=["src/"]),
     package_dir={"": "src"},
     include_package_data=True,
-    extras_require={"docs": docs_require, "tests": test_require, "dev": dev_require},
+    extras_require={"docs": docs_requires, "tests": test_requires, "dev": dev_requires},
     entry_points="""
         [console_scripts]
         sdanalysis=sdanalysis.main:sdanalysis
