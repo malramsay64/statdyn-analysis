@@ -24,4 +24,3 @@ dependencies:
     - hypothesis
     - mypy
     - pylint
-    - moble::quaternion=2018.02
