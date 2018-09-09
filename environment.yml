@@ -24,3 +24,5 @@ dependencies:
     - hypothesis
     - mypy
     - pylint
+    - black
+    - isort
