@@ -17,9 +17,10 @@ source:
 
 
 requirements:
-  build:
+  host:
     - python {{ python }}
     - setuptools
+    - pip
 
 
   run:
@@ -38,9 +39,10 @@ requirements:
     - freud ==0.9.0
 
 build:
+  noarch: python
   entry_points:
     - sdanalysis = sdanalysis.main:sdanalysis
-  script: python setup.py install --single-version-externally-managed --record record.txt
+  script: python -m pip install --no-deps .
   number: 0
 
 test:
