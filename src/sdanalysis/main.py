@@ -109,10 +109,38 @@ def comp_dynamics(sim_params, mol_relaxations, linear_dynamics, infile) -> None:
 
 
 @sdanalysis.command()
-@click.pass_obj
 @click.argument("infile", type=click.Path(exists=True, file_okay=True, dir_okay=False))
-def comp_relaxations(sim_params, infile) -> None:  # pylint: disable=unused-argument
+def comp_relaxations(infile) -> None:
+    """Compute the summary time value for the dynamic quantities.
+
+    This computes the characteristic timescale of the dynamic quantities which have been
+    calculated and are present in INFILE. The INFILE is a path to the pre-computed
+    dynamic quantities and needs to be in the HDF5 format with either the '.hdf5' or
+    '.h5' extension.
+
+    The output is written to the table 'relaxations' in INFILE.
+
+    """
     infile = Path(infile)
+    if infile.suffix not in [".hdf5", ".h5"]:
+        raise ValueError(
+            "The argument 'infile' requires an hdf5 input file with extension '.hdf5' or '.h5'"
+        )
+    from tables import open_file
+
+    # Check input file contains the tables required
+    with open_file(infile) as src:
+        if "dynamics" not in src:
+            raise KeyError(
+                "Table 'dynamics' not found in input file,"
+                " try rerunning `sdanalysis comp_dynamics`."
+            )
+        if "molecular_relaxations" not in src:
+            raise KeyError(
+                f"Table 'molecular_relaxations' not found in input file,"
+                " try rerunning `sdanalysis comp_dynamics`."
+            )
+
     assert infile.suffix in [".hdf5", ".h5"]
     df_dyn = pandas.read_hdf(infile, "dynamics")
     # Remove columns with no relaxation value to calculate
@@ -120,7 +148,7 @@ def comp_relaxations(sim_params, infile) -> None:  # pylint: disable=unused-argu
         ["mean_displacement", "mean_rotation", "mfd", "overlap", "start_index"],
         inplace=True,
     )
-    # Average over all intial times
+    # Average over all initial times
     df_dyn = df_dyn.groupby(["time", "temperature", "pressure"]).mean()
 
     relaxations = df_dyn.groupby(["temperature", "pressure"]).aggregate(
@@ -136,9 +164,7 @@ def comp_relaxations(sim_params, infile) -> None:  # pylint: disable=unused-argu
     df_mol = df_mol.groupby(["init_frame", "temperature", "pressure"]).agg(np.mean)
     df_mol = df_mol.groupby(["temperature", "pressure"]).agg(["mean", hmean])
     df_mol.columns = ["_".join(f) for f in df_mol.columns.tolist()]
-    pandas.concat([df_mol, relaxations], axis=1).to_hdf(
-        "data/analysis/dynamics.h5", "relaxations"
-    )
+    pandas.concat([df_mol, relaxations], axis=1).to_hdf(infile, "relaxations")
 
 
 @sdanalysis.command()
