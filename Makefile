@@ -12,23 +12,17 @@ help:
 	@echo "    make deploy     deploy application"
 
 setup:
-	pip3 install -U pip
-	pip3 install pipenv
-	pipenv install --dev --three --ignore-pipfile
-	pipenv run pip install -e .
-	pipenv run pip install codecov
+	conda env update
 
 test:
-	pipenv run pytest
-	pipenv run codecov
-
+	isort --check-only --recursive src/
+	black --check src/
+	pylint src/
+	mypy src/
+	pytest
 
 deploy:
-	pipenv run python setup.py sdist
-	pipenv run twine upload --skip-existing dist/*
 
-clean:
-	rm -f dist/*
 
 .PHONY: help test clean deploy
 
