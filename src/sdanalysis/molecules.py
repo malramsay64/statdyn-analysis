@@ -17,7 +17,7 @@ from .math_util import rotate_vectors
 logger = logging.getLogger(__name__)
 
 
-class Molecule(object):
+class Molecule:
     """Molecule class holding information on the molecule for use in hoomd.
 
     This class contains all the paramters required to initialise the molecule
@@ -41,7 +41,7 @@ class Molecule(object):
         self.positions.flags.writeable = False
 
     def __eq__(self, other) -> bool:
-        return type(self) == type(other)
+        return isinstance(other, type(self))
 
     @property
     def num_particles(self) -> int:
@@ -113,7 +113,7 @@ class Disc(Molecule):
 class Sphere(Molecule):
     """Define a 3D sphere."""
 
-    def __init__(self) -> None:
+    def __init__(self) -> None:  # pylint: disable=useless-super-delegation
         """Initialise Spherical particle."""
         super().__init__()
 

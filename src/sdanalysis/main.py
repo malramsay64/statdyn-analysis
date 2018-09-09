@@ -8,13 +8,14 @@
 """Run simulation with boilerplate taken care of by the statdyn library."""
 
 import logging
+from pathlib import Path
 from pprint import pformat
 
 import click
 import numpy as np
 import pandas
-from scipy.stats import hmean
 import yaml
+from scipy.stats import hmean
 
 from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
@@ -110,7 +111,8 @@ def comp_dynamics(sim_params, mol_relaxations, linear_dynamics, infile) -> None:
 @sdanalysis.command()
 @click.pass_obj
 @click.argument("infile", type=click.Path(exists=True, file_okay=True, dir_okay=False))
-def comp_relaxations(sim_params, infile) -> None:
+def comp_relaxations(sim_params, infile) -> None:  # pylint: disable=unused-argument
+    infile = Path(infile)
     assert infile.suffix in [".hdf5", ".h5"]
     df_dyn = pandas.read_hdf(infile, "dynamics")
     # Remove columns with no relaxation value to calculate
@@ -140,8 +142,7 @@ def comp_relaxations(sim_params, infile) -> None:
 
 
 @sdanalysis.command()
-@click.pass_obj
-def figure(sim_params: SimulationParams) -> None:
+def figure() -> None:
     """Start bokeh server with the file passed."""
     from bokeh.server.server import Server
     from bokeh.application import Application

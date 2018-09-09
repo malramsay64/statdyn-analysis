@@ -22,14 +22,14 @@ def order(infile, outfile):
     trajectory = gsd.hoomd.open(infile, "rb")
     with open(outfile, "w") as dst:
         print("Timestep, OrientOrder", file=dst)
-        for index in range(len(trajectory)):
+        for index, _ in enumerate(trajectory):
             try:
                 snapshot = trajectory[index]
             except RuntimeError:
                 logger.info("Frame %s corrupted, continuing...", index)
                 continue
 
-            order = orientational_order(
+            orient_order = orientational_order(
                 box=snapshot.configuration.box,
                 position=snapshot.particles.position,
                 orientation=snapshot.particles.orientation,
@@ -37,6 +37,6 @@ def order(infile, outfile):
             print(
                 snapshot.configuration.step,
                 ",",
-                np.sum(order > 0.9) / len(order),
+                np.sum(orient_order > 0.9) / len(orient_order),
                 file=dst,
             )

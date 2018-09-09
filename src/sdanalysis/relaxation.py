@@ -27,6 +27,7 @@ def _exponential_decay(x: np.ndarray, a: float, b: float, c: float = 0) -> np.nd
     return a * np.exp(-b * x) + c
 
 
+# pylint: disable=unused-argument
 def _ddx_exponential_decay(
     x: np.ndarray, a: float, b: float, c: float = 0
 ) -> np.ndarray:
@@ -39,9 +40,10 @@ def _d2dx2_exponential_decay(
     return b * b * a * np.exp(-b * x)
 
 
-def diffusion_constant(
-    time: np.ndarray, msd: np.ndarray, sigma: np.ndarray = None
-) -> Tuple[float, float]:
+# pylint: enable=unused-argument
+
+
+def diffusion_constant(time: np.ndarray, msd: np.ndarray) -> Tuple[float, float]:
     """Compute the diffusion_constant from the mean squared displacement.
 
     Args:
@@ -54,7 +56,7 @@ def diffusion_constant(
         (float, float): The diffusion constant
 
     """
-    linear_region = np.logical_and(2 < msd, msd < 100)
+    linear_region = np.logical_and(msd > 2, msd < 100)
     try:
         popt, pcov = curve_fit(_msd_function, time[linear_region], msd[linear_region])
     except TypeError:
@@ -154,6 +156,7 @@ def max_time_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, flo
     return time[max_val_index], error
 
 
+# pylint: disable=unused-argument
 def max_value_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, float]:
     """Maximum value recorded.
 

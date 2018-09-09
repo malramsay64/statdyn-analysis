@@ -26,7 +26,7 @@ def _to_path(value: Optional[Path]) -> Optional[Path]:
 
 
 @attr.s(auto_attribs=True)
-class SimulationParams(object):
+class SimulationParams:
     """Store the parameters of the simulation."""
 
     # Thermodynamic Params

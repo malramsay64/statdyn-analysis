@@ -8,11 +8,10 @@
 """Compute dynamic properties."""
 
 import logging
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas
-import rowan
 
 from .math_util import displacement_periodic, quaternion_rotation, rotate_vectors
 from .molecules import Molecule, Trimer
@@ -20,8 +19,10 @@ from .molecules import Molecule, Trimer
 np.seterr(divide="raise", invalid="raise", over="raise")
 logger = logging.getLogger(__name__)
 
+YamlValue = Union[str, float, int]
 
-class dynamics(object):
+
+class dynamics:
     """Compute dynamic properties of a simulation."""
 
     dyn_dtype = np.float32
@@ -143,7 +144,7 @@ class dynamics(object):
         return np.arange(self.num_particles)
 
 
-class molecularRelaxation(object):
+class molecularRelaxation:
     """Compute the relaxation of each molecule."""
 
     def __init__(self, num_elements: int, threshold: float) -> None:
@@ -208,22 +209,28 @@ def create_mol_relaxations(
     threshold: float,
     last_passage: bool = False,
     last_passage_cutoff: float = 1.0,
-    **kwargs,
 ) -> molecularRelaxation:
+    if threshold is None or threshold < 0:
+        raise ValueError(f"Threshold needs a positive value, got {threshold}")
     if last_passage:
+        if last_passage_cutoff is None or last_passage_cutoff < 0:
+            raise ValueError(
+                "When using last passage a positive cutoff value is required,"
+                f"got {last_passage_cutoff}, default is 1.0"
+            )
         return lastMolecularRelaxation(num_elements, threshold, last_passage_cutoff)
 
     return molecularRelaxation(num_elements, threshold)
 
 
-class relaxations(object):
+class relaxations:
     def __init__(
         self,
         timestep: int,
         box: np.ndarray,
         position: np.ndarray,
         orientation: np.ndarray,
-        molecule: Molecule = None,
+        molecule: Molecule = None,  # pylint: disable=unused-argument
     ) -> None:
         self.init_time = timestep
         self.box = box
@@ -242,12 +249,24 @@ class relaxations(object):
             ]
         )
 
-    def set_mol_relax(self, definition: List[Dict[str, Any]]) -> None:
+    def set_mol_relax(self, definition: List[Dict[str, YamlValue]]) -> None:
         self.mol_relax: Dict[str, molecularRelaxation] = {}
         for item in definition:
-            index = item.get("name")
-            assert index is not None
-            self.mol_relax[index] = create_mol_relaxations(self._num_elements, **item)
+            if item.get("name") is None:
+                raise ValueError("'name' is a required attribute")
+            index = str(item["name"])
+            if item.get("threshold") is None:
+                raise ValueError("'threshold' is a required attribute")
+            threshold = float(item["threshold"])
+            last_passage = bool(item.get("last_passage", False))
+            last_passage_cutoff = float(item.get("last_passage_cutoff", 1.0))
+
+            self.mol_relax[index] = create_mol_relaxations(
+                self._num_elements,
+                threshold=threshold,
+                last_passage=last_passage,
+                last_passage_cutoff=last_passage_cutoff,
+            )
 
     def get_timediff(self, timestep: int):
         return timestep - self.init_time

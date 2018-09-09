@@ -113,17 +113,14 @@ def process_lammpstrj(
     indexes = [0]
     assert sim_params.infile is not None
     parser = parse_lammpstrj(sim_params.infile)
-    frame: LammpsFrame = next(parser)
-    while frame:
+    for frame in parser:
         if sim_params.num_steps is not None and frame.timestep > sim_params.num_steps:
             return
 
         yield indexes, frame
 
-        frame = next(parser)
 
-
-def parse_lammpstrj(filename: Path, mode: str = "r") -> Iterator[LammpsFrame]:
+def parse_lammpstrj(filename: Path) -> Iterator[LammpsFrame]:
     logger.debug("Parse file: %s", filename)
     with open(filename) as src:
         while True:
@@ -215,7 +212,7 @@ class WriteCache:
 
 def process_file(
     sim_params: SimulationParams, mol_relaxations: List[Dict[str, Any]] = None
-) -> None:
+) -> Optional[pandas.DataFrame]:
     """Read a gsd file and compute the dynamics quantities.
 
     This computes the dynamic quantities from a gsd file returning the
@@ -244,7 +241,9 @@ def process_file(
         for index in indexes:
             try:
                 logger.debug(
-                    f"len(keyframes): {len(keyframes)}, len(relaxframes): {len(relaxframes)}"
+                    "len(keyframes): %d, len(relaxframes): %d",
+                    len(keyframes),
+                    len(relaxframes),
                 )
                 mydyn = keyframes[index]
                 myrelax = relaxframes[index]
@@ -289,6 +288,6 @@ def process_file(
         mol_relax.to_hdf(
             sim_params.outfile, "molecular_relaxations", format="table", to_append=True
         )
-        return
+        return None
 
     return dataframes.to_dataframe()
