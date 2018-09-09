@@ -15,11 +15,11 @@ setup:
 	conda env update
 
 test:
-	isort --check-only --recursive src/
-	black --check src/
-	pylint src/
-	mypy src/
-	pytest
+	python3 -m isort --check-only --recursive src/
+	python3 -m black --check src/
+	python3 -m pylint src/
+	python3 -m mypy src/
+	python3 -m pytest
 
 deploy:
 
