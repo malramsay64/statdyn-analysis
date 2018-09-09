@@ -9,7 +9,7 @@ init-hook=
 
 # Add files or directories to the blacklist. They should be base names, not
 # paths.
-ignore=
+ignore=setup.py,conf.py
 
 # Pickle collected data for later comparisons.
 persistent=no
@@ -48,211 +48,19 @@ confidence=
 # Enable the message, report, category or checker with the given id(s). You can
 # either give multiple identifier separated by comma (,) or put this option
 # multiple time. See also the "--disable" option for examples.
-disable=all
+enable=all
 
-enable=import-error,
-       import-self,
-       reimported,
-       wildcard-import,
-       misplaced-future,
-       relative-import,
-       deprecated-module,
-       unpacking-non-sequence,
-       invalid-all-object,
-       undefined-all-variable,
-       used-before-assignment,
-       cell-var-from-loop,
-       global-variable-undefined,
-       redefined-builtin,
-       redefine-in-handler,
-       unused-import,
-       unused-wildcard-import,
-       global-variable-not-assigned,
-       undefined-loop-variable,
-       global-statement,
-       global-at-module-level,
-       bad-open-mode,
-       redundant-unittest-assert,
-       boolean-datetime,
-       unused-variable
+disable=bad-continuation,
+        suppressed-message,
+        locally-disabled,
+        locally-enabled,
+        file-ignored,
+        no-member,
+        missing-docstring,
+        empty-docstring,
+        invalid-name,
+        too-few-public-methods,
 
-# Things we'd like to enable someday:
-
-# Things we'd like to try.
-       # deprecated-method,
-       # anomalous-unicode-escape-in-string,
-       # anomalous-backslash-in-string,
-       # not-in-loop,
-       # function-redefined,
-       # continue-in-finally,
-       # abstract-class-instantiated,
-       # star-needs-assignment-target,
-       # duplicate-argument-name,
-       # return-in-init,
-       # too-many-star-expressions,
-       # nonlocal-and-global,
-       # return-outside-function,
-       # return-arg-in-generator,
-       # invalid-star-assignment-target,
-       # bad-reversed-sequence,
-       # nonexistent-operator,
-       # yield-outside-function,
-       # init-is-generator,
-       # nonlocal-without-binding,
-       # lost-exception,
-       # assert-on-tuple,
-       # dangerous-default-value,
-       # duplicate-key,
-       # useless-else-on-loop,
-       # expression-not-assigned,
-       # confusing-with-statement,
-       # unnecessary-lambda,
-       # pointless-statement,
-       # pointless-string-statement,
-       # unnecessary-pass,
-       # unreachable,
-       # eval-used,
-       # exec-used,
-       # bad-builtin,
-       # using-constant-test,
-       # deprecated-lambda,
-       # bad-super-call,
-       # missing-super-argument,
-       # slots-on-old-class,
-       # super-on-old-class,
-       # property-on-old-class,
-       # not-an-iterable,
-       # not-a-mapping,
-       # format-needs-mapping,
-       # truncated-format-string,
-       # missing-format-string-key,
-       # mixed-format-string,
-       # too-few-format-args,
-       # bad-str-strip-call,
-       # too-many-format-args,
-       # bad-format-character,
-       # format-combined-specification,
-       # bad-format-string-key,
-       # bad-format-string,
-       # missing-format-attribute,
-       # missing-format-argument-key,
-       # unused-format-string-argument,
-       # unused-format-string-key,
-       # invalid-format-index,
-       # bad-indentation,
-       # mixed-indentation,
-       # unnecessary-semicolon,
-       # lowercase-l-suffix,
-       # fixme,
-       # invalid-encoded-data,
-       # unpacking-in-except,
-       # import-star-module-level,
-       # parameter-unpacking,
-       # long-suffix,
-       # old-octal-literal,
-       # old-ne-operator,
-       # backtick,
-       # old-raise-syntax,
-       # print-statement,
-       # metaclass-assignment,
-       # next-method-called,
-       # dict-iter-method,
-       # dict-view-method,
-       # indexing-exception,
-       # raising-string,
-       # standarderror-builtin,
-       # using-cmp-argument,
-       # cmp-method,
-       # coerce-method,
-       # delslice-method,
-       # getslice-method,
-       # hex-method,
-       # nonzero-method,
-       # oct-method,
-       # setslice-method,
-       # apply-builtin,
-       # basestring-builtin,
-       # buffer-builtin,
-       # cmp-builtin,
-       # coerce-builtin,
-       # old-division,
-       # execfile-builtin,
-       # file-builtin,
-       # filter-builtin-not-iterating,
-       # no-absolute-import,
-       # input-builtin,
-       # intern-builtin,
-       # long-builtin,
-       # map-builtin-not-iterating,
-       # range-builtin-not-iterating,
-       # raw_input-builtin,
-       # reduce-builtin,
-       # reload-builtin,
-       # round-builtin,
-       # unichr-builtin,
-       # unicode-builtin,
-       # xrange-builtin,
-       # zip-builtin-not-iterating,
-       # logging-format-truncated,
-       # logging-too-few-args,
-       # logging-too-many-args,
-       # logging-unsupported-format,
-       # logging-not-lazy,
-       # logging-format-interpolation,
-       # invalid-unary-operand-type,
-       # unsupported-binary-operation,
-       # no-member,
-       # not-callable,
-       # redundant-keyword-arg,
-       # assignment-from-no-return,
-       # assignment-from-none,
-       # not-context-manager,
-       # repeated-keyword,
-       # missing-kwoa,
-       # no-value-for-parameter,
-       # invalid-sequence-index,
-       # invalid-slice-index,
-       # too-many-function-args,
-       # unexpected-keyword-arg,
-       # unsupported-membership-test,
-       # unsubscriptable-object,
-       # access-member-before-definition,
-       # method-hidden,
-       # assigning-non-slot,
-       # duplicate-bases,
-       # inconsistent-mro,
-       # inherit-non-class,
-       # invalid-slots,
-       # invalid-slots-object,
-       # no-method-argument,
-       # no-self-argument,
-       # unexpected-special-method-signature,
-       # non-iterator-returned,
-       # protected-access,
-       # arguments-differ,
-       # attribute-defined-outside-init,
-       # no-init,
-       # abstract-method,
-       # signature-differs,
-       # bad-staticmethod-argument,
-       # non-parent-init-called,
-       # super-init-not-called,
-       # bad-except-order,
-       # catching-non-exception,
-       # bad-exception-context,
-       # notimplemented-raised,
-       # raising-bad-type,
-       # raising-non-exception,
-       # misplaced-bare-raise,
-       # duplicate-except,
-       # broad-except,
-       # nonstandard-exception,
-       # binary-op-exception,
-       # bare-except,
-       # not-async-context-manager,
-       # yield-inside-async-function,
-
-# ...
 [REPORTS]
 
 # Set the output format. Available formats are text, parseable, colorized, msvs
@@ -512,14 +320,14 @@ int-import-graph=
 [DESIGN]
 
 # Maximum number of arguments for function / method
-max-args=5
+max-args=8
 
 # Argument names that match this expression will be ignored. Default to name
 # with leading underscore
 ignored-argument-names=_.*
 
 # Maximum number of locals for function / method body
-max-locals=15
+max-locals=18
 
 # Maximum number of return / yield for function / method body
 max-returns=6
@@ -534,7 +342,7 @@ max-statements=50
 max-parents=7
 
 # Maximum number of attributes for a class (see R0902).
-max-attributes=7
+max-attributes=8
 
 # Minimum number of public methods for a class (see R0903).
 min-public-methods=2
