@@ -10,15 +10,13 @@
 import gsd.hoomd
 import numpy as np
 import pytest
-import quaternion
 from hypothesis import HealthCheck, assume, given, settings
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
+from numpy.testing import assert_allclose
 
 from sdanalysis import dynamics
 from sdanalysis.read import process_gsd
-
-from .math_util_test import unit_quaternion
 
 MAX_BOX = 20.
 DTYPE = np.float32
@@ -47,15 +45,6 @@ def translationalDisplacement_reference(
     return result
 
 
-def rotationalDisplacement_reference(
-    initial: np.ndarray, final: np.ndarray
-) -> np.ndarray:
-    """Simplified reference implementation of the rotational displacement."""
-    init = quaternion.as_quat_array(initial)[0]
-    fin = quaternion.as_quat_array(final)[0]
-    return quaternion.rotation_intrinsic_distance(init, fin)
-
-
 @given(
     arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 4, MAX_BOX / 4)),
     arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 4, MAX_BOX / 4)),
@@ -72,8 +61,8 @@ def test_translationalDisplacement_noperiod(init, final):
     result = dynamics.translationalDisplacement(box, init, final)
     ref_res = translationalDisplacement_reference(box, init, final)
     print(result)
-    assert np.allclose(result, np_res, atol=EPS)
-    assert np.allclose(result, ref_res, atol=EPS)
+    assert_allclose(result, np_res, atol=EPS)
+    assert_allclose(result, ref_res, atol=EPS)
 
 
 @given(
@@ -90,7 +79,7 @@ def test_translationalDisplacement_periodicity(init, final):
     result = dynamics.translationalDisplacement(box, init, final)
     ref_res = translationalDisplacement_reference(box, init, final)
     assert np.all(np.logical_not(np.isclose(result, np_res)))
-    assert np.allclose(result, ref_res, atol=EPS)
+    assert_allclose(result, ref_res, atol=EPS)
 
 
 @given(
@@ -106,21 +95,6 @@ def test_translationalDisplacement(init, final):
     result = dynamics.translationalDisplacement(box, init, final)
     ref_res = translationalDisplacement_reference(box, init, final)
     assert np.allclose(result, ref_res, atol=EPS)
-
-
-@settings(suppress_health_check=[HealthCheck.filter_too_much, HealthCheck.too_slow])
-@given(unit_quaternion(), unit_quaternion())
-def test_rotationalDisplacement(init, final):
-    """Test the calculation of the rotationalDisplacement.
-
-    This compares the result of my algorithm to the quaternion library
-    which is much slower on arrays of values.
-    """
-    assume(not np.any(np.isnan(init)))
-    assume(not np.any(np.isnan(final)))
-    result = dynamics.rotationalDisplacement(init, final)
-    ref_res = rotationalDisplacement_reference(init, final)
-    assert np.allclose(result, ref_res, equal_nan=True, atol=10e-2)
 
 
 @given(arrays(HYP_DTYPE, (100), elements=floats(0, 10)))
@@ -177,7 +151,7 @@ def test_rotations(dynamics_class, trajectory, step):
     rotations = dynamics_class.get_rotations(snap.particles.orientation)
     assert rotations.shape == (dynamics_class.num_particles,)
     if step == 0:
-        assert np.all(rotations == 0.)
+        assert np.allclose(rotations, 0., atol=EPS)
     else:
         assert np.all(rotations >= 0.)
 

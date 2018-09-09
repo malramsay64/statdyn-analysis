@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 import pandas
+import rowan
 
 from .math_util import displacement_periodic, quaternion_rotation, rotate_vectors
 from .molecules import Molecule, Trimer
@@ -269,9 +270,11 @@ class relaxations(object):
 def molecule2particles(
     position: np.ndarray, orientation: np.ndarray, mol_vector: np.ndarray
 ) -> np.ndarray:
-    return rotate_vectors(orientation, mol_vector.astype(np.float32)) + np.repeat(
-        position, mol_vector.shape[0], axis=0
-    )
+    if np.allclose(orientation, 0.):
+        orientation[:, 0] = 1.
+    return np.concatenate(
+        [rotate_vectors(orientation, pos) for pos in mol_vector.astype(np.float32)]
+    ) + np.repeat(position, mol_vector.shape[0], axis=0)
 
 
 def mean_squared_displacement(displacement: np.ndarray) -> float:

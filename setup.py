@@ -9,14 +9,6 @@
 """Command line tool to run simulations."""
 
 from setuptools import find_packages, setup
-from setuptools.extension import Extension
-
-try:
-    import numpy as np
-    from Cython.Build import cythonize
-except ModuleNotFoundError as e:
-    print("Numpy and Cython are required to install sdanalysis.")
-    raise
 
 
 def get_version():
@@ -25,40 +17,23 @@ def get_version():
     return g["__version__"]
 
 
-extensions = [
-    Extension(
-        "sdanalysis.math_util",
-        ["src/sdanalysis/math_util.pyx"],
-        libraries=["m"],
-        include_dirs=[np.get_include()],
-    ),
-    Extension(
-        "sdanalysis._order",
-        ["src/sdanalysis/_order.pyx"],
-        language="c++",
-        libraries=["m"],
-        include_dirs=[np.get_include()],
-    ),
-]
-
 setup_requires = ["numpy>=1.13", "cython"]
 install_requires = [
-        "numpy>=1.13",
-        "scipy>=1.0",
-        "scikit-learn==0.19.0",
-        "pandas",
-        "tables",
-        "bokeh>=0.12.11",
-        "gsd>=1.3.0",
-        "pyyaml",
-        "hsluv",
-        "attrs",
-        "click",
+    "numpy>=1.13",
+    "scipy>=1.0",
+    "scikit-learn==0.19.0",
+    "pandas",
+    "tables",
+    "bokeh>=0.12.11",
+    "gsd>=1.3.0",
+    "pyyaml",
+    "hsluv",
+    "attrs",
+    "click",
 ]
 test_requires = [
     "pytest",
     "pylint",
-    "numpy-quaternion",
     "hypothesis",
     "coverage",
     "mypy",
@@ -77,7 +52,6 @@ setup(
     setup_requires=setup_requires,
     install_requires=install_requires,
     packages=find_packages("src"),
-    ext_modules=cythonize(extensions, include_path=["src/"]),
     package_dir={"": "src"},
     include_package_data=True,
     extras_require={"docs": docs_requires, "tests": test_requires, "dev": dev_requires},

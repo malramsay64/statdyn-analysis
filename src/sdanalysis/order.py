@@ -9,11 +9,40 @@
 """
 
 import numpy as np
+import rowan
 from freud.box import Box
 from freud.locality import NearestNeighbors as NearestNeighbours
 from freud.voronoi import Voronoi
 
-from ._order import _orientational_order, _relative_orientations
+
+def _neighbour_relative_angle(
+    neighbourlist: np.ndarray, orientation: np.ndarray
+) -> np.ndarray:
+    num_mols = len(orientation)
+    default_vals = np.arange(num_mols).reshape(-1, 1)
+    neighbourlist = np.where(neighbourlist < num_mols, neighbourlist, default_vals)
+    return rowan.geometry.intrinsic_distance(
+        orientation[neighbourlist], orientation.reshape(-1, 1, 4)
+    )
+
+
+def _orientational_order(
+    neighbourlist: np.ndarray, orientation: np.ndarray, angle_factor: float = 1.
+) -> np.ndarray:
+    """Compute the orientational order parameter.
+
+    This parameter computed from the relative orientation of the neighbouring
+    molecules.
+
+    Args:
+        neighbourlist: The neighbours of each molecule in the simulation
+        orientation: The orientation of each molecule as a quaternion
+        angle_factor (float): Multiplicative factor for the angle. This allows
+            for this function to apply to angles other than 180 deg.
+
+    """
+    angles = _neighbour_relative_angle(neighbourlist, orientation)
+    return np.cos(angles.mean() * angle_factor)
 
 
 def dt_model():
@@ -73,7 +102,7 @@ def compute_neighbours(
 ) -> np.ndarray:
     """Compute the neighbours of each molecule."""
     neighs = setup_neighbours(box, position, max_radius, max_neighbours)
-    return neighs.getNeighborList().astype(np.long)
+    return neighs.getNeighborList()
 
 
 def relative_orientations(
@@ -84,7 +113,7 @@ def relative_orientations(
     max_neighbours: int = 8,
 ) -> np.ndarray:
     neighbours = compute_neighbours(box, position, max_radius, max_neighbours)
-    return _relative_orientations(neighbours, orientation)
+    return _neighbour_relative_angle(neighbours, orientation)
 
 
 def orientational_order(

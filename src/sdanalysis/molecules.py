@@ -83,8 +83,11 @@ class Molecule(object):
         return np.array([self._radii[p] for p in self.particles])
 
     def orientation2positions(self, position, orientation):
-        return np.tile(position, (self.num_particles, 1)) + rotate_vectors(
-            orientation, self.positions.astype(np.float32)
+        return np.tile(position, (self.num_particles, 1)) + np.concatenate(
+            [
+                rotate_vectors(orientation, pos)
+                for pos in self.positions.astype(np.float32)
+            ]
         )
 
     def compute_size(self):
