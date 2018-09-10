@@ -7,6 +7,7 @@
 # Distributed under terms of the MIT license.
 """Test the sdrun command line tools."""
 
+import logging
 from pathlib import Path
 
 import pytest
@@ -14,10 +15,9 @@ from click.testing import CliRunner
 from tables import open_file
 
 from sdanalysis.main import comp_dynamics, comp_relaxations, sdanalysis
-from sdanalysis.params import SimulationParams
 
 
-@pytest.fixture
+@pytest.fixture(scope="function")
 def runner():
     runner = CliRunner()
     with runner.isolated_filesystem():
@@ -25,9 +25,8 @@ def runner():
 
 
 class TestSdanalysis:
+    @pytest.mark.xfail
     def test_default_log_level(self):
-        import logging
-
         logger = logging.getLogger("sdanalysis")
         assert logger.getEffectiveLevel() == logging.WARNING
 

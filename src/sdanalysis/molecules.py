@@ -8,97 +8,54 @@
 """Module to define a molecule to use for simulation."""
 
 import logging
-from typing import Any, Dict, List, Tuple
+from typing import Dict, List
 
+import attr
 import numpy as np
-
-from .math_util import rotate_vectors
 
 logger = logging.getLogger(__name__)
 
 
+@attr.s(auto_attribs=True, cmp=False)
 class Molecule:
-    """Molecule class holding information on the molecule for use in hoomd.
+    """A template class for the generation of molecules for analysis.
 
-    This class contains all the paramters required to initialise the molecule
-    in a hoomd simulation. This includes all interaction potentials, the rigid
-    body interactions and the moments of inertia.
-
-    The Molecule class is a template class that defines a number of functions
-    subclasses can use to set these variables however it generates no sensible
-    molecule itself.
+    The positions of all molecules will be adjusted to ensure the center of mass is at
+    the position (0, 0, 0).
 
     """
 
-    def __init__(self) -> None:
-        """Initialise defualt properties."""
-        self.moment_inertia = (0., 0., 0.)  # type: Tuple[float, float, float]
-        self.potential_args = dict()  # type: Dict[Any, Any]
-        self.particles = ["A"]
-        self._radii = {"A": 1.}
-        self.dimensions = 3
-        self.positions = np.array([[0, 0, 0]])
-        self.positions.flags.writeable = False
+    dimensions: int = 3
+    particles: List[str] = attr.ib(default=attr.Factory(lambda: ["A"]))
+    positions: np.ndarray = attr.ib(
+        default=attr.Factory(lambda: np.zeros((1, 3))), repr=False, cmp=False
+    )
+    _radii: Dict[str, float] = attr.ib(default=attr.Factory(dict))
+    rigid: bool = False
+    moment_inertia_scale: float = 1
 
-    def __eq__(self, other) -> bool:
-        return isinstance(other, type(self))
+    def __attrs_post_init__(self) -> None:
+        self._radii.setdefault("A", 1.0)
+        self.positions -= self._compute_center_of_mass()
 
     @property
     def num_particles(self) -> int:
-        """Count of particles in the molecule."""
+        """ Count of particles in the molecule"""
         return len(self.particles)
+
+    def _compute_center_of_mass(self) -> np.ndarray:
+        return np.mean(self.positions, axis=0)
 
     def get_types(self) -> List[str]:
         """Get the types of particles present in a molecule."""
         return sorted(list(self._radii.keys()))
 
-    def identify_bodies(self, indexes: np.ndarray) -> np.ndarray:
-        """Convert an index of molecules into an index of particles."""
-        return np.append(indexes, [indexes] * (self.num_particles - 1))
-
     def __str__(self) -> str:
         return type(self).__name__
-
-    def scale_moment_inertia(self, scale_factor: float) -> None:
-        """Scale the moment of inertia by a constant factor."""
-        i_x, i_y, i_z = self.moment_inertia
-        self.moment_inertia = (
-            i_x * scale_factor,
-            i_y * scale_factor,
-            i_z * scale_factor,
-        )
-
-    def compute_moment_intertia(
-        self, scale_factor: float = 1
-    ) -> Tuple[float, float, float]:
-        """Compute the moment of inertia from the particle paramters."""
-        positions = self.positions
-        COM = np.sum(positions, axis=0) / positions.shape[0]
-        moment_inertia = np.sum(np.square(positions - COM))
-        moment_inertia *= scale_factor
-        return (0, 0, moment_inertia)
 
     def get_radii(self) -> np.ndarray:
         """Radii of the particles."""
         return np.array([self._radii[p] for p in self.particles])
-
-    def orientation2positions(self, position, orientation):
-        return np.tile(position, (self.num_particles, 1)) + np.concatenate(
-            [
-                rotate_vectors(orientation, pos)
-                for pos in self.positions.astype(np.float32)
-            ]
-        )
-
-    def compute_size(self):
-        """Compute the maximum possible size of the moleucule.
-
-        This is a rough estimate of the size of the molecule for the creation
-        of a lattice that contains no overlaps.
-
-        """
-        length = np.max(np.max(self.positions, axis=1) - np.min(self.positions, axis=1))
-        return length + 2 * self.get_radii().max()
 
 
 class Disc(Molecule):
@@ -106,8 +63,7 @@ class Disc(Molecule):
 
     def __init__(self) -> None:
         """Initialise 2D disc particle."""
-        super().__init__()
-        self.dimensions = 2
+        super().__init__(dimensions=2)
 
 
 class Sphere(Molecule):
@@ -129,8 +85,6 @@ class Trimer(Molecule):
     subtended by the type `'A'` particle is the other degree of freedom.
 
 
-    TODO:
-        Compute the moment of inertia
     """
 
     def __init__(
@@ -152,41 +106,48 @@ class Trimer(Molecule):
                 factor.
 
         """
+        assert isinstance(radius, (float, int))
+        assert isinstance(distance, (float, int))
+        assert isinstance(angle, (float, int))
         super().__init__()
         self.radius = radius
         self.distance = distance
         self.angle = angle
-        self.particles = ["A", "B", "B"]
-        self._radii.update(B=self.radius)
-        self.dimensions = 2
-        self.positions = np.array(
+        rad_ang = np.deg2rad(angle)
+        particles = ["A", "B", "B"]
+        radii = {"A": 1.0, "B": self.radius}
+        positions = np.array(
             [
                 [0, 0, 0],
-                [
-                    -self.distance * np.sin(self.rad_angle / 2),
-                    self.distance * np.cos(self.rad_angle / 2),
-                    0,
-                ],
-                [
-                    self.distance * np.sin(self.rad_angle / 2),
-                    self.distance * np.cos(self.rad_angle / 2),
-                    0,
-                ],
+                [-distance * np.sin(rad_ang / 2), distance * np.cos(rad_ang / 2), 0],
+                [distance * np.sin(rad_ang / 2), distance * np.cos(rad_ang / 2), 0],
             ]
         )
-        self.positions.flags.writeable = False
-        self.moment_inertia = self.compute_moment_intertia(moment_inertia_scale)
+        super().__init__(
+            positions=positions,
+            dimensions=2,
+            radii=radii,
+            particles=particles,
+            rigid=True,
+            moment_inertia_scale=moment_inertia_scale,
+        )
 
     @property
     def rad_angle(self) -> float:
         return np.radians(self.angle)
+
+    def __repr__(self) -> str:
+        return (
+            f"{type(self).__name__}(radius={self.radius}, distance={self.distance}, "
+            f"angle={self.angle}, moment_inertia_scale={self.moment_inertia_scale})"
+        )
 
     def __eq__(self, other) -> bool:
         if super().__eq__(other):
             return (
                 self.radius == other.radius
                 and self.distance == other.distance
-                and self.moment_inertia == other.moment_inertia
+                and self.angle == other.angle
             )
 
         return False
@@ -204,8 +165,13 @@ class Dimer(Molecule):
 
     """
 
-    def __init__(self, radius: float = 0.637556, distance: float = 1.0) -> None:
-        """Intialise Dimer molecule.
+    def __init__(
+        self,
+        radius: float = 0.637556,
+        distance: float = 1.0,
+        moment_inertia_scale: float = 1,
+    ) -> None:
+        """Initialise Dimer molecule.
 
         Args:
             radius (float): Radius of the small particles. Default is 0.637556
@@ -218,9 +184,20 @@ class Dimer(Molecule):
         super(Dimer, self).__init__()
         self.radius = radius
         self.distance = distance
-        self.particles = ["A", "B"]
-        self._radii.update(B=self.radius)
-        self.dimensions = 2
-        self.positions = np.array([[0, 0, 0], [0, self.distance, 0]])
-        self.positions.flags.writeable = False
-        self.moment_inertia = self.compute_moment_intertia()
+        particles = ["A", "B"]
+        radii = {"A": 1.0, "B": self.radius}
+        positions = np.array([[0, 0, 0], [0, self.distance, 0]])
+        super().__init__(
+            dimensions=2,
+            particles=particles,
+            positions=positions,
+            radii=radii,
+            rigid=True,
+            moment_inertia_scale=moment_inertia_scale,
+        )
+
+    def __eq__(self, other) -> bool:
+        if super().__eq__(other):
+            return self.radius == other.radius and self.distance == other.distance
+
+        return False

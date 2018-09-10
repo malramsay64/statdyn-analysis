@@ -11,6 +11,11 @@
 from pathlib import Path
 from typing import NamedTuple, Optional
 
+import numpy as np
+
+from sdanalysis.math_util import rotate_vectors
+from sdanalysis.molecules import Molecule
+
 
 class variables(NamedTuple):
     temperature: Optional[str]
@@ -42,3 +47,11 @@ def get_filename_vars(fname: Path):
         crys = None
 
     return variables(temp, pressure, crys)
+
+
+def orientation2positions(
+    mol: Molecule, position: np.ndarray, orientation: np.ndarray
+) -> np.ndarray:
+    return np.tile(position, (mol.num_particles, 1)) + np.concatenate(
+        [rotate_vectors(orientation, pos) for pos in mol.positions.astype(np.float32)]
+    )

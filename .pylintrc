@@ -60,6 +60,8 @@ disable=bad-continuation,
         empty-docstring,
         invalid-name,
         too-few-public-methods,
+        unsubscriptable-object,
+        not-an-iterable,
 
 [REPORTS]
 

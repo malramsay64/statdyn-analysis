@@ -19,6 +19,7 @@ from hsluv import hpluv_to_rgb
 from ..frame import Frame
 from ..math_util import quaternion2z
 from ..molecules import Molecule, Trimer
+from ..util import orientation2positions
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,7 @@ def frame2data(
         logger.debug("Order fraction %.2f", np.mean(order))
         colour[order] = colour_orientation(angle, light_colours=True)[order]
 
-    positions = molecule.orientation2positions(frame.position, frame.orientation)
+    positions = orientation2positions(molecule, frame.position, frame.orientation)
     data = {
         "x": positions[:, 0],
         "y": positions[:, 1],
