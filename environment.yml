@@ -4,8 +4,7 @@ channels:
     - conda-forge
 dependencies:
     # Install Requirements
-    - python=3.6
-    - cython>=0.28
+    - python>=3.6
     - numpy=1.14
     - scipy=1.1.0
     - scikit-learn=0.19.0

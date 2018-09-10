@@ -13,6 +13,7 @@ help:
 
 setup:
 	conda env update
+	pre-commit install-hooks
 
 test:
 	python3 -m isort --check-only --recursive src/
@@ -20,6 +21,14 @@ test:
 	python3 -m pylint src/
 	python3 -m mypy src/
 	python3 -m pytest
+
+lock:
+	docker run -it\
+		-v $(shell pwd)/environment.yml:/srv/environment.yml:Z \
+		continuumio/miniconda3:4.5.4 \
+		conda env create -f /srv/environment.yml && \
+		conda activate sdanalysis-dev && \
+		conda env export > environment.lock
 
 deploy:
 
