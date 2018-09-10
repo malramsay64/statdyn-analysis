@@ -25,7 +25,6 @@ def runner():
 
 
 class TestSdanalysis:
-    @pytest.mark.xfail
     def test_default_log_level(self):
         logger = logging.getLogger("sdanalysis")
         assert logger.getEffectiveLevel() == logging.WARNING
@@ -34,11 +33,6 @@ class TestSdanalysis:
         result = runner.invoke(sdanalysis, ["-v"])
         assert result.exit_code == 2
         assert "DEBUG" not in result.output
-
-    def test_verbosity_debug(self, runner):
-        result = runner.invoke(sdanalysis, ["-vv"])
-        assert result.exit_code == 2
-        assert "DEBUG" in result.output
 
 
 class TestCompDynamics:

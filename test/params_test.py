@@ -18,8 +18,6 @@ from sdanalysis.molecules import Dimer, Disc, Molecule, Sphere, Trimer
 from sdanalysis.params import SimulationParams
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logging.basicConfig(level=logging.DEBUG)
 
 
 @pytest.fixture

@@ -24,7 +24,6 @@ from .StepSize import GenerateStepSeries
 from .util import get_filename_vars
 
 logger = logging.getLogger(__name__)
-logger.setLevel("INFO")
 
 gsd_logger = logging.getLogger("gsd")
 gsd_logger.setLevel("WARNING")
