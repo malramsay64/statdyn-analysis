@@ -17,12 +17,12 @@ before_install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda env update
+  - conda create --name sdanalysis --file environment-lock.txt
   - source activate sdanalysis-dev
   - conda install -c conda-forge codecov
 
 install:
-  - python setup.py develop
+  - pip install -e . --no-deps
 
 script:
   - black --check src/
@@ -35,7 +35,6 @@ after_success:
 
 before_deploy:
     - conda install -n root anaconda-client conda-build
-    - conda config --append channels glotzer
     - conda config --append channels malramsay
     - conda config --set anaconda_upload yes
     - source activate base
