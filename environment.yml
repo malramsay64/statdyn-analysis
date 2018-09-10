@@ -2,6 +2,8 @@ name: sdanalysis-dev
 channels:
     - defaults
     - conda-forge
+    - malramsay
+    - simplistix
 dependencies:
     # Install Requirements
     - python>=3.6
@@ -15,7 +17,7 @@ dependencies:
     - pyyaml
     - freud
     - rowan
-    - malramsay::hsluv
+    - hsluv
     # Development requirements
     - pytest
     - coverage
@@ -26,3 +28,4 @@ dependencies:
     - pylint
     - black
     - isort
+    - picky-conda

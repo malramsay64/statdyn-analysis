@@ -3,6 +3,7 @@
 # Malcolm Ramsay, 2018-01-03 09:24
 #
 #
+lockfile = environment-lock.txt
 
 help:
 	@echo "Usage:"
@@ -12,7 +13,7 @@ help:
 	@echo "    make deploy     deploy application"
 
 setup:
-	conda env update
+	conda create --name sdanalysis-dev --file environment-lock.txt
 	pre-commit install-hooks
 
 test:
@@ -22,18 +23,20 @@ test:
 	python3 -m mypy src/
 	python3 -m pytest
 
-lock:
+lock: | ${lockfile}
 	docker run -it\
-		-v $(shell pwd)/environment.yml:/srv/environment.yml:Z \
-		continuumio/miniconda3:4.5.4 \
-		conda env create -f /srv/environment.yml && \
-		conda activate sdanalysis-dev && \
-		conda env export > environment.lock
+		--volume $(shell pwd):/srv:z \
+		--workdir /srv \
+		continuumio/miniconda3:4.5.4 bash -c \
+		"conda env create -f environment.yml && source activate sdanalysis-dev && conda list --explicit > ${lockfile}"
 
-deploy:
+${lockfile}:
+	touch $@
+
+install:
+	pip install -e . --no-deps
 
 
 .PHONY: help test clean deploy
 
 # vim:ft=make
-#
