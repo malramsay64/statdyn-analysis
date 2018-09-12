@@ -212,9 +212,9 @@ class WriteCache:
 def process_file(
     sim_params: SimulationParams, mol_relaxations: List[Dict[str, Any]] = None
 ) -> Optional[pandas.DataFrame]:
-    """Read a gsd file and compute the dynamics quantities.
+    """Read a file and compute the dynamics quantities.
 
-    This computes the dynamic quantities from a gsd file returning the
+    This computes the dynamic quantities from a file returning the
     result as a pandas DataFrame. This is only suitable for cases where
     all the data will fit in memory, as there is no writing to a file.
 

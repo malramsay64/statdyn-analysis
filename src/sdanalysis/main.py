@@ -105,6 +105,7 @@ def comp_dynamics(sim_params, output, mol_relaxations, linear_dynamics, infile) 
     if output is not None:
         sim_params.output = output
     sim_params.infile = infile
+    sim_params.outfile = sim_params.output / "dynamics.h5"
     if linear_dynamics:
         sim_params.linear_steps = None
     if mol_relaxations is not None:
