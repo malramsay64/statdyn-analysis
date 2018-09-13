@@ -8,6 +8,7 @@
 """Read input files and compute dynamic and thermodynamic quantities."""
 
 import logging
+import time
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
@@ -15,6 +16,7 @@ import attr
 import gsd.hoomd
 import numpy as np
 import pandas
+import tables
 
 from .dynamics import dynamics, relaxations
 from .frame import Frame, HoomdFrame, LammpsFrame
@@ -170,12 +172,14 @@ def parse_lammpstrj(filename: Path) -> Iterator[LammpsFrame]:
 @attr.s(auto_attribs=True)
 class WriteCache:
     _filename: Optional[Path] = None
+    group_name: str = "dynamics"
     cache_multiplier: int = 1
     to_append: bool = False
 
     _cache: List[Any] = attr.ib(default=attr.Factory(list), init=False)
     _cache_default: int = attr.ib(default=8192, init=False)
     _emptied_count: int = attr.ib(default=0, init=False)
+    _retries: int = attr.ib(default=10, init=False)
 
     @property
     def _cache_size(self) -> int:
@@ -189,9 +193,28 @@ class WriteCache:
         self._cache.append(item)
 
     def flush(self) -> None:
-        self.to_dataframe().to_hdf(
-            self.filename, "dynamics", format="table", append=self.to_append
-        )
+        df = self.to_dataframe()
+        # Retry file writing if it fails
+        for _ in range(self._retries):
+            try:
+                df.to_hdf(
+                    self.filename,
+                    f"dynamics/{self.group_name}",
+                    format="table",
+                    append=self.to_append,
+                )
+            except tables.exceptions.HDF5ExtError:
+                time.sleep(np.random.random())
+            else:
+                break
+        else:
+            # This time with no exception handling so the exception is raised
+            df.to_hdf(
+                self.filename,
+                f"dynamics/{self.group_name}",
+                format="table",
+                append=self.to_append,
+            )
         self.to_append = True
         self._cache.clear()
 
@@ -225,10 +248,17 @@ def process_file(
 
     """
     assert sim_params.infile is not None
+    group_name = (
+        f"{str(sim_params.molecule)}-"
+        f"P{sim_params.pressure:.2f}-"
+        "T{sim_params.temperature:.2f}"
+    )
     if sim_params.outfile is not None:
-        dataframes = WriteCache(sim_params.outfile, to_append=True)
+        dataframes = WriteCache(sim_params.outfile, group_name, to_append=True)
     else:
-        dataframes = WriteCache(sim_params.outfile, to_append=True, cache_multiplier=0)
+        dataframes = WriteCache(
+            sim_params.outfile, group_name, to_append=True, cache_multiplier=0
+        )
     keyframes: List[dynamics] = []
     relaxframes: List[relaxations] = []
     if sim_params.infile.suffix == ".gsd":
