@@ -248,11 +248,12 @@ def process_file(
 
     """
     assert sim_params.infile is not None
-    group_name = (
-        f"{str(sim_params.molecule)}-"
-        f"P{sim_params.pressure:.2f}-"
-        "T{sim_params.temperature:.2f}"
-    )
+
+    mol = str(sim_params.molecule)
+    press = sim_params.pressure
+    temp = sim_params.temperature
+    group_name = f"{mol}-P{press:.2f}-T{temp:.2f}"
+
     if sim_params.outfile is not None:
         dataframes = WriteCache(sim_params.outfile, group_name, to_append=True)
     else:
