@@ -9,12 +9,17 @@
 """A collection of utility functions."""
 
 from pathlib import Path
-from typing import NamedTuple, Optional
+from typing import NamedTuple, Optional, Union
 
 import numpy as np
 
 from sdanalysis.math_util import rotate_vectors
 from sdanalysis.molecules import Molecule
+from .params import SimulationParams
+import logging
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
 
 
 class variables(NamedTuple):
@@ -26,6 +31,8 @@ class variables(NamedTuple):
 def get_filename_vars(fname: Path):
     fname = Path(fname)
     flist = fname.stem.split("-")
+    logger.debug("Split Filename: %s", str(flist))
+
     if len(flist) < 4:
         return variables(None, None, None)
 
@@ -47,6 +54,14 @@ def get_filename_vars(fname: Path):
         crys = None
 
     return variables(temp, pressure, crys)
+
+
+def set_filename_vars(fname: Union[str, Path], sim_params: SimulationParams) -> None:
+    """Set the variables of the simulations params according to the filename."""
+    var = get_filename_vars(fname)
+    sim_params.temperature = float(var.temperature)
+    sim_params.pressure = float(var.pressure)
+    sim_params.crystal = var.crystal
 
 
 def orientation2positions(
