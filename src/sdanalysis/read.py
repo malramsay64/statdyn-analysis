@@ -23,7 +23,6 @@ from .frame import Frame, HoomdFrame, LammpsFrame
 from .molecules import Trimer
 from .params import SimulationParams
 from .StepSize import GenerateStepSeries
-from .util import get_filename_vars
 
 logger = logging.getLogger(__name__)
 
