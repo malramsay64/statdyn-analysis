@@ -112,6 +112,8 @@ def comp_dynamics(sim_params, output, mol_relaxations, linear_dynamics, infile) 
         compute_relaxations = yaml.parse(mol_relaxations)
     else:
         compute_relaxations = None
+
+    set_filename_vars(sim_params.infile, sim_params)
     process_file(sim_params, compute_relaxations)
 
 

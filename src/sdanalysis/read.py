@@ -252,7 +252,7 @@ def process_file(
     mol = str(sim_params.molecule)
     press = sim_params.pressure
     temp = sim_params.temperature
-    group_name = f"{mol}-P{press:.2f}-T{temp:.2f}"
+    group_name = f"{mol}_P{press:.2f}_T{temp:.2f}"
 
     if sim_params.outfile is not None:
         dataframes = WriteCache(sim_params.outfile, group_name, to_append=True)
@@ -266,7 +266,6 @@ def process_file(
         file_iterator: FileIterator = process_gsd(sim_params)
     elif sim_params.infile.suffix == ".lammpstrj":
         file_iterator = process_lammpstrj(sim_params)
-    variables = get_filename_vars(sim_params.infile)
     for indexes, frame in file_iterator:
         for index in indexes:
             try:
@@ -305,16 +304,16 @@ def process_file(
             myrelax.add(frame.timestep, frame.position, frame.orientation)
             logger.debug("Series: %s", index)
             dynamics_series["start_index"] = index
-            dynamics_series["temperature"] = variables.temperature
-            dynamics_series["pressure"] = variables.pressure
+            dynamics_series["temperature"] = sim_params.temperature
+            dynamics_series["pressure"] = sim_params.pressure
             dataframes.append(dynamics_series)
     if sim_params.outfile is not None:
         dataframes.flush()
         mol_relax = pandas.concat(
             (relax.summary() for relax in relaxframes), keys=range(len(relaxframes))
         )
-        mol_relax["temperature"] = variables.temperature
-        mol_relax["pressure"] = variables.pressure
+        mol_relax["temperature"] = sim_params.temperature
+        mol_relax["pressure"] = sim_params.pressure
         mol_relax.to_hdf(
             sim_params.outfile, "molecular_relaxations", format="table", to_append=True
         )
