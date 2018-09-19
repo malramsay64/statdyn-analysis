@@ -21,6 +21,7 @@ from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
 from .read import process_file
 from .relaxation import compute_relaxation_value, translate_relaxation
+from .util import set_filename_vars
 from .version import __version__
 
 logger = logging.getLogger(__name__)
