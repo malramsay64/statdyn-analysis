@@ -55,4 +55,4 @@ test:
   source_files:
     - test/
   commands:
-    - make test
+    - python -m pytest
