@@ -19,7 +19,6 @@ from sdanalysis.molecules import Molecule
 from .params import SimulationParams
 
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
 
 PathLike = Union[str, Path]
 
