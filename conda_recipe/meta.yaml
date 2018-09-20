@@ -37,6 +37,7 @@ requirements:
     - attrs
     - click
     - freud ==0.9.0
+    - rowan
 
 build:
   noarch: python
