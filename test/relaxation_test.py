@@ -8,14 +8,12 @@
 
 """Test the relaxation module."""
 
-from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import numpy as np
 import pandas
 import pytest
 
-from sdanalysis import SimulationParams, read, relaxation
+from sdanalysis import relaxation
 
 
 def test_diffusion_constant():
@@ -110,20 +108,6 @@ class TestMaxTimeRelax:
         max_time, error = relaxation.max_time_relaxation(self.time, value)
         assert max_time == expected_time
         assert error == 1
-
-
-@pytest.fixture()
-def dynamics_file():
-    with TemporaryDirectory() as tmp:
-        outfile = Path(tmp) / "dynamics.h5"
-        sim_params = SimulationParams(
-            infile="test/data/trajectory-Trimer-P13.50-T3.00.gsd",
-            outfile=outfile,
-            output=tmp,
-        )
-        read.process_file(sim_params)
-
-        yield outfile
 
 
 def test_compute_relaxations(dynamics_file):

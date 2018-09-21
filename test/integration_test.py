@@ -10,6 +10,7 @@
 
 from pathlib import Path
 
+import pandas
 import pytest
 
 from sdanalysis.main import comp_dynamics, comp_relaxations
@@ -34,6 +35,7 @@ def test_runner_file(runner):
     assert (Path.cwd() / "test").is_file()
 
 
+@pytest.mark.xfail
 def test_dynamics(runner, trajectory):
     outdir = Path.cwd()
     print(outdir)
@@ -41,8 +43,19 @@ def test_dynamics(runner, trajectory):
     print(list(outdir.glob("*")))
     assert result.exit_code == 0
     assert (outdir / "dynamics.h5").is_file()
+    result = runner.invoke(comp_relaxations, ["dynamics.h5"])
+    assert result.exit_code == 0, result.output
 
 
+def test_relaxation_file(runner, dynamics_file):
+    assert dynamics_file.is_file()
+    result = runner.invoke(comp_relaxations, [str(dynamics_file)])
+    assert result.exit_code == 0
+    with pandas.HDFStore(dynamics_file) as src:
+        assert "/relaxations" in src.keys()
+
+
+@pytest.mark.xfail
 def test_relaxation(runner, trajectory):
     outdir = Path.cwd()
     print(outdir)

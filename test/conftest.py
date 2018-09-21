@@ -6,10 +6,13 @@
 #
 # Distributed under terms of the MIT license.
 
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
 import pytest
 from click.testing import CliRunner
 
-from sdanalysis import molecules
+from sdanalysis import SimulationParams, molecules, read, relaxation
 
 MOLECULE_LIST = [
     molecules.Molecule,
@@ -30,3 +33,14 @@ def runner():
     r = CliRunner()
     with r.isolated_filesystem():
         yield r
+
+
+@pytest.fixture()
+def dynamics_file():
+    infile = Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
+    with TemporaryDirectory() as tmp:
+        outfile = Path(tmp) / "dynamics.h5"
+        sim_params = SimulationParams(infile=infile, outfile=outfile, output=tmp)
+        read.process_file(sim_params)
+
+        yield outfile
