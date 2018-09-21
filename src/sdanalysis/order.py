@@ -102,7 +102,7 @@ def compute_neighbours(
 ) -> np.ndarray:
     """Compute the neighbours of each molecule."""
     neighs = setup_neighbours(box, position, max_radius, max_neighbours)
-    return neighs.nlist
+    return neighs.getNeighborList()
 
 
 def relative_orientations(
