@@ -8,14 +8,10 @@
 """Run simulation with boilerplate taken care of by the statdyn library."""
 
 import logging
-from pathlib import Path
 from pprint import pformat
 
 import click
-import numpy as np
-import pandas
 import yaml
-from scipy.stats import hmean
 
 from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
@@ -110,12 +106,12 @@ def comp_dynamics(sim_params, output, mol_relaxations, linear_dynamics, infile) 
     if linear_dynamics:
         sim_params.linear_steps = None
     if mol_relaxations is not None:
-        compute_relaxations = yaml.parse(mol_relaxations)
+        relaxations = yaml.parse(mol_relaxations)
     else:
-        compute_relaxations = None
+        relaxations = None
 
     set_filename_vars(sim_params.infile, sim_params)
-    process_file(sim_params, compute_relaxations)
+    process_file(sim_params, relaxations)
 
 
 @sdanalysis.command()

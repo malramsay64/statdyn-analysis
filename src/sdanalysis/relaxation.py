@@ -218,7 +218,7 @@ def compute_relaxation_value(
 
 
 def series_relaxation_value(series: pandas.Series) -> float:
-    mean, error = compute_relaxation_value(series.index, series.values, series.name)
+    mean, _ = compute_relaxation_value(series.index, series.values, series.name)
     return mean
 
 
