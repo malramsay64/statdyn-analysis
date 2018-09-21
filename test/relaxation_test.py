@@ -8,6 +8,8 @@
 
 """Test the relaxation module."""
 
+from pathlib import Path
+
 import numpy as np
 import pytest
 from sdanalysis import relaxation
@@ -105,3 +107,8 @@ class TestMaxTimeRelax:
         max_time, error = relaxation.max_time_relaxation(self.time, value)
         assert max_time == expected_time
         assert error == 1
+
+
+def test_compute_relaxations():
+    infile = Path("test/data/dynamics.h5")
+    relaxation.compute_relaxations(infile)
