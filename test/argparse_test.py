@@ -65,8 +65,8 @@ def test_comp_dynamics_infile(runner, sim_params):
     assert result.exit_code == 2
     assert 'Invalid value for "infile": Path "nonexistant.file" does not exist.'
 
-    datafile = "test/data/trajectory-Trimer-P13.50-T3.00.gsd"
-    result = runner.invoke(comp_dynamics, [datafile], obj=sim_params)
+    datafile = Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
+    result = runner.invoke(comp_dynamics, [str(datafile)], obj=sim_params)
     assert result.exit_code == 0
     print(result.output)
     assert "_infile=None" not in result.output
