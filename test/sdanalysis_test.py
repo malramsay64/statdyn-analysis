@@ -25,10 +25,6 @@ def runner():
 
 
 class TestSdanalysis:
-    def test_default_log_level(self):
-        logger = logging.getLogger("sdanalysis")
-        assert logger.getEffectiveLevel() == logging.WARNING
-
     def test_verbosity_info(self, runner):
         result = runner.invoke(sdanalysis, ["-v"])
         assert result.exit_code == 2
