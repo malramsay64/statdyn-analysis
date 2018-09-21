@@ -102,7 +102,7 @@ def compute_neighbours(
 ) -> np.ndarray:
     """Compute the neighbours of each molecule."""
     neighs = setup_neighbours(box, position, max_radius, max_neighbours)
-    return neighs.getNeighborList()
+    return neighs.nlist
 
 
 def relative_orientations(
@@ -153,5 +153,5 @@ def relative_distances(
 
 def compute_voronoi_neighs(box: np.ndarray, position: np.ndarray) -> np.ndarray:
     vor = Voronoi(create_freud_box(box), buff=5)
-    nlist = vor.computeNeighbors(position).getNeighborList()
+    nlist = vor.computeNeighbors(position).nlist
     return nlist.neighbor_counts
