@@ -251,7 +251,7 @@ def process_file(
     mol = str(sim_params.molecule)
     press = sim_params.pressure
     temp = sim_params.temperature
-    group_name = f"{mol}_P{press:.2f}_T{temp:.2f}"
+    group_name = f"{mol}_P{press:.2f}_T{temp:.2f}".replace(".", "")
 
     if sim_params.outfile is not None:
         dataframes = WriteCache(sim_params.outfile, group_name, to_append=True)
