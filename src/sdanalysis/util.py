@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import NamedTuple, Optional, Union
 
 import numpy as np
+
 from sdanalysis.math_util import rotate_vectors
 from sdanalysis.molecules import Molecule
 

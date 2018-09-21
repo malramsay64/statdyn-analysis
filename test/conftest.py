@@ -8,6 +8,7 @@
 
 import pytest
 from click.testing import CliRunner
+
 from sdanalysis import molecules
 
 MOLECULE_LIST = [

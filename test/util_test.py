@@ -10,10 +10,10 @@
 
 """
 import numpy as np
-
-from sdanalysis.util import orientation2positions, set_filename_vars, get_filename_vars
 import pytest
+
 from sdanalysis.params import SimulationParams
+from sdanalysis.util import get_filename_vars, orientation2positions, set_filename_vars
 
 
 def test_orientation2positions(mol):

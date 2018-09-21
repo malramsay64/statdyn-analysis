@@ -13,6 +13,7 @@ from pathlib import Path
 
 import click
 import pytest
+
 import sdanalysis as sdanalysis_module
 from sdanalysis.main import MOLECULE_OPTIONS, comp_dynamics, sdanalysis
 from sdanalysis.params import SimulationParams
