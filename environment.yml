@@ -3,7 +3,6 @@ channels:
     - defaults
     - conda-forge
     - malramsay
-    - simplistix
 dependencies:
     # Install Requirements
     - python>=3.6
@@ -28,4 +27,3 @@ dependencies:
     - pylint
     - black
     - isort
-    - picky-conda
