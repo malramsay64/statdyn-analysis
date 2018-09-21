@@ -23,10 +23,12 @@ def trajectory():
 def test_dynamics(runner, trajectory):
     result = runner.invoke(comp_dynamics, [str(trajectory)])
     assert result.exit_code == 0
+    assert Path("dynamics.h5").is_file()
 
 
 def test_relaxation(runner, trajectory):
     result = runner.invoke(comp_dynamics, [str(trajectory)])
     assert result.exit_code == 0
+    assert Path("dynamics.h5").is_file()
     result = runner.invoke(comp_relaxations, ["dynamics.h5"])
     assert result.exit_code == 0, result.output
