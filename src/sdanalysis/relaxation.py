@@ -217,8 +217,9 @@ def compute_relaxation_value(
     return exponential_relaxation(timesteps, values)
 
 
-def series_relaxation_value(series: pandas.Series) -> Tuple[float, float]:
-    return compute_relaxation_value(series.index, series.values, series.name)
+def series_relaxation_value(series: pandas.Series) -> float:
+    mean, error = compute_relaxation_value(series.index, series.values, series.name)
+    return mean
 
 
 def compute_relaxations(infile) -> None:

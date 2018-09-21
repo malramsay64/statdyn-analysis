@@ -11,6 +11,7 @@
 from pathlib import Path
 
 import numpy as np
+import pandas
 import pytest
 
 from sdanalysis import relaxation
@@ -113,3 +114,12 @@ class TestMaxTimeRelax:
 def test_compute_relaxations():
     infile = Path("test/data/dynamics.h5")
     relaxation.compute_relaxations(infile)
+
+
+def test_compute_relaxations_values():
+    infile = Path("test/data/dynamics.h5")
+    relaxation.compute_relaxations(infile)
+    df = pandas.read_hdf(infile, "relaxations")
+    columns = ["diffusion_constant"]
+    for col in columns:
+        assert df[col].dtype == float
