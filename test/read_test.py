@@ -96,6 +96,17 @@ def test_writeCache_len():
         assert len(my_list._cache) == 0
 
 
+def test_writeCache_file():
+    with tempfile.TemporaryDirectory() as dst:
+        outfile = Path(dst) / "test2.h5"
+        my_list = read.WriteCache(outfile)
+        for i in range(100):
+            my_list.append({"value": i})
+        assert not outfile.is_file()
+        my_list.flush()
+        assert outfile.is_file()
+
+
 def test_process_gsd(sim_params):
     indexes, frame = next(read.process_gsd(sim_params))
     assert isinstance(indexes, list)

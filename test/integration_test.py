@@ -20,6 +20,20 @@ def trajectory():
     return Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
 
 
+def test_runner_file(runner):
+    import click
+
+    @click.command()
+    @click.argument("fname")
+    def create_file(fname):
+        with open(fname, "w") as dst:
+            dst.write("testing\n")
+
+    result = runner.invoke(create_file, ["test"])
+    assert result.exit_code == 0
+    assert (Path.cwd() / "test").is_file()
+
+
 def test_dynamics(runner, trajectory):
     outdir = Path.cwd()
     print(outdir)
