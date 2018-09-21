@@ -11,10 +11,14 @@ This provides methods of easily comparing values across variables.
 """
 
 import logging
+from pathlib import Path
 from typing import Tuple
 
 import numpy as np
+import pandas
+import tables
 from scipy.optimize import curve_fit, newton
+from scipy.stats import hmean
 
 logger = logging.getLogger(__name__)
 
@@ -203,3 +207,81 @@ def compute_relaxation_value(
     if relax_type in ["alpha", "gamma"]:
         return max_time_relaxation(timesteps, values)
     return exponential_relaxation(timesteps, values)
+
+
+def series_relaxation_value(series: pandas.Series) -> Tuple[float, float]:
+    return compute_relaxation_value(series.index, series.values, series.name)
+
+
+def compute_relaxations(infile) -> None:
+    """Compute the summary time value for the dynamic quantities.
+
+    This computes the characteristic timescale of the dynamic quantities which have been
+    calculated and are present in INFILE. The INFILE is a path to the pre-computed
+    dynamic quantities and needs to be in the HDF5 format with either the '.hdf5' or
+    '.h5' extension.
+
+    The output is written to the table 'relaxations' in INFILE.
+
+    """
+
+    infile = Path(infile)
+    # Check is actually an HDF5 file
+    try:
+        with tables.open_file(str(infile)):
+            pass
+    except tables.HDF5ExtError:
+        raise ValueError("The argument 'infile' requires an hdf5 input file.")
+
+    # Check input file contains the tables required
+    with tables.open_file(str(infile)) as src:
+        if "/dynamics" not in src:
+            raise KeyError(
+                "Table 'dynamics' not found in input file,"
+                " try rerunning `sdanalysis comp_dynamics`."
+            )
+        if "/molecular_relaxations" not in src:
+            raise KeyError(
+                f"Table 'molecular_relaxations' not found in input file,"
+                " try rerunning `sdanalysis comp_dynamics`."
+            )
+
+    relaxation_list = []
+    with pandas.HDFStore(infile) as src:
+        for key in src.keys():
+            if "dynamics" not in key:
+                continue
+
+            df_dyn = src.get(key)
+            logger.debug(df_dyn.columns)
+            # Remove columns with no relaxation value to calculate
+            extra_columns = [
+                "mean_displacement",
+                "mean_rotation",
+                "mfd",
+                "overlap",
+                "start_index",
+            ]
+            for col in extra_columns:
+                if col in df_dyn.columns:
+                    df_dyn.drop(columns=col, inplace=True)
+
+            # Average over all initial times
+            df_dyn = df_dyn.groupby(["time", "temperature", "pressure"]).mean()
+
+            relaxations = df_dyn.groupby(["temperature", "pressure"]).agg(
+                series_relaxation_value
+            )
+            relaxations.columns = [
+                translate_relaxation(quantity) for quantity in relaxations.columns
+            ]
+            relaxation_list.append(relaxations)
+
+    df_mol = pandas.read_hdf(infile, "molecular_relaxations")
+    df_mol.replace(2 ** 32 - 1, np.nan, inplace=True)
+    df_mol.index.names = ["init_frame", "molecule"]
+    df_mol = df_mol.groupby(["init_frame", "temperature", "pressure"]).agg(np.mean)
+    df_mol = df_mol.groupby(["temperature", "pressure"]).agg(["mean", hmean])
+    df_mol.columns = ["_".join(f) for f in df_mol.columns.tolist()]
+    relaxations = pandas.concat(relaxation_list)
+    pandas.concat([df_mol, relaxations], axis=1).to_hdf(infile, "relaxations")

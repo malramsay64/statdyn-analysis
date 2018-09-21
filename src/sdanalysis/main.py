@@ -20,7 +20,7 @@ from scipy.stats import hmean
 from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
 from .read import process_file
-from .relaxation import compute_relaxation_value, translate_relaxation
+from .relaxation import compute_relaxations
 from .util import set_filename_vars
 from .version import __version__
 
@@ -131,53 +131,7 @@ def comp_relaxations(infile) -> None:
     The output is written to the table 'relaxations' in INFILE.
 
     """
-    from tables import open_file, HDF5ExtError
-
-    infile = Path(infile)
-    # Check is actually an HDF5 file
-    try:
-        with open_file(str(infile)):
-            pass
-    except HDF5ExtError:
-        raise ValueError("The argument 'infile' requires an hdf5 input file.")
-
-    # Check input file contains the tables required
-    with open_file(str(infile)) as src:
-        if "/dynamics" not in src:
-            raise KeyError(
-                "Table 'dynamics' not found in input file,"
-                " try rerunning `sdanalysis comp_dynamics`."
-            )
-        if "/molecular_relaxations" not in src:
-            raise KeyError(
-                f"Table 'molecular_relaxations' not found in input file,"
-                " try rerunning `sdanalysis comp_dynamics`."
-            )
-
-    assert infile.suffix in [".hdf5", ".h5"]
-    df_dyn = pandas.read_hdf(infile, "dynamics")
-    # Remove columns with no relaxation value to calculate
-    df_dyn.drop(
-        ["mean_displacement", "mean_rotation", "mfd", "overlap", "start_index"],
-        inplace=True,
-    )
-    # Average over all initial times
-    df_dyn = df_dyn.groupby(["time", "temperature", "pressure"]).mean()
-
-    relaxations = df_dyn.groupby(["temperature", "pressure"]).aggregate(
-        compute_relaxation_value
-    )
-    relaxations.columns = [
-        translate_relaxation(quantity) for quantity in relaxations.columns
-    ]
-
-    df_mol = pandas.read_hdf(infile, "molecular_relaxations")
-    df_mol.replace(2 ** 32 - 1, np.nan, inplace=True)
-    df_mol.index.names = ["init_frame", "molecule"]
-    df_mol = df_mol.groupby(["init_frame", "temperature", "pressure"]).agg(np.mean)
-    df_mol = df_mol.groupby(["temperature", "pressure"]).agg(["mean", hmean])
-    df_mol.columns = ["_".join(f) for f in df_mol.columns.tolist()]
-    pandas.concat([df_mol, relaxations], axis=1).to_hdf(infile, "relaxations")
+    compute_relaxations(infile)
 
 
 @sdanalysis.command()
