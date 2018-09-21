@@ -111,6 +111,7 @@ def comp_dynamics(sim_params, output, mol_relaxations, linear_dynamics, infile) 
         relaxations = None
 
     set_filename_vars(sim_params.infile, sim_params)
+    logger.info("Processing: %s", infile)
     process_file(sim_params, relaxations)
 
 
@@ -127,6 +128,7 @@ def comp_relaxations(infile) -> None:
     The output is written to the table 'relaxations' in INFILE.
 
     """
+    logger.info("Processing: %s", infile)
     compute_relaxations(infile)
 
 
