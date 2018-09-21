@@ -121,5 +121,11 @@ def test_sdanalysis_output(runner, output):
     assert f"_output={output}" in result.output
 
 
+def test_create_output_dir(runner):
+    infile = Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
+    result = runner.invoke(comp_dynamics, ["--output", "missing", str(infile)])
+    assert result.exit_code == 0
+
+
 def test_figure():
     pass

@@ -110,6 +110,9 @@ def comp_dynamics(sim_params, output, mol_relaxations, linear_dynamics, infile) 
     else:
         relaxations = None
 
+    # Create output directory where it doesn't already exists
+    sim_params.output.mkdir(parents=True, exist_ok=True)
+
     set_filename_vars(sim_params.infile, sim_params)
     logger.info("Processing: %s", infile)
     process_file(sim_params, relaxations)
