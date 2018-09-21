@@ -97,14 +97,20 @@ def process_gsd(sim_params: SimulationParams) -> Iterator[Tuple[List[int], Hoomd
                     frame.configuration.step,
                 )
                 while curr_step < frame.configuration.step:
-                    curr_step = step_iter.next()
+                    try:
+                        curr_step = next(step_iter)
+                    except StopIteration:
+                        return
             if curr_step > num_steps:
                 return
 
             if curr_step == frame.configuration.step:
                 yield step_iter.get_index(), HoomdFrame(frame)
 
-            curr_step = step_iter.next()
+            try:
+                curr_step = next(step_iter)
+            except StopIteration:
+                return
 
 
 def process_lammpstrj(
