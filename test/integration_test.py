@@ -21,14 +21,20 @@ def trajectory():
 
 
 def test_dynamics(runner, trajectory):
-    result = runner.invoke(comp_dynamics, [str(trajectory)])
+    outdir = Path.cwd()
+    print(outdir)
+    result = runner.invoke(comp_dynamics, ["-o", str(outdir), str(trajectory)])
+    print(list(outdir.glob("*")))
     assert result.exit_code == 0
-    assert Path("dynamics.h5").is_file()
+    assert (outdir / "dynamics.h5").is_file()
 
 
 def test_relaxation(runner, trajectory):
-    result = runner.invoke(comp_dynamics, [str(trajectory)])
+    outdir = Path.cwd()
+    print(outdir)
+    result = runner.invoke(comp_dynamics, ["-o", str(outdir), str(trajectory)])
+    print(list(outdir.glob("*")))
     assert result.exit_code == 0
-    assert Path("dynamics.h5").is_file()
+    assert (outdir / "dynamics.h5").is_file()
     result = runner.invoke(comp_relaxations, ["dynamics.h5"])
     assert result.exit_code == 0, result.output
