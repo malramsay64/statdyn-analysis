@@ -13,8 +13,6 @@ from pathlib import Path
 
 import click
 import pytest
-from click.testing import CliRunner
-
 import sdanalysis as sdanalysis_module
 from sdanalysis.main import MOLECULE_OPTIONS, comp_dynamics, sdanalysis
 from sdanalysis.params import SimulationParams
@@ -44,11 +42,6 @@ def dummy_subcommand(obj):
 
 
 @pytest.fixture
-def runner():
-    return CliRunner()
-
-
-@pytest.fixture
 def sim_params():
     return SimulationParams()
 
@@ -67,10 +60,9 @@ def test_verbose(runner, arg):
 
 def test_comp_dynamics_infile(runner, sim_params):
     # Check error on nonexistant file
-    with runner.isolated_filesystem():
-        result = runner.invoke(comp_dynamics, ["nonexistant.file"], obj=sim_params)
-        assert result.exit_code == 2
-        assert 'Invalid value for "infile": Path "nonexistant.file" does not exist.'
+    result = runner.invoke(comp_dynamics, ["nonexistant.file"], obj=sim_params)
+    assert result.exit_code == 2
+    assert 'Invalid value for "infile": Path "nonexistant.file" does not exist.'
 
     datafile = "test/data/trajectory-Trimer-P13.50-T3.00.gsd"
     result = runner.invoke(comp_dynamics, [datafile], obj=sim_params)
@@ -82,14 +74,13 @@ def test_comp_dynamics_infile(runner, sim_params):
 
 def test_comp_dynamics_mol_relax(runner, sim_params):
     # Check error on nonexistant file
-    with runner.isolated_filesystem():
-        result = runner.invoke(
-            comp_dynamics, ["--mol-relaxations", "nonexistant.file"], obj=sim_params
-        )
-        assert result.exit_code == 2
-        assert (
-            'Invalid value for "mol_relaxations": Path "nonexistant.file" does not exist.'
-        )
+    result = runner.invoke(
+        comp_dynamics, ["--mol-relaxations", "nonexistant.file"], obj=sim_params
+    )
+    assert result.exit_code == 2
+    assert (
+        'Invalid value for "mol_relaxations": Path "nonexistant.file" does not exist.'
+    )
 
 
 def create_params():
@@ -123,11 +114,10 @@ def test_sdanalysis_options(runner, params):
 
 @pytest.mark.parametrize("output", ["output", "output"])
 def test_sdanalysis_output(runner, output):
-    with runner.isolated_filesystem():
-        result = runner.invoke(sdanalysis, ["--output", output, "dummy_subcommand"])
-        assert result.exit_code == 0
-        assert Path(output).exists
-        assert f"_output={output}" in result.output
+    result = runner.invoke(sdanalysis, ["--output", output, "dummy_subcommand"])
+    assert result.exit_code == 0
+    assert Path(output).exists
+    assert f"_output={output}" in result.output
 
 
 def test_figure():

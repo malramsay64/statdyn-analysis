@@ -7,7 +7,7 @@
 # Distributed under terms of the MIT license.
 
 import pytest
-
+from click.testing import CliRunner
 from sdanalysis import molecules
 
 MOLECULE_LIST = [
@@ -22,3 +22,10 @@ MOLECULE_LIST = [
 @pytest.fixture(scope="module", params=MOLECULE_LIST)
 def mol(request):
     return request.param()
+
+
+@pytest.fixture
+def runner():
+    r = CliRunner()
+    with r.isolated_filesystem():
+        yield r
