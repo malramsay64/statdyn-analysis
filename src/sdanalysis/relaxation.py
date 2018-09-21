@@ -156,7 +156,12 @@ def max_time_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, flo
 
     """
     max_val_index = np.nanargmax(value)
-    error = (time[max_val_index + 1] - time[max_val_index - 1]) / 2
+    if max_val_index == len(value) - 1:
+        error = time[max_val_index] - time[max_val_index - 1]
+    elif max_val_index == 0:
+        error = time[max_val_index + 1] - time[max_val_index]
+    else:
+        error = (time[max_val_index + 1] - time[max_val_index - 1]) / 2
     return time[max_val_index], error
 
 
@@ -174,12 +179,15 @@ def max_value_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, fl
 
     """
     max_val_index = np.nanargmax(value)
-    error = (
-        value[max_val_index]
-        - value[max_val_index - 1]
-        + value[max_val_index]
-        - value[max_val_index + 1]
-    ) / 2
+    if max_val_index == len(value) - 1:
+        error = value[max_val_index] - value[max_val_index - 1]
+    elif max_val_index == 0:
+        error = value[max_val_index] - value[max_val_index + 1]
+    else:
+        error = (
+            (value[max_val_index] - value[max_val_index - 1])
+            + (value[max_val_index] - value[max_val_index + 1])
+        ) / 2
     return value[max_val_index], error
 
 

@@ -9,7 +9,7 @@
 """Test the relaxation module."""
 
 import numpy as np
-
+import pytest
 from sdanalysis import relaxation
 
 
@@ -47,35 +47,61 @@ def test_threshold_relaxation():
     assert relax == num_values / 2
 
 
-def test_max_time_relaxation():
+class TestMaxValueRelax:
     time = np.arange(101)
-    value = 50 - np.abs(np.arange(-50, 50))
-    max_time, error = relaxation.max_time_relaxation(time, value)
-    assert max_time == 50
-    assert error == 1
+
+    def test_compute(self):
+        value = 50 - np.abs(np.arange(-50, 50))
+        max_value, error = relaxation.max_value_relaxation(self.time, value)
+        assert max_value == 50
+        assert error == 1
+
+    def test_compute_nan(self):
+        value = 50. - np.abs(np.arange(-50, 50))
+        value[0] = np.nan
+        max_value, error = relaxation.max_value_relaxation(self.time, value)
+        assert max_value == 50
+        assert error == 1
+
+    @pytest.mark.parametrize("expected_max", ["first", "last"])
+    def test_boundary_values(self, expected_max):
+        """The first value should work when the maximum."""
+        value = np.zeros_like(self.time)
+        if expected_max == "first":
+            value[0] = 1
+        elif expected_max == "last":
+            value[-1] = 1
+        max_value, error = relaxation.max_value_relaxation(self.time, value)
+        assert max_value == 1
+        assert error == 1
 
 
-def test_max_time_relaxation_nan():
+class TestMaxTimeRelax:
     time = np.arange(101)
-    value = 50. - np.abs(np.arange(-50, 50))
-    value[0] = np.nan
-    max_time, error = relaxation.max_time_relaxation(time, value)
-    assert max_time == 50
-    assert error == 1
 
+    def test_compute(self):
+        value = 50 - np.abs(np.arange(-50, 50))
+        max_time, error = relaxation.max_time_relaxation(self.time, value)
+        assert max_time == 50
+        assert error == 1
 
-def test_max_value_relaxation():
-    time = np.arange(101)
-    value = 50 - np.abs(np.arange(-50, 50))
-    max_value, error = relaxation.max_value_relaxation(time, value)
-    assert max_value == 50
-    assert error == 1
+    def test_compute_nan(self):
+        value = 50. - np.abs(np.arange(-50, 50))
+        value[0] = np.nan
+        max_time, error = relaxation.max_time_relaxation(self.time, value)
+        assert max_time == 50
+        assert error == 1
 
-
-def test_max_value_relaxation_nan():
-    time = np.arange(101)
-    value = 50. - np.abs(np.arange(-50, 50))
-    value[0] = np.nan
-    max_value, error = relaxation.max_value_relaxation(time, value)
-    assert max_value == 50
-    assert error == 1
+    @pytest.mark.parametrize("expected_max", ["first", "last"])
+    def test_boundary_values(self, expected_max):
+        """The first value should work when the maximum."""
+        value = np.zeros_like(self.time)
+        if expected_max == "first":
+            value[0] = 1
+            expected_time = 0
+        elif expected_max == "last":
+            value[-1] = 1
+            expected_time = self.time[-1]
+        max_time, error = relaxation.max_time_relaxation(self.time, value)
+        assert max_time == expected_time
+        assert error == 1
