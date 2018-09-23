@@ -290,6 +290,9 @@ def compute_relaxations(infile) -> None:
     df_mol.replace(2 ** 32 - 1, np.nan, inplace=True)
     df_mol.index.names = ["init_frame", "molecule"]
     df_mol = df_mol.groupby(["init_frame", "temperature", "pressure"]).agg(np.mean)
+    # Initial frames with any nan value are excluded from analysis. It is assumed they
+    # didn't run for a long enough time.
+    df_mol = df_mol.dropna()
     df_mol = df_mol.groupby(["temperature", "pressure"]).agg(["mean", hmean])
     df_mol.columns = ["_".join(f) for f in df_mol.columns.tolist()]
     relaxations = pandas.concat(relaxation_list)
