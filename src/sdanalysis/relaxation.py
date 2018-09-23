@@ -295,5 +295,6 @@ def compute_relaxations(infile) -> None:
     df_mol = df_mol.dropna()
     df_mol = df_mol.groupby(["temperature", "pressure"]).agg(["mean", hmean])
     df_mol.columns = ["_".join(f) for f in df_mol.columns.tolist()]
+    df_mol = df_mol.reset_index()
     relaxations = pandas.concat(relaxation_list)
     pandas.concat([df_mol, relaxations], axis=1).to_hdf(infile, "relaxations")
