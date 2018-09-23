@@ -13,7 +13,7 @@ the rest of the implementation.
 
 """
 from copy import deepcopy
-from multiprocessing import Manager, Pool, Queue
+from multiprocessing import Manager, Pool, Queue, cpu_count
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
@@ -47,7 +47,8 @@ def parallel_process_files(
     manager = Manager()
     queue = manager.Queue()
 
-    with Pool() as pool:
+    # Number of cpus + an additional for the writer file
+    with Pool(cpu_count() + 1) as pool:
 
         # Put file writing process to work first
         writer = pool.apply_async(file_writer, (queue, sim_params.outfile))
