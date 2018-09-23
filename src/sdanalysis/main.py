@@ -9,15 +9,15 @@
 
 import logging
 from pprint import pformat
+from typing import Tuple, cast
 
 import click
 import yaml
 
 from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
-from .read import process_file
 from .relaxation import compute_relaxations
-from .util import set_filename_vars
+from .threading import parallel_process_files
 from .version import __version__
 
 logger = logging.getLogger(__name__)
@@ -94,14 +94,19 @@ def sdanalysis(ctx, **kwargs) -> None:
     is_flag=True,
     help="Flag to specify the configurations in a trajectory have linear steps between them.",
 )
-@click.argument("infile", type=click.Path(exists=True, file_okay=True, dir_okay=False))
+@click.argument(
+    "infile", nargs=-1, type=click.Path(exists=True, file_okay=True, dir_okay=False)
+)
 def comp_dynamics(sim_params, output, mol_relaxations, linear_dynamics, infile) -> None:
-    """Compute dynamic properties."""
+    """Compute dynamic properties for a number of input files."""
+    assert isinstance(infile, tuple)
+    for i in infile:
+        assert i is not None
+        assert isinstance(i, str)
     if sim_params is None:
         sim_params = SimulationParams()
     if output is not None:
         sim_params.output = output
-    sim_params.infile = infile
     sim_params.outfile = sim_params.output / "dynamics.h5"
     if linear_dynamics:
         sim_params.linear_steps = None
@@ -113,9 +118,10 @@ def comp_dynamics(sim_params, output, mol_relaxations, linear_dynamics, infile) 
     # Create output directory where it doesn't already exists
     sim_params.output.mkdir(parents=True, exist_ok=True)
 
-    set_filename_vars(sim_params.infile, sim_params)
     logger.info("Processing: %s", infile)
-    process_file(sim_params, relaxations)
+
+    infile = cast(Tuple[str], infile)
+    parallel_process_files(infile, sim_params, relaxations)
 
 
 @sdanalysis.command()

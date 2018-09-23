@@ -21,6 +21,15 @@ def trajectory():
     return Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
 
 
+def test_dynamics_file(dynamics_file):
+    assert dynamics_file.is_file()
+    with pandas.HDFStore(dynamics_file) as src:
+        assert "/dynamics" in src.keys()
+        assert "/molecular_relaxations" in src.keys()
+        for key in src.keys():
+            assert "/dynamics/" not in src.keys()
+
+
 def test_runner_file(runner):
     import click
 

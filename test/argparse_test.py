@@ -14,7 +14,7 @@ from pathlib import Path
 import click
 import pytest
 
-import sdanalysis as sdanalysis_module
+from sdanalysis import main
 from sdanalysis.main import MOLECULE_OPTIONS, comp_dynamics, sdanalysis
 from sdanalysis.params import SimulationParams
 from sdanalysis.version import __version__
@@ -28,23 +28,16 @@ def print_params_values(sim_params: SimulationParams) -> None:
         print(f"{key}={value}")
 
 
-def dummy_process_file(sim_params: SimulationParams, compute_relaxations):
-    print_params_values(sim_params)
-
-
-# Monkey patch process file function
-sdanalysis_module.main.process_file = dummy_process_file
+def dummy_process_files(infile, sim_params, relaxations):
+    for f in infile:
+        with sim_params.temp_context(infile=f):
+            print_params_values(sim_params)
 
 
 @sdanalysis.command()
 @click.pass_obj
 def dummy_subcommand(obj):
     print_params_values(obj)
-
-
-@pytest.fixture
-def sim_params():
-    return SimulationParams()
 
 
 def test_version(runner):
@@ -59,7 +52,9 @@ def test_verbose(runner, arg):
     assert result.exit_code == 0
 
 
-def test_comp_dynamics_infile(runner, sim_params):
+def test_comp_dynamics_infile(monkeypatch, runner, sim_params):
+    monkeypatch.setattr(main, "parallel_process_files", dummy_process_files)
+
     # Check error on nonexistant file
     result = runner.invoke(comp_dynamics, ["nonexistant.file"], obj=sim_params)
     assert result.exit_code == 2

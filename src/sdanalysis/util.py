@@ -61,9 +61,12 @@ def get_filename_vars(fname: PathLike):
 def set_filename_vars(fname: PathLike, sim_params: SimulationParams) -> None:
     """Set the variables of the simulations params according to the filename."""
     var = get_filename_vars(fname)
-    sim_params.temperature = float(var.temperature)
-    sim_params.pressure = float(var.pressure)
-    sim_params.space_group = var.crystal
+    for attr in ["temperature", "pressure", "crystal"]:
+        if getattr(var, attr) is not None:
+            value = getattr(var, attr)
+            if attr not in ["crystal"]:
+                value = float(value)
+            setattr(sim_params, attr, value)
 
 
 def orientation2positions(

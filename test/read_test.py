@@ -9,18 +9,27 @@
 
 import tempfile
 from pathlib import Path
+from tempfile import TemporaryDirectory
 
 import numpy as np
+import pandas
 import pytest
 
 from sdanalysis import read
 from sdanalysis.params import SimulationParams
 from sdanalysis.StepSize import GenerateStepSeries
+from sdanalysis.threading import parallel_process_files
 
 
 @pytest.fixture
 def sim_params():
-    yield SimulationParams(infile="test/data/trajectory-Trimer-P13.50-T3.00.gsd")
+    with TemporaryDirectory() as output:
+        output = Path(output)
+        yield SimulationParams(
+            infile="test/data/trajectory-Trimer-P13.50-T3.00.gsd",
+            output=output,
+            outfile=output / "dynamics.h5",
+        )
 
 
 @pytest.mark.parametrize("num_steps", [0, 10, 20, 100])
@@ -32,15 +41,17 @@ def sim_params():
     ],
 )
 def test_stopiter_handling(sim_params, num_steps, infile):
-    with sim_params.temp_context(infile=infile, num_steps=num_steps):
-        df = read.process_file(sim_params)
+    with sim_params.temp_context(num_steps=num_steps):
+        parallel_process_files(input_files=[infile], sim_params=sim_params)
+    df = pandas.read_hdf(sim_params.outfile, "dynamics")
     assert np.all(df.time == list(GenerateStepSeries(num_steps)))
 
 
 @pytest.mark.parametrize("num_steps", [0, 10, 20, 100])
 def test_linear_steps_stopiter(sim_params, num_steps):
     with sim_params.temp_context(num_steps=num_steps, linear_steps=None):
-        df = read.process_file(sim_params)
+        parallel_process_files(input_files=[sim_params.infile], sim_params=sim_params)
+    df = pandas.read_hdf(sim_params.outfile, "dynamics")
     assert df.time.max() == num_steps
 
 

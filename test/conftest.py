@@ -13,6 +13,7 @@ import pytest
 from click.testing import CliRunner
 
 from sdanalysis import SimulationParams, molecules, read, relaxation
+from sdanalysis.threading import parallel_process_files
 
 MOLECULE_LIST = [
     molecules.Molecule,
@@ -38,9 +39,16 @@ def runner():
 @pytest.fixture()
 def dynamics_file():
     infile = Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
-    with TemporaryDirectory() as tmp:
-        outfile = Path(tmp) / "dynamics.h5"
-        sim_params = SimulationParams(infile=infile, outfile=outfile, output=tmp)
-        read.process_file(sim_params)
+    with TemporaryDirectory() as output:
+        outfile = Path(output) / "dynamics.h5"
+        sim_params = SimulationParams(outfile=outfile, output=output)
+        parallel_process_files([infile], sim_params)
 
         yield outfile
+
+
+@pytest.fixture()
+def sim_params():
+    with TemporaryDirectory() as output:
+        params = SimulationParams(output=output)
+        yield params
