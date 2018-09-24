@@ -16,7 +16,7 @@ from hypothesis.extra.numpy import arrays, floating_dtypes
 from hypothesis.strategies import floats
 from numpy.testing import assert_allclose
 
-from sdanalysis.math_util import (
+from sdanalysis.util import (
     quaternion2z,
     quaternion_angle,
     quaternion_rotation,
