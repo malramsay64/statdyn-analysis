@@ -24,10 +24,26 @@ logger = logging.getLogger(__name__)
 
 
 def _msd_function(x: np.ndarray, m: float, b: float) -> np.ndarray:
+    """Function to fit the mean squared displacement.
+
+    The relaxation value of the mean squared displacement (MSD) is found by fitting the line
+
+    .. math::
+        y = mx + b
+
+    with the relaxation value, i.e. the Diffusion constant, being proportional to :math:`m`.
+
+    """
     return m * x + b
 
 
 def _exponential_decay(x: np.ndarray, a: float, b: float, c: float = 0) -> np.ndarray:
+    """Function used to fit an exponential decay.
+
+    This is is the functional form used to fit a function which exhibits exponential
+    decay. The important parameter here is :math:`b`, which is the rate of the decay.
+
+    """
     return a * np.exp(-b * x) + c
 
 
@@ -35,12 +51,34 @@ def _exponential_decay(x: np.ndarray, a: float, b: float, c: float = 0) -> np.nd
 def _ddx_exponential_decay(
     x: np.ndarray, a: float, b: float, c: float = 0
 ) -> np.ndarray:
+    """The first derivative of the exponential decay function.
+
+    This is the analytical first derivative of the function used for the fit of the
+    exponential decay. This is used to speed up the root finding step.
+
+    .. note:
+
+        This function needs to have the same input arguments as the function it is a
+        derivative of.
+
+    """
     return -b * a * np.exp(-b * x)
 
 
 def _d2dx2_exponential_decay(
     x: np.ndarray, a: float, b: float, c: float = 0
 ) -> np.ndarray:
+    """The first derivative of the exponential decay function.
+
+    This is the analytical first derivative of the function used for the fit of the
+    exponential decay. This is used to speed up the root finding step.
+
+    .. note:
+
+        This function needs to have the same input arguments as the function it is a
+        derivative of.
+
+    """
     return b * b * a * np.exp(-b * x)
 
 
