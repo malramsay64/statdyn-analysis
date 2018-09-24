@@ -17,9 +17,8 @@ from bokeh.plotting import figure
 from hsluv import hpluv_to_rgb
 
 from ..frame import Frame
-from ..math_util import quaternion2z
 from ..molecules import Molecule, Trimer
-from ..util import orientation2positions
+from ..util import orientation2positions, quaternion2z
 
 logger = logging.getLogger(__name__)
 

@@ -13,8 +13,8 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pandas
 
-from .math_util import displacement_periodic, quaternion_rotation, rotate_vectors
 from .molecules import Molecule, Trimer
+from .util import displacement_periodic, quaternion_rotation, rotate_vectors
 
 np.seterr(divide="raise", invalid="raise", over="raise")
 logger = logging.getLogger(__name__)
