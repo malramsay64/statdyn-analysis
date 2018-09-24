@@ -62,6 +62,7 @@ disable=bad-continuation,
         too-few-public-methods,
         unsubscriptable-object,
         not-an-iterable,
+        no-value-for-parameter,
 
 [REPORTS]
 
