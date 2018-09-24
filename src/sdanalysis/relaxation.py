@@ -110,11 +110,17 @@ def diffusion_constant(time: np.ndarray, msd: np.ndarray) -> Result:
         (float, float): The diffusion constant
 
     """
-    linear_region = np.logical_and(msd > 2, msd < 100)
+    try:
+        linear_region = np.logical_and(msd > 2, msd < 100)
+    except FloatingPointError as err:
+        logger.exception("%s", err)
+        return Result(0, 0)
     try:
         popt, pcov = curve_fit(_msd_function, time[linear_region], msd[linear_region])
-    except TypeError:
-        return 0, 0
+    except TypeError as err:
+        logger.debug("time: %s", time[linear_region])
+        logger.exception("%s", err)
+        return Result(0, 0)
 
     perr = 2 * np.sqrt(np.diag(pcov))
     return Result(popt[0], perr[0])
@@ -159,22 +165,45 @@ def exponential_relaxation(
         error (float): Estimated error of the relaxation time.
 
     """
+    assert time.shape == value.shape
     exp_value = 1 / np.exp(1)
+    mask = np.isfinite(value)
+    time = time[mask]
+    value = value[mask]
+    assert np.all(np.isfinite(value))
     fit_region = np.logical_and(
         (exp_value - value_width / 2) < value, (exp_value + value_width / 2) > value
     )
     logger.debug("Num elements: %d", np.sum(fit_region))
+
+    # The number of values has to be greater than the number of fit parameters.
+    if np.sum(fit_region) <= 3:
+        return Result(np.nan, np.nan)
+
     zero_est = time[np.argmin(np.abs(value - exp_value))]
+    try:
+        p0 = (1., 1 / zero_est)
+    except (ZeroDivisionError, FloatingPointError) as err:
+        logger.exception("%s", err)
+        p0 = (1., 0.)
+
     if sigma is not None:
         sigma = sigma[fit_region]
-    popt, pcov = curve_fit(
-        _exponential_decay,
-        time[fit_region],
-        value[fit_region],
-        p0=[1., 1 / zero_est],
-        sigma=sigma,
-    )
-    perr = 2 * np.sqrt(np.diag(pcov))
+
+    try:
+        popt, pcov = curve_fit(
+            _exponential_decay, time[fit_region], value[fit_region], p0=p0, sigma=sigma
+        )
+    except RuntimeError as err:
+        logger.exception("%s", err)
+        return Result(np.nan, np.nan)
+
+    try:
+        perr = 2 * np.sqrt(np.diag(pcov))
+    except FloatingPointError as err:
+        logger.exception("%s", err)
+        return Result(np.nan, np.nan)
+
     logger.debug("Fit Parameters: %s", popt)
 
     def find_root(a, b):
@@ -183,17 +212,27 @@ def exponential_relaxation(
             args=(a, b, -exp_value),
             x0=zero_est,
             fprime=_ddx_exponential_decay,
-            maxiter=100,
+            maxiter=20,
             tol=1e-4,
         )
 
-    val_mean: float = find_root(*popt)
-    val_min: float = find_root(*(popt - perr))
-    val_max: float = find_root(*(popt + perr))
-    return val_mean, val_max - val_min
+    try:
+        val_mean: float = find_root(*popt)
+        try:
+            val_min: float = find_root(*(popt - perr))
+            val_max: float = find_root(*(popt + perr))
+        except FloatingPointError as err:
+            logger.exception("%s", err)
+            val_min = 0
+            val_max = val_mean - val_min
+        return Result(val_mean, val_max - val_min)
+
+    except RuntimeError as err:
+        logger.exception("%s", err)
+        return Result(np.nan, np.nan)
 
 
-def max_time_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, float]:
+def max_time_relaxation(time: np.ndarray, value: np.ndarray) -> Result:
     """Time at which the maximum value is recorded.
 
     Args:
@@ -205,7 +244,13 @@ def max_time_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, flo
         float: Value of the maximum.
 
     """
-    max_val_index = np.nanargmax(value)
+    assert time.shape == value.shape
+    try:
+        max_val_index = np.nanargmax(value)
+    except ValueError as err:
+        logger.exception("%s", err)
+        return Result(np.nan, np.nan)
+
     if max_val_index == len(value) - 1:
         error = time[max_val_index] - time[max_val_index - 1]
     elif max_val_index == 0:
@@ -227,7 +272,13 @@ def max_value_relaxation(time: np.ndarray, value: np.ndarray) -> Result:
         float: Value of the maximum.
 
     """
-    max_val_index = np.nanargmax(value)
+    assert time.shape == value.shape
+    try:
+        max_val_index = np.nanargmax(value)
+    except ValueError as err:
+        logger.exception("%s", err)
+        return Result(np.nan, np.nan)
+
     if max_val_index == len(value) - 1:
         error = value[max_val_index] - value[max_val_index - 1]
     elif max_val_index == 0:
@@ -257,6 +308,7 @@ def compute_relaxation_value(
     timesteps: np.ndarray, values: np.ndarray, relax_type: str
 ) -> Result:
     """Compute a single representative value for each dynamic quantity."""
+    assert timesteps.shape == values.shape
     if relax_type in ["msd"]:
         return diffusion_constant(timesteps, values)
     if relax_type in ["struct_msd"]:
@@ -267,8 +319,12 @@ def compute_relaxation_value(
 
 
 def series_relaxation_value(series: pandas.Series) -> float:
-    mean, _ = compute_relaxation_value(series.index, series.values, series.name)
-    return mean
+    assert series.index.values.shape == series.values.shape
+    for level in ["temperature", "pressure"]:
+        if level in series.index.names:
+            series.reset_index(level=level, drop=True, inplace=True)
+    result = compute_relaxation_value(series.index.values, series.values, series.name)
+    return result.mean
 
 
 def compute_relaxations(infile) -> None:
