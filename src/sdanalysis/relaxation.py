@@ -360,36 +360,31 @@ def compute_relaxations(infile) -> None:
                 " try rerunning `sdanalysis comp_dynamics`."
             )
 
-    relaxation_list = []
+    key = "dynamics"
     with pandas.HDFStore(infile) as src:
-        for key in src.keys():
-            if "dynamics" not in key:
-                continue
+        df_dyn = src.get(key)
+        logger.debug(df_dyn.columns)
+        # Remove columns with no relaxation value to calculate
+        extra_columns = [
+            "mean_displacement",
+            "mean_rotation",
+            "mfd",
+            "overlap",
+            "start_index",
+        ]
+        for col in extra_columns:
+            if col in df_dyn.columns:
+                df_dyn.drop(columns=col, inplace=True)
 
-            df_dyn = src.get(key)
-            logger.debug(df_dyn.columns)
-            # Remove columns with no relaxation value to calculate
-            extra_columns = [
-                "mean_displacement",
-                "mean_rotation",
-                "mfd",
-                "overlap",
-                "start_index",
-            ]
-            for col in extra_columns:
-                if col in df_dyn.columns:
-                    df_dyn.drop(columns=col, inplace=True)
+        # Average over all initial times
+        df_dyn = df_dyn.groupby(["time", "temperature", "pressure"]).mean()
 
-            # Average over all initial times
-            df_dyn = df_dyn.groupby(["time", "temperature", "pressure"]).mean()
-
-            relaxations = df_dyn.groupby(["temperature", "pressure"]).agg(
-                series_relaxation_value
-            )
-            relaxations.columns = [
-                translate_relaxation(quantity) for quantity in relaxations.columns
-            ]
-            relaxation_list.append(relaxations)
+        relaxations = df_dyn.groupby(["temperature", "pressure"]).agg(
+            series_relaxation_value
+        )
+        relaxations.columns = [
+            translate_relaxation(quantity) for quantity in relaxations.columns
+        ]
 
     df_mol = pandas.read_hdf(infile, "molecular_relaxations")
     df_mol.replace(2 ** 32 - 1, np.nan, inplace=True)
@@ -400,6 +395,8 @@ def compute_relaxations(infile) -> None:
     df_mol = df_mol.dropna()
     df_mol = df_mol.groupby(["temperature", "pressure"]).agg(["mean", hmean])
     df_mol.columns = ["_".join(f) for f in df_mol.columns.tolist()]
-    df_mol = df_mol.reset_index()
-    relaxations = pandas.concat(relaxation_list)
-    pandas.concat([df_mol, relaxations], axis=1).to_hdf(infile, "relaxations")
+
+    df_all = df_mol.join(relaxations, on=["temperature", "pressure"]).reset_index()
+    assert "temperature" in df_all.columns
+    assert "pressure" in df_all.columns
+    df_all.to_hdf(infile, "relaxations")
