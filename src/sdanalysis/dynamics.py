@@ -12,6 +12,7 @@ from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
 import pandas
+from freud.box import Box
 
 from .molecules import Molecule, Trimer
 from .util import displacement_periodic, quaternion_rotation, rotate_vectors
@@ -24,8 +25,6 @@ YamlValue = Union[str, float, int]
 
 class dynamics:
     """Compute dynamic properties of a simulation."""
-
-    dyn_dtype = np.float32
 
     def __init__(
         self,
@@ -50,12 +49,12 @@ class dynamics:
         """
         assert position.shape[0] > 0
         self.timestep = timestep
-        self.box = box[:3]
-        self.position = position.astype(self.dyn_dtype)
+        self.box = Box(*box, is2D=True if molecule.dimensions == 2 else False)
+        self.position = position
         self.num_particles = position.shape[0]
         if orientation is not None:
             assert orientation.shape[0] > 0
-            self.orientation = orientation.astype(self.dyn_dtype)
+            self.orientation = orientation
         self.mol_vector = molecule.positions
 
     def computeMSD(self, position: np.ndarray) -> float:
@@ -233,7 +232,7 @@ class relaxations:
         molecule: Molecule = None,  # pylint: disable=unused-argument
     ) -> None:
         self.init_time = timestep
-        self.box = box
+        self.box = Box(*box, is2D=True if molecule.dimensions == 2 else False)
         self._num_elements = position.shape[0]
         self.init_position = position
         self.init_orientation = orientation
@@ -498,13 +497,11 @@ def rotationalDisplacement(initial: np.ndarray, final: np.ndarray) -> np.ndarray
     """
     assert final.shape[0] > 0
     assert initial.shape[0] >= final.shape[0]
-    result = np.empty(final.shape[0], dtype=final.dtype)
-    quaternion_rotation(initial, final, result)
-    return result
+    return quaternion_rotation(initial, final)
 
 
 def translationalDisplacement(
-    box: np.ndarray, initial: np.ndarray, final: np.ndarray
+    box: Box, initial: np.ndarray, final: np.ndarray
 ) -> np.ndarray:
     """Optimised function for computing the displacement.
 
@@ -518,7 +515,4 @@ def translationalDisplacement(
     """
     assert final.shape[0] > 0
     assert initial.shape[0] >= final.shape[0]
-    result = np.empty(final.shape[0], dtype=final.dtype)
-    box_f32 = box.astype(np.float32)
-    displacement_periodic(box_f32, initial, final, result)
-    return result
+    return displacement_periodic(box, initial, final)

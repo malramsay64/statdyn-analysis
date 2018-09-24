@@ -14,7 +14,7 @@ from typing import NamedTuple, Optional, Union
 
 import numpy as np
 import rowan
-from freud import Box
+from freud.box import Box
 
 from .molecules import Molecule
 from .params import SimulationParams
@@ -69,8 +69,8 @@ def set_filename_vars(fname: PathLike, sim_params: SimulationParams) -> None:
             setattr(sim_params, attr, value)
 
 
-def quaternion_rotation(initial, final, result):
-    result[:] = rowan.geometry.intrinsic_distance(initial, final)
+def quaternion_rotation(initial, final):
+    return rowan.geometry.intrinsic_distance(initial, final)
 
 
 def rotate_vectors(quaternion, vector):
@@ -101,16 +101,17 @@ def quaternion2z(quaternion: np.ndarray) -> np.ndarray:
     return rowan.to_euler(quaternion)[:, 0].astype(np.float32)
 
 
-def displacement_periodic(box, initial, final, result):
-    if len(box) > 3 and np.any(box[3:] != 0.):
-        raise NotImplementedError(
-            "Periodic distances for non-orthorhombic boxes are not yet implemented."
-            f"Got xy: {box[3]}, xz: {box[4]}, yz: {box[5]}"
-        )
-    delta = np.abs(final - initial)
-    result[:] = np.linalg.norm(
-        np.where(delta > 0.5 * box[:3], delta - box[:3], delta), axis=1
-    )
+def displacement_periodic(
+    box: Box, initial: np.ndarray, final: np.ndarray
+) -> np.ndarray:
+    """Calculate displacement inclusive of periodic boundary conditions.
+
+    This uses the :class:`freud.Box` to wrap the displacement within the box.
+
+    """
+    if not isinstance(box, Box):
+        raise ValueError(f"Expecting type of {Box}, got {type(box)}")
+    return np.linalg.norm(box.wrap(final - initial), axis=1)
 
 
 def orientation2positions(

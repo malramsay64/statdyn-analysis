@@ -10,7 +10,8 @@
 import gsd.hoomd
 import numpy as np
 import pytest
-from hypothesis import HealthCheck, assume, given, settings
+from freud.box import Box
+from hypothesis import HealthCheck, assume, given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
 from numpy.testing import assert_allclose
@@ -25,7 +26,7 @@ HYP_DTYPE = DTYPE
 
 
 def translationalDisplacement_reference(
-    box: np.ndarray, initial: np.ndarray, final: np.ndarray
+    box: Box, initial: np.ndarray, final: np.ndarray
 ) -> np.ndarray:
     """Simplified reference implementation for computing the displacement.
 
@@ -34,7 +35,8 @@ def translationalDisplacement_reference(
 
     """
     result = np.empty(final.shape[0], dtype=final.dtype)
-    for index in range(len(result)):
+    box = np.array([box.Lx, box.Ly, box.Lz])
+    for index, _ in enumerate(result):
         temp = initial[index] - final[index]
         for i in range(3):
             if temp[i] > box[i] / 2:
@@ -56,7 +58,7 @@ def test_translationalDisplacement_noperiod(init, final):
     function in the case where there is no periodic boundaries to worry
     about.
     """
-    box = np.array([MAX_BOX, MAX_BOX, MAX_BOX], dtype=DTYPE)
+    box = Box(MAX_BOX, MAX_BOX, MAX_BOX)
     np_res = np.linalg.norm(init - final, axis=1)
     result = dynamics.translationalDisplacement(box, init, final)
     ref_res = translationalDisplacement_reference(box, init, final)
@@ -74,7 +76,7 @@ def test_translationalDisplacement_periodicity(init, final):
 
     This is testing that periodic boundaries are identified appropriately.
     """
-    box = np.array([MAX_BOX, MAX_BOX, MAX_BOX], dtype=DTYPE)
+    box = Box(MAX_BOX, MAX_BOX, MAX_BOX)
     np_res = np.square(np.linalg.norm(init - final, axis=1))
     result = dynamics.translationalDisplacement(box, init, final)
     ref_res = translationalDisplacement_reference(box, init, final)
@@ -91,7 +93,7 @@ def test_translationalDisplacement(init, final):
 
     This is testing that periodic boundaries are identified appropriately.
     """
-    box = np.array([MAX_BOX, MAX_BOX, MAX_BOX], dtype=DTYPE)
+    box = Box(MAX_BOX, MAX_BOX, MAX_BOX)
     result = dynamics.translationalDisplacement(box, init, final)
     ref_res = translationalDisplacement_reference(box, init, final)
     assert np.allclose(result, ref_res, atol=EPS)
@@ -157,8 +159,7 @@ def test_rotations(dynamics_class, trajectory, step):
 
 
 def test_float64_box():
-    box = np.ones(3, dtype=np.float64)
-    box.flags.writeable = False
+    box = Box.cube(1)
     init = np.random.random((100, 3)).astype(np.float32)
     final = np.random.random((100, 3)).astype(np.float32)
     result = dynamics.translationalDisplacement(box, init, final)
@@ -166,8 +167,7 @@ def test_float64_box():
 
 
 def test_read_only_arrays():
-    box = np.ones(3, dtype=np.float64)
-    box.flags.writeable = False
+    box = Box.cube(1)
     init = np.random.random((100, 3)).astype(np.float32)
     init.flags.writeable = False
     final = np.random.random((100, 3)).astype(np.float32)
