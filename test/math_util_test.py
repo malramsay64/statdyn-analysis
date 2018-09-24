@@ -138,16 +138,14 @@ def test_quat_rotation():
     np.random.seed(0)
     initial = rowan.random.rand(1000)
     final = rowan.random.rand(1000)
-    result = np.empty(1000)
-    quaternion_rotation(initial, final, result)
+    result = quaternion_rotation(initial, final)
     assert np.all(result < 2 * np.pi)
     assert np.all(0 < result)
 
 
 def test_quaternion_zero_rotation():
     initial = np.array([[1, 0, 0, 0]], dtype=np.float32)
-    result = np.empty(1)
-    quaternion_rotation(initial, initial, result)
+    result = quaternion_rotation(initial, initial)
     assert result == 0
 
 
@@ -155,6 +153,5 @@ def test_quaternion_small_rotation():
     """Small rotations should show up as no rotation."""
     initial = np.array([[1, 0, 0, 0]])
     final = z2quaternion(np.array([1e-7]))
-    result = np.empty(1, dtype=np.float32)
-    quaternion_rotation(initial, final, result)
+    result = quaternion_rotation(initial, final)
     assert result != 0
