@@ -12,7 +12,7 @@ This provides methods of easily comparing values across variables.
 
 import logging
 from pathlib import Path
-from typing import Tuple
+from typing import NamedTuple
 
 import numpy as np
 import pandas
@@ -21,6 +21,18 @@ from scipy.optimize import curve_fit, newton
 from scipy.stats import hmean
 
 logger = logging.getLogger(__name__)
+
+
+class Result(NamedTuple):
+    """Hold the result of a relaxation calculation.
+
+    This uses the NamedTuple class to make the access of the returned values more
+    transparent and easier to understand.
+
+    """
+
+    mean: float
+    error: float
 
 
 def _msd_function(x: np.ndarray, m: float, b: float) -> np.ndarray:
@@ -85,7 +97,7 @@ def _d2dx2_exponential_decay(
 # pylint: enable=unused-argument
 
 
-def diffusion_constant(time: np.ndarray, msd: np.ndarray) -> Tuple[float, float]:
+def diffusion_constant(time: np.ndarray, msd: np.ndarray) -> Result:
     """Compute the diffusion_constant from the mean squared displacement.
 
     Args:
@@ -105,7 +117,7 @@ def diffusion_constant(time: np.ndarray, msd: np.ndarray) -> Tuple[float, float]
         return 0, 0
 
     perr = 2 * np.sqrt(np.diag(pcov))
-    return popt[0], perr[0]
+    return Result(popt[0], perr[0])
 
 
 def threshold_relaxation(
@@ -113,7 +125,7 @@ def threshold_relaxation(
     value: np.ndarray,
     threshold: float = 1 / np.exp(1),
     greater: bool = True,
-) -> Tuple[float, float]:
+) -> Result:
     """Compute the relaxation through the reaching of a specific value.
 
     Args:
@@ -129,7 +141,7 @@ def threshold_relaxation(
         index = np.argmax(value > threshold)
     else:
         index = np.argmin(value < threshold)
-    return time[index], time[index] - time[index - 1]
+    return Result(time[index], time[index] - time[index - 1])
 
 
 def exponential_relaxation(
@@ -137,7 +149,7 @@ def exponential_relaxation(
     value: np.ndarray,
     sigma: np.ndarray = None,
     value_width: float = 0.3,
-) -> Tuple[float, float]:
+) -> Result:
     """Fit a region of the exponential relaxation with an exponential.
 
     This fits an exponential to the small region around the value 1/e.
@@ -200,11 +212,10 @@ def max_time_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, flo
         error = time[max_val_index + 1] - time[max_val_index]
     else:
         error = (time[max_val_index + 1] - time[max_val_index - 1]) / 2
-    return time[max_val_index], error
+    return Result(time[max_val_index], error)
 
 
-# pylint: disable=unused-argument
-def max_value_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, float]:
+def max_value_relaxation(time: np.ndarray, value: np.ndarray) -> Result:
     """Maximum value recorded.
 
     Args:
@@ -226,7 +237,7 @@ def max_value_relaxation(time: np.ndarray, value: np.ndarray) -> Tuple[float, fl
             (value[max_val_index] - value[max_val_index - 1])
             + (value[max_val_index] - value[max_val_index + 1])
         ) / 2
-    return value[max_val_index], error
+    return Result(value[max_val_index], error)
 
 
 def translate_relaxation(quantity: str) -> str:
@@ -244,7 +255,7 @@ def translate_relaxation(quantity: str) -> str:
 
 def compute_relaxation_value(
     timesteps: np.ndarray, values: np.ndarray, relax_type: str
-) -> Tuple[float, float]:
+) -> Result:
     """Compute a single representative value for each dynamic quantity."""
     if relax_type in ["msd"]:
         return diffusion_constant(timesteps, values)
