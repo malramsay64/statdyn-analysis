@@ -114,13 +114,13 @@ def diffusion_constant(time: np.ndarray, msd: np.ndarray) -> Result:
         linear_region = np.logical_and(msd > 2, msd < 100)
     except FloatingPointError as err:
         logger.exception("%s", err)
-        return Result(0, 0)
+        return Result(np.nan, np.nan)
     try:
         popt, pcov = curve_fit(_msd_function, time[linear_region], msd[linear_region])
     except TypeError as err:
         logger.debug("time: %s", time[linear_region])
         logger.exception("%s", err)
-        return Result(0, 0)
+        return Result(np.nan, np.nan)
 
     perr = 2 * np.sqrt(np.diag(pcov))
     return Result(popt[0], perr[0])
