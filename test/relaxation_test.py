@@ -132,7 +132,6 @@ def test_compute_relaxations_values(dynamics_file):
         assert df[col].dtype == float
 
 
-@settings(max_examples=100)
 @given(values=arrays(dtype=np.float32, shape=1000))
 @pytest.mark.parametrize("relax_type", relaxation_types)
 def test_compute_relaxations_random(values, relax_type):
@@ -140,7 +139,6 @@ def test_compute_relaxations_random(values, relax_type):
     relaxation.compute_relaxation_value(timesteps, values, relax_type)
 
 
-@settings(max_examples=100)
 @given(values=arrays(dtype=np.float32, shape=1000))
 @pytest.mark.parametrize("relax_type", relaxation_types)
 def test_series_relaxations_random(values, relax_type):
