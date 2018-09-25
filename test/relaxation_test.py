@@ -133,24 +133,18 @@ def test_compute_relaxations_values(dynamics_file):
 
 
 @settings(max_examples=100)
-@given(
-    timesteps=arrays(dtype=np.uint32, shape=1000),
-    values=arrays(dtype=np.float32, shape=1000),
-)
+@given(values=arrays(dtype=np.float32, shape=1000))
 @pytest.mark.parametrize("relax_type", relaxation_types)
-def test_compute_relaxations_random(timesteps, values, relax_type):
-    timesteps.sort()
+def test_compute_relaxations_random(values, relax_type):
+    timesteps = np.arange(values.shape[0], dtype=int)
     relaxation.compute_relaxation_value(timesteps, values, relax_type)
 
 
 @settings(max_examples=100)
-@given(
-    timesteps=arrays(dtype=np.uint32, shape=1000),
-    values=arrays(dtype=np.float32, shape=1000),
-)
+@given(values=arrays(dtype=np.float32, shape=1000))
 @pytest.mark.parametrize("relax_type", relaxation_types)
-def test_series_relaxations_random(timesteps, values, relax_type):
-    timesteps.sort()
+def test_series_relaxations_random(values, relax_type):
+    timesteps = np.arange(values.shape[0], dtype=int)
     s = pandas.Series(data=values, index=timesteps, name=relax_type)
     relaxation.series_relaxation_value(s)
 
