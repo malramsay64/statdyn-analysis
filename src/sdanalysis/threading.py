@@ -24,7 +24,7 @@ from .read import process_file
 
 
 def file_writer(queue: Queue, outfile: Path):
-    with pandas.HDFStore(outfile) as dst:
+    with pandas.HDFStore(outfile, "w") as dst:
         while True:
             group, dataset = queue.get()
             if dataset is None:
