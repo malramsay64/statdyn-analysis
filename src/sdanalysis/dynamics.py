@@ -48,8 +48,13 @@ class dynamics:
 
         """
         assert position.shape[0] > 0
+        if molecule is None:
+            is2D = False
+        else:
+            is2D = True if molecule.dimensions == 2 else False
+
         self.timestep = timestep
-        self.box = Box(*box, is2D=True if molecule.dimensions == 2 else False)
+        self.box = Box(*box, is2D=is2D)
         self.position = position
         self.num_particles = position.shape[0]
         if orientation is not None:
@@ -230,9 +235,14 @@ class relaxations:
         position: np.ndarray,
         orientation: np.ndarray,
         molecule: Molecule = None,  # pylint: disable=unused-argument
+        is2D: bool = None,
     ) -> None:
         self.init_time = timestep
-        self.box = Box(*box, is2D=True if molecule.dimensions == 2 else False)
+        if molecule is None:
+            is2D = False
+        else:
+            is2D = True if molecule.dimensions == 2 else False
+        self.box = Box(*box, is2D=is2D)
         self._num_elements = position.shape[0]
         self.init_position = position
         self.init_orientation = orientation
