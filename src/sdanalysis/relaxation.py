@@ -184,7 +184,7 @@ def exponential_relaxation(
     try:
         p0 = (1., 1 / zero_est)
     except (ZeroDivisionError, FloatingPointError) as err:
-        logger.exception("%s", err)
+        logger.warning("Handled exception in estimating zero\n%s", err)
         p0 = (1., 0.)
 
     if sigma is not None:
@@ -194,8 +194,8 @@ def exponential_relaxation(
         popt, pcov = curve_fit(
             _exponential_decay, time[fit_region], value[fit_region], p0=p0, sigma=sigma
         )
-    except RuntimeError as err:
-        logger.exception("%s", err)
+    except (RuntimeError, FloatingPointError) as err:
+        logger.warning("Exception in fitting curve, returning Nan\n%s", err)
         return Result(np.nan, np.nan)
 
     try:
@@ -222,13 +222,13 @@ def exponential_relaxation(
             val_min: float = find_root(*(popt - perr))
             val_max: float = find_root(*(popt + perr))
         except FloatingPointError as err:
-            logger.exception("%s", err)
+            logger.warning("Handled Exception in calculating Error bars\n%s", err)
             val_min = 0
             val_max = val_mean - val_min
         return Result(val_mean, val_max - val_min)
 
     except RuntimeError as err:
-        logger.exception("%s", err)
+        logger.warning("Failed to converge on value, returning NaN")
         return Result(np.nan, np.nan)
 
 
@@ -386,17 +386,28 @@ def compute_relaxations(infile) -> None:
             translate_relaxation(quantity) for quantity in relaxations.columns
         ]
 
-    df_mol = pandas.read_hdf(infile, "molecular_relaxations")
-    df_mol.replace(2 ** 32 - 1, np.nan, inplace=True)
-    df_mol.index.names = ["init_frame", "molecule"]
-    df_mol = df_mol.groupby(["init_frame", "temperature", "pressure"]).agg(np.mean)
-    # Initial frames with any nan value are excluded from analysis. It is assumed they
-    # didn't run for a long enough time.
-    df_mol = df_mol.dropna()
-    df_mol = df_mol.groupby(["temperature", "pressure"]).agg(["mean", hmean])
-    df_mol.columns = ["_".join(f) for f in df_mol.columns.tolist()]
+    df_mol = compute_molecular_relaxations(
+        pandas.read_hdf(infile, "molecular_relaxations")
+    )
 
     df_all = df_mol.join(relaxations, on=["temperature", "pressure"]).reset_index()
     assert "temperature" in df_all.columns
     assert "pressure" in df_all.columns
     df_all.to_hdf(infile, "relaxations")
+
+
+def compute_molecular_relaxations(df: pandas.DataFrame) -> pandas.DataFrame:
+    assert "temperature" in df.columns
+    assert "pressure" in df.columns
+    assert len(df.index.names) == 2
+
+    df.replace(2 ** 32 - 1, np.nan, inplace=True)
+    df.index.names = ["init_frame", "molecule"]
+    # Initial frames with any NaN value are excluded from analysis. It is assumed they
+    # didn't run for a long enough time.
+    df = df.groupby(["init_frame", "temperature", "pressure"]).filter(
+        lambda x: x.isna().sum().sum() == 0
+    )
+    df = df.groupby(["temperature", "pressure"]).agg(["mean", hmean])
+    df.columns = ["_".join(f) for f in df.columns.tolist()]
+    return df

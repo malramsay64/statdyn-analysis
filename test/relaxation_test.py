@@ -12,7 +12,7 @@
 import numpy as np
 import pandas
 import pytest
-from hypothesis import given, settings
+from hypothesis import example, given
 from hypothesis.extra.numpy import arrays
 
 from sdanalysis import relaxation
@@ -133,6 +133,7 @@ def test_compute_relaxations_values(dynamics_file):
 
 
 @given(values=arrays(dtype=np.float32, shape=1000))
+@example(values=np.ones(1000))
 @pytest.mark.parametrize("relax_type", relaxation_types)
 def test_compute_relaxations_random(values, relax_type):
     timesteps = np.arange(values.shape[0], dtype=int)
@@ -158,3 +159,29 @@ def test_series_relaxations_index(indexes):
     df = pandas.DataFrame(data).groupby(indexes).mean()
     s = df.test
     relaxation.series_relaxation_value(s)
+
+
+@pytest.fixture
+def relax_df():
+    # Use one frame to detect when there is incorrect handling of the harmonic mean
+    frames = 1
+    mols = 100
+    np.random.seed(0)
+    df = pandas.DataFrame(
+        {
+            "init_frame": np.repeat(np.arange(frames), mols),
+            "molecule": np.tile(np.arange(mols), frames),
+            "temperature": 0.1,
+            "pressure": 0.1,
+            "tau_DL04": np.random.random(frames * mols),
+            "tau_D04": np.random.random(frames * mols),
+        }
+    )
+    return df.groupby(["init_frame", "molecule"]).mean()
+
+
+def test_relaxation_hmean(relax_df):
+    df = relaxation.compute_molecular_relaxations(relax_df)
+    columns = ["tau_DL04", "tau_D04"]
+    for col in columns:
+        assert np.all(df[col + "_mean"].values != df[col + "_hmean"].values)
