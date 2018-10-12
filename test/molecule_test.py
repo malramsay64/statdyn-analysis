@@ -12,6 +12,7 @@ import numpy as np
 import pytest
 from hypothesis import given
 from hypothesis.strategies import floats
+from numpy.testing import assert_allclose
 
 from sdanalysis import molecules
 
@@ -30,3 +31,7 @@ def test_get_radii(mol):
 def test_get_types(mol):
     types = mol.get_types()
     assert "R" not in types
+
+
+def test_position_com(mol):
+    assert_allclose(mol.positions.mean(axis=0), np.zeros(3), atol=1e-7)
