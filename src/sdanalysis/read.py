@@ -132,6 +132,9 @@ def parse_lammpstrj(filename: Path) -> Iterator[LammpsFrame]:
         while True:
             # Timestep
             line: Union[str, List[str]] = src.readline()
+            if not line:
+                # We have reached the end of the file
+                return
             assert line == "ITEM: TIMESTEP\n", line
             timestep = int(src.readline().strip())
             logger.debug("Timestep: %d", timestep)
