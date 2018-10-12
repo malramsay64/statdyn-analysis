@@ -172,7 +172,7 @@ class lastMolecularRelaxation(molecularRelaxation):
     _is_irreversible = 3
 
     def __init__(
-        self, num_elements: int, threshold: float, irreversibility: float = 1.
+        self, num_elements: int, threshold: float, irreversibility: float = 1.0
     ) -> None:
         super().__init__(num_elements, threshold)
         self._state = np.zeros(self.num_elements, dtype=np.uint8)
@@ -249,7 +249,7 @@ class relaxations:
         # set defualt values for mol_relax
         self.set_mol_relax(
             [
-                {"name": "tau_D1", "threshold": 1.},
+                {"name": "tau_D1", "threshold": 1.0},
                 {"name": "tau_D04", "threshold": 0.4},
                 {"name": "tau_DL04", "threshold": 0.4, "last_passage": True},
                 {"name": "tau_T2", "threshold": np.pi / 2},
@@ -298,8 +298,8 @@ class relaxations:
 def molecule2particles(
     position: np.ndarray, orientation: np.ndarray, mol_vector: np.ndarray
 ) -> np.ndarray:
-    if np.allclose(orientation, 0.):
-        orientation[:, 0] = 1.
+    if np.allclose(orientation, 0.0):
+        orientation[:, 0] = 1.0
     return np.concatenate(
         [rotate_vectors(orientation, pos) for pos in mol_vector.astype(np.float32)]
     ) + np.repeat(position, mol_vector.shape[0], axis=0)
