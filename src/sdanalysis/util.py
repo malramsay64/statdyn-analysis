@@ -121,5 +121,5 @@ def orientation2positions(
     mol: Molecule, position: np.ndarray, orientation: np.ndarray
 ) -> np.ndarray:
     return np.tile(position, (mol.num_particles, 1)) + np.concatenate(
-        [rotate_vectors(orientation, pos) for pos in mol.positions.astype(np.float32)]
+        [rotate_vectors(orientation, pos) for pos in mol.positions]
     )
