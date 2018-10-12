@@ -80,7 +80,9 @@ class LammpsFrame(Frame):
 
     @property
     def orientation(self) -> np.ndarray:
-        return np.zeros((len(self), 4), dtype=np.float32)
+        orient = np.zeros((len(self), 4), dtype=np.float32)
+        orient[:, 0] = 1
+        return orient
 
     @property
     def timestep(self) -> int:
