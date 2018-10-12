@@ -111,7 +111,10 @@ def displacement_periodic(
     """
     if not isinstance(box, Box):
         raise ValueError(f"Expecting type of {Box}, got {type(box)}")
-    return np.linalg.norm(box.wrap(final - initial), axis=1)
+    try:
+        return np.linalg.norm(box.wrap(final - initial), axis=1)
+    except FloatingPointError:
+        return np.full(initial.shape[0], np.nan)
 
 
 def orientation2positions(

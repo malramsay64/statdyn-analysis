@@ -409,7 +409,10 @@ def structural_relax(displacement: np.ndarray, dist: float = 0.3) -> float:
     Return:
         float: The structural relaxation of the configuration
     """
-    return np.mean(displacement < dist)
+    try:
+        return np.mean(displacement < dist)
+    except FloatingPointError:
+        return np.full_like(displacement, np.nan)
 
 
 def gamma(displacement: np.ndarray, rotation: np.ndarray) -> float:
