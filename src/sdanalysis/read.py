@@ -239,9 +239,9 @@ class WriteCache:
 
 
 def process_file(
-    queue: multiprocessing.Queue,
     sim_params: SimulationParams,
     mol_relaxations: List[Dict[str, Any]] = None,
+    queue: Optional[multiprocessing.Queue] = None,
 ) -> Optional[pandas.DataFrame]:
     """Read a file and compute the dynamics quantities.
 
@@ -258,10 +258,12 @@ def process_file(
     assert sim_params.infile is not None
 
     set_filename_vars(sim_params.infile, sim_params)
-    if sim_params.outfile is not None:
+    if sim_params.outfile is not None and queue is None:
+        dataframes = WriteCache(filename=sim_params.outfile)
+    elif queue:
         dataframes = WriteCache(queue=queue)
     else:
-        dataframes = WriteCache(queue=queue)
+        dataframes = WriteCache()
 
     keyframes: List[dynamics] = []
     relaxframes: List[relaxations] = []
@@ -317,7 +319,8 @@ def process_file(
         )
         mol_relax["temperature"] = sim_params.temperature
         mol_relax["pressure"] = sim_params.pressure
-        queue.put(("molecular_relaxations", mol_relax))
+        if queue:
+            queue.put(("molecular_relaxations", mol_relax))
         return None
 
     return dataframes.to_dataframe()
