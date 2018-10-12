@@ -124,9 +124,22 @@ def test_process_gsd(sim_params):
     assert isinstance(frame, read.HoomdFrame)
 
 
-def test_process_lammpstrj():
-    pass
+def test_parse_lammpstrj():
+    infile = "test/data/short-time-variance.lammpstrj"
+    num_atoms = None
+    for frame in read.parse_lammpstrj(infile):
+        assert frame.timestep >= 0
+        if num_atoms is None:
+            num_atoms = len(frame)
+        else:
+            assert num_atoms == len(frame)
+        assert np.unique(frame.position, axis=1).shape[0] == num_atoms
 
 
-def test_process_file():
-    pass
+@pytest.mark.parametrize(
+    "infile", ["short-time-variance.lammpstrj", "trajectory-Trimer-P13.50-T3.00.gsd"]
+)
+def test_process_file(sim_params, infile):
+    data_dir = Path("test/data")
+    with sim_params.temp_context(infile=data_dir / infile):
+        df = read.process_file(sim_params)
