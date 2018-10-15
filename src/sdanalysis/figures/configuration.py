@@ -103,7 +103,7 @@ def frame2data(
 
     else:
         # Colour all particles with the darker shade
-        colour: np.ndarray = colour_orientation(angle)
+        colour = colour_orientation(angle)
         if order_list is not None:
             order_list = np.logical_not(order_list)
             # Colour unordered molecules lighter
