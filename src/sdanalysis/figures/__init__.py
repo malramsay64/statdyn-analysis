@@ -6,4 +6,6 @@
 #
 # Distributed under terms of the MIT license.
 
+from bokeh.io import output_file, output_notebook, show
+
 from .configuration import plot_frame
