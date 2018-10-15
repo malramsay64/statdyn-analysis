@@ -12,8 +12,10 @@ from typing import Any, Callable, Dict
 
 import numpy as np
 from bokeh.colors import RGB
-from bokeh.models import Circle, ColumnDataSource, HoverTool
+from bokeh.models import CategoricalColorMapper, Circle, ColumnDataSource, HoverTool
+from bokeh.palettes import Category10_10
 from bokeh.plotting import figure
+from bokeh.transform import factor_cmap
 from hsluv import hpluv_to_rgb
 
 from ..frame import Frame
@@ -40,16 +42,27 @@ LIGHT_COLOURS = _create_colours(light_colours=True)
 DARK_COLOURS = _create_colours(light_colours=False)
 
 
-def plot_circles(mol_plot: figure, source: ColumnDataSource) -> figure:
+def plot_circles(
+    mol_plot: figure, source: ColumnDataSource, categorical_colour: bool = False
+) -> figure:
     """Add the points to a bokeh figure to render the trimer molecule.
 
     This enables the trimer molecules to be drawn on the figure using only
     the position and the orientations of the central molecule.
 
     """
-    glyph = Circle(
+    glyph_args = dict(
         x="x", y="y", fill_alpha=1, line_alpha=0, radius="radius", fill_color="colour"
     )
+    if categorical_colour:
+        colour_categorical = factor_cmap(
+            field_name="colour",
+            factors=np.unique(source.data["colour"]).astype(str),
+            palette=Category10_10,
+        )
+        glyph_args["fill_color"] = colour_categorical
+
+    glyph = Circle(**glyph_args)
 
     mol_plot.add_glyph(source, glyph=glyph)
     mol_plot.add_tools(
@@ -77,24 +90,35 @@ def frame2data(
     order_function: Callable = None,
     order_list: np.ndarray = None,
     molecule: Molecule = Trimer(),
+    categorical_colour: bool = False,
 ) -> Dict[str, Any]:
     assert Molecule is not None
     angle = quaternion2z(frame.orientation)
-    # Colour all particles with the darker shade
-    colour: np.ndarray = colour_orientation(angle)
-    if order_list is not None:
-        order_list = np.logical_not(order_list)
-        # Colour unordered molecules lighter
-        colour[order_list] = colour_orientation(angle, light_colours=True)[order_list]
-    elif order_function is not None:
-        order = order_function(frame.box, frame.position, frame.orientation)
-        if order.dtype in [int, bool]:
-            order = np.logical_not(order.astype(bool))
-        else:
-            logger.debug("Order dtype: %s", order.dtype)
-            order = order == "liq"
-        logger.debug("Order fraction %.2f", np.mean(order))
-        colour[order] = colour_orientation(angle, light_colours=True)[order]
+    if categorical_colour:
+        if order_list is None:
+            raise ValueError(
+                "The colour_classes option can only be used with a custom order_list."
+            )
+        colour = order_list.astype(str)
+
+    else:
+        # Colour all particles with the darker shade
+        colour: np.ndarray = colour_orientation(angle)
+        if order_list is not None:
+            order_list = np.logical_not(order_list)
+            # Colour unordered molecules lighter
+            colour[order_list] = colour_orientation(angle, light_colours=True)[
+                order_list
+            ]
+        elif order_function is not None:
+            order = order_function(frame.box, frame.position, frame.orientation)
+            if order.dtype in [int, bool]:
+                order = np.logical_not(order.astype(bool))
+            else:
+                logger.debug("Order dtype: %s", order.dtype)
+                order = order == "liq"
+            logger.debug("Order fraction %.2f", np.mean(order))
+            colour[order] = colour_orientation(angle, light_colours=True)[order]
 
     positions = orientation2positions(molecule, frame.position, frame.orientation)
     data = {
@@ -113,10 +137,15 @@ def plot_frame(
     order_list: np.ndarray = None,
     source: ColumnDataSource = None,
     molecule: Molecule = Trimer(),
+    categorical_colour: bool = False,
 ):
     """Plot snapshot using bokeh."""
     data = frame2data(
-        frame, order_function=order_function, order_list=order_list, molecule=molecule
+        frame,
+        order_function=order_function,
+        order_list=order_list,
+        molecule=molecule,
+        categorical_colour=categorical_colour,
     )
     plot = figure(
         aspect_scale=1,
@@ -131,4 +160,4 @@ def plot_frame(
     else:
         source = ColumnDataSource(data=data)
 
-    return plot_circles(plot, source)
+    return plot_circles(plot, source, categorical_colour)

@@ -8,33 +8,53 @@
 """Test function from the generation of figures."""
 
 import math
+from functools import partial
 
+import bokeh.colors
 import gsd.hoomd
+import numpy as np
 import pytest
 from hypothesis import given
 from hypothesis.strategies import floats
 
 from sdanalysis.figures.configuration import colour_orientation, plot_frame
 from sdanalysis.frame import HoomdFrame
-from sdanalysis.molecules import Trimer
-from sdanalysis.order import compute_voronoi_neighs
+from sdanalysis.order import compute_ml_order, compute_voronoi_neighs, knn_model
 
 
 @given(floats(min_value=-math.pi, max_value=math.pi))
 def test_colour_orientation(orientation):
     """Ensure Color objects values being returned by colour_orientation."""
-    colour_orientation(orientation)
+    c = colour_orientation(orientation)
+    assert isinstance(c, bokeh.colors.Color)
 
 
-@pytest.mark.parametrize("molecule", [Trimer()])
-def test_plot_frame(molecule):
+@pytest.fixture()
+def snapshot():
     with gsd.hoomd.open("test/data/trajectory-Trimer-P13.50-T3.00.gsd") as trj:
-        plot_frame(HoomdFrame(trj[0]), molecule=molecule)
+        yield HoomdFrame(trj[0])
 
 
-def test_order():
-    with gsd.hoomd.open("test/data/trajectory-Trimer-P13.50-T3.00.gsd") as trj:
-        order_list = compute_voronoi_neighs(
-            trj[0].configuration.box, trj[0].particles.position
-        )
-        plot_frame(HoomdFrame(trj[0]), order_list=order_list)
+def test_plot_frame(snapshot, mol):
+    plot_frame(snapshot, molecule=mol)
+
+
+def test_plot_frame_orderlist(snapshot, mol):
+    order_list = np.random.choice([0, 1, 2], len(snapshot))
+    plot_frame(snapshot, molecule=mol, order_list=order_list)
+
+
+def test_plot_frame_orderfunc(snapshot, mol):
+    order_func = partial(compute_ml_order, knn_model())
+    plot_frame(snapshot, molecule=mol, order_function=order_func)
+
+
+@pytest.mark.parametrize("dtype", [int, str, float])
+def test_plot_frame_categorical(snapshot, mol, dtype):
+    categories = np.random.choice([0, 1, 2], len(snapshot)).astype(dtype)
+    plot_frame(snapshot, molecule=mol, order_list=categories, categorical_colour=True)
+
+
+def test_order(snapshot):
+    order_list = compute_voronoi_neighs(snapshot.box, snapshot.position)
+    plot_frame(snapshot, order_list=order_list)
