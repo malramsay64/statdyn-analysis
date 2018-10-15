@@ -11,9 +11,9 @@ import logging
 from typing import Any, Callable, Dict
 
 import numpy as np
+from bokeh import palettes
 from bokeh.colors import RGB
-from bokeh.models import CategoricalColorMapper, Circle, ColumnDataSource, HoverTool
-from bokeh.palettes import Category10_10
+from bokeh.models import Circle, ColumnDataSource, HoverTool
 from bokeh.plotting import figure
 from bokeh.transform import factor_cmap
 from hsluv import hpluv_to_rgb
@@ -58,7 +58,7 @@ def plot_circles(
         colour_categorical = factor_cmap(
             field_name="colour",
             factors=np.unique(source.data["colour"]).astype(str),
-            palette=Category10_10,
+            palette=palettes.Category10_10,
         )
         glyph_args["fill_color"] = colour_categorical
 

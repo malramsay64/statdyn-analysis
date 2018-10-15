@@ -234,7 +234,7 @@ class relaxations:
         box: np.ndarray,
         position: np.ndarray,
         orientation: np.ndarray,
-        molecule: Molecule = None,  # pylint: disable=unused-argument
+        molecule: Molecule = None,
         is2D: bool = None,
     ) -> None:
         self.init_time = timestep
