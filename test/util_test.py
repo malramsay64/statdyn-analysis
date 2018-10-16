@@ -81,22 +81,34 @@ def test_orientation2positions_moved_rot_multiple(mol):
 
 @pytest.mark.parametrize("press", ["0.00", "0.50", "1.00", "13.50"])
 @pytest.mark.parametrize("temp", ["0.00", "0.10", "1.50", "2.00"])
+@pytest.mark.parametrize("crys", [None, "p2", "p2gg", "pg"])
 @pytest.mark.parametrize("mol", ["Trimer"])
 @pytest.mark.parametrize("prefix", ["dump-", "trajectory-", ""])
-def test_get_filename_vars(prefix, mol, press, temp):
-    fname = f"{prefix}{mol}-P{press}-T{temp}.gsd"
+def test_get_filename_vars(prefix, mol, press, temp, crys):
+    if crys is None:
+        fname = f"trajectory-{mol}-P{press}-T{temp}.gsd"
+    else:
+        fname = f"trajectory-{mol}-P{press}-T{temp}-{crys}.gsd"
+
     var = get_filename_vars(fname)
     assert isinstance(var.temperature, str)
     assert var.temperature == temp
     assert isinstance(var.pressure, str)
     assert var.pressure == press
+    assert isinstance(var.crystal, str)
+    assert var.crystal == crys
 
 
 @pytest.mark.parametrize("press", ["0.00", "0.50", "1.00", "13.50"])
 @pytest.mark.parametrize("temp", ["0.00", "0.10", "1.50", "2.00"])
+@pytest.mark.parametrize("crys", [None, "p2", "p2gg", "pg"])
 @pytest.mark.parametrize("mol", ["Trimer"])
-def test_set_filename_vars(mol, press, temp):
-    fname = f"trajectory-{mol}-P{press}-T{temp}.gsd"
+def test_set_filename_vars(mol, press, temp, crys):
+    if crys is None:
+        fname = f"trajectory-{mol}-P{press}-T{temp}.gsd"
+    else:
+        fname = f"trajectory-{mol}-P{press}-T{temp}-{crys}.gsd"
+
     sim_params = SimulationParams()
 
     set_filename_vars(fname, sim_params)
@@ -104,6 +116,8 @@ def test_set_filename_vars(mol, press, temp):
     assert sim_params.temperature == float(temp)
     assert isinstance(sim_params.pressure, float)
     assert sim_params.pressure == float(press)
+    assert isinstance(sim_params.space_group, str)
+    assert sim_params.space_group == crys
 
 
 def angle(num_elements=1):
