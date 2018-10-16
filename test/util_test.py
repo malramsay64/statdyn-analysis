@@ -82,8 +82,9 @@ def test_orientation2positions_moved_rot_multiple(mol):
 @pytest.mark.parametrize("press", ["0.00", "0.50", "1.00", "13.50"])
 @pytest.mark.parametrize("temp", ["0.00", "0.10", "1.50", "2.00"])
 @pytest.mark.parametrize("mol", ["Trimer"])
-def test_get_filename_vars(mol, press, temp):
-    fname = f"trajectory-{mol}-P{press}-T{temp}.gsd"
+@pytest.mark.parametrize("prefix", ["dump-", "trajectory-", ""])
+def test_get_filename_vars(prefix, mol, press, temp):
+    fname = f"{prefix}{mol}-P{press}-T{temp}.gsd"
     var = get_filename_vars(fname)
     assert isinstance(var.temperature, str)
     assert var.temperature == temp

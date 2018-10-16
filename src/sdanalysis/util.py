@@ -35,23 +35,26 @@ def get_filename_vars(fname: PathLike):
     flist = fname.stem.split("-")
     logger.debug("Split Filename: %s", str(flist))
 
-    if len(flist) < 4:
+    if flist[0] in ["dump", "trajectory"]:
+        del flist[0]
+
+    if len(flist) < 3:
         return variables(None, None, None)
 
-    pressure_str = flist[2]
+    pressure_str = flist[1]
     if pressure_str[0] == "P":
         pressure: Optional[str] = pressure_str[1:]
     else:
         pressure = None
 
-    temperature_str = flist[3]
+    temperature_str = flist[2]
     if temperature_str[0] == "T":
         temp: Optional[str] = temperature_str[1:]
     else:
         temp = None
 
-    if len(flist) >= 5:
-        crys: Optional[str] = flist[4]
+    if len(flist) >= 4:
+        crys: Optional[str] = flist[3]
     else:
         crys = None
 
