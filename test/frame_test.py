@@ -14,7 +14,6 @@ import pytest
 from sdanalysis.frame import HoomdFrame, LammpsFrame
 
 
-@pytest.fixture
 def lammps_frame():
     inframe = {
         "x": np.random.rand(100),
@@ -27,7 +26,6 @@ def lammps_frame():
     return frame
 
 
-@pytest.fixture
 def gsd_frame():
     with gsd.hoomd.open("test/data/trajectory-Trimer-P13.50-T3.00.gsd") as trj:
         inframe = trj[0]
@@ -35,10 +33,7 @@ def gsd_frame():
     return frame
 
 
-@pytest.fixture(
-    params=[pytest.lazy_fixture("lammps_frame"), pytest.lazy_fixture("gsd_frame")],
-    ids=["lammps_frame", "gsd_frame"],
-)
+@pytest.fixture(params=[lammps_frame(), gsd_frame()], ids=["lammps_frame", "gsd_frame"])
 def frametypes(request):
     return request.param
 
@@ -72,7 +67,9 @@ def test_frame_box(frametypes):
     assert frametypes.box.dtype == np.float32
 
 
-def test_frame_box_hoomd(gsd_frame):
+def test_frame_box_hoomd():
+    frame = gsd_frame()
+
     class Box(NamedTuple):
         Lx: float
         Ly: float
@@ -82,9 +79,9 @@ def test_frame_box_hoomd(gsd_frame):
         yz: float
 
     box = Box(3, 2, 1, 0, 0, 0)
-    gsd_frame.frame.box = box
+    frame.frame.box = box
     assert np.all(
-        gsd_frame.box == np.array([box.Lx, box.Ly, box.Lz, box.xy, box.xz, box.yz])
+        frame.box == np.array([box.Lx, box.Ly, box.Lz, box.xy, box.xz, box.yz])
     )
 
 

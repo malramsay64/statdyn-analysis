@@ -21,7 +21,6 @@ dependencies:
     - pytest
     - coverage
     - pytest-cov
-    - pytest-lazy-fixture
     - hypothesis
     - mypy
     - pylint
