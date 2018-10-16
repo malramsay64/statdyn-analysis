@@ -8,6 +8,8 @@
 """Run simulation with boilerplate taken care of by the statdyn library."""
 
 import logging
+from functools import partial
+from pathlib import Path
 from pprint import pformat
 from typing import Tuple, cast
 
@@ -143,7 +145,8 @@ def comp_relaxations(infile) -> None:
 
 @sdanalysis.command()
 @click.option("--ip", multiple=True, help="Allow connections from these locations.")
-def figure(ip) -> None:
+@click.option("--directory", type=click.Path(exists=True, file_okay=False))
+def figure(ip, directory) -> None:
     """Start bokeh server with the file passed."""
     from bokeh.server.server import Server
     from bokeh.application import Application
@@ -153,6 +156,10 @@ def figure(ip) -> None:
 
     if isinstance(ip, str):
         ip = (ip,)
+    if directory:
+        directory = Path(directory)
+        make_document = partial(make_document, directory=directory)
+
     apps = {"/": Application(FunctionHandler(make_document))}
     server = Server(apps, allow_websocket_origin=list(ip))
     server.run_until_shutdown()

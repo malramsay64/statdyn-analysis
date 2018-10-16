@@ -361,6 +361,6 @@ class TrimerFigure(object):
         self._doc.title = "Configurations"
 
 
-def make_document(doc):
-    fig = TrimerFigure(doc)
+def make_document(doc, directory: Path = None):
+    fig = TrimerFigure(doc, directory=directory)
     fig.create_doc()
