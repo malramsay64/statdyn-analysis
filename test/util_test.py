@@ -95,7 +95,7 @@ def test_get_filename_vars(prefix, mol, press, temp, crys):
     assert var.temperature == temp
     assert isinstance(var.pressure, str)
     assert var.pressure == press
-    assert isinstance(var.crystal, str)
+    assert isinstance(var.crystal, type(crys))
     assert var.crystal == crys
 
 
@@ -116,7 +116,7 @@ def test_set_filename_vars(mol, press, temp, crys):
     assert sim_params.temperature == float(temp)
     assert isinstance(sim_params.pressure, float)
     assert sim_params.pressure == float(press)
-    assert isinstance(sim_params.space_group, str)
+    assert isinstance(sim_params.space_group, type(crys))
     assert sim_params.space_group == crys
 
 

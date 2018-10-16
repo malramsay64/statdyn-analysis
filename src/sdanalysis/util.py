@@ -64,12 +64,13 @@ def get_filename_vars(fname: PathLike):
 def set_filename_vars(fname: PathLike, sim_params: SimulationParams) -> None:
     """Set the variables of the simulations params according to the filename."""
     var = get_filename_vars(fname)
-    for attr in ["temperature", "pressure", "crystal"]:
+    for attr in ["temperature", "pressure"]:
         if getattr(var, attr) is not None:
-            value = getattr(var, attr)
-            if attr not in ["crystal"]:
-                value = float(value)
+            value = float(getattr(var, attr))
             setattr(sim_params, attr, value)
+
+    if var.crystal is not None:
+        sim_params.space_group = var.crystal
 
 
 def quaternion_rotation(initial, final):
