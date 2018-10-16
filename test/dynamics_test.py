@@ -148,16 +148,21 @@ class TestDynamicsClass:
             assert np.all(displacement >= 0.0)
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
-    @pytest.mark.parametrize("method", ["computeMSD", "computeMFD", "computeAlpha"])
+    @pytest.mark.parametrize("method", ["computeMSD", "computeMFD"])
     def test_trans_methods(self, dynamics_class, trajectory, step, method):
         snap = trajectory[step]
         quantity = getattr(dynamics_class, method)(snap.particles.position)
 
         if step == 0:
             assert np.isclose(quantity, 0, atol=1e-7)
-            assert quantity == 0
-        elif method != "computeAlpha":
+        else:
             assert quantity >= 0
+
+    @pytest.mark.parametrize("step", [0, 1, 10, 20])
+    @pytest.mark.parametrize("method", ["computeAlpha"])
+    def test_alpha_methods(self, dynamics_class, trajectory, step, method):
+        snap = trajectory[step]
+        quantity = getattr(dynamics_class, method)(snap.particles.position)
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     @pytest.mark.parametrize("method", ["computeRotation"])
