@@ -11,7 +11,7 @@ import gsd.hoomd
 import numpy as np
 import pytest
 from freud.box import Box
-from hypothesis import HealthCheck, assume, given
+from hypothesis import assume, given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
 from numpy.testing import assert_allclose
@@ -19,7 +19,7 @@ from numpy.testing import assert_allclose
 from sdanalysis import dynamics
 from sdanalysis.read import process_gsd
 
-MAX_BOX = 20.
+MAX_BOX = 20.0
 DTYPE = np.float32
 EPS = 2 * np.sqrt(np.finfo(DTYPE).eps)
 HYP_DTYPE = DTYPE
@@ -116,7 +116,7 @@ def test_overlap(displacement, rotation):
     overlap_same = dynamics.mobile_overlap(rotation, rotation)
     assert np.isclose(overlap_same, 1)
     overlap = dynamics.mobile_overlap(displacement, rotation)
-    assert 0. <= overlap <= 1.
+    assert 0.0 <= overlap <= 1.0
 
 
 @pytest.fixture(scope="module")
@@ -136,47 +136,68 @@ def dynamics_class(trajectory):
     )
 
 
-@pytest.mark.parametrize("step", [0, 1, 10, 20])
-def test_displacements(dynamics_class, trajectory, step):
-    snap = trajectory[step]
-    displacement = dynamics_class.get_displacements(snap.particles.position)
-    assert displacement.shape == (dynamics_class.num_particles,)
-    if step == 0:
-        assert np.all(displacement == 0.)
-    else:
-        assert np.all(displacement >= 0.)
+class TestDynamicsClass:
+    @pytest.mark.parametrize("step", [0, 1, 10, 20])
+    def test_displacements(self, dynamics_class, trajectory, step):
+        snap = trajectory[step]
+        displacement = dynamics_class.get_displacements(snap.particles.position)
+        assert displacement.shape == (dynamics_class.num_particles,)
+        if step == 0:
+            assert np.all(displacement == 0.0)
+        else:
+            assert np.all(displacement >= 0.0)
+
+    @pytest.mark.parametrize("step", [0, 1, 10, 20])
+    @pytest.mark.parametrize("method", ["computeMSD", "computeMFD", "computeAlpha"])
+    def test_trans_methods(self, dynamics_class, trajectory, step, method):
+        snap = trajectory[step]
+        quantity = getattr(dynamics_class, method)(snap.particles.position)
+
+        if step == 0:
+            assert np.isclose(quantity, 0, atol=1e-7)
+            assert quantity == 0
+        elif method != "computeAlpha":
+            assert quantity >= 0
+
+    @pytest.mark.parametrize("step", [0, 1, 10, 20])
+    @pytest.mark.parametrize("method", ["computeRotation"])
+    def test_rot_methods(self, dynamics_class, trajectory, step, method):
+        snap = trajectory[step]
+        quantity = getattr(dynamics_class, method)(snap.particles.orientation)
+
+        if step == 0:
+            assert np.isclose(quantity, 0, atol=1e-7)
+        else:
+            assert quantity >= 0
+
+    @pytest.mark.parametrize("step", [0, 1, 10, 20])
+    def test_rotations(self, dynamics_class, trajectory, step):
+        snap = trajectory[step]
+        rotations = dynamics_class.get_rotations(snap.particles.orientation)
+        assert rotations.shape == (dynamics_class.num_particles,)
+        if step == 0:
+            assert np.allclose(rotations, 0.0, atol=EPS)
+        else:
+            assert np.all(rotations >= 0.0)
+
+    def test_float64_box(self):
+        box = Box.cube(1)
+        init = np.random.random((100, 3)).astype(np.float32)
+        final = np.random.random((100, 3)).astype(np.float32)
+        result = dynamics.translationalDisplacement(box, init, final)
+        assert np.all(result < 1)
+
+    def test_read_only_arrays(self):
+        box = Box.cube(1)
+        init = np.random.random((100, 3)).astype(np.float32)
+        init.flags.writeable = False
+        final = np.random.random((100, 3)).astype(np.float32)
+        final.flags.writeable = False
+        result = dynamics.translationalDisplacement(box, init, final)
+        assert np.all(result < 1)
 
 
-@pytest.mark.parametrize("step", [0, 1, 10, 20])
-def test_rotations(dynamics_class, trajectory, step):
-    snap = trajectory[step]
-    rotations = dynamics_class.get_rotations(snap.particles.orientation)
-    assert rotations.shape == (dynamics_class.num_particles,)
-    if step == 0:
-        assert np.allclose(rotations, 0., atol=EPS)
-    else:
-        assert np.all(rotations >= 0.)
-
-
-def test_float64_box():
-    box = Box.cube(1)
-    init = np.random.random((100, 3)).astype(np.float32)
-    final = np.random.random((100, 3)).astype(np.float32)
-    result = dynamics.translationalDisplacement(box, init, final)
-    assert np.all(result < 1)
-
-
-def test_read_only_arrays():
-    box = Box.cube(1)
-    init = np.random.random((100, 3)).astype(np.float32)
-    init.flags.writeable = False
-    final = np.random.random((100, 3)).astype(np.float32)
-    final.flags.writeable = False
-    result = dynamics.translationalDisplacement(box, init, final)
-    assert np.all(result < 1)
-
-
-def test_dynamics():
+def test_process_file():
     process_gsd("test/data/trajectory-Trimer-P13.50-T3.00.gsd")
 
 
@@ -209,7 +230,7 @@ def test_molecularRelaxation():
 def test_lastMolecularRelaxation():
     num_elements = 10
     threshold = 0.4
-    tau = dynamics.lastMolecularRelaxation(num_elements, threshold, 1.)
+    tau = dynamics.lastMolecularRelaxation(num_elements, threshold, 1.0)
     invalid_values = np.full(num_elements, tau._max_value, dtype=np.uint32)
 
     def move(dist):

@@ -67,8 +67,8 @@ class dynamics:
         result = translationalDisplacement(self.box, self.position, position)
         return mean_squared_displacement(result)
 
-    def comptuteMFD(self, position: np.ndarray) -> float:
-        """Comptute the fourth power of displacement."""
+    def computeMFD(self, position: np.ndarray) -> float:
+        """Compute the fourth power of displacement."""
         result = translationalDisplacement(self.box, self.position, position)
         return mean_fourth_displacement(result)
 
@@ -88,7 +88,7 @@ class dynamics:
         return timestep - self.timestep
 
     def computeRotation(self, orientation: np.ndarray) -> float:
-        """Compute the rotation of the moleule."""
+        """Compute the rotation from the initial frame."""
         result = rotationalDisplacement(self.orientation, orientation)
         return mean_rotation(result)
 
@@ -142,6 +142,9 @@ class dynamics:
                 }
             )
         return dynamic_quantities
+
+    def __len__(self) -> int:
+        return self.num_particles
 
     def get_molid(self):
         """Molecule ids of each of the values."""
