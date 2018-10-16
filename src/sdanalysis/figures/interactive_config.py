@@ -357,24 +357,8 @@ class TrimerFigure(object):
             ],
             width=int(self.controls_width * 1.1),
         )
-        self._doc.add_root(
-            row(controls, self.plot, self.create_legend(), create_reference_interface())
-        )
+        self._doc.add_root(row(controls, self.plot, self.create_legend()))
         self._doc.title = "Configurations"
-
-
-def create_reference_interface():
-    div_str = "<p><b>Reference Structures:</b></p>"
-    div_width = 200
-    for crystal in ["p2", "p2gg", "pg"]:
-        crys_img = f"https://malramsay.com/static/img/molecules/crystal-{crystal}.png"
-        div_str += f"""
-            <figure style="text-align:center" width={div_width}>
-                <img src="{crys_img}" width={div_width} height={div_width}>
-                <figcaption align="center">{crystal}</figcaption>
-            </figure>
-            """
-    return Div(text=div_str, width=div_width + 100)
 
 
 def make_document(doc):
