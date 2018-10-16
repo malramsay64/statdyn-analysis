@@ -142,7 +142,8 @@ def comp_relaxations(infile) -> None:
 
 
 @sdanalysis.command()
-def figure() -> None:
+@click.option("--ip", multiple=True, help="Allow connections from these locations.")
+def figure(ip) -> None:
     """Start bokeh server with the file passed."""
     from bokeh.server.server import Server
     from bokeh.application import Application
@@ -150,7 +151,9 @@ def figure() -> None:
 
     from .figures.interactive_config import make_document
 
+    if isinstance(ip, str):
+        ip = (ip,)
     apps = {"/": Application(FunctionHandler(make_document))}
-    server = Server(apps)
+    server = Server(apps, allow_websocket_origin=list(ip))
     server.run_until_shutdown()
     logger.info("Bokeh server terminated.")
