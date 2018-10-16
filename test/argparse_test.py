@@ -34,10 +34,13 @@ def dummy_process_files(infile, sim_params, relaxations):
             print_params_values(sim_params)
 
 
-@sdanalysis.command()
+@click.command("dummy_subcommand")
 @click.pass_obj
 def dummy_subcommand(obj):
     print_params_values(obj)
+
+
+sdanalysis.add_command(dummy_subcommand, "dummy_subcommand")
 
 
 def test_version(runner):
