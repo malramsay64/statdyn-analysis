@@ -9,5 +9,6 @@
 from .frame import Frame, HoomdFrame, LammpsFrame
 from .molecules import Dimer, Disc, Molecule, Trimer
 from .order import compute_neighbours, relative_distances, relative_orientations
+from .read import open_trajectory
 from .params import SimulationParams
 from .version import __version__
