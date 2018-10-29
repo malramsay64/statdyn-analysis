@@ -286,7 +286,7 @@ def process_file(
                 myrelax = relaxframes[index]
             except IndexError:
                 logger.debug("Frame: %s", frame)
-                logger.debug("Create keyframe at step %s", frame.timestep)
+                logger.debug("Create key frame at step %s", frame.timestep)
                 keyframes.append(
                     dynamics(
                         frame.timestep, frame.box, frame.position, frame.orientation
@@ -327,3 +327,15 @@ def process_file(
         return None
 
     return dataframes.to_dataframe()
+
+
+def open_trajectory(filename: Path):
+    filename = Path(filename)
+    if filename.suffix == ".gsd":
+        with gsd.hoomd.open(str(filename)) as trj:
+            for frame in trj:
+                yield HoomdFrame(frame)
+    elif filename.suffix == ".lammpstrj":
+        trj = parse_lammpstrj(filename)
+        for frame in trj:
+            yield frame

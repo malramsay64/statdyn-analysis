@@ -15,6 +15,7 @@ import numpy as np
 import pandas
 import pytest
 
+import sdanalysis
 from sdanalysis import read
 from sdanalysis.params import SimulationParams
 from sdanalysis.StepSize import GenerateStepSeries
@@ -143,3 +144,20 @@ def test_process_file(sim_params, infile):
     data_dir = Path("test/data")
     with sim_params.temp_context(infile=data_dir / infile):
         df = read.process_file(sim_params)
+
+
+@pytest.mark.parametrize(
+    "infile",
+    [
+        "short-time-variance.lammpstrj",
+        "trajectory-Trimer-P13.50-T3.00.gsd",
+        Path("trajectory-Trimer-P13.50-T3.00.gsd"),
+    ],
+)
+def test_open_trajectory(infile):
+    data_dir = Path("test/data")
+    for frame in read.open_trajectory(data_dir / infile):
+        # Ensure frame is of the appropriate type
+        assert isinstance(frame, sdanalysis.frame.Frame)
+        # Can I read the frame
+        assert frame.timestep >= 0
