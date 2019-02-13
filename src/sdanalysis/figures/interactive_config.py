@@ -61,11 +61,15 @@ def parse_directory(directory: Path, glob: str = "dump*.gsd") -> Dict[str, List]
             curr_list = all_values.get(var_name)
             if curr_list is None:
                 curr_list = []
-            curr_list.append(getattr(file_vars, var_name))
+            value = getattr(file_vars, var_name)
+            if value is not None:
+                curr_list.append(value)
             all_values[var_name] = curr_list
     for key, value in all_values.items():
+        print(value)
         logger.debug("Key: %s has value: %s", key, value)
-        all_values[key] = sorted(list(set(value)))
+        if value is not None:
+            all_values[key] = sorted(list(set(value)))
     return all_values
 
 
@@ -74,7 +78,12 @@ def variables_to_file(file_vars: variables, directory: Path) -> Path:
         glob_pattern = f"dump-Trimer-P{file_vars.pressure}-T{file_vars.temperature}-{file_vars.crystal}.gsd"
     else:
         glob_pattern = f"dump-Trimer-P{file_vars.pressure}-T{file_vars.temperature}.gsd"
-    return next(directory.glob(glob_pattern))
+    try:
+        print(directory.glob(glob_pattern), glob_pattern)
+        value = next(directory.glob(glob_pattern))
+        return value
+    except StopIteration:
+        return None
 
 
 def compute_neigh_ordering(box, positions, orientations):
@@ -91,6 +100,8 @@ class TrimerFigure(object):
     }
     controls_width = 400
 
+    _frame = None
+
     def __init__(self, doc, directory: Path = None) -> None:
 
         self._doc = doc
@@ -100,7 +111,7 @@ class TrimerFigure(object):
         if directory is None:
             directory = Path.cwd()
         self._source = ColumnDataSource(
-            {"x": [], "y": [], "orientation": [], "colour": []}
+            {"x": [], "y": [], "orientation": [], "colour": [], "radius": []}
         )
         self.directory = directory
         self.initialise_directory()
@@ -120,26 +131,21 @@ class TrimerFigure(object):
 
         self._pressure_button = RadioButtonGroup(
             name="Pressure",
-            labels=self.variable_selection["pressure"],
-            active=0,
-            width=self.controls_width,
-        )
-        self._temperature_button = RadioButtonGroup(
-            name="Temperature",
-            labels=self.variable_selection["temperature"],
-            active=0,
-            width=self.controls_width,
-        )
-        self._crystal_button = RadioButtonGroup(
-            name="Crystal",
-            labels=self.variable_selection["crystal"],
+            labels=self.variable_selection.get("pressure", []),
             active=0,
             width=self.controls_width,
         )
 
+        self._temperature_button = RadioButtonGroup(
+            name="Temperature",
+            labels=self.variable_selection.get("temperature", []),
+            active=0,
+            width=self.controls_width,
+        )
+
+
         self._pressure_button.on_change("active", self.update_current_trajectory)
         self._temperature_button.on_change("active", self.update_current_trajectory)
-        self._crystal_button.on_change("active", self.update_current_trajectory)
 
     def create_files_interface(self) -> None:
         directory_name = Div(
@@ -153,19 +159,26 @@ class TrimerFigure(object):
             Div(text="<b>Temperature:</b>"),
             self._temperature_button,
             Div(text="<b>Crystal Structure:</b>"),
-            self._crystal_button,
-            Div(text="<hr/>", width=self.controls_width, height=10),
-            height=400,
         )
         return file_selection
 
     def get_selected_variables(self) -> variables:
+        try:
+            temperature = self.variable_selection["temperature"][
+                    self._temperature_button.active
+                ]
+        except IndexError:
+            temperature = None
+
+        try:
+            pressure=self.variable_selection["pressure"][self._pressure_button.active]
+        except IndexError:
+            pressure = None
+
+        crystal = None
+
         return variables(
-            temperature=self.variable_selection["temperature"][
-                self._temperature_button.active
-            ],
-            pressure=self.variable_selection["pressure"][self._pressure_button.active],
-            crystal=self.variable_selection["crystal"][self._crystal_button.active],
+            temperature, pressure, crystal
         )
 
     def get_selected_file(self) -> Path:
@@ -203,8 +216,9 @@ class TrimerFigure(object):
         )
 
     def update_current_trajectory(self, attr, old, new) -> None:
-        self._trajectory = gsd.hoomd.open(str(self.get_selected_file()), "rb")
-        self.update_frame(attr, old, new)
+        if self.get_selected_file() is not None:
+            self._trajectory = gsd.hoomd.open(str(self.get_selected_file()), "rb")
+            self.update_frame(attr, old, new)
 
     def initialise_media_interface(self) -> None:
         self._trajectory_slider = Slider(
@@ -271,12 +285,13 @@ class TrimerFigure(object):
         ]
 
     def update_data(self, attr, old, new):
-        if self.plot:
+        if self.plot and self._frame is not None:
             self.plot.title.text = f"Timestep {self._frame.timestep:.5g}"
-        data = frame2data(
-            self._frame, order_function=self.get_order_function(), molecule=Trimer()
-        )
-        self._update_source(data)
+        if self._frame is not None:
+            data = frame2data(
+                self._frame, order_function=self.get_order_function(), molecule=Trimer()
+            )
+            self._update_source(data)
 
     def update_data_attr(self, attr):
         self.update_data(attr, None, None)
@@ -335,7 +350,7 @@ class TrimerFigure(object):
             height=800,
             aspect_scale=1,
             match_aspect=True,
-            title=f"Timestep {self._frame.timestep:.5g}",
+            title=f"Timestep {0:.5g}",
             output_backend="webgl",
             active_scroll="wheel_zoom",
         )
