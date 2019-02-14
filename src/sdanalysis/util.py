@@ -35,7 +35,7 @@ def get_filename_vars(fname: PathLike):
     flist = fname.stem.split("-")
     logger.debug("Split Filename: %s", str(flist))
 
-    if flist[0] in ["dump", "trajectory"]:
+    if flist[0] in ["dump", "trajectory", "thermo"]:
         del flist[0]
 
     if len(flist) < 3:

@@ -83,7 +83,7 @@ def test_orientation2positions_moved_rot_multiple(mol):
 @pytest.mark.parametrize("temp", ["0.00", "0.10", "1.50", "2.00"])
 @pytest.mark.parametrize("crys", [None, "p2", "p2gg", "pg"])
 @pytest.mark.parametrize("mol", ["Trimer"])
-@pytest.mark.parametrize("prefix", ["dump-", "trajectory-", ""])
+@pytest.mark.parametrize("prefix", ["dump-", "trajectory-", "thermo-", ""])
 def test_get_filename_vars(prefix, mol, press, temp, crys):
     if crys is None:
         fname = f"trajectory-{mol}-P{press}-T{temp}.gsd"
@@ -206,10 +206,10 @@ def test_angle_roundtrip(angles):
 @pytest.mark.parametrize(
     "quaternion, angle",
     [
-        ([0.98246199, 0., 0., 0.18646298], 0.37512138),
-        ([0.20939827, 0., 0., 0.97783041], 2.7196734),
-        ([0.97660005, 0., 0., -0.21506353], -0.43351361),
-        ([-0.21179545, 0., 0., 0.977314], -2.71476936),
+        ([0.982_461_99, 0.0, 0.0, 0.186_462_98], 0.375_121_38),
+        ([0.209_398_27, 0.0, 0.0, 0.977_830_41], 2.719_673_4),
+        ([0.976_600_05, 0.0, 0.0, -0.215_063_53], -0.433_513_61),
+        ([-0.211_795_45, 0.0, 0.0, 0.977_314], -2.714_769_36),
     ],
 )
 def test_quaternion2z_specifics(quaternion, angle):
