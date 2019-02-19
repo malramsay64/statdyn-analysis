@@ -141,7 +141,7 @@ def unit_quaternion_Z():
 @pytest.fixture
 def quat():
     np.random.seed(0)
-    return rowan.random.rand(1000)
+    return rowan.normalize(rowan.random.rand(1000))
 
 
 @given(angle())
@@ -183,8 +183,8 @@ def test_quaternion_angle_2d(quat):
 
     """
     result = quaternion_angle(quat)
-    assert np.all(-np.pi <= result)
-    assert np.all(result <= np.pi)
+    assert np.all(0 <= result)
+    assert np.all(result <= 2 * np.pi)
 
 
 @given(arrays(np.float64, 1, elements=floats(min_value=-np.pi, max_value=np.pi)))
