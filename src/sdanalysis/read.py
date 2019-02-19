@@ -78,7 +78,10 @@ def process_gsd(sim_params: SimulationParams) -> Iterator[Tuple[List[int], Hoomd
             gen_steps=sim_params.gen_steps,
             max_gen=sim_params.max_gen,
         )
-        curr_step = 0
+        try:
+            curr_step = next(step_iter)
+        except StopIteration:
+            return
         for frame in src:
             logger.debug("Step %d with index %s", curr_step, step_iter.get_index())
             # This handles when the generators don't match up
