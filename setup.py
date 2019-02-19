@@ -30,7 +30,7 @@ install_requires = [
     "hsluv",
     "attrs",
     "click",
-    "freud",
+    "freud-analysis",
     "rowan",
 ]
 test_requires = [
