@@ -90,7 +90,12 @@ class LammpsFrame(Frame):
 
     @property
     def box(self) -> np.ndarray:
-        return np.array(self.frame["box"], dtype=np.float32)
+        box = np.zeros(6, dtype=np.float32)
+        for index, value in enumerate(self.frame["box"]):
+            if index > 5:
+                break
+            box[index] = value
+        return box
 
     def __len__(self) -> int:
         return len(self.frame["x"])
