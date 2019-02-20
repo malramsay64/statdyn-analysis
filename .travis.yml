@@ -13,7 +13,7 @@ before_install:
   # Useful for debugging any issues with conda
   - conda info -a
 
-  - conda create --name sdanalysis --file environment-lock.txt
+  - conda env create
   - source activate sdanalysis
   - conda install -c conda-forge codecov
 

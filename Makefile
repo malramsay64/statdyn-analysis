@@ -25,16 +25,6 @@ test:
 	python3 -m mypy src/
 	python3 -m pytest
 
-lock: | ${lockfile}
-	docker run -it\
-		--volume $(shell pwd):/srv:z \
-		--workdir /srv \
-		continuumio/miniconda3:4.5.4 bash -c \
-		"conda env create -f environment.yml && source activate sdanalysis-dev && conda list --explicit > ${lockfile}"
-
-${lockfile}:
-	touch $@
-
 install:
 	pip install -e . --no-deps
 

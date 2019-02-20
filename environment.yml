@@ -11,10 +11,10 @@ dependencies:
     - scikit-learn=0.19.0
     - pandas
     - pytables=3.4.2
-    - bokeh=0.12.16
+    - bokeh
     - gsd
     - pyyaml
-    - freud
+    - freud~=1.0.0
     - rowan
     - hsluv
     # Development requirements
@@ -24,5 +24,5 @@ dependencies:
     - hypothesis
     - mypy
     - pylint
-    - black
+    - black==18.9b0
     - isort
