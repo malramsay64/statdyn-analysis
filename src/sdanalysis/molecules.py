@@ -89,10 +89,10 @@ class Trimer(Molecule):
 
     def __init__(
         self,
-        radius: float = 0.637556,
+        radius: float = 0.637_556,
         distance: float = 1.0,
         angle: float = 120,
-        moment_inertia_scale: float = 1.,
+        moment_inertia_scale: float = 1.0,
     ) -> None:
         """Initialise trimer molecule.
 
@@ -167,7 +167,7 @@ class Dimer(Molecule):
 
     def __init__(
         self,
-        radius: float = 0.637556,
+        radius: float = 0.637_556,
         distance: float = 1.0,
         moment_inertia_scale: float = 1,
     ) -> None:

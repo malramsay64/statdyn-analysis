@@ -45,8 +45,8 @@ class SimulationParams:
     num_steps: Optional[int] = None
     linear_steps: int = attr.ib(default=100, repr=False)
     max_gen: int = attr.ib(default=500, repr=False)
-    gen_steps: int = attr.ib(default=20_000, repr=False)
-    output_interval: int = attr.ib(default=10_000, repr=False)
+    gen_steps: int = attr.ib(default=20000, repr=False)
+    output_interval: int = attr.ib(default=10000, repr=False)
 
     # File Params
     _infile: Optional[Path] = attr.ib(default=None, converter=_to_path, repr=False)

@@ -182,10 +182,10 @@ def exponential_relaxation(
 
     zero_est = time[np.argmin(np.abs(value - exp_value))]
     try:
-        p0 = (1., 1 / zero_est)
+        p0 = (1.0, 1 / zero_est)
     except (ZeroDivisionError, FloatingPointError) as err:
         logger.warning("Handled exception in estimating zero\n%s", err)
-        p0 = (1., 0.)
+        p0 = (1.0, 0.0)
 
     if sigma is not None:
         sigma = sigma[fit_region]

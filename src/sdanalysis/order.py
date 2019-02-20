@@ -27,7 +27,7 @@ def _neighbour_relative_angle(
 
 
 def _orientational_order(
-    neighbourlist: np.ndarray, orientation: np.ndarray, angle_factor: float = 1.
+    neighbourlist: np.ndarray, orientation: np.ndarray, angle_factor: float = 1.0
 ) -> np.ndarray:
     """Compute the orientational order parameter.
 
