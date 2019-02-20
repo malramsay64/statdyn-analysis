@@ -14,7 +14,7 @@ before_install:
   - conda info -a
 
   - conda env create
-  - source activate sdanalysis
+  - source activate sdanalysis-dev
   - conda install -c conda-forge codecov
 
 install:
