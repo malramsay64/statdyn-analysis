@@ -51,10 +51,14 @@ class dynamics:
         if molecule is None:
             is2D = False
         else:
-            is2D = True if molecule.dimensions == 2 else False
+            is2D = molecule.dimensions == 2
+
+        if is2D:
+            self.box = Box(Lx=box[0], Ly=box[1], xy=box[3], is2D=is2D)
+        else:
+            self.box = Box(*box, is2D=is2D)
 
         self.timestep = timestep
-        self.box = Box(*box, is2D=is2D)
         self.position = position
         self.num_particles = position.shape[0]
         if orientation is not None:
@@ -244,8 +248,13 @@ class relaxations:
         if molecule is None:
             is2D = False
         else:
-            is2D = True if molecule.dimensions == 2 else False
-        self.box = Box(*box, is2D=is2D)
+            is2D = molecule.dimensions == 2
+
+        if is2D:
+            self.box = Box(Lx=box[0], Ly=box[1], xy=box[3], is2D=is2D)
+        else:
+            self.box = Box(*box, is2D=is2D)
+
         self._num_elements = position.shape[0]
         self.init_position = position
         self.init_orientation = orientation
