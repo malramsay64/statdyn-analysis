@@ -73,7 +73,7 @@ def parse_directory(directory: Path, glob: str = "dump*.gsd") -> Dict[str, List]
     return all_values
 
 
-def variables_to_file(file_vars: variables, directory: Path) -> Path:
+def variables_to_file(file_vars: variables, directory: Path) -> Optional[Path]:
     if file_vars.crystal is not None:
         glob_pattern = f"dump-Trimer-P{file_vars.pressure}-T{file_vars.temperature}-{file_vars.crystal}.gsd"
     else:
@@ -178,7 +178,7 @@ class TrimerFigure(object):
 
         return variables(temperature, pressure, crystal)
 
-    def get_selected_file(self) -> Path:
+    def get_selected_file(self) -> Optional[Path]:
         return variables_to_file(self.get_selected_variables(), self.directory)
 
     def update_frame(self, attr, old, new) -> None:
