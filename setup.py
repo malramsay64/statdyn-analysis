@@ -29,7 +29,7 @@ install_requires = [
     "pyyaml",
     "hsluv",
     "attrs",
-    "click",
+    "click~=7.0.0",
     "freud-analysis",
     "rowan",
 ]

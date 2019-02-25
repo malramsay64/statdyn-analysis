@@ -35,8 +35,8 @@ requirements:
     - pyyaml
     - hsluv
     - attrs
-    - click
-    - freud >=0.10.0
+    - click ~=7.0.0
+    - freud ~=1.0.0
     - rowan
 
 build:
