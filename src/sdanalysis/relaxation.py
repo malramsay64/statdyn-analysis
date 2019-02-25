@@ -111,7 +111,9 @@ def diffusion_constant(time: np.ndarray, msd: np.ndarray) -> Result:
 
     """
     try:
-        linear_region = np.logical_and(msd > 2, msd < 100)
+        linear_region = np.logical_and(2 < msd, msd < 100)
+        if np.sum(linear_region) <= 2:
+            return Result(np.nan, np.nan)
     except FloatingPointError as err:
         logger.exception("%s", err)
         return Result(np.nan, np.nan)
