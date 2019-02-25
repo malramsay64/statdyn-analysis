@@ -52,6 +52,7 @@ enable=all
 
 disable=bad-continuation,
         suppressed-message,
+        misplaced-comparison-constant,
         locally-disabled,
         locally-enabled,
         file-ignored,
