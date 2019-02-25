@@ -143,7 +143,6 @@ class TrimerFigure(object):
             width=self.controls_width,
         )
 
-
         self._pressure_button.on_change("active", self.update_current_trajectory)
         self._temperature_button.on_change("active", self.update_current_trajectory)
 
@@ -165,21 +164,19 @@ class TrimerFigure(object):
     def get_selected_variables(self) -> variables:
         try:
             temperature = self.variable_selection["temperature"][
-                    self._temperature_button.active
-                ]
+                self._temperature_button.active
+            ]
         except IndexError:
             temperature = None
 
         try:
-            pressure=self.variable_selection["pressure"][self._pressure_button.active]
+            pressure = self.variable_selection["pressure"][self._pressure_button.active]
         except IndexError:
             pressure = None
 
         crystal = None
 
-        return variables(
-            temperature, pressure, crystal
-        )
+        return variables(temperature, pressure, crystal)
 
     def get_selected_file(self) -> Path:
         return variables_to_file(self.get_selected_variables(), self.directory)
