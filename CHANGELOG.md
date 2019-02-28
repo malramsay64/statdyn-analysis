@@ -1,6 +1,24 @@
 <a name="unreleased"></a>
 ## [Unreleased]
 
+
+<a name="v0.6.10"></a>
+## [v0.6.10] - 2019-02-25
+### Chore
+- Add conda-forge repo to travis for build phase
+
+### Feat
+- Generate changelog using git-chglog
+
+### Fix
+- Handle diffusion constant where there is no relaxation
+
+### Style
+- Allow any ordering of arguments in a conditional
+
+
+<a name="v0.6.9"></a>
+## [v0.6.9] - 2019-02-25
 ### Chore
 - closer specification of version numbers
 - Run updated black on source files
@@ -8,9 +26,6 @@
 - Remove the conda environment lock mechanism
 - The results from Rowan appear to have changed in an updates
 - Use the pypi name for freud in setup.py
-
-### Feat
-- Generate changelog using git-chglog
 
 ### Fix
 - Use appropriate mypy type hinting for interactive_config
@@ -280,7 +295,9 @@
 <a name="0.0.8"></a>
 ## 0.0.8 - 2016-09-10
 
-[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.8...HEAD
+[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.10...HEAD
+[v0.6.10]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.9...v0.6.10
+[v0.6.9]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.8...v0.6.9
 [v0.6.8]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.7...v0.6.8
 [v0.6.7]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.6...v0.6.7
 [v0.6.6]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.5...v0.6.6
