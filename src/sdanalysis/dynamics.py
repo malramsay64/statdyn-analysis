@@ -33,6 +33,7 @@ class Dynamics:
         position: np.ndarray,
         orientation: Optional[np.ndarray] = None,
         molecule: Molecule = Trimer(),
+        image: Optional[np.ndarray] = None,
     ) -> None:
         """Initialise a dynamics instance.
 
@@ -65,18 +66,29 @@ class Dynamics:
             assert orientation.shape[0] > 0
             self.orientation = orientation
         self.mol_vector = molecule.positions
+        self.image = image
 
-    def compute_msd(self, position: np.ndarray) -> float:
+    def compute_msd(
+        self, position: np.ndarray, image: Optional[np.ndarray] = None
+    ) -> float:
         """Compute the mean squared displacement."""
-        result = translational_displacement(self.box, self.position, position)
+        result = translational_displacement(
+            self.box, self.position, position, self.image, image
+        )
         return mean_squared_displacement(result)
 
-    def compute_mfd(self, position: np.ndarray) -> float:
+    def compute_mfd(
+        self, position: np.ndarray, image: Optional[np.ndarray] = None
+    ) -> float:
         """Compute the fourth power of displacement."""
-        result = translational_displacement(self.box, self.position, position)
+        result = translational_displacement(
+            self.box, self.position, position, self.image, image
+        )
         return mean_fourth_displacement(result)
 
-    def compute_alpha(self, position: np.ndarray) -> float:
+    def compute_alpha(
+        self, position: np.ndarray, image: Optional[np.ndarray] = None
+    ) -> float:
         r"""Compute the non-gaussian parameter alpha.
 
         .. math::
@@ -84,7 +96,9 @@ class Dynamics:
                       {2\langle \Delta r^2  \rangle^2} -1
 
         """
-        result = translational_displacement(self.box, self.position, position)
+        result = translational_displacement(
+            self.box, self.position, position, self.image, image
+        )
         return alpha_non_gaussian(result)
 
     def compute_time_delta(self, timestep: int) -> int:
@@ -101,7 +115,9 @@ class Dynamics:
         result = rotational_displacement(self.orientation, orientation)
         return result
 
-    def get_displacements(self, position: np.ndarray) -> np.ndarray:
+    def get_displacements(
+        self, position: np.ndarray, image: Optional[np.ndarray] = None
+    ) -> np.ndarray:
         """Get all the displacements."""
         result = translational_displacement(self.box, self.position, position)
         return result
@@ -117,11 +133,15 @@ class Dynamics:
         return structural_relax(particle_displacement, threshold)
 
     def compute_all(
-        self, timestep: int, position: np.ndarray, orientation: np.ndarray = None
+        self,
+        timestep: int,
+        position: np.ndarray,
+        orientation: np.ndarray = None,
+        image: Optional[np.ndarray] = None,
     ) -> Dict[str, Any]:
         """Compute all dynamics quantities of interest."""
         delta_displacement = translational_displacement(
-            self.box, self.position, position
+            self.box, self.position, position, self.image, image
         )
         dynamic_quantities = {
             "time": self.compute_time_delta(timestep),
