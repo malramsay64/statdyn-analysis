@@ -14,7 +14,6 @@ from typing import NamedTuple, Optional, Union
 
 import numpy as np
 import rowan
-from freud.box import Box
 
 from .molecules import Molecule
 from .params import SimulationParams

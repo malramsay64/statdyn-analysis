@@ -119,7 +119,9 @@ class Dynamics:
         self, position: np.ndarray, image: Optional[np.ndarray] = None
     ) -> np.ndarray:
         """Get all the displacements."""
-        result = translational_displacement(self.box, self.position, position)
+        result = translational_displacement(
+            self.box, self.position, position, self.image, image
+        )
         return result
 
     def compute_struct_relax(
