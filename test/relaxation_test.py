@@ -65,7 +65,7 @@ class TestMaxValueRelax:
         assert error == 1
 
     def test_compute_nan(self):
-        value = 50. - np.abs(np.arange(-50, 50))
+        value = 50.0 - np.abs(np.arange(-50, 50))
         assert self.time.shape == value.shape
         value[0] = np.nan
         max_value, error = relaxation.max_value_relaxation(self.time, value)
@@ -97,7 +97,7 @@ class TestMaxTimeRelax:
         assert error == 1
 
     def test_compute_nan(self):
-        value = 50. - np.abs(np.arange(-50, 50))
+        value = 50.0 - np.abs(np.arange(-50, 50))
         assert self.time.shape == value.shape
         value[0] = np.nan
         max_time, error = relaxation.max_time_relaxation(self.time, value)
@@ -153,7 +153,7 @@ def test_series_relaxations_random(values, relax_type):
 )
 def test_series_relaxations_index(indexes):
     array_size = 1000
-    data = {i: 1. for i in indexes}
+    data = {i: 1.0 for i in indexes}
     data["timesteps"] = np.arange(array_size)
     data["test"] = np.ones(array_size)
     df = pandas.DataFrame(data).groupby(indexes).mean()

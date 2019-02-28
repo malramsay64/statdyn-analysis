@@ -72,14 +72,14 @@ def test_initial_start_series(initial):
     assert next(gen) == 0
 
 
-@pytest.mark.parametrize("final", [100, 10000, 100000, 100001, 99999])
+@pytest.mark.parametrize("final", [100, 10000, 100_000, 100_001, 99999])
 def test_final_total(final):
     """Ensure the final value produced is the final value."""
     genlist = list(generate_steps(total_steps=final))
     assert genlist[-1] == final
 
 
-@pytest.mark.parametrize("final", [100, 10000, 100000, 100001, 99999])
+@pytest.mark.parametrize("final", [100, 10000, 100_000, 100_001, 99999])
 def test_final_total_series(final):
     """Ensure the final value produced is the final value."""
     genlist = list(GenerateStepSeries(total_steps=final))
@@ -92,7 +92,7 @@ def test_generate_steps(steps):  # pylint: disable=redefined-outer-name
     assert steps["gen"] == steps["def"]
 
 
-@pytest.mark.parametrize("total_steps, num_linear", [(10000, 100), (1000000, 100)])
+@pytest.mark.parametrize("total_steps, num_linear", [(10000, 100), (1_000_000, 100)])
 def test_generate_step_series(total_steps, num_linear):
     """Test generate_steps and generate_step_series.
 
@@ -126,7 +126,7 @@ def test_get_index():
 
 def test_generate_step_series_many():
     """Test generation of a step series works."""
-    total_steps = 1000000
+    total_steps = 1_000_000
     num_linear = 10
     many_gens = list(
         GenerateStepSeries(

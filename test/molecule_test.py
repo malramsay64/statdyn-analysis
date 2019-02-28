@@ -18,14 +18,14 @@ from sdanalysis import molecules
 
 
 def test_scale_moment_inertia(mol):
-    scale_factor = 10.
+    scale_factor = 10.0
     mol.moment_inertia_scale = scale_factor
     assert mol.moment_inertia_scale == scale_factor
 
 
 def test_get_radii(mol):
     radii = mol.get_radii()
-    assert radii[0] == 1.
+    assert radii[0] == 1.0
 
 
 def test_get_types(mol):
