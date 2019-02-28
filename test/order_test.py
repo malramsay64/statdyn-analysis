@@ -20,8 +20,6 @@ INFILES = [
     "test/data/dump-Trimer-13.50-0.40-pg.gsd",
 ]
 
-ML_MODELS = [order.dt_model, order.knn_model]
-
 
 @pytest.fixture(scope="module", params=INFILES)
 def frame(request):
@@ -71,14 +69,3 @@ def test_relative_orientations(frame):
         frame.configuration.box, frame.particles.position, frame.particles.orientation
     )
     assert np.all(np.isfinite(orientations))
-
-
-@pytest.mark.parametrize("model", ML_MODELS)
-def test_ml_models(frame, model):
-    ordering = order.compute_ml_order(
-        model(),
-        frame.configuration.box,
-        frame.particles.position,
-        frame.particles.orientation,
-    )
-    assert np.all(ordering != 0)
