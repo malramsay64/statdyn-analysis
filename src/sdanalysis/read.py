@@ -7,6 +7,7 @@
 # Distributed under terms of the MIT license.
 """Read input files and compute dynamic and thermodynamic quantities."""
 
+import datetime
 import logging
 import multiprocessing
 from pathlib import Path
@@ -262,6 +263,8 @@ def process_file(
 
     """
     assert sim_params.infile is not None
+    logger.info("Processing %s", sim_params.infile)
+    start_time = datetime.datetime.now()
 
     set_filename_vars(sim_params.infile, sim_params)
     if sim_params.outfile is not None and queue is None:
@@ -333,6 +336,11 @@ def process_file(
         if queue:
             queue.put(("molecular_relaxations", mol_relax))
         return None
+
+    end_time = datetime.datetime.now()
+    processing_time = end_time - start_time
+
+    logger.info("Finished processing %s, took %s", sim_params.infile, processing_time)
 
     return dataframes.to_dataframe()
 
