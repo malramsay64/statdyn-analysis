@@ -26,12 +26,14 @@ logger = logging.getLogger(__name__)
 
 gsd_logger = logging.getLogger("gsd")
 gsd_logger.setLevel(logging.WARNING)
+freud_logger = logging.getLogger("freud")
+freud_logger.setLevel(logging.WARNING)
 
 MOLECULE_OPTIONS = {"trimer": Trimer, "disc": Disc, "sphere": Sphere, "dimer": Dimer}
 
 
 def _verbosity(_, __, value) -> None:
-    levels = {0: "WARNING", 1: "INFO", 2: "DEBUG"}
+    levels = {0: "INFO", 1: "DEBUG"}
     log_level = levels.get(value, "DEBUG")
     logging.basicConfig(level=log_level)
     logger.debug(f"Setting log level to %s", log_level)
@@ -126,7 +128,7 @@ def comp_dynamics(sim_params, output, mol_relaxations, linear_dynamics, infile) 
     # Create output directory where it doesn't already exists
     sim_params.output.mkdir(parents=True, exist_ok=True)
 
-    logger.info("Processing: %s", infile)
+    logger.debug("Processing: %s", infile)
 
     infile = cast(Tuple[str], infile)
     parallel_process_files(infile, sim_params, relaxations)
