@@ -105,6 +105,16 @@ class TrimerFigure(object):
         self._source = ColumnDataSource(
             {"x": [], "y": [], "orientation": [], "colour": [], "radius": []}
         )
+
+        if models:
+            from sklearn.externals import joblib
+
+            for model in models:
+                model = Path(model)
+                self.order_functions[model.stem] = functools.partial(
+                    compute_ml_order, joblib.load(model)
+                )
+
         self.directory = directory
         self.initialise_directory()
 

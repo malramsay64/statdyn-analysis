@@ -152,7 +152,14 @@ def comp_relaxations(infile) -> None:
 @sdanalysis.command()
 @click.option("--ip", multiple=True, help="Allow connections from these locations.")
 @click.option("--directory", type=click.Path(exists=True, file_okay=False))
-def figure(ip, directory) -> None:
+@click.option(
+    "-m",
+    "--model",
+    type=click.Path(exists=True, file_okay=True, dir_okay=False),
+    multiple=True,
+    help="Pickled scikit-learn Models to use for visualisation of machine learning algorithms.",
+)
+def figure(ip, directory, model) -> None:
     """Start bokeh server with the file passed."""
     from bokeh.server.server import Server
     from bokeh.application import Application
@@ -164,7 +171,7 @@ def figure(ip, directory) -> None:
         ip = (ip,)
     if directory:
         directory = Path(directory)
-        make_document = partial(make_document, directory=directory)
+        make_document = partial(make_document, directory=directory, models=model)
 
     apps = {"/": Application(FunctionHandler(make_document))}
     server = Server(apps, allow_websocket_origin=list(ip))
