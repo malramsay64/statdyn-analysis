@@ -45,20 +45,6 @@ def _orientational_order(
     return np.cos(angles.mean() * angle_factor)
 
 
-def dt_model():
-    from sklearn.externals import joblib
-    from pathlib import Path
-
-    return joblib.load(Path(__file__).parent / "models/dt-Trimer-model.pkl")
-
-
-def knn_model():
-    from sklearn.externals import joblib
-    from pathlib import Path
-
-    return joblib.load(Path(__file__).parent / "models/knn-Trimer-model.pkl")
-
-
 def compute_ml_order(
     model, box: np.ndarray, position: np.ndarray, orientation: np.ndarray
 ) -> np.ndarray:

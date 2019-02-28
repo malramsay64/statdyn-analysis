@@ -36,13 +36,7 @@ from tornado import gen
 
 from ..frame import HoomdFrame
 from ..molecules import Trimer
-from ..order import (
-    compute_ml_order,
-    compute_voronoi_neighs,
-    dt_model,
-    knn_model,
-    orientational_order,
-)
+from ..order import compute_ml_order, compute_voronoi_neighs, orientational_order
 from ..util import get_filename_vars, variables
 from .configuration import DARK_COLOURS, frame2data, plot_circles, plot_frame
 
@@ -94,15 +88,13 @@ class TrimerFigure(object):
     order_functions = {
         "None": None,
         "Orient": functools.partial(orientational_order, order_threshold=0.75),
-        "Decision Tree": functools.partial(compute_ml_order, dt_model()),
-        "KNN Model": functools.partial(compute_ml_order, knn_model()),
         "Num Neighs": compute_neigh_ordering,
     }
     controls_width = 400
 
     _frame = None
 
-    def __init__(self, doc, directory: Path = None) -> None:
+    def __init__(self, doc, directory: Path = None, models=[]) -> None:
 
         self._doc = doc
         self.plot = None
