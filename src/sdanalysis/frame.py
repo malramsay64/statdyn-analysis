@@ -8,7 +8,7 @@
 """Classes which hold frames."""
 
 from abc import ABC, abstractmethod
-from typing import Dict
+from typing import Dict, Optional
 
 import attr
 import numpy as np
@@ -19,6 +19,11 @@ class Frame(ABC):
     @property
     @abstractmethod
     def position(self) -> np.ndarray:
+        pass
+
+    @property
+    @abstractmethod
+    def image(self) -> Optional[np.ndarray]:
         pass
 
     @property
@@ -65,6 +70,10 @@ class LammpsFrame(Frame):
         return np.array(
             [self.frame["x"], self.frame["y"], self.frame["z"]], dtype=np.float32
         ).T
+
+    @property
+    def image(self) -> Optional[np.ndarray]:
+        return None
 
     @property
     def x_position(self) -> np.ndarray:
@@ -133,6 +142,10 @@ class HoomdFrame(Frame):
     @property
     def position(self) -> np.ndarray:
         return self.frame.particles.position[: self._num_mols]
+
+    @property
+    def image(self) -> Optional[np.ndarray]:
+        return self.frame.particles.image
 
     @property
     def x_position(self) -> np.ndarray:
