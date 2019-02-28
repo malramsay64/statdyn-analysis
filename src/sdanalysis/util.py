@@ -105,22 +105,6 @@ def quaternion2z(quaternion: np.ndarray) -> np.ndarray:
     return rowan.to_euler(quaternion)[:, 0].astype(np.float32)
 
 
-def displacement_periodic(
-    box: Box, initial: np.ndarray, final: np.ndarray
-) -> np.ndarray:
-    """Calculate displacement inclusive of periodic boundary conditions.
-
-    This uses the :class:`freud.Box` to wrap the displacement within the box.
-
-    """
-    if not isinstance(box, Box):
-        raise ValueError(f"Expecting type of {Box}, got {type(box)}")
-    try:
-        return np.linalg.norm(box.wrap(final - initial), axis=1)
-    except FloatingPointError:
-        return np.full(initial.shape[0], np.nan)
-
-
 def orientation2positions(
     mol: Molecule, position: np.ndarray, orientation: np.ndarray
 ) -> np.ndarray:

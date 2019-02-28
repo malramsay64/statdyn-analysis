@@ -15,7 +15,7 @@ import pandas
 from freud.box import Box
 
 from .molecules import Molecule, Trimer
-from .util import displacement_periodic, quaternion_rotation, rotate_vectors
+from .util import quaternion_rotation, rotate_vectors
 
 np.seterr(divide="raise", invalid="raise", over="raise")
 logger = logging.getLogger(__name__)
@@ -528,18 +528,25 @@ def rotational_displacement(initial: np.ndarray, final: np.ndarray) -> np.ndarra
 
 
 def translational_displacement(
-    box: Box, initial: np.ndarray, final: np.ndarray
+    box: Box,
+    initial: np.ndarray,
+    final: np.ndarray,
+    inital_image: Optional[np.ndarray] = None,
+    final_image: Optional[np.ndarray] = None,
 ) -> np.ndarray:
-    """Optimised function for computing the displacement.
-
-    This computes the displacement using the shortest path from the original
-    position to the final position. This is a reasonable assumption to make
-    since the path
-
-    This assumes there is no more than a single image between molecules,
-    which breaks slightly when the frame size changes. I am assuming this is
-    negligible so not including it.
-    """
+    """Optimised function for computing the displacement."""
     assert final.shape[0] > 0
     assert initial.shape[0] >= final.shape[0]
-    return displacement_periodic(box, initial, final)
+
+    if not isinstance(box, Box):
+        raise ValueError(f"Expecting type of {Box}, got {type(box)}")
+
+    if inital_image is not None and final_image is not None:
+        return np.linalg.norm(
+            box.unwrap(final, final_image) - box.unwrap(initial, inital_image), axis=1
+        )
+
+    try:
+        return np.linalg.norm(box.wrap(final - initial), axis=1)
+    except FloatingPointError:
+        return np.full(initial.shape[0], np.nan)
