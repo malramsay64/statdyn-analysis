@@ -25,7 +25,7 @@ EPS = 2 * np.sqrt(np.finfo(DTYPE).eps)
 HYP_DTYPE = DTYPE
 
 
-def translationalDisplacement_reference(
+def translational_displacement_reference(
     box: Box, initial: np.ndarray, final: np.ndarray
 ) -> np.ndarray:
     """Simplified reference implementation for computing the displacement.
@@ -51,7 +51,7 @@ def translationalDisplacement_reference(
     arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 4, MAX_BOX / 4)),
     arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 4, MAX_BOX / 4)),
 )
-def test_translationalDisplacement_noperiod(init, final):
+def test_translational_displacement_noperiod(init, final):
     """Test calculation of the translational displacement.
 
     This test ensures that the result is close to the numpy.linalg.norm
@@ -60,8 +60,8 @@ def test_translationalDisplacement_noperiod(init, final):
     """
     box = Box(MAX_BOX, MAX_BOX, MAX_BOX)
     np_res = np.linalg.norm(init - final, axis=1)
-    result = dynamics.translationalDisplacement(box, init, final)
-    ref_res = translationalDisplacement_reference(box, init, final)
+    result = dynamics.translational_displacement(box, init, final)
+    ref_res = translational_displacement_reference(box, init, final)
     print(result)
     assert_allclose(result, np_res, atol=EPS)
     assert_allclose(result, ref_res, atol=EPS)
@@ -71,15 +71,15 @@ def test_translationalDisplacement_noperiod(init, final):
     arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, -MAX_BOX / 4 - 1e-5)),
     arrays(HYP_DTYPE, (10, 3), elements=floats(MAX_BOX / 4, MAX_BOX / 2)),
 )
-def test_translationalDisplacement_periodicity(init, final):
+def test_translational_displacement_periodicity(init, final):
     """Ensure the periodicity is calulated appropriately.
 
     This is testing that periodic boundaries are identified appropriately.
     """
     box = Box(MAX_BOX, MAX_BOX, MAX_BOX)
     np_res = np.square(np.linalg.norm(init - final, axis=1))
-    result = dynamics.translationalDisplacement(box, init, final)
-    ref_res = translationalDisplacement_reference(box, init, final)
+    result = dynamics.translational_displacement(box, init, final)
+    ref_res = translational_displacement_reference(box, init, final)
     assert np.all(np.logical_not(np.isclose(result, np_res)))
     assert_allclose(result, ref_res, atol=EPS)
 
@@ -88,14 +88,14 @@ def test_translationalDisplacement_periodicity(init, final):
     arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, MAX_BOX / 2)),
     arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, MAX_BOX / 2)),
 )
-def test_translationalDisplacement(init, final):
+def test_translational_displacement(init, final):
     """Ensure the periodicity is calulated appropriately.
 
     This is testing that periodic boundaries are identified appropriately.
     """
     box = Box(MAX_BOX, MAX_BOX, MAX_BOX)
-    result = dynamics.translationalDisplacement(box, init, final)
-    ref_res = translationalDisplacement_reference(box, init, final)
+    result = dynamics.translational_displacement(box, init, final)
+    ref_res = translational_displacement_reference(box, init, final)
     assert np.allclose(result, ref_res, atol=EPS)
 
 
@@ -128,7 +128,7 @@ def trajectory():
 @pytest.fixture(scope="module")
 def dynamics_class(trajectory):
     snap = trajectory[0]
-    return dynamics.dynamics(
+    return dynamics.Dynamics(
         snap.configuration.step,
         snap.configuration.box,
         snap.particles.position,
@@ -148,7 +148,7 @@ class TestDynamicsClass:
             assert np.all(displacement >= 0.0)
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
-    @pytest.mark.parametrize("method", ["computeMSD", "computeMFD"])
+    @pytest.mark.parametrize("method", ["compute_msd", "compute_mfd"])
     def test_trans_methods(self, dynamics_class, trajectory, step, method):
         snap = trajectory[step]
         quantity = getattr(dynamics_class, method)(snap.particles.position)
@@ -159,13 +159,13 @@ class TestDynamicsClass:
             assert quantity >= 0
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
-    @pytest.mark.parametrize("method", ["computeAlpha"])
+    @pytest.mark.parametrize("method", ["compute_alpha"])
     def test_alpha_methods(self, dynamics_class, trajectory, step, method):
         snap = trajectory[step]
         quantity = getattr(dynamics_class, method)(snap.particles.position)
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
-    @pytest.mark.parametrize("method", ["computeRotation"])
+    @pytest.mark.parametrize("method", ["compute_rotation"])
     def test_rot_methods(self, dynamics_class, trajectory, step, method):
         snap = trajectory[step]
         quantity = getattr(dynamics_class, method)(snap.particles.orientation)
@@ -189,7 +189,7 @@ class TestDynamicsClass:
         box = Box.cube(1)
         init = np.random.random((100, 3)).astype(np.float32)
         final = np.random.random((100, 3)).astype(np.float32)
-        result = dynamics.translationalDisplacement(box, init, final)
+        result = dynamics.translational_displacement(box, init, final)
         assert np.all(result < 1)
 
     def test_read_only_arrays(self):
@@ -198,7 +198,7 @@ class TestDynamicsClass:
         init.flags.writeable = False
         final = np.random.random((100, 3)).astype(np.float32)
         final.flags.writeable = False
-        result = dynamics.translationalDisplacement(box, init, final)
+        result = dynamics.translational_displacement(box, init, final)
         assert np.all(result < 1)
 
 
@@ -206,10 +206,10 @@ def test_process_file():
     process_gsd("test/data/trajectory-Trimer-P13.50-T3.00.gsd")
 
 
-def test_molecularRelaxation():
+def test_MolecularRelaxation():
     num_elements = 10
     threshold = 0.4
-    tau = dynamics.molecularRelaxation(num_elements, threshold)
+    tau = dynamics.MolecularRelaxation(num_elements, threshold)
     invalid_values = np.full(num_elements, tau._max_value, dtype=np.uint32)
 
     def move(dist):
@@ -232,10 +232,10 @@ def test_molecularRelaxation():
     assert np.all(tau.get_status() == np.full(num_elements, 3))
 
 
-def test_lastMolecularRelaxation():
+def test_LastMolecularRelaxation():
     num_elements = 10
     threshold = 0.4
-    tau = dynamics.lastMolecularRelaxation(num_elements, threshold, 1.0)
+    tau = dynamics.LastMolecularRelaxation(num_elements, threshold, 1.0)
     invalid_values = np.full(num_elements, tau._max_value, dtype=np.uint32)
 
     def move(dist):

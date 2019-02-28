@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 YamlValue = Union[str, float, int]
 
 
-class dynamics:
+class Dynamics:
     """Compute dynamic properties of a simulation."""
 
     def __init__(
@@ -66,17 +66,17 @@ class dynamics:
             self.orientation = orientation
         self.mol_vector = molecule.positions
 
-    def computeMSD(self, position: np.ndarray) -> float:
+    def compute_msd(self, position: np.ndarray) -> float:
         """Compute the mean squared displacement."""
-        result = translationalDisplacement(self.box, self.position, position)
+        result = translational_displacement(self.box, self.position, position)
         return mean_squared_displacement(result)
 
-    def computeMFD(self, position: np.ndarray) -> float:
+    def compute_mfd(self, position: np.ndarray) -> float:
         """Compute the fourth power of displacement."""
-        result = translationalDisplacement(self.box, self.position, position)
+        result = translational_displacement(self.box, self.position, position)
         return mean_fourth_displacement(result)
 
-    def computeAlpha(self, position: np.ndarray) -> float:
+    def compute_alpha(self, position: np.ndarray) -> float:
         r"""Compute the non-gaussian parameter alpha.
 
         .. math::
@@ -84,47 +84,47 @@ class dynamics:
                       {2\langle \Delta r^2  \rangle^2} -1
 
         """
-        result = translationalDisplacement(self.box, self.position, position)
+        result = translational_displacement(self.box, self.position, position)
         return alpha_non_gaussian(result)
 
-    def computeTimeDelta(self, timestep: int) -> int:
+    def compute_time_delta(self, timestep: int) -> int:
         """Time difference between keyframe and timestep."""
         return timestep - self.timestep
 
-    def computeRotation(self, orientation: np.ndarray) -> float:
+    def compute_rotation(self, orientation: np.ndarray) -> float:
         """Compute the rotation from the initial frame."""
-        result = rotationalDisplacement(self.orientation, orientation)
+        result = rotational_displacement(self.orientation, orientation)
         return mean_rotation(result)
 
     def get_rotations(self, orientation: np.ndarray) -> np.ndarray:
         """Get all the rotations."""
-        result = rotationalDisplacement(self.orientation, orientation)
+        result = rotational_displacement(self.orientation, orientation)
         return result
 
     def get_displacements(self, position: np.ndarray) -> np.ndarray:
         """Get all the displacements."""
-        result = translationalDisplacement(self.box, self.position, position)
+        result = translational_displacement(self.box, self.position, position)
         return result
 
-    def computeStructRelax(
+    def compute_struct_relax(
         self, position: np.ndarray, orientation: np.ndarray, threshold: float = 0.3
     ) -> float:
-        particle_displacement = translationalDisplacement(
+        particle_displacement = translational_displacement(
             self.box,
             molecule2particles(self.position, self.orientation, self.mol_vector),
             molecule2particles(position, orientation, self.mol_vector),
         )
         return structural_relax(particle_displacement, threshold)
 
-    def computeAll(
+    def compute_all(
         self, timestep: int, position: np.ndarray, orientation: np.ndarray = None
     ) -> Dict[str, Any]:
         """Compute all dynamics quantities of interest."""
-        delta_displacement = translationalDisplacement(
+        delta_displacement = translational_displacement(
             self.box, self.position, position
         )
         dynamic_quantities = {
-            "time": self.computeTimeDelta(timestep),
+            "time": self.compute_time_delta(timestep),
             "mean_displacement": mean_displacement(delta_displacement),
             "msd": mean_squared_displacement(delta_displacement),
             "mfd": mean_fourth_displacement(delta_displacement),
@@ -132,7 +132,7 @@ class dynamics:
             "com_struct": structural_relax(delta_displacement, dist=0.4),
         }
         if self.orientation is not None:
-            delta_rotation = rotationalDisplacement(self.orientation, orientation)
+            delta_rotation = rotational_displacement(self.orientation, orientation)
             dynamic_quantities.update(
                 {
                     "mean_rotation": mean_rotation(delta_rotation),
@@ -140,7 +140,7 @@ class dynamics:
                     "rot2": rotational_relax2(delta_rotation),
                     "gamma": gamma(delta_displacement, delta_rotation),
                     "overlap": mobile_overlap(delta_displacement, delta_rotation),
-                    "struct": self.computeStructRelax(
+                    "struct": self.compute_struct_relax(
                         position, orientation, threshold=0.3
                     ),
                 }
@@ -155,7 +155,7 @@ class dynamics:
         return np.arange(self.num_particles)
 
 
-class molecularRelaxation:
+class MolecularRelaxation:
     """Compute the relaxation of each molecule."""
 
     def __init__(self, num_elements: int, threshold: float) -> None:
@@ -175,7 +175,7 @@ class molecularRelaxation:
         return self._status
 
 
-class lastMolecularRelaxation(molecularRelaxation):
+class LastMolecularRelaxation(MolecularRelaxation):
     _is_irreversible = 3
 
     def __init__(
@@ -204,7 +204,7 @@ class lastMolecularRelaxation(molecularRelaxation):
         return status
 
 
-class structRelaxations(molecularRelaxation):
+class StructRelaxations(MolecularRelaxation):
     """Compute the average structural relaxation for a molecule."""
 
     def __init__(self, num_elements: int, threshold: float, molecule: Molecule) -> None:
@@ -220,7 +220,7 @@ def create_mol_relaxations(
     threshold: float,
     last_passage: bool = False,
     last_passage_cutoff: float = 1.0,
-) -> molecularRelaxation:
+) -> MolecularRelaxation:
     if threshold is None or threshold < 0:
         raise ValueError(f"Threshold needs a positive value, got {threshold}")
     if last_passage:
@@ -229,12 +229,12 @@ def create_mol_relaxations(
                 "When using last passage a positive cutoff value is required,"
                 f"got {last_passage_cutoff}, default is 1.0"
             )
-        return lastMolecularRelaxation(num_elements, threshold, last_passage_cutoff)
+        return LastMolecularRelaxation(num_elements, threshold, last_passage_cutoff)
 
-    return molecularRelaxation(num_elements, threshold)
+    return MolecularRelaxation(num_elements, threshold)
 
 
-class relaxations:
+class Relaxations:
     def __init__(
         self,
         timestep: int,
@@ -271,7 +271,7 @@ class relaxations:
         )
 
     def set_mol_relax(self, definition: List[Dict[str, YamlValue]]) -> None:
-        self.mol_relax: Dict[str, molecularRelaxation] = {}
+        self.mol_relax: Dict[str, MolecularRelaxation] = {}
         for item in definition:
             if item.get("name") is None:
                 raise ValueError("'name' is a required attribute")
@@ -293,8 +293,10 @@ class relaxations:
         return timestep - self.init_time
 
     def add(self, timestep: int, position: np.ndarray, orientation: np.ndarray) -> None:
-        displacement = translationalDisplacement(self.box, self.init_position, position)
-        rotation = rotationalDisplacement(self.init_orientation, orientation)
+        displacement = translational_displacement(
+            self.box, self.init_position, position
+        )
+        rotation = rotational_displacement(self.init_orientation, orientation)
         for key, func in self.mol_relax.items():
             if "D" in key:
                 func.add(self.get_timediff(timestep), displacement)
@@ -318,7 +320,7 @@ def molecule2particles(
 
 
 def mean_squared_displacement(displacement: np.ndarray) -> float:
-    """Mean value of the squared displacment.
+    """Mean value of the squared displacement.
 
     Args:
         displacement (class:`numpy.ndarray`): vector of squared
@@ -496,7 +498,7 @@ def mobile_overlap(
     return len(np.intersect1d(trans_order, rot_order)) / num_elements
 
 
-def rotationalDisplacement(initial: np.ndarray, final: np.ndarray) -> np.ndarray:
+def rotational_displacement(initial: np.ndarray, final: np.ndarray) -> np.ndarray:
     r"""Compute the rotational displacement.
 
     Args:
@@ -525,7 +527,7 @@ def rotationalDisplacement(initial: np.ndarray, final: np.ndarray) -> np.ndarray
     return quaternion_rotation(initial, final)
 
 
-def translationalDisplacement(
+def translational_displacement(
     box: Box, initial: np.ndarray, final: np.ndarray
 ) -> np.ndarray:
     """Optimised function for computing the displacement.

@@ -17,7 +17,7 @@ import gsd.hoomd
 import numpy as np
 import pandas
 
-from .dynamics import dynamics, relaxations
+from .dynamics import Dynamics, Relaxations
 from .frame import Frame, HoomdFrame, LammpsFrame
 from .molecules import Trimer
 from .params import SimulationParams
@@ -271,8 +271,8 @@ def process_file(
     else:
         dataframes = WriteCache()
 
-    keyframes: List[dynamics] = []
-    relaxframes: List[relaxations] = []
+    keyframes: List[Dynamics] = []
+    relaxframes: List[Relaxations] = []
     if sim_params.infile.suffix == ".gsd":
         file_iterator: FileIterator = process_gsd(sim_params)
     elif sim_params.infile.suffix == ".lammpstrj":
@@ -291,12 +291,12 @@ def process_file(
                 logger.debug("Frame: %s", frame)
                 logger.debug("Create key frame at step %s", frame.timestep)
                 keyframes.append(
-                    dynamics(
+                    Dynamics(
                         frame.timestep, frame.box, frame.position, frame.orientation
                     )
                 )
                 relaxframes.append(
-                    relaxations(
+                    Relaxations(
                         frame.timestep,
                         frame.box,
                         frame.position,
@@ -309,7 +309,7 @@ def process_file(
                 # Set custom relaxation functions
                 if mol_relaxations is not None:
                     myrelax.set_mol_relax(mol_relaxations)
-            dynamics_series = mydyn.computeAll(
+            dynamics_series = mydyn.compute_all(
                 frame.timestep, frame.position, frame.orientation
             )
             myrelax.add(frame.timestep, frame.position, frame.orientation)
