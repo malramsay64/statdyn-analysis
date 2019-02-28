@@ -21,7 +21,7 @@ setup_requires = []
 install_requires = [
     "numpy>=1.13",
     "scipy>=1.0",
-    "scikit-learn==0.19.0",
+    "scikit-learn~=0.20.0",
     "pandas",
     "tables",
     "bokeh>=0.12.11",
