@@ -52,7 +52,13 @@ def _verbosity(_, __, value) -> None:
 @click.option(
     "-s", "--num-steps", type=int, help="Maximum number of steps for analysis"
 )
-@click.option("--gen-steps", type=int, help="Steps between keyframes in simulation")
+@click.option(
+    "--keyframe-interval",
+    "--gen-steps",
+    "gen_steps",  # save to the variable gen_steps
+    type=int,
+    help="Steps between keyframes in simulation",
+)
 @click.option(
     "--linear-steps", type=int, help="Number of steps between exponential increase."
 )
