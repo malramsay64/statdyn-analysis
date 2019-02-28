@@ -292,7 +292,12 @@ def process_file(
                 logger.debug("Create key frame at step %s", frame.timestep)
                 keyframes.append(
                     Dynamics(
-                        frame.timestep, frame.box, frame.position, frame.orientation
+                        frame.timestep,
+                        frame.box,
+                        frame.position,
+                        frame.orientation,
+                        molecule=Trimer(),
+                        image=frame.image,
                     )
                 )
                 relaxframes.append(
@@ -310,7 +315,7 @@ def process_file(
                 if mol_relaxations is not None:
                     myrelax.set_mol_relax(mol_relaxations)
             dynamics_series = mydyn.compute_all(
-                frame.timestep, frame.position, frame.orientation
+                frame.timestep, frame.position, frame.orientation, frame.image
             )
             myrelax.add(frame.timestep, frame.position, frame.orientation)
             logger.debug("Series: %s", index)
