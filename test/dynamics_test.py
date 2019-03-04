@@ -11,7 +11,7 @@ import gsd.hoomd
 import numpy as np
 import pytest
 from freud.box import Box
-from hypothesis import assume, given
+from hypothesis import assume, example, given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
 from numpy.testing import assert_allclose
@@ -281,3 +281,10 @@ def test_LastMolecularRelaxation():
     assert np.all(
         tau._state == np.ones(num_elements, dtype=np.uint8) * tau._is_irreversible
     )
+
+
+@given(arrays(HYP_DTYPE, (10), elements=floats(0, 1)))
+@example(np.full(10, np.nan))
+def test_structural_relaxation(array):
+    value = dynamics.structural_relax(array)
+    assert isinstance(value, float)

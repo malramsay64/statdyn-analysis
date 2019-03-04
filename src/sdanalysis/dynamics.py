@@ -448,7 +448,7 @@ def structural_relax(displacement: np.ndarray, dist: float = 0.3) -> float:
     try:
         return np.mean(displacement < dist)
     except FloatingPointError:
-        return np.full_like(displacement, np.nan)
+        return np.nan
 
 
 def gamma(displacement: np.ndarray, rotation: np.ndarray) -> float:
