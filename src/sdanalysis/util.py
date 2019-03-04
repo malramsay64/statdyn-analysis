@@ -37,27 +37,26 @@ def get_filename_vars(fname: PathLike):
     if flist[0] in ["dump", "trajectory", "thermo"]:
         del flist[0]
 
+    # The remaining three quantities being molecule, temperature and pressure
     if len(flist) < 3:
         return variables(None, None, None)
 
-    pressure_str = flist[1]
-    if pressure_str[0] == "P":
-        pressure: Optional[str] = pressure_str[1:]
-    else:
-        pressure = None
+    pressure: Optional[str] = None
+    temperature: Optional[str] = None
 
-    temperature_str = flist[2]
-    if temperature_str[0] == "T":
-        temp: Optional[str] = temperature_str[1:]
-    else:
-        temp = None
+    for item in flist:
+        if item[0] == "P":
+            pressure = item[1:]
+        elif item[0] == "T":
+            temperature = item[1:]
 
+    # The 4th item has to be the crystal structure
     if len(flist) >= 4:
         crys: Optional[str] = flist[3]
     else:
         crys = None
 
-    return variables(temp, pressure, crys)
+    return variables(temperature, pressure, crys)
 
 
 def set_filename_vars(fname: PathLike, sim_params: SimulationParams) -> None:

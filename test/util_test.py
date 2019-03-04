@@ -84,11 +84,18 @@ def test_orientation2positions_moved_rot_multiple(mol):
 @pytest.mark.parametrize("crys", [None, "p2", "p2gg", "pg"])
 @pytest.mark.parametrize("mol", ["Trimer"])
 @pytest.mark.parametrize("prefix", ["dump-", "trajectory-", "thermo-", ""])
-def test_get_filename_vars(prefix, mol, press, temp, crys):
-    if crys is None:
-        fname = f"trajectory-{mol}-P{press}-T{temp}.gsd"
+@pytest.mark.parametrize("swapped", [True, False])
+def test_get_filename_vars(prefix, mol, press, temp, crys, swapped):
+    if swapped:
+        if crys is None:
+            fname = f"trajectory-{mol}-T{temp}-P{press}.gsd"
+        else:
+            fname = f"trajectory-{mol}-T{temp}-P{press}-{crys}.gsd"
     else:
-        fname = f"trajectory-{mol}-P{press}-T{temp}-{crys}.gsd"
+        if crys is None:
+            fname = f"trajectory-{mol}-P{press}-T{temp}.gsd"
+        else:
+            fname = f"trajectory-{mol}-P{press}-T{temp}-{crys}.gsd"
 
     var = get_filename_vars(fname)
     assert isinstance(var.temperature, str)
