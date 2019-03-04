@@ -2,8 +2,38 @@
 ## [Unreleased]
 
 
+<a name="v0.7.0"></a>
+## [v0.7.0] - 2019-03-04
+### Chore
+- Remove nonexistant models files from MANIFEST.in
+- Remove empty .gitmodules file
+- Remove scikit learn models from package
+- Update to latest scikit learn ([#58](https://github.com/malramsay64/statdyn-analysis/issues/58))
+- Apply pep8 naming conventions to dynamics module ([#65](https://github.com/malramsay64/statdyn-analysis/issues/65))
+
+### Feat
+- Handle pressure and temperature at any position in filename ([#68](https://github.com/malramsay64/statdyn-analysis/issues/68))
+- Specify number of threads for parallel processing function
+- Log quantities of interest when processing files ([#45](https://github.com/malramsay64/statdyn-analysis/issues/45))
+- Use INFO log level for cli status update ([#72](https://github.com/malramsay64/statdyn-analysis/issues/72))
+- Compute dynamics keeping track of images ([#71](https://github.com/malramsay64/statdyn-analysis/issues/71))
+- Implement image in the Frame classes
+- Support images in computing dynamics
+- Allow displacement over multiple cells ([#71](https://github.com/malramsay64/statdyn-analysis/issues/71))
+- Ability to specify custom models on command line
+- Add keyframe-interval flag to cli
+
+### Fix
+- Always return a float from structural_relaxation
+- Remove machine learning models from tests
+
+### Style
+- Format tests using black
+- Satiate pylint
+
+
 <a name="v0.6.10"></a>
-## [v0.6.10] - 2019-02-25
+## [v0.6.10] - 2019-02-28
 ### Chore
 - Add conda-forge repo to travis for build phase
 
@@ -295,7 +325,8 @@
 <a name="0.0.8"></a>
 ## 0.0.8 - 2016-09-10
 
-[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.10...HEAD
+[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.0...HEAD
+[v0.7.0]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.10...v0.7.0
 [v0.6.10]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.9...v0.6.10
 [v0.6.9]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.8...v0.6.9
 [v0.6.8]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.7...v0.6.8
