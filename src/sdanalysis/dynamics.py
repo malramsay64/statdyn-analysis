@@ -549,6 +549,7 @@ def rotational_displacement(initial: np.ndarray, final: np.ndarray) -> np.ndarra
     return quaternion_rotation(initial, final)
 
 
+# pylint: disable=unused-argument
 def translational_displacement(
     box: Box,
     initial: np.ndarray,
