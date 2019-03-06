@@ -12,18 +12,19 @@ This is segregated to make it simpler to remove, test and work on without affect
 the rest of the implementation.
 
 """
+import logging
 from copy import deepcopy
 from multiprocessing import Manager, Pool, Queue, cpu_count
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 import pandas
 
 from .params import SimulationParams
 from .read import process_file
-import logging
 
 logger = logging.getLogger(__name__)
+
 
 def file_writer(queue: Queue, outfile: Path):
     with pandas.HDFStore(outfile, "w") as dst:

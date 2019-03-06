@@ -34,11 +34,11 @@ from bokeh.plotting import curdoc, figure
 from hsluv import hpluv_to_hex
 from tornado import gen
 
+from .configuration import DARK_COLOURS, frame2data, plot_circles, plot_frame
 from ..frame import HoomdFrame
 from ..molecules import Trimer
 from ..order import compute_ml_order, compute_voronoi_neighs, orientational_order
 from ..util import get_filename_vars, variables
-from .configuration import DARK_COLOURS, frame2data, plot_circles, plot_frame
 
 logger = logging.getLogger(__name__)
 gsdlogger = logging.getLogger("gsd")
