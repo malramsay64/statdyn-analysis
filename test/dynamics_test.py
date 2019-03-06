@@ -16,7 +16,7 @@ from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
 from numpy.testing import assert_allclose
 
-from sdanalysis import dynamics
+from sdanalysis import HoomdFrame, dynamics
 from sdanalysis.read import process_gsd
 
 MAX_BOX = 20.0
@@ -30,7 +30,7 @@ def translational_displacement_reference(
 ) -> np.ndarray:
     """Simplified reference implementation for computing the displacement.
 
-    This computes the displacment using the shortest path from the original
+    This computes the displacement using the shortest path from the original
     position to the final position.
 
     """
@@ -54,7 +54,7 @@ def translational_displacement_reference(
 def test_translational_displacement_noperiod(init, final):
     """Test calculation of the translational displacement.
 
-    This test ensures that the result is close to the numpy.linalg.norm
+    This test ensures that the result is close to the func::`numpy.linalg.norm`
     function in the case where there is no periodic boundaries to worry
     about.
     """
@@ -72,7 +72,7 @@ def test_translational_displacement_noperiod(init, final):
     arrays(HYP_DTYPE, (10, 3), elements=floats(MAX_BOX / 4, MAX_BOX / 2)),
 )
 def test_translational_displacement_periodicity(init, final):
-    """Ensure the periodicity is calulated appropriately.
+    """Ensure the periodicity is calculated appropriately.
 
     This is testing that periodic boundaries are identified appropriately.
     """
@@ -89,7 +89,7 @@ def test_translational_displacement_periodicity(init, final):
     arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, MAX_BOX / 2)),
 )
 def test_translational_displacement(init, final):
-    """Ensure the periodicity is calulated appropriately.
+    """Ensure the periodicity is calculated appropriately.
 
     This is testing that periodic boundaries are identified appropriately.
     """
@@ -127,25 +127,40 @@ def trajectory():
 
 @pytest.fixture(scope="module")
 def dynamics_class(trajectory):
-    snap = trajectory[0]
+    snap = HoomdFrame(trajectory[0])
     return dynamics.Dynamics(
-        snap.configuration.step,
-        snap.configuration.box,
-        snap.particles.position,
-        snap.particles.orientation,
+        snap.timestep, snap.box, snap.position, snap.orientation, image=snap.image
     )
 
 
 class TestDynamicsClass:
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     def test_displacements(self, dynamics_class, trajectory, step):
-        snap = trajectory[step]
-        displacement = dynamics_class.get_displacements(snap.particles.position)
+        snap = HoomdFrame(trajectory[step])
+        displacement = dynamics_class.get_displacements(snap.position)
         assert displacement.shape == (dynamics_class.num_particles,)
         if step == 0:
             assert np.all(displacement == 0.0)
         else:
             assert np.all(displacement >= 0.0)
+
+    @pytest.mark.parametrize("step", [0, 1, 10, 20])
+    def test_displacements_image(self, dynamics_class, trajectory, step):
+        snap = HoomdFrame(trajectory[step])
+        displacement = dynamics_class.get_displacements(snap.position, snap.image)
+        assert displacement.shape == (dynamics_class.num_particles,)
+        if step == 0:
+            assert np.all(displacement == 0.0)
+        else:
+            assert np.all(displacement >= 0.0)
+            assert np.max(displacement) <= 0.2
+
+    @pytest.mark.parametrize("step", [0, 1, 10, 20])
+    def test_image(self, dynamics_class, trajectory, step):
+        snap = HoomdFrame(trajectory[step])
+        displacement = dynamics_class.get_displacements(snap.position, snap.image)
+        assert displacement.shape == (dynamics_class.num_particles,)
+        assert np.max(np.abs(dynamics_class.image - snap.image)) <= 1
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     @pytest.mark.parametrize("method", ["compute_msd", "compute_mfd"])
