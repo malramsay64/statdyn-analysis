@@ -153,7 +153,7 @@ class TestDynamicsClass:
             assert np.all(displacement == 0.0)
         else:
             assert np.all(displacement >= 0.0)
-            assert np.max(displacement) <= 0.2
+            assert np.max(displacement) <= 0.3
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     def test_image(self, dynamics_class, trajectory, step):
