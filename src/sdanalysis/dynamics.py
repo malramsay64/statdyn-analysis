@@ -553,7 +553,7 @@ def translational_displacement(
     box: Box,
     initial: np.ndarray,
     final: np.ndarray,
-    inital_image: Optional[np.ndarray] = None,
+    initial_image: Optional[np.ndarray] = None,
     final_image: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Optimised function for computing the displacement."""
@@ -563,9 +563,9 @@ def translational_displacement(
     if not isinstance(box, Box):
         raise ValueError(f"Expecting type of {Box}, got {type(box)}")
 
-    if inital_image is not None and final_image is not None:
+    if initial_image is not None and final_image is not None:
         return np.linalg.norm(
-            box.unwrap(final, final_image) - box.unwrap(initial, inital_image), axis=1
+            box.unwrap(final.copy(), initial_image - final_image) - initial, axis=1
         )
 
     try:
