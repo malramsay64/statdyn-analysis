@@ -563,11 +563,6 @@ def translational_displacement(
     if not isinstance(box, Box):
         raise ValueError(f"Expecting type of {Box}, got {type(box)}")
 
-    if initial_image is not None and final_image is not None:
-        return np.linalg.norm(
-            box.unwrap(final.copy(), initial_image - final_image) - initial, axis=1
-        )
-
     try:
         return np.linalg.norm(box.wrap(final - initial), axis=1)
     except FloatingPointError:
