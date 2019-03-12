@@ -34,36 +34,28 @@ from bokeh.plotting import curdoc, figure
 from hsluv import hpluv_to_hex
 from tornado import gen
 
-from .configuration import DARK_COLOURS, frame2data, plot_circles, plot_frame
 from ..frame import HoomdFrame
 from ..molecules import Trimer
 from ..order import compute_ml_order, compute_voronoi_neighs, orientational_order
 from ..util import get_filename_vars, variables
+from .configuration import DARK_COLOURS, frame2data, plot_circles, plot_frame
 
 logger = logging.getLogger(__name__)
 gsdlogger = logging.getLogger("gsd")
 gsdlogger.setLevel("WARN")
 
 
-def parse_directory(directory: Path, glob: str = "dump*.gsd") -> Dict[str, List]:
-    all_values: Dict[str, np.ndarray] = {}
+def parse_directory(directory: Path, glob: str = "dump*.gsd") -> Dict[str, Dict]:
+    all_values: Dict[str, Dict] = {}
     files = directory.glob(glob)
     for fname in files:
-        file_vars = get_filename_vars(fname)
-        # Convert named tuples to a dict of lists
-        for var_name in file_vars._fields:
-            curr_list = all_values.get(var_name)
-            if curr_list is None:
-                curr_list = []
-            value = getattr(file_vars, var_name)
-            if value is not None:
-                curr_list.append(value)
-            all_values[var_name] = curr_list
-    for key, value in all_values.items():
-        print(value)
-        logger.debug("Key: %s has value: %s", key, value)
-        if value is not None:
-            all_values[key] = sorted(list(set(value)))
+        temperature, pressure, crystal = get_filename_vars(fname)
+        all_values.setdefault(pressure, {})
+        if crystal is not None:
+            all_values[pressure].setdefault(crystal, {})
+            all_values[pressure][temperature][crystal] = fname
+        else:
+            all_values[pressure][temperature] = fname
     return all_values
 
 
@@ -129,59 +121,110 @@ class TrimerFigure(object):
 
     def initialise_directory(self) -> None:
         self.variable_selection = parse_directory(self.directory, glob="*.gsd")
-        logger.debug("Variables present: %s", self.variable_selection.keys())
+        logger.debug("Pressures present: %s", self.variable_selection.keys())
 
+        self._pressures = sorted(list(self.variable_selection.keys()))
         self._pressure_button = RadioButtonGroup(
-            name="Pressure",
-            labels=self.variable_selection.get("pressure", []),
+            name="Pressure ",
+            labels=self._pressures,
             active=0,
             width=self.controls_width,
         )
+        self._pressure_button.on_change("active", self.update_temperature_button)
+        pressure = self._pressures[self._pressure_button.active]
 
+        self._temperatures = sorted(list(self.variable_selection[pressure].keys()))
         self._temperature_button = RadioButtonGroup(
             name="Temperature",
-            labels=self.variable_selection.get("temperature", []),
+            labels=self._temperatures,
             active=0,
             width=self.controls_width,
         )
+        temperature = self._temperatures[self._temperature_button.active]
 
-        self._pressure_button.on_change("active", self.update_current_trajectory)
-        self._temperature_button.on_change("active", self.update_current_trajectory)
+        if isinstance(self.variable_selection[pressure][temperature], dict):
+            self._crystals: Optional[List[str]] = sorted(
+                list(self.variable_selection[pressure][temperature].keys())
+            )
+            self._crystal_button = RadioButtonGroup(
+                name="Crystal",
+                labels=self._crystals,
+                active=0,
+                width=self.controls_width,
+            )
+            self._temperature_button.on_change("active", self.update_crystal_button)
+            self._crystal_button.on_change("active", self.update_current_trajectory)
+        else:
+            self._crystals = None
+            self._crystal_button = None
+            self._temperature_button.on_change("active", self.update_current_trajectory)
+
+    @property
+    def pressure(self) -> str:
+        return self._pressures[self._pressure_button.active]
+
+    @property
+    def temperature(self) -> str:
+        return self._temperatures[self._temperature_button.active]
+
+    @property
+    def crystal(self) -> Optional[str]:
+        if self._crystals is not None:
+            logger.debug(
+                "Current crystal %d from %s",
+                self._crystal_button.active,
+                self._crystals,
+            )
+            return self._crystals[self._crystal_button.active]
+        return None
+
+    def update_temperature_button(self, attr, old, new):
+        self._temperatures = sorted(list(self.variable_selection[self.pressure].keys()))
+
+        self._temperature_button.labels = self._temperatures
+        self._temperature_button.active = 0
+
+    def update_crystal_button(self, attr, old, new):
+        if isinstance(self.variable_selection[self.pressure][self.temperature], dict):
+            self._crystals = sorted(
+                list(self.variable_selection[self.pressure][self.temperature].keys())
+            )
+
+            self._crystal_button.labels = self._crystals
+            self._crystal_button.active = 0
+        else:
+            self._crystals = None
+            self._crystal_button = None
 
     def create_files_interface(self) -> None:
         directory_name = Div(
             text=f"<b>Current Directory:</b><br/>{self.directory.stem}",
             width=self.controls_width,
         )
-        file_selection = column(
-            directory_name,
-            Div(text="<b>Pressure:</b>"),
-            self._pressure_button,
-            Div(text="<b>Temperature:</b>"),
-            self._temperature_button,
-            Div(text="<b>Crystal Structure:</b>"),
-        )
+        if self._crystal_button is None:
+            file_selection = column(
+                directory_name,
+                Div(text="<b>Pressure:</b>"),
+                self._pressure_button,
+                Div(text="<b>Temperature:</b>"),
+                self._temperature_button,
+            )
+        else:
+            file_selection = column(
+                directory_name,
+                Div(text="<b>Pressure:</b>"),
+                self._pressure_button,
+                Div(text="<b>Temperature:</b>"),
+                self._temperature_button,
+                Div(text="<b>Crystal Structure:</b>"),
+                self._crystal_button,
+            )
         return file_selection
 
-    def get_selected_variables(self) -> variables:
-        try:
-            temperature = self.variable_selection["temperature"][
-                self._temperature_button.active
-            ]
-        except IndexError:
-            temperature = None
-
-        try:
-            pressure = self.variable_selection["pressure"][self._pressure_button.active]
-        except IndexError:
-            pressure = None
-
-        crystal = None
-
-        return variables(temperature, pressure, crystal)
-
     def get_selected_file(self) -> Optional[Path]:
-        return variables_to_file(self.get_selected_variables(), self.directory)
+        if self._crystals is None:
+            return self.variable_selection[self.pressure][self.temperature]
+        return self.variable_selection[self.pressure][self.temperature][self.crystal]
 
     def update_frame(self, attr, old, new) -> None:
         self._frame = HoomdFrame(self._trajectory[self.index])
@@ -375,6 +418,6 @@ class TrimerFigure(object):
         self._doc.title = "Configurations"
 
 
-def make_document(doc, directory: Path = None):
-    fig = TrimerFigure(doc, directory=directory)
+def make_document(doc, directory: Path = None, models=[]):
+    fig = TrimerFigure(doc, directory=directory, models=models)
     fig.create_doc()
