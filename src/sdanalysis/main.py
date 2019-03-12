@@ -151,6 +151,14 @@ def comp_relaxations(infile) -> None:
     compute_relaxations(infile)
 
 
+def _interactive_verbosity(_, __, value) -> None:
+    if value:
+        logger = logging.getLogger("sdanalysis.figures.interactive_config")
+        logger.setLevel("DEBUG")
+        logging.basicConfig(level="DEBUG")
+        logger.debug("Setting log level of interactive_config to DEBUG")
+
+
 @sdanalysis.command()
 @click.option("--ip", multiple=True, help="Allow connections from these locations.")
 @click.option("--directory", type=click.Path(exists=True, file_okay=False))
@@ -160,6 +168,16 @@ def comp_relaxations(infile) -> None:
     type=click.Path(exists=True, file_okay=True, dir_okay=False),
     multiple=True,
     help="Pickled scikit-learn Models to use for visualisation of machine learning algorithms.",
+)
+@click.option(
+    "-v",
+    "--verbose",
+    count=True,
+    default=0,
+    callback=_interactive_verbosity,
+    expose_value=False,
+    is_eager=True,
+    help="Increase debug level",
 )
 def figure(ip, directory, model) -> None:
     """Start bokeh server with the file passed."""
