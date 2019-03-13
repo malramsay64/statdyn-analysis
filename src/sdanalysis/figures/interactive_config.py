@@ -260,6 +260,15 @@ class TrimerFigure(object):
     def update_current_trajectory(self, attr, old, new) -> None:
         if self.get_selected_file() is not None:
             self._trajectory = gsd.hoomd.open(str(self.get_selected_file()), "rb")
+            num_frames = len(self._trajectory)
+
+            try:
+                if self._trajectory_slider.value > num_frames:
+                    self._trajectory_slider.value = num_frames - 1
+                self._trajectory_slider.end = len(self._trajectory)
+            except AttributeError:
+                pass
+
             self.update_frame(attr, old, new)
 
     def initialise_media_interface(self) -> None:
