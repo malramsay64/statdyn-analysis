@@ -349,10 +349,10 @@ class TrimerFigure(object):
 
     def _play_pause_toggle(self, attr):
         if self._playing:
-            self._doc.remove_periodic_callback(self._incr_index)
+            self._doc.remove_periodic_callback(self._callback)
             self._playing = False
         else:
-            self._doc.add_periodic_callback(self._incr_index, 100)
+            self._callback = self._doc.add_periodic_callback(self._incr_index, 100)
             self._playing = True
 
     def create_legend(self):
