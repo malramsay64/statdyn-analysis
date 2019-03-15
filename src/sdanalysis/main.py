@@ -153,10 +153,10 @@ def comp_relaxations(infile) -> None:
 
 def _interactive_verbosity(_, __, value) -> None:
     if value:
-        logger = logging.getLogger("sdanalysis.figures.interactive_config")
-        logger.setLevel("DEBUG")
+        interactive_logger = logging.getLogger("sdanalysis.figures.interactive_config")
+        interactive_logger.setLevel("DEBUG")
         logging.basicConfig(level="DEBUG")
-        logger.debug("Setting log level of interactive_config to DEBUG")
+        interactive_logger.debug("Setting log level of interactive_config to DEBUG")
 
 
 @sdanalysis.command()
