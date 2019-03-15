@@ -185,12 +185,17 @@ class TrimerFigure(object):
 
     def create_files_interface(self) -> None:
         directory_name = Div(
-            text=f"<b>Current Directory:</b><br/>{self.directory.stem}",
+            text=f"<b>Current Directory:</b><br/>{self.directory}",
+            width=self.controls_width,
+        )
+        self._filename_div = Div(
+            text=f"<b>Current File:</b><br/>{self.get_selected_file().name}",
             width=self.controls_width,
         )
         if self._crystal_button is None:
             file_selection = column(
                 directory_name,
+                filename,
                 Div(text="<b>Pressure:</b>"),
                 self._pressure_button,
                 Div(text="<b>Temperature:</b>"),
@@ -199,6 +204,7 @@ class TrimerFigure(object):
         else:
             file_selection = column(
                 directory_name,
+                filename,
                 Div(text="<b>Pressure:</b>"),
                 self._pressure_button,
                 Div(text="<b>Temperature:</b>"),
@@ -325,7 +331,7 @@ class TrimerFigure(object):
 
     def update_data(self, attr, old, new):
         if self.plot and self._frame is not None:
-            self.plot.title.text = f"Timestep {self._frame.timestep:.5g}"
+            self.plot.title.text = f"Timestep {self._frame.timestep:,}"
         if self._frame is not None:
             data = frame2data(
                 self._frame, order_function=self.get_order_function(), molecule=Trimer()
