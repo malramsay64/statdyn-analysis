@@ -60,19 +60,6 @@ def parse_directory(directory: Path, glob: str = "dump*.gsd") -> Dict[str, Dict]
     return all_values
 
 
-def variables_to_file(file_vars: variables, directory: Path) -> Optional[Path]:
-    if file_vars.crystal is not None:
-        glob_pattern = f"dump-Trimer-P{file_vars.pressure}-T{file_vars.temperature}-{file_vars.crystal}.gsd"
-    else:
-        glob_pattern = f"dump-Trimer-P{file_vars.pressure}-T{file_vars.temperature}.gsd"
-    try:
-        print(directory.glob(glob_pattern), glob_pattern)
-        value = next(directory.glob(glob_pattern))
-        return value
-    except StopIteration:
-        return None
-
-
 def compute_neigh_ordering(box, positions, orientations):
     return compute_voronoi_neighs(box, positions) == 6
 
@@ -88,7 +75,6 @@ class TrimerFigure(object):
     _frame = None
 
     def __init__(self, doc, directory: Path = None, models=[]) -> None:
-
         self._doc = doc
         self.plot = None
         self._trajectory = [None]
