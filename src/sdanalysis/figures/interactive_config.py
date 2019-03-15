@@ -47,7 +47,8 @@ gsdlogger.setLevel("WARN")
 
 def parse_directory(directory: Path, glob: str = "dump*.gsd") -> Dict[str, Dict]:
     all_values: Dict[str, Dict] = {}
-    files = directory.glob(glob)
+    files = list(directory.glob(glob))
+    logger.debug("Found files: %s", files)
     for fname in files:
         temperature, pressure, crystal = get_filename_vars(fname)
         all_values.setdefault(pressure, {})
@@ -259,13 +260,14 @@ class TrimerFigure(object):
 
     def update_current_trajectory(self, attr, old, new) -> None:
         if self.get_selected_file() is not None:
+            logger.debug("Opening %s", self.get_selected_file())
             self._trajectory = gsd.hoomd.open(str(self.get_selected_file()), "rb")
             num_frames = len(self._trajectory)
 
             try:
                 if self._trajectory_slider.value > num_frames:
                     self._trajectory_slider.value = num_frames - 1
-                self._trajectory_slider.end = len(self._trajectory)
+                self._trajectory_slider.end = len(self._trajectory) - 1
             except AttributeError:
                 pass
 
