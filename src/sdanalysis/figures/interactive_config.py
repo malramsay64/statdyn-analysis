@@ -188,14 +188,14 @@ class TrimerFigure(object):
             text=f"<b>Current Directory:</b><br/>{self.directory}",
             width=self.controls_width,
         )
-        self._filename_div = Div(
-            text=f"<b>Current File:</b><br/>{self.get_selected_file().name}",
-            width=self.controls_width,
-        )
+        self._filename_div = Div(text="", width=self.controls_width)
+        current_file = self.get_selected_file()
+        if current_file is not None:
+            self._filename_div.text = f"<b>Current File:</b><br/>{current_file.name}"
         if self._crystal_button is None:
             file_selection = column(
                 directory_name,
-                filename,
+                self._filename_div,
                 Div(text="<b>Pressure:</b>"),
                 self._pressure_button,
                 Div(text="<b>Temperature:</b>"),
@@ -204,7 +204,7 @@ class TrimerFigure(object):
         else:
             file_selection = column(
                 directory_name,
-                filename,
+                self._filename_div,
                 Div(text="<b>Pressure:</b>"),
                 self._pressure_button,
                 Div(text="<b>Temperature:</b>"),
