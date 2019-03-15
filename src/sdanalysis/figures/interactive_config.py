@@ -107,7 +107,7 @@ class TrimerFigure(object):
         self.initialise_doc()
 
     def initialise_directory(self) -> None:
-        self.variable_selection = parse_directory(self.directory, glob="*.gsd")
+        self.variable_selection = parse_directory(self.directory, glob="dump*.gsd")
         logger.debug("Pressures present: %s", self.variable_selection.keys())
 
         self._pressures = sorted(list(self.variable_selection.keys()))
