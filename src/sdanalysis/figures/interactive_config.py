@@ -7,7 +7,22 @@
 # Distributed under terms of the MIT license.
 #
 # pylint: skip-file
-"""Create an interactive view of a configuration."""
+"""Create an interactive view of a configuration.
+
+This is a visualisation of a trajectory, allowing interaction with both the current
+frame, zooming in at particular points, and additionally exploring the time dimension of
+a trajectory.
+
+This is intended to be a simple and easy to use interface, where the visualisation is
+nice and clear, and interaction is intuitive. To this end, while there are tool-tips available,
+providing the information on the position, orientation and further details of particles,
+they are off by default.
+
+While the particles are trimer in shape, for reasons of performance they are rendered as
+3 circles. The performance gain is from using the WebGL for the rendering of the
+circles, while rendering of arbitrary shapes is not supported.
+
+"""
 
 import functools
 import logging
