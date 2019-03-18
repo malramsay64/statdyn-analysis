@@ -35,14 +35,31 @@ FileIterator = Iterator[Tuple[List[int], Frame]]
 
 
 def _get_num_steps(trajectory):
-    while True:
-        frame_index = -1
+    """Find the number of steps in a Hoomd trajectory handling errors.
+
+    There are cases where it makes sense to run an analysis on the trajectory
+    of a simulation which is not yet finished, which has the potential to
+    have errors reading the final few frames of the trajectory. This gets the
+    number of steps handling the errors in these cases.
+
+    By getting the number of steps in this way, the malformed configurations
+    can also be avoided in further processing.
+
+    """
+    # Start with the index being the last frame
+    frame_index = -1
+
+    # Where there is an error in the last frame, (up to 10)
+    # retry with the previous frame.
+    max_retries = 10
+    for _ in range(max_retries):
         try:
             return trajectory[frame_index].configuration.step
-
-        # The final configuration is malformed
+        # The final configuration is malformed, so try and read the previous frame
         except RuntimeError:
             frame_index -= 1
+
+    raise RuntimeError("Cannot read frames from trajectory %s", trajectory)
 
 
 def process_gsd(sim_params: SimulationParams) -> Iterator[Tuple[List[int], HoomdFrame]]:
