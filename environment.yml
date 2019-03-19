@@ -18,6 +18,7 @@ dependencies:
     - rowan
     - hsluv
     # Development requirements
+    - pre_commit
     - pytest
     - coverage
     - pytest-cov
