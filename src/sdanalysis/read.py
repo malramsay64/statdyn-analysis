@@ -59,10 +59,22 @@ def _get_num_steps(trajectory):
         except RuntimeError:
             frame_index -= 1
 
-    raise RuntimeError("Cannot read frames from trajectory %s", trajectory)
+    logger.exception(
+        "Read failed. Trajectory length: %s, frame_index: %d",
+        len(trajectory),
+        frame_index,
+    )
+    raise RuntimeError("Cannot read frames from trajectory ", trajectory)
 
 
-def process_gsd(sim_params: SimulationParams) -> Iterator[Tuple[List[int], HoomdFrame]]:
+def process_gsd(sim_params: SimulationParams) -> FileIterator:
+    """Perform analysis of a GSD file.
+
+    This is a specialisation of the process_file, called when the extension of a file is
+    `.gsd`; as such it shouldn't typically be called by the user. For the user facing
+    function see :func:`process_file`.
+
+    """
     assert sim_params.infile is not None
     assert sim_params.gen_steps is not None
     assert sim_params.max_gen is not None
