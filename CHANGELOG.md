@@ -2,6 +2,55 @@
 ## [Unreleased]
 
 
+<a name="v0.7.2"></a>
+## [v0.7.2] - 2019-03-19
+### Chore
+- Set specific pylint version in pre-commit config
+- Include pre_commit in conda environment
+- Add pylint to pre-commit checks
+- Ignore interactive config in coverage reports ([#56](https://github.com/malramsay64/statdyn-analysis/issues/56))
+- Update pre-commit configuration
+- Remove unused code from interactive_config
+- Update play/pause button to work with bokeh 1.0
+- Update scikit-learn to 0.20 in environment.yml
+
+### Doc
+- Add docstring to interactive configuration
+
+### Feat
+- Output timestep as a comma separated integer
+- Improve debug logging of interactive_config
+- Update interactive slider range on loading file
+- Shown variables reflect the available variables
+- Implement verbose flag for figure subcommand
+
+### Fix
+- Fix use of formatting in raising of exception.
+- Variables not defined and checking for None
+- Load the dump files instead of all gsd files
+
+### Fix
+- No infinite loops in reading input file
+
+### Sty
+- Change name of the interacctive_logger
+
+
+<a name="v0.7.1"></a>
+## [v0.7.1] - 2019-03-06
+### Fix
+- Disable calculation of displacement across images
+
+### Sty
+- Disable unused argument for translational_displacement
+- Sort imports and format with black
+- Spelling mistakes in initial
+
+### Test
+- Increase max value of displacement
+- Clean up dynamics tests using HoomdFrame
+
+
 <a name="v0.7.0"></a>
 ## [v0.7.0] - 2019-03-04
 ### Chore
@@ -27,9 +76,11 @@
 - Always return a float from structural_relaxation
 - Remove machine learning models from tests
 
+### Sty
+- Satiate pylint
+
 ### Style
 - Format tests using black
-- Satiate pylint
 
 
 <a name="v0.6.10"></a>
@@ -325,7 +376,9 @@
 <a name="0.0.8"></a>
 ## 0.0.8 - 2016-09-10
 
-[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.0...HEAD
+[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.2...HEAD
+[v0.7.2]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.1...v0.7.2
+[v0.7.1]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.0...v0.7.1
 [v0.7.0]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.10...v0.7.0
 [v0.6.10]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.9...v0.6.10
 [v0.6.9]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.8...v0.6.9
