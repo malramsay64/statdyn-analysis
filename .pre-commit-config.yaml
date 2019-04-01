@@ -9,7 +9,10 @@ repos:
   hooks:
     - id: black
 
-- repo: https://github.com/pre-commit/mirrors-pylint
-  rev: v2.3.1
+- repo: local
   hooks:
-  - id: pylint
+  - id: system
+    name: pylint
+    entry: python -m pylint.__main__
+    language: system
+    files: \.py$
