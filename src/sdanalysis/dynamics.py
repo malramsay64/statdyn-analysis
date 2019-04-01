@@ -24,7 +24,24 @@ YamlValue = Union[str, float, int]
 
 
 class Dynamics:
-    """Compute dynamic properties of a simulation."""
+    """Compute dynamic properties of a simulation.
+
+    Args:
+        timestep: The timestep on which the configuration was taken.
+        box: The lengths of each side of the simulation cell including 
+            any tilt factors.
+        position: The positions of the molecules
+            with shape ``(nmols, 3)``. Even if the simulation is only 2D,
+            all 3 dimensions of the position need to be passed.
+        orientation: The orientaions of all the
+            molecules as a quaternion in the form ``(w, x, y, z)``. If no
+            orientation is supplied then no rotational quantities are
+            calculated.
+        molecule: The molecule for which to compute the dynamics quantities.
+            This is used to compute the structural relaxation for all particles.
+        image: The periodic image each particle is occupying.
+
+    """
 
     def __init__(
         self,
@@ -32,22 +49,9 @@ class Dynamics:
         box: np.ndarray,
         position: np.ndarray,
         orientation: Optional[np.ndarray] = None,
-        molecule: Molecule = Trimer(),
+        molecule: Optional[Molecule] = None,
         image: Optional[np.ndarray] = None,
     ) -> None:
-        """Initialise a dynamics instance.
-
-        Args:
-            timestep (int): The timestep on which the configuration was taken.
-            position (py:class:`numpy.ndarray`): The positions of the molecules
-                with shape ``(nmols, 3)``. Even if the simulation is only 2D,
-                all 3 dimensions of the position need to be passed.
-            orientation (py:class:`numpy.ndarray`): The orientaions of all the
-                molecules as a quaternion in the form ``(w, x, y, z)``. If no
-                orientation is supplied then no rotational quantities are
-                calculated.
-
-        """
         assert position.shape[0] > 0
         if molecule is None:
             is2D = False
@@ -65,7 +69,8 @@ class Dynamics:
         if orientation is not None:
             assert orientation.shape[0] > 0
             self.orientation = orientation
-        self.mol_vector = molecule.positions
+        if molecule is not None:
+            self.mol_vector = molecule.positions
         self.image = image
 
     def compute_msd(
@@ -439,8 +444,7 @@ def structural_relax(displacement: np.ndarray, dist: float = 0.3) -> float:
 
     Args:
         displacement: displacements
-        dist (float): The distance cutoff for considering relaxation.
-        (defualt: 0.3)
+        dist): The distance cutoff for considering relaxation. (defualt: 0.3)
 
     Return:
         float: The structural relaxation of the configuration
@@ -455,7 +459,7 @@ def gamma(displacement: np.ndarray, rotation: np.ndarray) -> float:
     r"""Calculate the second order coupling of translations and rotations.
 
     .. math::
-        \gamma &= \frac{\langle(\Delta r \Delta\theta)^2 \rangle -
+        \gamma = \frac{\langle(\Delta r \Delta\theta)^2 \rangle -
             \langle\Delta r^2\rangle\langle\Delta \theta^2\rangle
             }{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}
 
@@ -481,8 +485,7 @@ def rotational_relax1(rotation: np.ndarray) -> float:
     r"""Compute the first-order rotational relaxation function.
 
     .. math::
-        C_1(t) = \langle \hat\vec e(0) \cdot
-            \hat \vec e(t) \rangle
+        C_1(t) = \langle \hat{\mathbf{e}}(0) \cdot \hat{\mathbf{e}}(t) \rangle
 
     Return:
         float: The rotational relaxation
@@ -494,8 +497,7 @@ def rotational_relax2(rotation: np.ndarray) -> float:
     r"""Compute the second rotational relaxation function.
 
     .. math::
-        C_1(t) = \langle 2[\hat\vec e(0) \cdot \
-            \hat \vec e(t)]^2 - 1 \rangle
+        C_1(t) = \langle 2(\hat{\mathbf{e}}(0) \cdot  \hat{\mathbf{e}}(t))^2 - 1 \rangle
 
     Return:
         float: The rotational relaxation
