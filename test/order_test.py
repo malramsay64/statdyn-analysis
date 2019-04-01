@@ -64,6 +64,13 @@ def test_orientational_order(frame):
     assert np.all(orient_order > 0.60)
 
 
+def test_relative_distance(frame):
+    distances = order.relative_distances(
+        frame.configuration.box, frame.particles.position, frame.particles.orientation
+    )
+    assert np.all(np.isfinite(distances))
+
+
 def test_relative_orientations(frame):
     orientations = order.relative_orientations(
         frame.configuration.box, frame.particles.position, frame.particles.orientation

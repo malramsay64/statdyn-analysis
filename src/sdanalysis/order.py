@@ -134,7 +134,11 @@ def relative_distances(
 ) -> np.ndarray:
     """Compute the distance to each neighbour."""
     neighbours = setup_neighbours(box, position, max_radius, max_neighbours)
-    return np.sqrt(neighbours.getRsqList())
+    distances = neighbours.r_sq_list
+    # The distance for neighbours which don't exist is -1. Since this doesn't have a
+    # sqrt, replace all values less than 0 with 0.
+    distances[distances < 0] = 0
+    return np.sqrt(distances)
 
 
 def compute_voronoi_neighs(box: np.ndarray, position: np.ndarray) -> np.ndarray:
