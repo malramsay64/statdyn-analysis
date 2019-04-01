@@ -44,7 +44,7 @@ test_requires = [
     "pytest-cov",
     "pytest-lazy-fixture",
 ]
-docs_requires = []
+docs_requires = ["sphinx", "sphinx_rtd_theme", "shinx_autodoc_typehints"]
 dev_requires = docs_requires + test_requires
 
 setup(

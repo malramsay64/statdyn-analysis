@@ -27,3 +27,8 @@ dependencies:
     - pylint
     - black==18.9b0
     - isort
+    # Documentation
+    - sphinx
+    - sphinx_rtd_theme
+    - pip:
+      - sphinx_autodoc_typehints
