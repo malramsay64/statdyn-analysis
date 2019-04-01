@@ -14,7 +14,7 @@ import numpy as np
 import pandas
 from freud.box import Box
 
-from .molecules import Molecule, Trimer
+from .molecules import Molecule
 from .util import quaternion_rotation, rotate_vectors
 
 np.seterr(divide="raise", invalid="raise", over="raise")
@@ -28,7 +28,7 @@ class Dynamics:
 
     Args:
         timestep: The timestep on which the configuration was taken.
-        box: The lengths of each side of the simulation cell including 
+        box: The lengths of each side of the simulation cell including
             any tilt factors.
         position: The positions of the molecules
             with shape ``(nmols, 3)``. Even if the simulation is only 2D,
