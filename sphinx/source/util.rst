@@ -1,7 +1,7 @@
-TrimerDynamics module
+Util module
 =====================
 
-.. automodule:: TrimerDynamics
+.. automodule:: sdanalysis.util
     :members:
     :undoc-members:
     :show-inheritance:

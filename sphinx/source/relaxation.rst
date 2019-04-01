@@ -1,7 +1,7 @@
-FileDynamics module
+Relaxation module
 ===================
 
-.. automodule:: FileDynamics
+.. automodule:: sdanalysis.relaxation
     :members:
     :undoc-members:
     :show-inheritance:

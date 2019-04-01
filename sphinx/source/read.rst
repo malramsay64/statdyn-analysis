@@ -1,7 +1,7 @@
-TrimerEquil module
+Read module
 ==================
 
-.. automodule:: TrimerEquil
-    :members
+.. automodule:: sdanalysis.read
+    :members:
     :undoc-members:
     :show-inheritance:

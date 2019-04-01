@@ -1,7 +1,7 @@
-TransData module
+Frame module
 ================
 
-.. automodule:: TransData
+.. automodule:: sdanalysis.frame
     :members:
     :undoc-members:
     :show-inheritance:

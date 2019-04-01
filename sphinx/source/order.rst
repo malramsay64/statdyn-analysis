@@ -1,7 +1,7 @@
-Equil Module
+Order Module
 ============
 
-.. automodule:: equil
+.. automodule:: sdanalysis.order
     :members:
     :undoc-members:
     :show-inheritance:

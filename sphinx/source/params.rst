@@ -1,7 +1,8 @@
-StepSize Module
+Params Module
 ===============
 
-.. automodule:: StepSize
+.. automodule:: sdanalysis.params
     :members:
     :undoc-members:
     :show-inheritance:
+    :special-members:

@@ -1,7 +1,8 @@
-Dynamics Module
+Dynamics module
 ===============
 
-.. automodule:: dynamics
+.. automodule:: sdanalysis.dynamics
     :members:
     :undoc-members:
     :show-inheritance:
+    :special-members:

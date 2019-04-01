@@ -6,20 +6,20 @@
 Welcome to MD-Molecules-Hoomd's documentation!
 ==============================================
 
-Contents:
+.. automodule:: sdanalysis
 
 .. toctree::
    :maxdepth: 4
 
-   TrimerEquil
-   equil
-   TrimerDynamics
    dynamics
-   CompDynamics
-   FileDynamics
-   TimeDep
-   TransData
-   StepSize
+   relaxation
+   params
+   figures
+   frame
+   util
+   read
+   molecules
+   order
 
 
 
@@ -29,4 +29,3 @@ Indices and tables
 * :ref:`genindex`
 * :ref:`modindex`
 * :ref:`search`
-

@@ -1,7 +1,8 @@
 Molecule Module
 ===============
 
-.. automodule:: molecule
+.. automodule:: sdanalysis.molecules
     :members:
     :undoc-members:
     :show-inheritance:
+    :special-members:
