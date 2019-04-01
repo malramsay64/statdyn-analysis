@@ -5,6 +5,7 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+# pylint: disable=redefined-outer-name
 
 """Ensure correctness of the order parameters."""
 
@@ -65,8 +66,9 @@ def test_orientational_order(frame):
 
 
 def test_relative_distance(frame):
+    print(frame.configuration.box)
     distances = order.relative_distances(
-        frame.configuration.box, frame.particles.position, frame.particles.orientation
+        frame.configuration.box, frame.particles.position
     )
     assert np.all(np.isfinite(distances))
 
