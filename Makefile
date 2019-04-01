@@ -28,6 +28,9 @@ test:
 install:
 	pip install -e . --no-deps
 
+docs:
+	$(MAKE) -C sphinx html
+
 
 .PHONY: help test clean deploy
 
