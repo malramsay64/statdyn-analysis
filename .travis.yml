@@ -11,10 +11,8 @@ install:
   - pip install codecov
 
 script:
-  - black --check src/
-  - pylint src/
-  - mypy src/
-  - pytest
+  - make test
+  - make docs
 
 after_success:
   - codecov
