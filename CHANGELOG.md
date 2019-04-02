@@ -2,6 +2,35 @@
 ## [Unreleased]
 
 
+<a name="v0.7.3"></a>
+## [v0.7.3] - 2019-04-02
+### Chore
+- Build documentation on travis-ci
+- Pin numpy version
+- Add python 3.7 to conda_build_config
+- Fix warnings about dependency specifications in meta.yaml
+- Use local install of pylint for pre-commit
+- Add makefile rule for building docs
+- Include requirements for building documentation
+- Fix indentation of .pre-commit-config.yaml
+
+### Docs
+- Improve display of dynamics class in docs
+- Update modules in project documentation
+
+### Feat
+- Use pip for testing on travis
+
+### Fix
+- Pylint issues raised in CI
+- Include black in dev requirements of setup.py
+- Use the xenial distribution on travis
+- typo in docs_requires for setup.py
+- Call relative_distances function correctly in tests
+- Fix unused imports and whitespace issues
+- Version 1.0 of freud changes the interface for neighbour distances
+
+
 <a name="v0.7.2"></a>
 ## [v0.7.2] - 2019-03-19
 ### Chore
@@ -376,7 +405,8 @@
 <a name="0.0.8"></a>
 ## 0.0.8 - 2016-09-10
 
-[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.2...HEAD
+[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.3...HEAD
+[v0.7.3]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.2...v0.7.3
 [v0.7.2]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.1...v0.7.2
 [v0.7.1]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.0...v0.7.1
 [v0.7.0]: https://github.com/malramsay64/statdyn-analysis/compare/v0.6.10...v0.7.0
