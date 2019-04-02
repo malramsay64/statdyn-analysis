@@ -36,7 +36,7 @@ def _verbosity(_, __, value) -> None:
     levels = {0: "INFO", 1: "DEBUG"}
     log_level = levels.get(value, "DEBUG")
     logging.basicConfig(level=log_level)
-    logger.debug(f"Setting log level to %s", log_level)
+    logger.debug("Setting log level to %s", log_level)
 
 
 @click.group()

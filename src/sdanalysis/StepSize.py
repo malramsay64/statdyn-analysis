@@ -6,7 +6,7 @@ import logging
 from collections import namedtuple
 from itertools import takewhile
 from queue import Empty, PriorityQueue
-from typing import Dict, Iterable, Iterator, List
+from typing import Dict, Iterator, List
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ def exp_sequence(
         step_size *= base
 
 
-class GenerateStepSeries(Iterable):
+class GenerateStepSeries:
     """Generate a many sequences of steps with different starting values."""
 
     def __init__(
