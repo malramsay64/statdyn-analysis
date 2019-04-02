@@ -19,7 +19,7 @@ def get_version():
 
 setup_requires = []
 install_requires = [
-    "numpy>=1.13",
+    "numpy~=1.16",
     "scipy>=1.0",
     "scikit-learn~=0.20.0",
     "pandas",
