@@ -64,6 +64,7 @@ disable=bad-continuation,
         unsubscriptable-object,
         not-an-iterable,
         no-value-for-parameter,
+        ungrouped-imports,
 
 [REPORTS]
 
