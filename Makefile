@@ -22,6 +22,7 @@ test:
 	python3 -m black --check src/
 	python3 -m black --check test/
 	python3 -m pylint src/
+	python3 -m pylint test/
 	python3 -m mypy src/
 	python3 -m pytest
 
