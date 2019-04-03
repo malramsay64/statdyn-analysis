@@ -6,7 +6,7 @@
 #
 # Distributed under terms of the MIT license.
 #
-# pylint: disable=redefined-outer-name
+# pylint: disable=redefined-outer-name, unsupported-assignment-operation
 #
 
 """Test the relaxation module."""
