@@ -5,4 +5,3 @@ Dynamics module
     :members:
     :undoc-members:
     :show-inheritance:
-    :special-members:

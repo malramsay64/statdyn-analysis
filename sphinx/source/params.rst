@@ -5,4 +5,3 @@ Params Module
     :members:
     :undoc-members:
     :show-inheritance:
-    :special-members:

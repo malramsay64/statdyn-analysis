@@ -5,10 +5,8 @@ Figures module
     :members:
     :undoc-members:
     :show-inheritance:
-    :special-members:
 
 .. automodule:: sdanalysis.figures.thermodynamics
     :members:
     :undoc-members:
     :show-inheritance:
-    :special-members:
