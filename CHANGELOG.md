@@ -2,6 +2,27 @@
 ## [Unreleased]
 
 
+<a name="v0.7.4"></a>
+## [v0.7.4] - 2019-04-03
+### Chore
+- Include a requirements.txt file for building docs
+- Run pylint on test directory when running make test
+- Update tests to pass pylint linting
+- Ignore ungrouped imports with pylint
+- Add freud to whitelisted pylint packages
+
+### Doc
+- No documentation of special members
+
+### Feat
+- Implement calculating the intermediate scattering function
+- Standardise the conversion to a freud Box class
+
+### Fix
+- remove unsupported assignment operation from relaxation
+- Copy displacements array to numpy before editing
+
+
 <a name="v0.7.3"></a>
 ## [v0.7.3] - 2019-04-02
 ### Chore
@@ -405,7 +426,8 @@
 <a name="0.0.8"></a>
 ## 0.0.8 - 2016-09-10
 
-[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.3...HEAD
+[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.4...HEAD
+[v0.7.4]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.3...v0.7.4
 [v0.7.3]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.2...v0.7.3
 [v0.7.2]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.1...v0.7.2
 [v0.7.1]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.0...v0.7.1
