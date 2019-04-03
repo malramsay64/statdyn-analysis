@@ -10,9 +10,10 @@
 
 import numpy as np
 import rowan
-from freud.box import Box
 from freud.locality import NearestNeighbors as NearestNeighbours
 from freud.voronoi import Voronoi
+
+from .util import create_freud_box
 
 
 def _neighbour_relative_angle(
@@ -54,18 +55,6 @@ def compute_ml_order(
         box, position, orientation, max_radius, max_neighbours
     )
     return model.predict(orientations)
-
-
-def create_freud_box(box: np.ndarray, is_2D=True) -> Box:
-    # pylint: disable=invalid-name
-    Lx, Ly, Lz = box[:3]
-    xy = xz = yz = 0
-    if len(box) == 6:
-        xy, xz, yz = box[3:6]
-    if is_2D:
-        return Box(Lx=Lx, Ly=Ly, xy=xy, is2D=is_2D)
-    return Box(Lx=Lx, Ly=Ly, Lz=Lz, xy=xy, xz=xz, yz=yz)
-    # pylint: disable=invalid-name
 
 
 def setup_neighbours(

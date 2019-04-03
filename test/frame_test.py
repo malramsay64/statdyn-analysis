@@ -11,6 +11,7 @@
 
 from typing import NamedTuple
 
+import freud
 import gsd.hoomd
 import numpy as np
 import pytest
@@ -114,3 +115,8 @@ def gsd_test_frames(request):
 def test_gsd_num_bodies(gsd_test_frames):
     num_mols, snap = gsd_test_frames
     assert HoomdFrame._get_num_bodies(snap) == num_mols
+
+
+def test_freud_box(frametypes):
+    box = frametypes.freud_box()
+    assert isinstance(box, freud.box.Box)

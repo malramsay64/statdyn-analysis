@@ -14,6 +14,7 @@ from typing import NamedTuple, Optional, Union
 
 import numpy as np
 import rowan
+from freud.box import Box
 
 from .molecules import Molecule
 from .params import SimulationParams
@@ -109,3 +110,22 @@ def orientation2positions(
     return np.tile(position, (mol.num_particles, 1)) + np.concatenate(
         [rotate_vectors(orientation, pos) for pos in mol.positions]
     )
+
+
+def create_freud_box(box: np.ndarray, is_2D=True) -> Box:
+    """Convert an array of box values to a box for use with freud functions
+
+    The freud package has a special type for the description of the simulation cell, the
+    Box class. This is a function to take an array of lengths and tilts to simplify the
+    creation of the Box class for use with freud.
+
+    """
+    # pylint: disable=invalid-name
+    Lx, Ly, Lz = box[:3]
+    xy = xz = yz = 0
+    if len(box) == 6:
+        xy, xz, yz = box[3:6]
+    if is_2D:
+        return Box(Lx=Lx, Ly=Ly, xy=xy, is2D=is_2D)
+    return Box(Lx=Lx, Ly=Ly, Lz=Lz, xy=xy, xz=xz, yz=yz)
+    # pylint: enable=invalid-name

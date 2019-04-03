@@ -15,7 +15,7 @@ import pandas
 from freud.box import Box
 
 from .molecules import Molecule
-from .util import quaternion_rotation, rotate_vectors
+from .util import create_freud_box, quaternion_rotation, rotate_vectors
 
 np.seterr(divide="raise", invalid="raise", over="raise")
 logger = logging.getLogger(__name__)
@@ -58,10 +58,7 @@ class Dynamics:
         else:
             is2D = molecule.dimensions == 2
 
-        if is2D:
-            self.box = Box(Lx=box[0], Ly=box[1], xy=box[3], is2D=is2D)
-        else:
-            self.box = Box(*box, is2D=is2D)
+        self.box = create_freud_box(box, is_2D=is2D)
 
         self.timestep = timestep
         self.position = position
@@ -277,10 +274,7 @@ class Relaxations:
         else:
             is2D = molecule.dimensions == 2
 
-        if is2D:
-            self.box = Box(Lx=box[0], Ly=box[1], xy=box[3], is2D=is2D)
-        else:
-            self.box = Box(*box, is2D=is2D)
+        self.box = create_freud_box(box, is_2D=is2D)
 
         self._num_elements = position.shape[0]
         self.init_position = position

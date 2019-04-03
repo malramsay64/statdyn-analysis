@@ -12,7 +12,10 @@ from typing import Dict, Optional
 
 import attr
 import numpy as np
+from freud.box import Box
 from gsd.hoomd import Snapshot
+
+from .util import create_freud_box
 
 
 class Frame(ABC):
@@ -56,9 +59,17 @@ class Frame(ABC):
     def timestep(self) -> int:
         pass
 
+    @property
+    @abstractmethod
+    def dimensions(self) -> int:
+        pass
+
     @abstractmethod
     def __len__(self) -> int:
         pass
+
+    def freud_box(self) -> Box:
+        return create_freud_box(self.box, is_2D=self.dimensions == 2)
 
 
 @attr.s(auto_attribs=True)
@@ -105,6 +116,10 @@ class LammpsFrame(Frame):
                 break
             box[index] = value
         return box
+
+    @property
+    def dimensions(self) -> int:
+        return 2
 
     def __len__(self) -> int:
         return len(self.frame["x"])
@@ -174,6 +189,12 @@ class HoomdFrame(Frame):
             box = self.frame.box
             return np.array([box.Lx, box.Ly, box.Lz, box.xy, box.xz, box.yz])
         return self.frame.configuration.box
+
+    @property
+    def dimensions(self) -> int:
+        if hasattr(self.frame, "box"):
+            return self.frame.box.dimensions
+        return self.frame.configuration.dimensions
 
     def __len__(self) -> int:
         return self._num_mols
