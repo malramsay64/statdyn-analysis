@@ -13,6 +13,7 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pandas
 from freud.box import Box
+from freud.density import RDF
 
 from .molecules import Molecule
 from .util import create_freud_box, quaternion_rotation, rotate_vectors
@@ -40,6 +41,9 @@ class Dynamics:
         molecule: The molecule for which to compute the dynamics quantities.
             This is used to compute the structural relaxation for all particles.
         image: The periodic image each particle is occupying.
+        wave_number: The wave number of the maximum peak in the Fourier
+            transform of the radial distribution function. If None this is
+            calculated from the initial configuration.
 
     """
 
@@ -51,10 +55,11 @@ class Dynamics:
         orientation: Optional[np.ndarray] = None,
         molecule: Optional[Molecule] = None,
         image: Optional[np.ndarray] = None,
+        wave_number: Optional[int] = None,
     ) -> None:
         assert position.shape[0] > 0
         if molecule is None:
-            is2D = False
+            is2D = True
         else:
             is2D = molecule.dimensions == 2
 
@@ -69,6 +74,36 @@ class Dynamics:
         if molecule is not None:
             self.mol_vector = molecule.positions
         self.image = image
+
+        if wave_number is None:
+            self.wave_number = self._calculate_max_wavenumber(self.box, self.position)
+        else:
+            self.wave_number = wave_number
+
+    @classmethod
+    def _calculate_max_wavenumber(
+        cls,
+        box: Box,
+        position: np.ndarray,
+        rmax: Optional[float] = None,
+        dr: Optional[float] = None,
+    ) -> int:
+        logger.debug("Box: %s", box)
+        if rmax is None:
+            rmax = min(box.Lx, box.Ly) / 4
+        if dr is None:
+            dr = 0.01
+
+        logger.debug("Box: %s, rmax: %s, dr: %s", box, rmax, dr)
+        # Calculate radial distribution function using RDF function from freud
+        rdf = RDF(rmax, dr)
+        rdf.compute(box, position)
+        logger.debug("Radial Distribution: %s", rdf.RDF)
+        # Take the Fourier transform to get the structure factor
+        structure_factor = np.fft.rfft(rdf.RDF - 1)
+        logger.debug("Structure factor: %s", structure_factor)
+        # Return the wave number with the maximum value
+        return np.argmax(structure_factor[1:])
 
     def compute_msd(
         self, position: np.ndarray, image: Optional[np.ndarray] = None
@@ -154,6 +189,9 @@ class Dynamics:
             "mfd": mean_fourth_displacement(delta_displacement),
             "alpha": alpha_non_gaussian(delta_displacement),
             "com_struct": structural_relax(delta_displacement, dist=0.4),
+            "scattering_function": intermediate_scattering_function(
+                self.box, self.position, position, wave_number=8
+            ),
         }
         if self.orientation is not None:
             delta_rotation = rotational_displacement(self.orientation, orientation)
@@ -338,6 +376,38 @@ def molecule2particles(
     return np.concatenate(
         [rotate_vectors(orientation, pos) for pos in mol_vector.astype(np.float32)]
     ) + np.repeat(position, mol_vector.shape[0], axis=0)
+
+
+def intermediate_scattering_function(
+    box: Box,
+    initial_position: np.ndarray,
+    current_position: np.ndarray,
+    wave_number: int,
+    angular_resolution: int = 60,
+) -> float:
+    r"""Calculate the intermediate scattering function for a specific wave-vector
+
+    This calculates the equation
+
+    .. math::
+        F(k, t) = \langle \cos( k [r_{x}(0) - r_{x}(t)]) \rangle
+
+    Where k is the value of `wave_vector`, the values of the array `inital_position` are $r_x(0)$,
+    while `current_position` is $r_(t)$.
+
+    The values of initial_position and current_position are both expected to be a vector of
+    shape N x 3 and the appropriate elementn are extracted from it.
+
+    """
+    angles = np.linspace(0, 2 * np.pi, num=angular_resolution, endpoint=False).reshape(
+        (-1, 1)
+    )
+    wave_vector = np.concatenate([np.cos(angles), np.sin(angles)], axis=1)
+    wave_vector *= wave_number
+
+    displacement = box.wrap(initial_position - current_position)[:, :2]
+
+    return np.mean(np.cos(np.dot(wave_vector, displacement.T)))
 
 
 def mean_squared_displacement(displacement: np.ndarray) -> float:
