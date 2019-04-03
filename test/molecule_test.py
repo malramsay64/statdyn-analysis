@@ -9,12 +9,7 @@
 """Test the molecule class."""
 
 import numpy as np
-import pytest
-from hypothesis import given
-from hypothesis.strategies import floats
 from numpy.testing import assert_allclose
-
-from sdanalysis import molecules
 
 
 def test_scale_moment_inertia(mol):

@@ -28,7 +28,7 @@ def print_params_values(sim_params: SimulationParams) -> None:
         print(f"{key}={value}")
 
 
-def dummy_process_files(infile, sim_params, relaxations):
+def dummy_process_files(infile, sim_params, _):
     for f in infile:
         with sim_params.temp_context(infile=f):
             print_params_values(sim_params)
@@ -93,7 +93,7 @@ def create_params():
         value = None
 
         if "molecule" in option:
-            for value in MOLECULE_OPTIONS.keys():
+            for value in MOLECULE_OPTIONS:
                 yield {"option": option, "value": value}
         else:
             for value in [0, 100, 1000, 10000]:

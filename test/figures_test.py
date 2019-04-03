@@ -5,6 +5,10 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+#
+# pylint: disable=redefined-outer-name
+#
+
 """Test function from the generation of figures."""
 
 import math
@@ -18,11 +22,7 @@ from hypothesis.strategies import floats
 
 from sdanalysis.figures.configuration import colour_orientation, plot_frame
 from sdanalysis.frame import HoomdFrame
-from sdanalysis.order import (
-    compute_ml_order,
-    compute_voronoi_neighs,
-    orientational_order,
-)
+from sdanalysis.order import compute_voronoi_neighs
 
 
 @given(floats(min_value=-math.pi, max_value=math.pi))
@@ -48,7 +48,7 @@ def test_plot_frame_orderlist(snapshot, mol):
 
 
 def test_plot_frame_orderfunc(snapshot, mol):
-    def compute_neigh_ordering(box, positions, orientations):
+    def compute_neigh_ordering(box, positions, _):
         return compute_voronoi_neighs(box, positions) == 6
 
     plot_frame(snapshot, molecule=mol, order_function=compute_neigh_ordering)

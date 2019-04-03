@@ -5,7 +5,9 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+#
 # pylint: disable=redefined-outer-name
+#
 
 """Ensure correctness of the order parameters."""
 

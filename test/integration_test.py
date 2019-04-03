@@ -5,6 +5,9 @@
 # Copyright © 2018 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+#
+# pylint: disable=redefined-outer-name
+#
 
 """Testing that everything works together."""
 
@@ -26,8 +29,7 @@ def test_dynamics_file(dynamics_file):
     with pandas.HDFStore(dynamics_file) as src:
         assert "/dynamics" in src.keys()
         assert "/molecular_relaxations" in src.keys()
-        for key in src.keys():
-            assert "/dynamics/" not in src.keys()
+        assert "/dynamics/" not in src.keys()
 
 
 def test_runner_file(runner):

@@ -5,11 +5,14 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+#
+# pylint: disable=redefined-outer-name, protected-access, len-as-condition
+#
+
 """Test the statdyn.analysis.read module."""
 
 import tempfile
 from pathlib import Path
-from tempfile import TemporaryDirectory
 
 import numpy as np
 import pandas
@@ -24,7 +27,7 @@ from sdanalysis.threading import parallel_process_files
 
 @pytest.fixture
 def sim_params():
-    with TemporaryDirectory() as output:
+    with tempfile.TemporaryDirectory() as output:
         output = Path(output)
         yield SimulationParams(
             infile="test/data/trajectory-Trimer-P13.50-T3.00.gsd",
@@ -144,6 +147,7 @@ def test_process_file(sim_params, infile):
     data_dir = Path("test/data")
     with sim_params.temp_context(infile=data_dir / infile):
         df = read.process_file(sim_params)
+    assert df is None
 
 
 @pytest.mark.parametrize(

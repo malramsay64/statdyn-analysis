@@ -5,6 +5,10 @@
 # Copyright © 2018 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+#
+# pylint: disable=redefined-outer-name, protected-access
+#
+
 from typing import NamedTuple
 
 import gsd.hoomd
@@ -39,7 +43,7 @@ def frametypes(request):
 
 
 def test_frame_len(frametypes):
-    assert len(frametypes) > 0
+    assert frametypes
     assert len(frametypes) == len(frametypes.position)
 
 
@@ -58,7 +62,7 @@ def test_frame_orientation(frametypes):
 
 
 def test_frame_timestep(frametypes):
-    frametypes.timestep
+    assert isinstance(int(frametypes.timestep), int)
 
 
 def test_frame_box(frametypes):

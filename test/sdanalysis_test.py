@@ -5,9 +5,12 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+#
+# pylint: disable=redefined-outer-name, no-self-use, unused-argument
+#
+
 """Test the sdrun command line tools."""
 
-import logging
 from pathlib import Path
 
 import pytest
@@ -70,7 +73,7 @@ class TestCompRelaxations:
 
     def test_missing_dynamics(self, runner):
         infile = Path("fail.hdf5")
-        with open_file(str(infile), "w") as dst:
+        with open_file(str(infile), "w"):
             pass
         result = runner.invoke(comp_relaxations, [str(infile)])
         assert result.exit_code != 0

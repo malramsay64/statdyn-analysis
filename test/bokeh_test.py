@@ -12,11 +12,11 @@ import subprocess
 
 
 def test_interactive_null():
-    import sdanalysis.figures.interactive_config  # pylint: disable=unused-variable
+    import sdanalysis.figures.interactive_config  # pylint: disable=unused-import
 
 
 def test_thermodynamics_null():
-    import sdanalysis.figures.thermodynamics  # pylint: disable=unused-variable
+    import sdanalysis.figures.thermodynamics  # pylint: disable=unused-import
 
 
 def test_interactive():

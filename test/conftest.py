@@ -5,6 +5,9 @@
 # Copyright © 2018 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+#
+# pylint: disable=redefined-outer-name
+#
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -12,7 +15,7 @@ from tempfile import TemporaryDirectory
 import pytest
 from click.testing import CliRunner
 
-from sdanalysis import SimulationParams, molecules, read, relaxation
+from sdanalysis import SimulationParams, molecules
 from sdanalysis.threading import parallel_process_files
 
 MOLECULE_LIST = [

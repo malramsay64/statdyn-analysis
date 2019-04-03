@@ -5,6 +5,9 @@
 # Copyright © 2018 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+#
+# pylint: disable=redefined-outer-name
+#
 
 """Test the various helper functions in the package."""
 
@@ -88,14 +91,14 @@ def test_orientation2positions_moved_rot_multiple(mol):
 def test_get_filename_vars(prefix, mol, press, temp, crys, swapped):
     if swapped:
         if crys is None:
-            fname = f"trajectory-{mol}-T{temp}-P{press}.gsd"
+            fname = f"{prefix}{mol}-T{temp}-P{press}.gsd"
         else:
-            fname = f"trajectory-{mol}-T{temp}-P{press}-{crys}.gsd"
+            fname = f"{prefix}{mol}-T{temp}-P{press}-{crys}.gsd"
     else:
         if crys is None:
-            fname = f"trajectory-{mol}-P{press}-T{temp}.gsd"
+            fname = f"{prefix}{mol}-P{press}-T{temp}.gsd"
         else:
-            fname = f"trajectory-{mol}-P{press}-T{temp}-{crys}.gsd"
+            fname = f"{prefix}{mol}-P{press}-T{temp}-{crys}.gsd"
 
     var = get_filename_vars(fname)
     assert isinstance(var.temperature, str)

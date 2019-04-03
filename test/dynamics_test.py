@@ -5,6 +5,10 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+#
+# pylint: disable=redefined-outer-name, protected-access, no-self-use
+#
+
 """Testing the dynamics module."""
 
 import gsd.hoomd
@@ -23,6 +27,24 @@ MAX_BOX = 20.0
 DTYPE = np.float32
 EPS = 2 * np.sqrt(np.finfo(DTYPE).eps)
 HYP_DTYPE = DTYPE
+
+
+def test_calculate_max_wavenumber(wavenumber=10):
+    angles = np.linspace(0, 2 * np.pi, num=6, endpoint=False).reshape((-1, 1))
+    radial = np.concatenate(
+        [np.cos(angles), np.sin(angles), np.zeros_like(angles)], axis=1
+    )
+    positions = []
+    for i in range(1, 20):
+        positions.append(radial + i * (2 * np.pi / wavenumber))
+    positions = np.concatenate(positions)
+    print(positions)
+
+    box = Box(Lx=100, Ly=100, is2D=True)
+
+    calc_wavenumber = dynamics.Dynamics._calculate_max_wavenumber(box, positions)
+
+    assert calc_wavenumber >= 0
 
 
 def translational_displacement_reference(
@@ -178,6 +200,7 @@ class TestDynamicsClass:
     def test_alpha_methods(self, dynamics_class, trajectory, step, method):
         snap = trajectory[step]
         quantity = getattr(dynamics_class, method)(snap.particles.position)
+        assert isinstance(quantity, float)
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     @pytest.mark.parametrize("method", ["compute_rotation"])
