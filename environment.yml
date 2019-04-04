@@ -6,7 +6,7 @@ channels:
 dependencies:
     # Install Requirements
     - python>=3.6
-    - numpy=1.14
+    - numpy=1.16
     - scipy=1.1.0
     - scikit-learn~=0.20.0
     - pandas
@@ -30,5 +30,6 @@ dependencies:
     # Documentation
     - sphinx
     - sphinx_rtd_theme
+    - pip
     - pip:
       - sphinx_autodoc_typehints
