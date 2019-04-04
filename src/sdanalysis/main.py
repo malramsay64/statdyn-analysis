@@ -102,7 +102,11 @@ def sdanalysis(ctx, **kwargs) -> None:
     type=click.Path(file_okay=False, dir_okay=True),
     help="Location to save all output files; required to be a directory.",
 )
-@click.option("--mol-relaxations", type=click.Path(exists=True, dir_okay=False))
+@click.option(
+    "--mol-relaxations",
+    type=click.Path(exists=True, dir_okay=False),
+    help="Path to a file defining all the molecular relaxations to compute.",
+)
 @click.option(
     "--linear-dynamics",
     type=bool,
