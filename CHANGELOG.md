@@ -2,6 +2,20 @@
 ## [Unreleased]
 
 
+<a name="v0.7.5"></a>
+## [v0.7.5] - 2019-04-04
+### Chore
+- Update numpy in conda environment
+
+### Doc
+- Improve help string for molecular relaxations
+
+### Feat
+- Include flag for the number of cpus to use.
+- Define relaxations as a function of the wave-number
+- Optimise calculation of intermediate scattering function
+
+
 <a name="v0.7.4"></a>
 ## [v0.7.4] - 2019-04-03
 ### Chore
@@ -426,7 +440,8 @@
 <a name="0.0.8"></a>
 ## 0.0.8 - 2016-09-10
 
-[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.4...HEAD
+[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.5...HEAD
+[v0.7.5]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.4...v0.7.5
 [v0.7.4]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.3...v0.7.4
 [v0.7.3]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.2...v0.7.3
 [v0.7.2]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.1...v0.7.2
