@@ -189,9 +189,11 @@ class Dynamics:
             "msd": mean_squared_displacement(delta_displacement),
             "mfd": mean_fourth_displacement(delta_displacement),
             "alpha": alpha_non_gaussian(delta_displacement),
-            "com_struct": structural_relax(delta_displacement, dist=0.4),
+            "com_struct": structural_relax(
+                delta_displacement, dist=np.pi / (2 * self.wave_number)
+            ),
             "scattering_function": intermediate_scattering_function(
-                self.box, self.position, position, wave_number=8
+                self.box, self.position, position, wave_number=self.wave_number
             ),
         }
         if self.orientation is not None:
@@ -204,7 +206,7 @@ class Dynamics:
                     "gamma": gamma(delta_displacement, delta_rotation),
                     "overlap": mobile_overlap(delta_displacement, delta_rotation),
                     "struct": self.compute_struct_relax(
-                        position, orientation, threshold=0.3
+                        position, orientation, threshold=np.pi / (2 * self.wave_number)
                     ),
                 }
             )

@@ -71,6 +71,12 @@ def _verbosity(_, __, value) -> None:
     help="Molecule to use for simnulation",
 )
 @click.option(
+    "--wave-number",
+    type=float,
+    default=0.3,
+    help="This is the wave number corresponding to the maximum of the structure factor",
+)
+@click.option(
     "-o",
     "--output",
     type=click.Path(file_okay=False, dir_okay=True),

@@ -37,6 +37,7 @@ class SimulationParams:
     molecule: Molecule = Trimer()
     moment_inertia_scale: Optional[float] = None
     harmonic_force: Optional[float] = None
+    wave_number: Optional[float] = None
 
     # Crystal Params
     space_group: Optional[str] = None
