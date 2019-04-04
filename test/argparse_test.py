@@ -28,7 +28,7 @@ def print_params_values(sim_params: SimulationParams) -> None:
         print(f"{key}={value}")
 
 
-def dummy_process_files(infile, sim_params, _):
+def dummy_process_files(infile, sim_params, *_):
     for f in infile:
         with sim_params.temp_context(infile=f):
             print_params_values(sim_params)

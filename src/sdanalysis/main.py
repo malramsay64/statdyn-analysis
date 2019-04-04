@@ -110,10 +110,15 @@ def sdanalysis(ctx, **kwargs) -> None:
     is_flag=True,
     help="Flag to specify the configurations in a trajectory have linear steps between them.",
 )
+@click.option(
+    "--ncpus", type=int, help="The number of files to process at the same time."
+)
 @click.argument(
     "infile", nargs=-1, type=click.Path(exists=True, file_okay=True, dir_okay=False)
 )
-def comp_dynamics(sim_params, output, mol_relaxations, linear_dynamics, infile) -> None:
+def comp_dynamics(
+    sim_params, output, mol_relaxations, linear_dynamics, infile, ncpus
+) -> None:
     """Compute dynamic properties for a number of input files."""
     assert isinstance(infile, tuple)
     for i in infile:
@@ -137,7 +142,7 @@ def comp_dynamics(sim_params, output, mol_relaxations, linear_dynamics, infile) 
     logger.debug("Processing: %s", infile)
 
     infile = cast(Tuple[str], infile)
-    parallel_process_files(infile, sim_params, relaxations)
+    parallel_process_files(infile, sim_params, relaxations, ncpus)
 
 
 @sdanalysis.command()
