@@ -8,6 +8,7 @@
 """Compute dynamic properties."""
 
 import logging
+from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
 import numpy as np
@@ -378,6 +379,26 @@ def molecule2particles(
     ) + np.repeat(position, mol_vector.shape[0], axis=0)
 
 
+# This decorator is what enables the caching of this function,
+# making this function 100 times faster for subsequent exectutions
+@lru_cache()
+def create_wave_vector(wave_number: float, angular_resolution: int):
+    r"""Convert a wave number into a radially symmetric wave vector
+
+    This calculates the values of cos and sin :math:`\theta` for `angular_resolution`
+    values of :math:`\theta` between 0 and :math:`2\pi`.
+
+    The results of this function are cached, so these values only need to be computed
+    a single time, the rest of the time they are just returned.
+
+    """
+    angles = np.linspace(0, 2 * np.pi, num=angular_resolution, endpoint=False).reshape(
+        (-1, 1)
+    )
+    wave_vector = np.concatenate([np.cos(angles), np.sin(angles)], axis=1)
+    return wave_vector * wave_number
+
+
 def intermediate_scattering_function(
     box: Box,
     initial_position: np.ndarray,
@@ -399,11 +420,7 @@ def intermediate_scattering_function(
     shape N x 3 and the appropriate elementn are extracted from it.
 
     """
-    angles = np.linspace(0, 2 * np.pi, num=angular_resolution, endpoint=False).reshape(
-        (-1, 1)
-    )
-    wave_vector = np.concatenate([np.cos(angles), np.sin(angles)], axis=1)
-    wave_vector *= wave_number
+    wave_vector = create_wave_vector(wave_number, angular_resolution)
 
     displacement = box.wrap(initial_position - current_position)[:, :2]
 
