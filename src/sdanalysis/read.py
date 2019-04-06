@@ -355,6 +355,12 @@ def process_file(
             dynamics_series["temperature"] = sim_params.temperature
             dynamics_series["pressure"] = sim_params.pressure
             dataframes.append(dynamics_series)
+
+    end_time = datetime.datetime.now()
+    processing_time = end_time - start_time
+
+    logger.info("Finished processing %s, took %s", sim_params.infile, processing_time)
+
     if sim_params.outfile is not None:
         dataframes.flush()
         mol_relax = pandas.concat(
@@ -365,11 +371,6 @@ def process_file(
         if queue:
             queue.put(("molecular_relaxations", mol_relax))
         return None
-
-    end_time = datetime.datetime.now()
-    processing_time = end_time - start_time
-
-    logger.info("Finished processing %s, took %s", sim_params.infile, processing_time)
 
     return dataframes.to_dataframe()
 
