@@ -32,6 +32,7 @@ install_requires = [
     "click~=7.0.0",
     "freud-analysis",
     "rowan",
+    "tqdm",
 ]
 test_requires = [
     "pytest",

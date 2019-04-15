@@ -38,6 +38,7 @@ requirements:
     - click ==7.*
     - freud ==1.*
     - rowan
+    - tqdm
 
 build:
   noarch: python

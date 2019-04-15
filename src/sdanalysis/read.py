@@ -17,6 +17,7 @@ import attr
 import gsd.hoomd
 import numpy as np
 import pandas
+from tqdm import tqdm
 
 from .dynamics import Dynamics, Relaxations
 from .frame import Frame, HoomdFrame, LammpsFrame
@@ -67,7 +68,7 @@ def _get_num_steps(trajectory):
     raise RuntimeError("Cannot read frames from trajectory ", trajectory)
 
 
-def process_gsd(sim_params: SimulationParams) -> FileIterator:
+def process_gsd(sim_params: SimulationParams, thread_index: int = 0) -> FileIterator:
     """Perform analysis of a GSD file.
 
     This is a specialisation of the process_file, called when the extension of a file is
@@ -89,7 +90,7 @@ def process_gsd(sim_params: SimulationParams) -> FileIterator:
         # Return the steps in sequence. This allows a linear sequence of steps.
         if sim_params.linear_steps is None:
             index_list = []
-            for frame in src:
+            for frame in tqdm(src, position=thread_index, miniters=100):
                 if (
                     frame.configuration.step % sim_params.gen_steps == 0
                     and len(index_list) <= sim_params.max_gen
@@ -112,7 +113,9 @@ def process_gsd(sim_params: SimulationParams) -> FileIterator:
             curr_step = next(step_iter)
         except StopIteration:
             return
-        for frame in src:
+        for frame in tqdm(
+            src, desc=sim_params.infile.stem, position=thread_index, miniters=100
+        ):
             logger.debug("Step %d with index %s", curr_step, step_iter.get_index())
             # This handles when the generators don't match up
             if curr_step > frame.configuration.step:
@@ -147,12 +150,12 @@ def process_gsd(sim_params: SimulationParams) -> FileIterator:
 
 
 def process_lammpstrj(
-    sim_params: SimulationParams
+    sim_params: SimulationParams, thread_index: int = 0
 ) -> Iterator[Tuple[List[int], LammpsFrame]]:
     indexes = [0]
     assert sim_params.infile is not None
     parser = parse_lammpstrj(sim_params.infile)
-    for frame in parser:
+    for frame in tqdm(parser, position=thread_index, miniters=100):
         if sim_params.num_steps is not None and frame.timestep > sim_params.num_steps:
             return
 
@@ -278,6 +281,7 @@ def process_file(
     sim_params: SimulationParams,
     mol_relaxations: List[Dict[str, Any]] = None,
     queue: Optional[multiprocessing.Queue] = None,
+    thread_index: int = 0,
 ) -> Optional[pandas.DataFrame]:
     """Read a file and compute the dynamics quantities.
 
@@ -306,9 +310,9 @@ def process_file(
     keyframes: List[Dynamics] = []
     relaxframes: List[Relaxations] = []
     if sim_params.infile.suffix == ".gsd":
-        file_iterator: FileIterator = process_gsd(sim_params)
+        file_iterator: FileIterator = process_gsd(sim_params, thread_index=thread_index)
     elif sim_params.infile.suffix == ".lammpstrj":
-        file_iterator = process_lammpstrj(sim_params)
+        file_iterator = process_lammpstrj(sim_params, thread_index=thread_index)
     for indexes, frame in file_iterator:
         for index in indexes:
             try:

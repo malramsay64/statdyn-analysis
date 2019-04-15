@@ -68,7 +68,10 @@ def parallel_process_files(
         # starmap allows for passing multiple args to process_file
         pool.starmap(
             process_file,
-            ((_set_input_file(sim_params, i), relaxations, queue) for i in input_files),
+            (
+                (_set_input_file(sim_params, i), relaxations, queue, index)
+                for index, i in enumerate(input_files)
+            ),
         )
 
         # Send None to file writer to kill

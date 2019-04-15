@@ -17,6 +17,7 @@ dependencies:
     - freud~=1.0.0
     - rowan
     - hsluv
+    - tqdm
     # Development requirements
     - pre_commit
     - pytest
