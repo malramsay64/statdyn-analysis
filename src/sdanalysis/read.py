@@ -109,13 +109,14 @@ def process_gsd(sim_params: SimulationParams, thread_index: int = 0) -> FileIter
             gen_steps=sim_params.gen_steps,
             max_gen=sim_params.max_gen,
         )
-        try:
-            curr_step = next(step_iter)
-        except StopIteration:
-            return
         for frame in tqdm(
             src, desc=sim_params.infile.stem, position=thread_index, miniters=100
         ):
+            # Increment Step
+            try:
+                curr_step = next(step_iter)
+            except StopIteration:
+                return
             logger.debug("Step %d with index %s", curr_step, step_iter.get_index())
             # This handles when the generators don't match up
             if curr_step > frame.configuration.step:
@@ -141,12 +142,12 @@ def process_gsd(sim_params: SimulationParams, thread_index: int = 0) -> FileIter
                 return
 
             if curr_step == frame.configuration.step:
-                yield step_iter.get_index(), HoomdFrame(frame)
-
-            try:
-                curr_step = next(step_iter)
-            except StopIteration:
-                return
+                try:
+                    yield step_iter.get_index(), HoomdFrame(frame)
+                # Handle error creating a HoomdFrame class
+                except ValueError as e:
+                    logger.warning(e)
+                    continue
 
 
 def process_lammpstrj(

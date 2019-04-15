@@ -143,10 +143,12 @@ class HoomdFrame(Frame):
         if num_mols > num_particles:
             num_mols = num_particles
 
-        assert (
-            num_mols <= num_particles
-        ), f"Num molecule: {num_mols}, Num particles {num_particles}"
-        assert num_particles == len(snapshot.particles.position)
+        if num_mols > num_particles:
+            raise ValueError(
+                "Invalid Snapshot, there are more molecules than particles"
+            )
+        if num_mols > len(snapshot.particles.position):
+            raise ValueError("There are more molecules than position datapoints.")
 
         return num_mols
 
