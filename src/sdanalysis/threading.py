@@ -13,11 +13,13 @@ the rest of the implementation.
 
 """
 import logging
+import os
 from copy import deepcopy
 from multiprocessing import Manager, Pool, Queue, cpu_count
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+import freud
 import pandas
 
 from .params import SimulationParams
@@ -51,6 +53,19 @@ def parallel_process_files(
     # The manager queue needs to be used
     manager = Manager()
     queue = manager.Queue()
+
+    # Only use a single thread for freud
+    freud.parallel.setNumThreads(1)
+    # Only use a single thread for numpy
+    try:
+        import mkl
+
+        mkl.set_num_threads(1)
+    except ImportError:
+        pass
+    # Set 1 thread for openmp and openblas
+    os.environ["OMP_NUM_THREADS"] = "1"
+    os.environ["OPENBLAS_NUM_THREADS"] = "1"
 
     # Number of cpus + an additional for the writer file
     if num_cpus is None:
