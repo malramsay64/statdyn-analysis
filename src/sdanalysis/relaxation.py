@@ -344,7 +344,7 @@ def compute_relaxation_value(
 
 
 def series_relaxation_value(series: pandas.Series) -> float:
-    if series.index.value.shape != series.values.shape:
+    if series.index.values.shape != series.values.shape:
         raise RuntimeError(
             "Index and values have different shapes."
             f"index: {series.index.value.shape}, values: {series.value.shape}"
