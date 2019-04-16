@@ -351,10 +351,16 @@ def process_file(
                 # Set custom relaxation functions
                 if mol_relaxations is not None:
                     myrelax.set_mol_relax(mol_relaxations)
-            dynamics_series = mydyn.compute_all(
-                frame.timestep, frame.position, frame.orientation, frame.image
-            )
-            myrelax.add(frame.timestep, frame.position, frame.orientation)
+
+            try:
+                dynamics_series = mydyn.compute_all(
+                    frame.timestep, frame.position, frame.orientation, frame.image
+                )
+                myrelax.add(frame.timestep, frame.position, frame.orientation)
+            except (ValueError, RuntimeError) as e:
+                logger.warning(e)
+                continue
+
             logger.debug("Series: %s", index)
             dynamics_series["start_index"] = index
             dynamics_series["temperature"] = sim_params.temperature
