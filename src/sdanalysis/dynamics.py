@@ -16,6 +16,7 @@ import pandas
 from freud.box import Box
 from freud.density import RDF
 
+from .frame import Frame
 from .molecules import Molecule
 from .util import create_freud_box, quaternion_rotation, rotate_vectors
 
@@ -107,6 +108,25 @@ class Dynamics:
         logger.debug("Structure factor: %s", structure_factor)
         # Return the wave number with the maximum value
         return np.argmax(structure_factor[1:])
+
+    @classmethod
+    def from_frame(
+        cls, frame: Frame, molecule: Optional[Molecule] = None
+    ) -> "Dynamics":
+        """Initialise the Dynamics class from a Frame object.
+
+        There is significant overlap between the frame class and the dynamics class,
+        so this is a convenience method to make the initialisation simpler.
+
+        """
+        return cls(
+            frame.timestep,
+            frame.box,
+            frame.position,
+            frame.orientation,
+            molecule=molecule,
+            image=frame.image,
+        )
 
     def compute_msd(
         self, position: np.ndarray, image: Optional[np.ndarray] = None
@@ -341,6 +361,24 @@ class Relaxations:
                 {"name": "tau_T3", "threshold": np.pi / 3},
                 {"name": "tau_T4", "threshold": np.pi / 4},
             ]
+        )
+
+    @classmethod
+    def from_frame(
+        cls, frame: Frame, molecule: Optional[Molecule] = None
+    ) -> "Relaxations":
+        """Initialise a Relaxations class from a Frame class.
+
+        This uses the properties of the Frame class to fill the values of the
+        Relaxations class, for which there is significant overlap.
+
+        """
+        return cls(
+            frame.timestep,
+            frame.box,
+            frame.position,
+            frame.orientation,
+            molecule=molecule,
         )
 
     def set_mol_relax(self, definition: List[Dict[str, YamlValue]]) -> None:
