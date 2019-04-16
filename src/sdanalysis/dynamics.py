@@ -58,7 +58,8 @@ class Dynamics:
         image: Optional[np.ndarray] = None,
         wave_number: Optional[int] = None,
     ) -> None:
-        assert position.shape[0] > 0
+        if position.shape[0] == 0:
+            raise RuntimeError("Position must contain values, has length of 0.")
         if molecule is None:
             is2D = True
         else:
@@ -70,7 +71,8 @@ class Dynamics:
         self.position = position
         self.num_particles = position.shape[0]
         if orientation is not None:
-            assert orientation.shape[0] > 0
+            if orientation.shape[0] == 0:
+                raise RuntimeError("Orientation must contain values, has length of 0.")
             self.orientation = orientation
         if molecule is not None:
             self.mol_vector = molecule.positions
@@ -230,7 +232,11 @@ class MolecularRelaxation:
         self._status = np.full(self.num_elements, self._max_value, dtype=int)
 
     def add(self, timediff: int, distance: np.ndarray) -> None:
-        assert distance.shape == self._status.shape
+        if distance.shape != self._status.shape:
+            raise RuntimeError(
+                "Current state and initial state have different shapes. "
+                "current: {distance.shape}, initial: {self._status.shape}"
+            )
         with np.errstate(invalid="ignore"):
             moved = np.greater(distance, self.threshold)
             moveable = np.greater(self._status, timediff)
@@ -251,7 +257,12 @@ class LastMolecularRelaxation(MolecularRelaxation):
         self._irreversibility = irreversibility
 
     def add(self, timediff: int, distance: np.ndarray) -> None:
-        assert distance.shape == self._status.shape
+        if distance.shape != self._status.shape:
+            raise RuntimeError(
+                "Current state and initial state have different shapes. "
+                "current: {distance.shape}, initial: {self._status.shape}"
+            )
+
         with np.errstate(invalid="ignore"):
             state = np.greater(distance, self.threshold).astype(np.uint8)
             state[
@@ -629,8 +640,15 @@ def rotational_displacement(initial: np.ndarray, final: np.ndarray) -> np.ndarra
     .. [Jim Belk]: https://math.stackexchange.com/questions/90081/quaternion-distance
 
     """
-    assert final.shape[0] > 0
-    assert initial.shape[0] >= final.shape[0]
+    if final.shape[0] == 0:
+        raise RuntimeError("final must contain values, has length of 0.")
+
+    if initial.shape != final.shape:
+        raise RuntimeError(
+            "Final state and initial state have different shapes. "
+            "initial: {initial.shape}, final: {final.shape}"
+        )
+
     return quaternion_rotation(initial, final)
 
 
@@ -643,8 +661,14 @@ def translational_displacement(
     final_image: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """Optimised function for computing the displacement."""
-    assert final.shape[0] > 0
-    assert initial.shape[0] >= final.shape[0]
+    if final.shape[0] == 0:
+        raise RuntimeError("final must contain values, has length of 0.")
+
+    if initial.shape != final.shape:
+        raise RuntimeError(
+            "Final state and initial state have different shapes. "
+            "initial: {initial.shape}, final: {final.shape}"
+        )
 
     if not isinstance(box, Box):
         raise ValueError(f"Expecting type of {Box}, got {type(box)}")

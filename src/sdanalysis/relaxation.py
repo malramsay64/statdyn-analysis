@@ -167,12 +167,18 @@ def exponential_relaxation(
         error (float): Estimated error of the relaxation time.
 
     """
-    assert time.shape == value.shape
+    if time.shape != value.shape:
+        raise RuntimeError(
+            "Time and value have different shapes. "
+            "time: {time.shape}, values: {value.shape}"
+        )
+
     exp_value = 1 / np.exp(1)
     mask = np.isfinite(value)
     time = time[mask]
     value = value[mask]
-    assert np.all(np.isfinite(value))
+    if np.any(~np.isfinite(value)):
+        raise ValueError("There are non-finite values present in `value`.")
     fit_region = np.logical_and(
         (exp_value - value_width / 2) < value, (exp_value + value_width / 2) > value
     )
@@ -246,7 +252,12 @@ def max_time_relaxation(time: np.ndarray, value: np.ndarray) -> Result:
         float: Value of the maximum.
 
     """
-    assert time.shape == value.shape
+    if time.shape != value.shape:
+        raise RuntimeError(
+            "Time and value have different shapes. "
+            "time: {time.shape}, values: {value.shape}"
+        )
+
     try:
         max_val_index = np.nanargmax(value)
     except ValueError as err:
@@ -259,6 +270,7 @@ def max_time_relaxation(time: np.ndarray, value: np.ndarray) -> Result:
         error = time[max_val_index + 1] - time[max_val_index]
     else:
         error = (time[max_val_index + 1] - time[max_val_index - 1]) / 2
+
     return Result(time[max_val_index], error)
 
 
@@ -266,15 +278,20 @@ def max_value_relaxation(time: np.ndarray, value: np.ndarray) -> Result:
     """Maximum value recorded.
 
     Args:
-        time (np.ndarray): The time index
-        value (np.ndarray): The value at each of the time indices
+        time: The time index
+        value: The value at each of the time indices
 
     Returns:
         float: The time at which the maximum value occurs.
         float: Value of the maximum.
 
     """
-    assert time.shape == value.shape
+    if time.shape != value.shape:
+        raise RuntimeError(
+            "Time and value have different shapes. "
+            "time: {time.shape}, values: {value.shape}"
+        )
+
     try:
         max_val_index = np.nanargmax(value)
     except ValueError as err:
@@ -290,6 +307,7 @@ def max_value_relaxation(time: np.ndarray, value: np.ndarray) -> Result:
             (value[max_val_index] - value[max_val_index - 1])
             + (value[max_val_index] - value[max_val_index + 1])
         ) / 2
+
     return Result(value[max_val_index], error)
 
 
@@ -310,7 +328,12 @@ def compute_relaxation_value(
     timesteps: np.ndarray, values: np.ndarray, relax_type: str
 ) -> Result:
     """Compute a single representative value for each dynamic quantity."""
-    assert timesteps.shape == values.shape
+    if timesteps.shape != values.shape:
+        raise RuntimeError(
+            "Timesteps and values have different shapes. "
+            "timesteps: {timesteps.shape}, values: {values.shape}"
+        )
+
     if relax_type in ["msd"]:
         return diffusion_constant(timesteps, values)
     if relax_type in ["struct_msd"]:
@@ -321,7 +344,12 @@ def compute_relaxation_value(
 
 
 def series_relaxation_value(series: pandas.Series) -> float:
-    assert series.index.values.shape == series.values.shape
+    if series.index.value.shape != series.values.shape:
+        raise RuntimeError(
+            "Index and values have different shapes."
+            f"index: {series.index.value.shape}, values: {series.value.shape}"
+        )
+
     for level in ["temperature", "pressure"]:
         if level in series.index.names:
             series.reset_index(level=level, drop=True, inplace=True)
@@ -393,15 +421,29 @@ def compute_relaxations(infile) -> None:
     )
 
     df_all = df_mol.join(relaxations, on=["temperature", "pressure"]).reset_index()
-    assert "temperature" in df_all.columns
-    assert "pressure" in df_all.columns
+    if "temperature" not in df_all.columns:
+        raise RuntimeError(
+            "Temperature not in columns, something has gone really wrong."
+        )
+
+    if "pressure" not in df_all.columns:
+        raise RuntimeError("Pressure not in columns, something has gone really wrong.")
+
     df_all.to_hdf(infile, "relaxations")
 
 
 def compute_molecular_relaxations(df: pandas.DataFrame) -> pandas.DataFrame:
-    assert "temperature" in df.columns
-    assert "pressure" in df.columns
-    assert len(df.index.names) == 2
+    if "temperature" not in df.columns:
+        raise ValueError("The column 'temperature' is required")
+
+    if "pressure" not in df.columns:
+        raise ValueError("The column 'pressure' is required")
+
+    if len(df.index.names) != 2:
+        raise ValueError(
+            "The shape of the index is not compatible,"
+            "require 2 columns for the index, 'init_frame' and 'molecule'"
+        )
 
     df.replace(2 ** 32 - 1, np.nan, inplace=True)
     df.index.names = ["init_frame", "molecule"]
