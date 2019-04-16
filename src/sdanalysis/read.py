@@ -315,6 +315,12 @@ def process_file(
     elif sim_params.infile.suffix == ".lammpstrj":
         file_iterator = process_lammpstrj(sim_params, thread_index=thread_index)
     for indexes, frame in file_iterator:
+        if frame.position.shape[0] == 0:
+            logger.warning(
+                "Found malformed frame in %s... continuing", sim_params.infile.name
+            )
+            continue
+
         for index in indexes:
             try:
                 logger.debug(
