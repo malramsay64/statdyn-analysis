@@ -308,8 +308,7 @@ def process_file(
     else:
         dataframes = WriteCache()
 
-    keyframes: List[Dynamics] = []
-    relaxframes: List[Relaxations] = []
+    keyframes: Dict[int, Tuple[Dynamics, Relaxations]] = {}
     if sim_params.infile.suffix == ".gsd":
         file_iterator: FileIterator = process_gsd(sim_params, thread_index=thread_index)
     elif sim_params.infile.suffix == ".lammpstrj":
@@ -322,41 +321,16 @@ def process_file(
             continue
 
         for index in indexes:
-            try:
-                logger.debug(
-                    "len(keyframes): %d, len(relaxframes): %d",
-                    len(keyframes),
-                    len(relaxframes),
-                )
-                mydyn = keyframes[index]
-                myrelax = relaxframes[index]
-            except IndexError:
-                logger.debug("Frame: %s", frame)
-                logger.debug("Create key frame at step %s", frame.timestep)
-                keyframes.append(
-                    Dynamics(
-                        frame.timestep,
-                        frame.box,
-                        frame.position,
-                        frame.orientation,
-                        molecule=Trimer(),
-                        image=frame.image,
-                    )
-                )
-                relaxframes.append(
-                    Relaxations(
-                        frame.timestep,
-                        frame.box,
-                        frame.position,
-                        frame.orientation,
-                        Trimer(),
-                    )
-                )
-                mydyn = keyframes[index]
-                myrelax = relaxframes[index]
-                # Set custom relaxation functions
-                if mol_relaxations is not None:
-                    myrelax.set_mol_relax(mol_relaxations)
+            mydyn, myrelax = keyframes.setdefault(
+                index,
+                (
+                    Dynamics.from_frame(frame, Trimer()),
+                    Relaxations.from_frame(frame, Trimer()),
+                ),
+            )
+            # Set custom relaxation functions
+            if mol_relaxations is not None:
+                myrelax.set_mol_relax(mol_relaxations)
 
             try:
                 dynamics_series = mydyn.compute_all(
@@ -381,7 +355,8 @@ def process_file(
     if sim_params.outfile is not None:
         dataframes.flush()
         mol_relax = pandas.concat(
-            (relax.summary() for relax in relaxframes), keys=range(len(relaxframes))
+            (relax.summary() for _, relax in keyframes.values()),
+            keys=list(keyframes.keys()),
         )
         mol_relax["temperature"] = sim_params.temperature
         mol_relax["pressure"] = sim_params.pressure
