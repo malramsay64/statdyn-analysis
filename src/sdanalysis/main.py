@@ -33,7 +33,7 @@ MOLECULE_OPTIONS = {"trimer": Trimer, "disc": Disc, "sphere": Sphere, "dimer": D
 
 
 def _verbosity(_, __, value) -> None:
-    levels = {0: "INFO", 1: "DEBUG"}
+    levels = {0: "WARNING", 1: "INFO", 2: "DEBUG"}
     log_level = levels.get(value, "DEBUG")
     logging.basicConfig(level=log_level)
     logger.debug("Setting log level to %s", log_level)
