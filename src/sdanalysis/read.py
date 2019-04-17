@@ -324,8 +324,8 @@ def process_file(
             mydyn, myrelax = keyframes.setdefault(
                 index,
                 (
-                    Dynamics.from_frame(frame, Trimer()),
-                    Relaxations.from_frame(frame, Trimer()),
+                    Dynamics.from_frame(frame, Trimer(), sim_params.wave_number),
+                    Relaxations.from_frame(frame, Trimer(), sim_params.wave_number),
                 ),
             )
             # Set custom relaxation functions
