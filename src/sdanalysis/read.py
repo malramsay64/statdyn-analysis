@@ -26,6 +26,8 @@ from .params import SimulationParams
 from .StepSize import GenerateStepSeries
 from .util import set_filename_vars
 
+tqdm_options = {"miniters": 100, "dynamics_ncols": True}
+
 logger = logging.getLogger(__name__)
 
 gsd_logger = logging.getLogger("gsd")
@@ -90,7 +92,9 @@ def process_gsd(sim_params: SimulationParams, thread_index: int = 0) -> FileIter
         # Return the steps in sequence. This allows a linear sequence of steps.
         if sim_params.linear_steps is None:
             index_list = []
-            for frame in tqdm(src, position=thread_index, miniters=100):
+            for frame in tqdm(
+                src, desc=sim_params.infile.stem, position=thread_index, **tqdm_options
+            ):
                 if (
                     frame.configuration.step % sim_params.gen_steps == 0
                     and len(index_list) <= sim_params.max_gen
@@ -110,7 +114,7 @@ def process_gsd(sim_params: SimulationParams, thread_index: int = 0) -> FileIter
             max_gen=sim_params.max_gen,
         )
         for frame in tqdm(
-            src, desc=sim_params.infile.stem, position=thread_index, miniters=100
+            src, desc=sim_params.infile.stem, position=thread_index, **tqdm_options
         ):
             # Increment Step
             try:
@@ -156,7 +160,9 @@ def process_lammpstrj(
     indexes = [0]
     assert sim_params.infile is not None
     parser = parse_lammpstrj(sim_params.infile)
-    for frame in tqdm(parser, position=thread_index, miniters=100):
+    for frame in tqdm(
+        parser, desc=sim_params.infile.stem, position=thread_index, **tqdm_options
+    ):
         if sim_params.num_steps is not None and frame.timestep > sim_params.num_steps:
             return
 
