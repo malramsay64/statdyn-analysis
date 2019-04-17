@@ -14,7 +14,6 @@ from typing import Any, Dict, List, Optional, Union
 import numpy as np
 import pandas
 from freud.box import Box
-from freud.density import RDF
 
 from .frame import Frame
 from .molecules import Molecule
@@ -57,7 +56,7 @@ class Dynamics:
         orientation: Optional[np.ndarray] = None,
         molecule: Optional[Molecule] = None,
         image: Optional[np.ndarray] = None,
-        wave_number: Optional[int] = None,
+        wave_number: Optional[float] = None,
     ) -> None:
         if position.shape[0] == 0:
             raise RuntimeError("Position must contain values, has length of 0.")
@@ -80,38 +79,19 @@ class Dynamics:
         self.image = image
 
         if wave_number is None:
-            self.wave_number = self._calculate_max_wavenumber(self.box, self.position)
-        else:
-            self.wave_number = wave_number
+            logger.info("No wave number passed, calculating from current frame.")
+            raise NotImplementedError(
+                "Automatic calculation of wave-number is not yet supported."
+            )
 
-    @classmethod
-    def _calculate_max_wavenumber(
-        cls,
-        box: Box,
-        position: np.ndarray,
-        rmax: Optional[float] = None,
-        dr: Optional[float] = None,
-    ) -> int:
-        logger.debug("Box: %s", box)
-        if rmax is None:
-            rmax = min(box.Lx, box.Ly) / 4
-        if dr is None:
-            dr = 0.01
-
-        logger.debug("Box: %s, rmax: %s, dr: %s", box, rmax, dr)
-        # Calculate radial distribution function using RDF function from freud
-        rdf = RDF(rmax, dr)
-        rdf.compute(box, position)
-        logger.debug("Radial Distribution: %s", rdf.RDF)
-        # Take the Fourier transform to get the structure factor
-        structure_factor = np.fft.rfft(rdf.RDF - 1)
-        logger.debug("Structure factor: %s", structure_factor)
-        # Return the wave number with the maximum value
-        return np.argmax(structure_factor[1:])
+        self.wave_number = wave_number
 
     @classmethod
     def from_frame(
-        cls, frame: Frame, molecule: Optional[Molecule] = None
+        cls,
+        frame: Frame,
+        molecule: Optional[Molecule] = None,
+        wave_number: Optional[float] = None,
     ) -> "Dynamics":
         """Initialise the Dynamics class from a Frame object.
 
@@ -126,6 +106,7 @@ class Dynamics:
             frame.orientation,
             molecule=molecule,
             image=frame.image,
+            wave_number=wave_number,
         )
 
     def compute_msd(
@@ -315,16 +296,24 @@ def create_mol_relaxations(
     num_elements: int,
     threshold: float,
     last_passage: bool = False,
-    last_passage_cutoff: float = 1.0,
+    last_passage_cutoff: Optional[float] = None,
 ) -> MolecularRelaxation:
+
     if threshold is None or threshold < 0:
         raise ValueError(f"Threshold needs a positive value, got {threshold}")
+
     if last_passage:
-        if last_passage_cutoff is None or last_passage_cutoff < 0:
+        if last_passage_cutoff is None:
+            logger.info(
+                "No last passage cutoff given, using 3 * threshold: %f", 3 * threshold
+            )
+            last_passage_cutoff = 3 * threshold
+        elif last_passage_cutoff < 0:
             raise ValueError(
                 "When using last passage a positive cutoff value is required,"
                 f"got {last_passage_cutoff}, default is 1.0"
             )
+
         return LastMolecularRelaxation(num_elements, threshold, last_passage_cutoff)
 
     return MolecularRelaxation(num_elements, threshold)
@@ -337,8 +326,9 @@ class Relaxations:
         box: np.ndarray,
         position: np.ndarray,
         orientation: np.ndarray,
-        molecule: Molecule = None,
-        is2D: bool = None,
+        molecule: Optional[Molecule] = None,
+        is2D: Optional[bool] = None,
+        wave_number: Optional[float] = None,
     ) -> None:
         self.init_time = timestep
         if molecule is None:
@@ -351,12 +341,18 @@ class Relaxations:
         self._num_elements = position.shape[0]
         self.init_position = position
         self.init_orientation = orientation
+        if wave_number is None:
+            raise NotImplementedError(
+                "Automatic calculation of wave number is not yet supported."
+            )
+        self.wave_number = wave_number
+
         # set defualt values for mol_relax
         self.set_mol_relax(
             [
-                {"name": "tau_D1", "threshold": 1.0},
-                {"name": "tau_D04", "threshold": 0.4},
-                {"name": "tau_DL04", "threshold": 0.4, "last_passage": True},
+                {"name": "tau_D", "threshold": 3 * wave_number},
+                {"name": "tau_F", "threshold": wave_number},
+                {"name": "tau_L", "threshold": wave_number, "last_passage": True},
                 {"name": "tau_T2", "threshold": np.pi / 2},
                 {"name": "tau_T3", "threshold": np.pi / 3},
                 {"name": "tau_T4", "threshold": np.pi / 4},
@@ -365,7 +361,10 @@ class Relaxations:
 
     @classmethod
     def from_frame(
-        cls, frame: Frame, molecule: Optional[Molecule] = None
+        cls,
+        frame: Frame,
+        molecule: Optional[Molecule] = None,
+        wave_number: Optional[float] = None,
     ) -> "Relaxations":
         """Initialise a Relaxations class from a Frame class.
 
@@ -379,6 +378,7 @@ class Relaxations:
             frame.position,
             frame.orientation,
             molecule=molecule,
+            wave_number=wave_number,
         )
 
     def set_mol_relax(self, definition: List[Dict[str, YamlValue]]) -> None:
@@ -454,7 +454,7 @@ def intermediate_scattering_function(
     box: Box,
     initial_position: np.ndarray,
     current_position: np.ndarray,
-    wave_number: int,
+    wave_number: float,
     angular_resolution: int = 60,
 ) -> float:
     r"""Calculate the intermediate scattering function for a specific wave-vector
