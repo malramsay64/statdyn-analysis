@@ -39,6 +39,11 @@ def _verbosity(_, __, value) -> None:
     logger.debug("Setting log level to %s", log_level)
 
 
+def _file_logger(_, __, value) -> None:
+    filename = value
+    logging.basicConfig(filename=filename, level=logger.level)
+
+
 @click.group()
 @click.version_option(__version__)
 @click.option(
@@ -50,6 +55,13 @@ def _verbosity(_, __, value) -> None:
     expose_value=False,
     is_eager=True,
     help="Increase debug level",
+)
+@click.option(
+    "--log-file",
+    callback=_file_logger,
+    expose_value=False,
+    is_eager=True,
+    help="Set output file for logging information.",
 )
 @click.option(
     "-s", "--num-steps", type=int, help="Maximum number of steps for analysis"
