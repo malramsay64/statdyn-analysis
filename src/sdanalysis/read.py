@@ -26,7 +26,7 @@ from .params import SimulationParams
 from .StepSize import GenerateStepSeries
 from .util import set_filename_vars
 
-tqdm_options = {"miniters": 100, "dynamics_ncols": True}
+tqdm_options = {"miniters": 100, "dynamic_ncols": True}
 
 logger = logging.getLogger(__name__)
 
