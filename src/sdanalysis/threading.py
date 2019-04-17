@@ -21,9 +21,12 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import freud
 import pandas
+from tqdm._tqdm import TqdmDefaultWriteLock
 
 from .params import SimulationParams
 from .read import process_file
+
+TqdmDefaultWriteLock.create_mp_lock()
 
 logger = logging.getLogger(__name__)
 
