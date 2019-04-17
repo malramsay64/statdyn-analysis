@@ -33,6 +33,7 @@ def sim_params():
             infile="test/data/trajectory-Trimer-P13.50-T3.00.gsd",
             output=output,
             outfile=output / "dynamics.h5",
+            wave_number=4.0,
         )
 
 

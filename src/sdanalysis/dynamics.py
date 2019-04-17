@@ -11,6 +11,7 @@ import logging
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
+import freud.density
 import numpy as np
 import pandas
 from freud.box import Box
@@ -23,6 +24,32 @@ np.seterr(divide="raise", invalid="raise", over="raise")
 logger = logging.getLogger(__name__)
 
 YamlValue = Union[str, float, int]
+
+
+def _static_structure_factor(
+    rdf: freud.density.RDF, wave_number: float, num_particles: int
+):
+    dr = rdf.R[1] - rdf.R[0]
+    integral = dr * np.sum((rdf.RDF - 1) * rdf.R * np.sin(wave_number * rdf.R))
+    density = num_particles / rdf.box.volume
+    return 1 + 4 * np.pi * density / wave_number * integral
+
+
+def _calculate_wave_number(box: Box, positions: np.ndarray):
+    rmax = min(box.Lx / 2, box.Ly / 2)
+    if not box.is2D:
+        rmax = min(rmax, box.Lz / 2)
+
+    dr = rmax / 200
+    rdf = freud.density.RDF(dr=dr, rmax=rmax)
+    rdf.compute(box, positions)
+
+    ssf = []
+    x = np.linspace(0.5, 20, 200)
+    for value in x:
+        ssf.append(_static_structure_factor(rdf, value, len(positions)))
+
+    return x[np.argmax(ssf)]
 
 
 class Dynamics:
@@ -80,9 +107,7 @@ class Dynamics:
 
         if wave_number is None:
             logger.info("No wave number passed, calculating from current frame.")
-            raise NotImplementedError(
-                "Automatic calculation of wave-number is not yet supported."
-            )
+            wave_number = _calculate_wave_number(self.box, self.position)
 
         self.wave_number = wave_number
 
@@ -341,10 +366,10 @@ class Relaxations:
         self._num_elements = position.shape[0]
         self.init_position = position
         self.init_orientation = orientation
+
         if wave_number is None:
-            raise NotImplementedError(
-                "Automatic calculation of wave number is not yet supported."
-            )
+            wave_number = _calculate_wave_number(self.box, self.init_position)
+
         self.wave_number = wave_number
 
         # set defualt values for mol_relax

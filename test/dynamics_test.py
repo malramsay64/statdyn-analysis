@@ -42,7 +42,7 @@ def test_calculate_max_wavenumber(wavenumber=10):
 
     box = Box(Lx=100, Ly=100, is2D=True)
 
-    calc_wavenumber = dynamics.Dynamics._calculate_max_wavenumber(box, positions)
+    calc_wavenumber = dynamics._calculate_wave_number(box, positions)
 
     assert calc_wavenumber >= 0
 
@@ -151,7 +151,12 @@ def trajectory():
 def dynamics_class(trajectory):
     snap = HoomdFrame(trajectory[0])
     return dynamics.Dynamics(
-        snap.timestep, snap.box, snap.position, snap.orientation, image=snap.image
+        snap.timestep,
+        snap.box,
+        snap.position,
+        snap.orientation,
+        image=snap.image,
+        wave_number=4.0,
     )
 
 
