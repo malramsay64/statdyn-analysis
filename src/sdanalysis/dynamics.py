@@ -377,9 +377,14 @@ class Relaxations:
         # set defualt values for mol_relax
         self.set_mol_relax(
             [
-                {"name": "tau_D", "threshold": 3 * wave_number},
-                {"name": "tau_F", "threshold": wave_number},
-                {"name": "tau_L", "threshold": wave_number, "last_passage": True},
+                {"name": "tau_D", "threshold": 3 * self.distance},
+                {"name": "tau_F", "threshold": self.distance},
+                {
+                    "name": "tau_L",
+                    "threshold": self.distance,
+                    "last_passage": True,
+                    "last_passage_cutoff": 3 * self.distance,
+                },
                 {"name": "tau_T2", "threshold": np.pi / 2},
                 {"name": "tau_T3", "threshold": np.pi / 3},
                 {"name": "tau_T4", "threshold": np.pi / 4},
