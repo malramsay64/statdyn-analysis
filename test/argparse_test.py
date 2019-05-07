@@ -45,14 +45,14 @@ sdanalysis.add_command(dummy_subcommand, "dummy_subcommand")
 
 def test_version(runner):
     result = runner.invoke(sdanalysis, ["--version"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     assert __version__ in result.output
 
 
 @pytest.mark.parametrize("arg", ["-v", "-vv", "-vvv", "-vvvv", "--verbose"])
 def test_verbose(runner, arg):
     result = runner.invoke(sdanalysis, [arg, "dummy_subcommand"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
 
 
 def test_comp_dynamics_infile(monkeypatch, runner, sim_params):
@@ -76,7 +76,7 @@ def test_comp_dynamics_mol_relax(runner, sim_params):
     result = runner.invoke(
         comp_dynamics, ["--mol-relaxations", "nonexistant.file"], obj=sim_params
     )
-    assert result.exit_code == 2
+    assert result.exit_code == 2, result.output
     assert (
         'Invalid value for "mol_relaxations": Path "nonexistant.file" does not exist.'
     )
@@ -105,7 +105,7 @@ def test_sdanalysis_options(runner, params):
     result = runner.invoke(
         sdanalysis, [params["option"], params["value"], "dummy_subcommand"]
     )
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     logger.debug("Command Output: \n%s", result.output)
     option = params["option"].strip("-").replace("-", "_")
     assert f"{option}={params['value']}" in result.output
@@ -114,15 +114,15 @@ def test_sdanalysis_options(runner, params):
 @pytest.mark.parametrize("output", ["output", "output"])
 def test_sdanalysis_output(runner, output):
     result = runner.invoke(sdanalysis, ["--output", output, "dummy_subcommand"])
-    assert result.exit_code == 0
+    assert result.exit_code == 0, result.output
     assert Path(output).exists
     assert f"_output={output}" in result.output
 
 
 def test_create_output_dir(runner):
     infile = Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
-    result = runner.invoke(comp_dynamics, ["--output", "missing", str(infile)])
-    assert result.exit_code == 0
+    result = runner.invoke(comp_dynamics_parallel, ["--output", "missing", str(infile)])
+    assert result.exit_code == 0, result.output
 
 
 def test_figure():
