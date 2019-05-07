@@ -217,9 +217,7 @@ class Dynamics:
             "msd": mean_squared_displacement(delta_displacement),
             "mfd": mean_fourth_displacement(delta_displacement),
             "alpha": alpha_non_gaussian(delta_displacement),
-            "com_struct": structural_relax(
-                delta_displacement, dist=np.pi / (2 * self.wave_number)
-            ),
+            "com_struct": structural_relax(delta_displacement, dist=self.distance),
             "scattering_function": intermediate_scattering_function(
                 self.box, self.position, position, wave_number=self.wave_number
             ),
@@ -234,7 +232,7 @@ class Dynamics:
                     "gamma": gamma(delta_displacement, delta_rotation),
                     "overlap": mobile_overlap(delta_displacement, delta_rotation),
                     "struct": self.compute_struct_relax(
-                        position, orientation, threshold=np.pi / (2 * self.wave_number)
+                        position, orientation, threshold=self.distance
                     ),
                 }
             )
@@ -242,6 +240,10 @@ class Dynamics:
 
     def __len__(self) -> int:
         return self.num_particles
+
+    @property
+    def distance(self) -> float:
+        return np.pi / (2 * self.wave_number)
 
     def get_molid(self):
         """Molecule ids of each of the values."""
@@ -383,6 +385,10 @@ class Relaxations:
                 {"name": "tau_T4", "threshold": np.pi / 4},
             ]
         )
+
+    @property
+    def distance(self):
+        return np.pi / (2 * self.wave_number)
 
     @classmethod
     def from_frame(
