@@ -18,6 +18,7 @@ import yaml
 
 from .molecules import Dimer, Disc, Sphere, Trimer
 from .params import SimulationParams
+from .read import process_file
 from .relaxation import compute_relaxations
 from .threading import parallel_process_files
 from .version import __version__
@@ -132,7 +133,7 @@ def sdanalysis(ctx, **kwargs) -> None:
 @click.argument(
     "infile", nargs=-1, type=click.Path(exists=True, file_okay=True, dir_okay=False)
 )
-def comp_dynamics(
+def comp_dynamics_parallel(
     sim_params, output, mol_relaxations, linear_dynamics, infile, ncpus
 ) -> None:
     """Compute dynamic properties for a number of input files."""
@@ -159,6 +160,49 @@ def comp_dynamics(
 
     infile = cast(Tuple[str], infile)
     parallel_process_files(infile, sim_params, relaxations, ncpus)
+
+
+@sdanalysis.command()
+@click.pass_obj
+@click.option(
+    "--mol-relaxations",
+    type=click.Path(exists=True, dir_okay=False),
+    help="Path to a file defining all the molecular relaxations to compute.",
+)
+@click.option(
+    "--linear-dynamics",
+    type=bool,
+    default=False,
+    is_flag=True,
+    help="Flag to specify the configurations in a trajectory have linear steps between them.",
+)
+@click.argument("infile", type=click.Path(exists=True, file_okay=True, dir_okay=False))
+@click.argument("outfile", type=click.Path(file_okay=True, dir_okay=False))
+def comp_dynamics(
+    sim_params, mol_relaxations, linear_dynamics, infile, outfile
+) -> None:
+    """Compute dynamic properties for a single input file."""
+    if sim_params is None:
+        sim_params = SimulationParams()
+
+    sim_params.outfile = Path(outfile)
+    sim_params.infile = Path(infile)
+
+    sim_params.output = sim_params.outfile.parent
+    if linear_dynamics:
+        sim_params.linear_steps = None
+    if mol_relaxations is not None:
+        relaxations = yaml.parse(mol_relaxations)
+    else:
+        relaxations = None
+
+    # Create output directory where it doesn't already exists
+    sim_params.output.mkdir(parents=True, exist_ok=True)
+
+    logger.debug("Processing: %s", infile)
+
+    infile = cast(Tuple[str], infile)
+    process_file(sim_params, relaxations)
 
 
 @sdanalysis.command()
