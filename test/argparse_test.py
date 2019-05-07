@@ -15,7 +15,12 @@ import click
 import pytest
 
 from sdanalysis import main
-from sdanalysis.main import MOLECULE_OPTIONS, comp_dynamics, sdanalysis
+from sdanalysis.main import (
+    MOLECULE_OPTIONS,
+    comp_dynamics,
+    comp_dynamics_parallel,
+    sdanalysis,
+)
 from sdanalysis.params import SimulationParams
 from sdanalysis.version import __version__
 
@@ -59,13 +64,13 @@ def test_comp_dynamics_infile(monkeypatch, runner, sim_params):
     monkeypatch.setattr(main, "parallel_process_files", dummy_process_files)
 
     # Check error on nonexistant file
-    result = runner.invoke(comp_dynamics, ["nonexistant.file"], obj=sim_params)
-    assert result.exit_code == 2
+    result = runner.invoke(comp_dynamics_parallel, ["nonexistant.file"], obj=sim_params)
+    assert result.exit_code == 2, result.output
     assert 'Invalid value for "infile": Path "nonexistant.file" does not exist.'
 
     datafile = Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
-    result = runner.invoke(comp_dynamics, [str(datafile)], obj=sim_params)
-    assert result.exit_code == 0
+    result = runner.invoke(comp_dynamics_parallel, [str(datafile)], obj=sim_params)
+    assert result.exit_code == 0, result.output
     print(result.output)
     assert "_infile=None" not in result.output
     assert f"_infile={datafile}" in result.output
