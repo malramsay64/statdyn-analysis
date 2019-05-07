@@ -415,12 +415,21 @@ def compute_relaxations(infile) -> None:
         relaxations.columns = [
             translate_relaxation(quantity) for quantity in relaxations.columns
         ]
+    logger.info("Shape of df_dyn relaxations is %s", df_dyn.shape)
+
+    df_mol_input = pandas.read_hdf(infile, "molecular_relaxations")
+    logger.info("Shape of df_mol_input relaxations is %s", df_mol_input.shape)
 
     df_mol = compute_molecular_relaxations(
         pandas.read_hdf(infile, "molecular_relaxations")
     )
+    logger.info("Shape of df_mol relaxations is %s", df_mol.shape)
 
-    df_all = df_mol.join(relaxations, on=["temperature", "pressure"]).reset_index()
+    df_all = df_mol.join(
+        relaxations, on=["temperature", "pressure"], lsuffix="mol"
+    ).reset_index()
+    logger.info("Shape of all relaxations is %s", df_all.shape)
+
     if "temperature" not in df_all.columns:
         raise RuntimeError(
             "Temperature not in columns, something has gone really wrong."
@@ -445,6 +454,7 @@ def compute_molecular_relaxations(df: pandas.DataFrame) -> pandas.DataFrame:
             "require 2 columns for the index, 'init_frame' and 'molecule'"
         )
 
+    logger.debug("Initial molecular shape: %s", df.shape)
     df.replace(2 ** 32 - 1, np.nan, inplace=True)
     df.index.names = ["init_frame", "molecule"]
     # Initial frames with any NaN value are excluded from analysis. It is assumed they
@@ -452,6 +462,10 @@ def compute_molecular_relaxations(df: pandas.DataFrame) -> pandas.DataFrame:
     df = df.groupby(["init_frame", "temperature", "pressure"]).filter(
         lambda x: x.isna().sum().sum() == 0
     )
+    logger.debug("Filtered molecular shape: %s", df.shape)
+
     df = df.groupby(["temperature", "pressure"]).agg(["mean", hmean])
+
+    logger.debug("Aggregated molecular shape: %s", df.shape)
     df.columns = ["_".join(f) for f in df.columns.tolist()]
     return df
