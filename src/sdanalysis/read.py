@@ -87,7 +87,7 @@ def _gsd_linear_trajectory(
                 raise e
             if timestep % keyframe_interval == 0 and len(index_list) <= keyframes_max:
                 index_list.append(len(index_list))
-            if steps_max and timestep > steps_max:
+            if steps_max is not None and timestep > steps_max:
                 return
             yield index_list, HoomdFrame(frame)
     return
@@ -153,7 +153,7 @@ def _gsd_exponential_trajectory(
                     except StopIteration:
                         return
 
-            if curr_step > steps_max:
+            if steps_max is not None and curr_step > steps_max:
                 return
 
             if curr_step == timestep:
