@@ -70,57 +70,57 @@ def _get_num_steps(trajectory):
     raise RuntimeError("Cannot read frames from trajectory ", trajectory)
 
 
-def process_gsd(sim_params: SimulationParams, thread_index: int = 0) -> FileIterator:
-    """Perform analysis of a GSD file.
+def _gsd_linear_trajectory(
+    infile: Path,
+    steps_max: Optional[int] = None,
+    keyframe_interval: int = 20000,
+    keyframes_max: int = 500,
+    thread_index: int = 0,
+):
+    index_list: List[int] = []
+    with gsd.hoomd.open(str(infile), "rb") as src:
+        for frame in tqdm(src, infile.stem, position=thread_index, **tqdm_options):
+            try:
+                timestep = int(frame.configuration.step)
+            except IndexError as e:
+                logger.error(e)
+                raise e
+            if timestep % keyframe_interval == 0 and len(index_list) <= keyframes_max:
+                index_list.append(len(index_list))
+            if steps_max and timestep > steps_max:
+                return
+            yield index_list, HoomdFrame(frame)
+    return
 
-    This is a specialisation of the process_file, called when the extension of a file is
-    `.gsd`; as such it shouldn't typically be called by the user. For the user facing
-    function see :func:`process_file`.
 
-    """
-    assert sim_params.infile is not None
-    assert sim_params.gen_steps is not None
-    assert sim_params.max_gen is not None
-    with gsd.hoomd.open(str(sim_params.infile), "rb") as src:
-
+def _gsd_exponential_trajectory(
+    infile: Path,
+    steps_max: Optional[int] = None,
+    keyframe_interval: int = 20000,
+    keyframes_max: int = 500,
+    linear_steps: int = 100,
+    thread_index: int = 0,
+):
+    with gsd.hoomd.open(str(infile), "rb") as src:
         # Compute steps in gsd file
-        if sim_params.num_steps is not None:
-            num_steps = sim_params.num_steps
-        else:
-            num_steps = _get_num_steps(src)
-
-        # Return the steps in sequence. This allows a linear sequence of steps.
-        if sim_params.linear_steps is None:
-            index_list = []
-            for frame in tqdm(
-                src, desc=sim_params.infile.stem, position=thread_index, **tqdm_options
-            ):
-                if (
-                    frame.configuration.step % sim_params.gen_steps == 0
-                    and len(index_list) <= sim_params.max_gen
-                ):
-                    index_list.append(len(index_list))
-                if frame.configuration.step > num_steps:
-                    return
-                yield index_list, HoomdFrame(frame)
-            return
+        if steps_max is None:
+            steps_max = _get_num_steps(src)
 
         # Exponential sequence of steps
-        logger.debug("Infile: %s contains %d steps", sim_params.infile, num_steps)
+        logger.debug("Infile: %s contains %d steps", infile, steps_max)
         step_iter = GenerateStepSeries(
-            num_steps,
-            num_linear=sim_params.linear_steps,
-            gen_steps=sim_params.gen_steps,
-            max_gen=sim_params.max_gen,
+            steps_max,
+            num_linear=linear_steps,
+            gen_steps=keyframe_interval,
+            max_gen=keyframes_max,
         )
-        for frame in tqdm(
-            src, desc=sim_params.infile.stem, position=thread_index, **tqdm_options
-        ):
+        for frame in tqdm(src, desc=infile.stem, position=thread_index, **tqdm_options):
             # Increment Step
             try:
                 curr_step = int(next(step_iter))
             except StopIteration:
                 return
+
             logger.debug("Step %d with index %s", curr_step, step_iter.get_index())
             # This handles when the generators don't match up
             if not isinstance(curr_step, int):
@@ -152,7 +152,8 @@ def process_gsd(sim_params: SimulationParams, thread_index: int = 0) -> FileIter
                         curr_step = next(step_iter)
                     except StopIteration:
                         return
-            if curr_step > num_steps:
+
+            if curr_step > steps_max:
                 return
 
             if curr_step == timestep:
@@ -162,6 +163,37 @@ def process_gsd(sim_params: SimulationParams, thread_index: int = 0) -> FileIter
                 except ValueError as e:
                     logger.warning(e)
                     continue
+
+
+def process_gsd(sim_params: SimulationParams, thread_index: int = 0) -> FileIterator:
+    """Perform analysis of a GSD file.
+
+    This is a specialisation of the process_file, called when the extension of a file is
+    `.gsd`; as such it shouldn't typically be called by the user. For the user facing
+    function see :func:`process_file`.
+
+    """
+    assert sim_params.infile is not None
+    assert sim_params.gen_steps is not None
+    assert sim_params.max_gen is not None
+
+    if sim_params.linear_steps is None:
+        yield from _gsd_linear_trajectory(
+            sim_params.infile,
+            sim_params.num_steps,
+            sim_params.gen_steps,
+            sim_params.max_gen,
+            thread_index,
+        )
+    else:
+        yield from _gsd_exponential_trajectory(
+            sim_params.infile,
+            sim_params.num_steps,
+            sim_params.gen_steps,
+            sim_params.max_gen,
+            sim_params.linear_steps,
+            thread_index,
+        )
 
 
 def process_lammpstrj(
@@ -378,6 +410,8 @@ def process_file(
         mol_relax["pressure"] = sim_params.pressure
         if queue:
             queue.put(("molecular_relaxations", mol_relax))
+        else:
+            mol_relax.to_hdf(sim_params.outfile, "molecular_relaxations")
         return None
 
     return dataframes.to_dataframe()
