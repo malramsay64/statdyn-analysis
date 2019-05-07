@@ -118,26 +118,36 @@ def process_gsd(sim_params: SimulationParams, thread_index: int = 0) -> FileIter
         ):
             # Increment Step
             try:
-                curr_step = next(step_iter)
+                curr_step = int(next(step_iter))
             except StopIteration:
                 return
             logger.debug("Step %d with index %s", curr_step, step_iter.get_index())
             # This handles when the generators don't match up
-            if curr_step > frame.configuration.step:
+            if not isinstance(curr_step, int):
+                raise RuntimeError(
+                    f"Expected integer value for current step, got {type(curr_step)}"
+                )
+            try:
+                timestep = int(frame.configuration.step)
+            except IndexError as e:
+                logger.error(e)
+                raise e
+
+            if curr_step > timestep:
                 logger.warning(
                     "Step missing in iterator: current %d, frame %d",
                     curr_step,
-                    frame.configuration.step,
+                    timestep,
                 )
                 continue
 
-            elif curr_step < frame.configuration.step:
+            elif curr_step < timestep:
                 logger.warning(
                     "Step missing in gsd trajectory: current %d, frame %d",
                     curr_step,
-                    frame.configuration.step,
+                    timestep,
                 )
-                while curr_step < frame.configuration.step:
+                while curr_step < timestep:
                     try:
                         curr_step = next(step_iter)
                     except StopIteration:
@@ -145,7 +155,7 @@ def process_gsd(sim_params: SimulationParams, thread_index: int = 0) -> FileIter
             if curr_step > num_steps:
                 return
 
-            if curr_step == frame.configuration.step:
+            if curr_step == timestep:
                 try:
                     yield step_iter.get_index(), HoomdFrame(frame)
                 # Handle error creating a HoomdFrame class
