@@ -146,9 +146,9 @@ def threshold_relaxation(
 
     """
     if greater:
-        index = np.argmax(value > threshold)
+        index = np.argmax(value < threshold)
     else:
-        index = np.argmin(value < threshold)
+        index = np.argmax(value > threshold)
     return Result(time[index], time[index] - time[index - 1])
 
 
