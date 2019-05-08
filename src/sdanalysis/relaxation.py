@@ -343,7 +343,7 @@ def compute_relaxation_value(
         return threshold_relaxation(timesteps, values, threshold=0.16, greater=False)
     if relax_type in ["alpha", "gamma"]:
         return max_time_relaxation(timesteps, values)
-    return exponential_relaxation(timesteps, values)
+    return threshold_relaxation(timesteps, values)
 
 
 def series_relaxation_value(series: pandas.Series) -> float:
