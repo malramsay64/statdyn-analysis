@@ -233,7 +233,10 @@ def exponential_relaxation(
             logger.warning("Handled Exception in calculating Error bars\n%s", err)
             val_min = 0
             val_max = val_mean - val_min
-        return Result(val_mean, val_max - val_min)
+        if val_mean > 0:
+            return Result(val_mean, val_max - val_min)
+        logger.warning("Rate is less than 0, returning Nan")
+        return Result(np.nan, np.nan)
 
     except RuntimeError as err:
         logger.warning("Failed to converge on value, returning NaN")
