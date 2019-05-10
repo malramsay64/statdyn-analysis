@@ -6,11 +6,13 @@
 #
 # Distributed under terms of the MIT license.
 #
-# pylint: disable=redefined-outer-name, unsupported-assignment-operation
+# pylint: disable=redefined-outer-name, unsupported-assignment-operation, no-self-use
 #
 
 """Test the relaxation module."""
 
+
+import logging
 
 import numpy as np
 import pandas
@@ -19,6 +21,10 @@ from hypothesis import example, given
 from hypothesis.extra.numpy import arrays
 
 from sdanalysis import relaxation
+
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.DEBUG)
+
 
 relaxation_types = ["alpha", "gamma", "com_struct", "msd", "rot1", "rot2", "struct"]
 
@@ -35,7 +41,7 @@ def test_diffusion_constant():
 
 
 def test_exponential_relax():
-    """Ensure the exponential_relaxation functiton working apropriately."""
+    """Ensure the exponential_relaxation function working appropriately."""
     known_decay = 1e4
     time = np.arange(100000)
     value = np.exp(-time / known_decay)
@@ -43,18 +49,49 @@ def test_exponential_relax():
     assert np.isclose(relax, known_decay)
 
 
-def test_threshold_relaxation():
+@pytest.fixture
+def linear_relax():
     num_values = 1000
     time = np.arange(num_values)
     values = np.arange(num_values) / num_values
-    relax, _ = relaxation.threshold_relaxation(
-        time, values, threshold=0.5, greater=True
-    )
-    assert relax == num_values / 2 + 1
-    relax, _ = relaxation.threshold_relaxation(
-        time, values, threshold=0.5, greater=False
-    )
-    assert relax == num_values / 2
+    return time, values
+
+
+class TestThresholdRelaxation:
+    def test_decay(self, linear_relax):
+        time, values = linear_relax
+        # This is to turn the linear growth into linear decay
+        values = 1 - values
+        logger.debug("Values: %s", values)
+        relax, _ = relaxation.threshold_relaxation(
+            time, values, threshold=0.5, decay=True
+        )
+        assert relax == len(time) / 2 + 1
+
+    def test_decay_zeroth(self, linear_relax):
+        time, values = linear_relax
+        # This is to turn the linear growth into linear decay
+        values = values
+        logger.debug("Values: %s", values)
+        relax, _ = relaxation.threshold_relaxation(
+            time, values, threshold=0.5, decay=True
+        )
+        assert relax == 0
+
+    def test_growth(self, linear_relax):
+        time, values = linear_relax
+        relax, _ = relaxation.threshold_relaxation(
+            time, values, threshold=0.5, decay=False
+        )
+        assert relax == len(time) / 2 + 1
+
+    def test_growth_zeroth(self, linear_relax):
+        time, values = linear_relax
+        values = 1 - values
+        relax, _ = relaxation.threshold_relaxation(
+            time, values, threshold=0.5, decay=False
+        )
+        assert relax == 0
 
 
 class TestMaxValueRelax:

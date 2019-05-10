@@ -132,7 +132,7 @@ def threshold_relaxation(
     time: np.ndarray,
     value: np.ndarray,
     threshold: float = 1 / np.exp(1),
-    greater: bool = True,
+    decay: bool = True,
 ) -> Result:
     """Compute the relaxation through the reaching of a specific value.
 
@@ -145,10 +145,13 @@ def threshold_relaxation(
         error (float): The error in the fit of the relaxation
 
     """
-    if greater:
-        index = np.argmax(value < threshold)
-    else:
-        index = np.argmax(value > threshold)
+    try:
+        if decay:
+            index = np.argmax(value < threshold)
+        else:
+            index = np.argmax(value > threshold)
+    except FloatingPointError:
+        return Result(np.nan, np.nan)
     return Result(time[index], time[index] - time[index - 1])
 
 
@@ -340,7 +343,7 @@ def compute_relaxation_value(
     if relax_type in ["msd"]:
         return diffusion_constant(timesteps, values)
     if relax_type in ["struct_msd"]:
-        return threshold_relaxation(timesteps, values, threshold=0.16, greater=False)
+        return threshold_relaxation(timesteps, values, threshold=0.16, decay=False)
     if relax_type in ["alpha", "gamma"]:
         return max_time_relaxation(timesteps, values)
     return threshold_relaxation(timesteps, values)
