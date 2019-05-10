@@ -68,7 +68,7 @@ def parse_directory(directory: Path, glob: str = "dump*.gsd") -> Dict[str, Dict]
         temperature, pressure, crystal = get_filename_vars(fname)
         all_values.setdefault(pressure, {})
         if crystal is not None:
-            all_values[pressure].setdefault(crystal, {})
+            all_values[pressure].setdefault(temperature, {})
             all_values[pressure][temperature][crystal] = fname
         else:
             all_values[pressure][temperature] = fname
@@ -111,6 +111,7 @@ class TrimerFigure(object):
 
         self.directory = directory
         self.initialise_directory()
+        self._filename_div = Div(text="", width=self.controls_width)
 
         self.initialise_trajectory_interface()
         self.update_current_trajectory(None, None, None)
@@ -279,6 +280,13 @@ class TrimerFigure(object):
                 pass
 
             self.update_frame(attr, old, new)
+            current_file = self.get_selected_file()
+            if current_file is not None:
+                self._filename_div.text = (
+                    f"<b>Current File:</b><br/>{current_file.name}"
+                )
+            else:
+                self._filename_div.text = f"<b>Current File:</b><br/>None"
 
     def initialise_media_interface(self) -> None:
         self._trajectory_slider = Slider(
