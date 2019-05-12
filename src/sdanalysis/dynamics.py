@@ -275,7 +275,7 @@ class MolecularRelaxation:
 
 
 class LastMolecularRelaxation(MolecularRelaxation):
-    _is_irreversible = 3
+    _is_irreversible = 2
 
     def __init__(
         self, num_elements: int, threshold: float, irreversibility: float = 1.0
@@ -292,19 +292,54 @@ class LastMolecularRelaxation(MolecularRelaxation):
             )
 
         with np.errstate(invalid="ignore"):
-            state = np.greater(distance, self.threshold).astype(np.uint8)
-            state[
-                np.logical_or(
-                    self._state == self._is_irreversible,
-                    np.greater(distance, self._irreversibility),
-                )
-            ] = self._is_irreversible
-            self._status[np.logical_and(state == 1, self._state == 0)] = timediff
-            self._state = state
+            # The state can have one of three values,
+            #   - 0 => No relaxation has taken place, or particle has moved back within
+            #          the threshold distance
+            #   - 1 => The distance has passed the threshold, however not the
+            #          irreversibility distance
+            #   - 2 => The molecule has passed the irreversibility distance
+            #
+            #  The following is a sample linear algorithm for the process
+            #
+            #  for state, dist, status in zip(self._state, distance, self._status):
+            #      if state == 2:
+            #          # The threshold has been reached so there is now nothing to do
+            #          continue
+            #      elif state == 1:
+            #          # Need to check whether the relaxation has crossed a threshold
+            #          if dist > self._irreversibility:
+            #              state = 2
+            #          elif dist < self.threshold:
+            #              state = 0
+            #          else:
+            #              continue
+            #      elif state == 0:
+            #          if dist > self.threshold:
+            #              status = timediff
+            #              state = 1
+            #          else:
+            #              continue
+            #      else:
+            #          RuntimeError("Invalid State")
+
+            # These are the molecules which have moved from state 0 to state 1
+            # This movement is accompanied by updating the time this motion occurred
+            passed_threshold = (distance > self.threshold) & (self._state == 0)
+            self._state[passed_threshold] = 1
+            self._status[passed_threshold] = timediff
+
+            # These are the molecules which have moved from state 1 to state 0
+            below_threshold = (distance < self.threshold) & (self._state == 1)
+            self._state[below_threshold] = 0
+
+            # These are the molecules which have moved from state 1 to state 2
+            # This is at the end so molecules can go from state 0 to 2 in one jump.
+            irreversible = (distance > self._irreversibility) & (self._state == 1)
+            self._state[irreversible] = 2
 
     def get_status(self):
         status = np.copy(self._status)
-        status[self._state != self._is_irreversible] = self._max_value
+        status[self._state != 2] = self._max_value
         return status
 
 
