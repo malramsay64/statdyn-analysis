@@ -8,6 +8,7 @@
 """Compute dynamic properties."""
 
 import logging
+from enum import Enum, auto
 from functools import lru_cache
 from typing import Any, Dict, List, Optional, Union
 
@@ -250,14 +251,32 @@ class Dynamics:
         return np.arange(self.num_particles)
 
 
+class RelaxationType(Enum):
+    rotation = auto()
+    translation = auto()
+
+
 class MolecularRelaxation:
     """Compute the relaxation of each molecule."""
 
-    def __init__(self, num_elements: int, threshold: float) -> None:
+    _max_value = 2 ** 32 - 1
+    relaxation_type = RelaxationType.translation
+
+    def __init__(
+        self, num_elements: int, threshold: float, relaxation_type: Optional[str] = None
+    ) -> None:
         self.num_elements = num_elements
         self.threshold = threshold
         self._max_value = 2 ** 32 - 1
         self._status = np.full(self.num_elements, self._max_value, dtype=int)
+
+        if relaxation_type is not None:
+            logger.debug(
+                "relaxation_type: %s, type(relaxation_type): %s",
+                relaxation_type,
+                type(relaxation_type),
+            )
+            self.relaxation_type = RelaxationType[relaxation_type]
 
     def add(self, timediff: int, distance: np.ndarray) -> None:
         if distance.shape != self._status.shape:
@@ -278,9 +297,13 @@ class LastMolecularRelaxation(MolecularRelaxation):
     _is_irreversible = 2
 
     def __init__(
-        self, num_elements: int, threshold: float, irreversibility: float = 1.0
+        self,
+        num_elements: int,
+        threshold: float,
+        irreversibility: float = 1.0,
+        relaxation_type: Optional[str] = None,
     ) -> None:
-        super().__init__(num_elements, threshold)
+        super().__init__(num_elements, threshold, relaxation_type)
         self._state = np.zeros(self.num_elements, dtype=np.uint8)
         self._irreversibility = irreversibility
 
@@ -359,6 +382,7 @@ def create_mol_relaxations(
     threshold: float,
     last_passage: bool = False,
     last_passage_cutoff: Optional[float] = None,
+    relaxation_type: Optional[str] = None,
 ) -> MolecularRelaxation:
 
     if threshold is None or threshold < 0:
@@ -376,9 +400,11 @@ def create_mol_relaxations(
                 f"got {last_passage_cutoff}, default is 1.0"
             )
 
-        return LastMolecularRelaxation(num_elements, threshold, last_passage_cutoff)
+        return LastMolecularRelaxation(
+            num_elements, threshold, last_passage_cutoff, relaxation_type
+        )
 
-    return MolecularRelaxation(num_elements, threshold)
+    return MolecularRelaxation(num_elements, threshold, relaxation_type)
 
 
 class Relaxations:
@@ -420,9 +446,9 @@ class Relaxations:
                     "last_passage": True,
                     "last_passage_cutoff": 3 * self.distance,
                 },
-                {"name": "tau_T2", "threshold": np.pi / 2},
-                {"name": "tau_T3", "threshold": np.pi / 3},
-                {"name": "tau_T4", "threshold": np.pi / 4},
+                {"name": "tau_T2", "threshold": np.pi / 2, "type": "rotation"},
+                {"name": "tau_T3", "threshold": np.pi / 3, "type": "rotation"},
+                {"name": "tau_T4", "threshold": np.pi / 4, "type": "rotation"},
             ]
         )
 
@@ -462,13 +488,17 @@ class Relaxations:
                 raise ValueError("'threshold' is a required attribute")
             threshold = float(item["threshold"])
             last_passage = bool(item.get("last_passage", False))
-            last_passage_cutoff = float(item.get("last_passage_cutoff", 1.0))
+            last_passage_cutoff = float(
+                item.get("last_passage_cutoff", 3.0 * threshold)
+            )
+            relaxation_type = str(item.get("type", "translation"))
 
             self.mol_relax[index] = create_mol_relaxations(
                 self._num_elements,
                 threshold=threshold,
                 last_passage=last_passage,
                 last_passage_cutoff=last_passage_cutoff,
+                relaxation_type=relaxation_type,
             )
 
     def get_timediff(self, timestep: int):
@@ -479,11 +509,13 @@ class Relaxations:
             self.box, self.init_position, position
         )
         rotation = rotational_displacement(self.init_orientation, orientation)
-        for key, func in self.mol_relax.items():
-            if "D" in key:
+        for _, func in self.mol_relax.items():
+            if func.relaxation_type is RelaxationType.rotation:
+                func.add(self.get_timediff(timestep), rotation)
+            elif func.relaxation_type is RelaxationType.translation:
                 func.add(self.get_timediff(timestep), displacement)
             else:
-                func.add(self.get_timediff(timestep), rotation)
+                raise RuntimeError("Invalid relaxation type")
 
     def summary(self) -> pandas.DataFrame:
         return pandas.DataFrame(
