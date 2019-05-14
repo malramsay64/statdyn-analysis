@@ -76,6 +76,9 @@ class Dynamics:
 
     """
 
+    mol_vector = None
+    orientation = None
+
     def __init__(
         self,
         timestep: int,
@@ -232,11 +235,16 @@ class Dynamics:
                     "rot2": rotational_relax2(delta_rotation),
                     "gamma": gamma(delta_displacement, delta_rotation),
                     "overlap": mobile_overlap(delta_displacement, delta_rotation),
-                    "struct": self.compute_struct_relax(
-                        position, orientation, threshold=self.distance
-                    ),
                 }
             )
+            if self.mol_vector is not None:
+                dynamic_quantities.update(
+                    {
+                        "struct": self.compute_struct_relax(
+                            position, orientation, threshold=self.distance
+                        )
+                    }
+                )
         return dynamic_quantities
 
     def __len__(self) -> int:
