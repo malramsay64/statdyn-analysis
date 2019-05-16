@@ -137,13 +137,13 @@ class TrimerFigure(object):
         pressure = self._pressures[self._pressure_button.active]
 
         self._temperatures = sorted(list(self.variable_selection[pressure].keys()))
-        self._temperature_button = RadioButtonGroup(
+        self._temperature_button = Select(
             name="Temperature",
-            labels=self._temperatures,
-            active=0,
+            options=self._temperatures,
+            value=self._temperatures[0],
             width=self.controls_width,
         )
-        temperature = self._temperatures[self._temperature_button.active]
+        temperature = self._temperature_button.value
 
         if isinstance(self.variable_selection[pressure][temperature], dict):
             self._crystals: Optional[List[str]] = sorted(
@@ -155,7 +155,7 @@ class TrimerFigure(object):
                 active=0,
                 width=self.controls_width,
             )
-            self._temperature_button.on_change("active", self.update_crystal_button)
+            self._temperature_button.on_change("value", self.update_crystal_button)
             self._crystal_button.on_change("active", self.update_current_trajectory)
         else:
             self._crystals = None
@@ -168,7 +168,7 @@ class TrimerFigure(object):
 
     @property
     def temperature(self) -> str:
-        return self._temperatures[self._temperature_button.active]
+        return self._temperature_button.value
 
     @property
     def crystal(self) -> Optional[str]:
@@ -184,8 +184,8 @@ class TrimerFigure(object):
     def update_temperature_button(self, attr, old, new):
         self._temperatures = sorted(list(self.variable_selection[self.pressure].keys()))
 
-        self._temperature_button.labels = self._temperatures
-        self._temperature_button.active = 0
+        self._temperature_button.options = self._temperatures
+        self._temperature_button.value = self._temperatures[0]
         self.update_crystal_button(None, None, None)
 
     def update_crystal_button(self, attr, old, new):
