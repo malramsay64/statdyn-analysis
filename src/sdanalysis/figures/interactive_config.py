@@ -186,6 +186,7 @@ class TrimerFigure(object):
 
         self._temperature_button.labels = self._temperatures
         self._temperature_button.active = 0
+        self.update_crystal_button(None, None, None)
 
     def update_crystal_button(self, attr, old, new):
         if isinstance(self.variable_selection[self.pressure][self.temperature], dict):
@@ -198,6 +199,7 @@ class TrimerFigure(object):
         else:
             self._crystals = None
             self._crystal_button = None
+        self.update_current_trajectory(None, None, None)
 
     def create_files_interface(self) -> None:
         directory_name = Div(
