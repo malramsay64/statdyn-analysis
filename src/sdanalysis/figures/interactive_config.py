@@ -137,7 +137,7 @@ class TrimerFigure(object):
         pressure = self._pressures[self._pressure_button.active]
 
         self._temperatures = sorted(list(self.variable_selection[pressure].keys()))
-        self._temperature_button = Select(
+        self._temperature_button = Dropdown(
             name="Temperature",
             options=self._temperatures,
             value=self._temperatures[0],
@@ -184,9 +184,9 @@ class TrimerFigure(object):
     def update_temperature_button(self, attr, old, new):
         self._temperatures = sorted(list(self.variable_selection[self.pressure].keys()))
 
-        self._temperature_button.options = self._temperatures
-        self._temperature_button.value = self._temperatures[0]
-        self.update_crystal_button(None, None, None)
+        self._temperature_button.labels = self._temperatures
+        self._temperature_button.active = 0
+        self.update_current_trajectory()
 
     def update_crystal_button(self, attr, old, new):
         if isinstance(self.variable_selection[self.pressure][self.temperature], dict):
@@ -196,6 +196,7 @@ class TrimerFigure(object):
 
             self._crystal_button.labels = self._crystals
             self._crystal_button.active = 0
+            self.update_current_trajectory()
         else:
             self._crystals = None
             self._crystal_button = None
