@@ -5,4 +5,4 @@
 # Copyright © 2018 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
-__version__ = "0.7.10"
+__version__ = "0.7.11"
