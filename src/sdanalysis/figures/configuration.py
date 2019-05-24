@@ -112,7 +112,7 @@ def frame2data(
             ]
         elif order_function is not None:
             order = order_function(frame.box, frame.position, frame.orientation)
-            if order.dtype in [int, bool]:
+            if order.dtype in [int, bool, float]:
                 order = np.logical_not(order.astype(bool))
             else:
                 logger.debug("Order dtype: %s", order.dtype)
