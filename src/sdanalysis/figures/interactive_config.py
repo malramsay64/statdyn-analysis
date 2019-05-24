@@ -38,7 +38,6 @@ from bokeh.models import (
     ColorBar,
     ColumnDataSource,
     Div,
-    Dropdown,
     FixedTicker,
     LinearColorMapper,
     RadioButtonGroup,
@@ -142,7 +141,7 @@ class TrimerFigure(object):
         pressure = self._pressures[self._pressure_button.active]
 
         self._temperatures = sorted(list(self.variable_selection[pressure].keys()))
-        self._temperature_button = Dropdown(
+        self._temperature_button = Select(
             name="Temperature",
             options=self._temperatures,
             value=self._temperatures[0],
@@ -201,7 +200,6 @@ class TrimerFigure(object):
 
             self._crystal_button.labels = self._crystals
             self._crystal_button.active = 0
-            self.update_current_trajectory()
         else:
             self._crystals = None
             self._crystal_button = None
@@ -258,6 +256,7 @@ class TrimerFigure(object):
             return 0
 
     def initialise_trajectory_interface(self) -> None:
+        logger.debug("Loading Models: %s", self.order_functions.keys())
         self._order_parameter = RadioButtonGroup(
             name="Classification algorithm:",
             labels=list(self.order_functions.keys()),
