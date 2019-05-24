@@ -38,6 +38,7 @@ from bokeh.models import (
     ColorBar,
     ColumnDataSource,
     Div,
+    Dropdown,
     FixedTicker,
     LinearColorMapper,
     RadioButtonGroup,
