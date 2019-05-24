@@ -2,6 +2,88 @@
 ## [Unreleased]
 
 
+<a name="v0.7.9"></a>
+## [v0.7.9] - 2019-05-24
+### Fix
+- Change temperature to drop down list
+- Update current file when any button is changed
+- Support dynamics initialised without a molecule
+- Pass correct displacements to relaxation instances
+
+### Refactor
+- Simplify LastMolecularRelaxation
+
+
+<a name="v0.7.8"></a>
+## [v0.7.8] - 2019-05-11
+### Fix
+- Support multiple crystal types in interactive configuration
+- Use threshold_relaxation for exponential relaxations
+- Compute threshold_relaxation properly
+- Prevent exponential relaxation from retuning negative numbers
+- Reduce the range of the msd relaxation
+
+### Refactor
+- Rename argument of threshold_relaxation to decay
+
+
+<a name="v0.7.7"></a>
+## [v0.7.7] - 2019-05-07
+### Bug
+- Typo in meta.yaml defining dependencies
+
+### Feat
+- Calculation of molecular relaxations in relaxtion
+- Command line options for serial and parallel processing
+- Create distance property for Dynamics and Relaxation
+- Allow for dynamic resizing of command line
+- Implement calculation of wave_number from positions
+- Enable logging to an output file
+
+### Fix
+- Check steps_max for None not Truthy
+- Further error checking and handling of timesteps
+- Use distance instead of wave_number for relaxations
+- Update urllib3 dependency to fix CVE-2019-11324
+- Typo in tqdm arguments
+- Initialise tqdm lock for multiprocessing
+- Set the wave-number when analysing trajectories
+- Handle wave-number properly in dynamics and relaxations
+
+### Refactor
+- Split processing of gsd files
+
+### Test
+- Test parallel and serial computation appropriately
+- Print output of command when exit code is incorrect
+
+
+<a name="v0.7.6"></a>
+## [v0.7.6] - 2019-04-16
+### Chore
+- Update documentation requirements
+- Update dependencies including pyyaml
+
+### Feat
+- Initialise Dynamics and Relaxation from a Frame
+- Raise exceptions in preference of assertions
+- Add progress bars to processing files
+
+### Fix
+- Check for malformed input files at start of loop
+- Continue to process dynamics when encontering an error
+- Set default log level to warning
+- Force freud and numpy to only use a single thread
+- Gracefully handle corrupted trajectory frame
+- Always output processing time
+
+### Fixup
+- remove checks with assertions
+
+### Refactor
+- Use dict type to simplify processing files
+
+
 <a name="v0.7.5"></a>
 ## [v0.7.5] - 2019-04-04
 ### Chore
@@ -440,7 +522,11 @@
 <a name="0.0.8"></a>
 ## 0.0.8 - 2016-09-10
 
-[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.5...HEAD
+[Unreleased]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.9...HEAD
+[v0.7.9]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.8...v0.7.9
+[v0.7.8]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.7...v0.7.8
+[v0.7.7]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.6...v0.7.7
+[v0.7.6]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.5...v0.7.6
 [v0.7.5]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.4...v0.7.5
 [v0.7.4]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.3...v0.7.4
 [v0.7.3]: https://github.com/malramsay64/statdyn-analysis/compare/v0.7.2...v0.7.3
