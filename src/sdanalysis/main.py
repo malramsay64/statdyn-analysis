@@ -262,7 +262,8 @@ def figure(ip, directory, model) -> None:
         ip = (ip,)
     if directory:
         directory = Path(directory)
-        make_document = partial(make_document, directory=directory, models=model)
+
+    make_document = partial(make_document, directory=directory, models=model)
 
     apps = {"/": Application(FunctionHandler(make_document))}
     server = Server(apps, allow_websocket_origin=list(ip))
