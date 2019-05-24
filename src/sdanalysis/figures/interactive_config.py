@@ -90,7 +90,7 @@ class TrimerFigure(object):
 
     _frame = None
 
-    def __init__(self, doc, directory: Path = None, models=[]) -> None:
+    def __init__(self, doc, directory: Path = None, models=None) -> None:
         self._doc = doc
         self.plot = None
         self._trajectory = [None]
@@ -101,7 +101,11 @@ class TrimerFigure(object):
             {"x": [], "y": [], "orientation": [], "colour": [], "radius": []}
         )
 
-        if models:
+        if models is not None:
+            if not isinstance(models, (list, tuple)):
+                raise ValueError("The argument models has to have type list or tuple")
+
+            logger.debug("Found additional models: %s", models)
             from sklearn.externals import joblib
 
             for model in models:
