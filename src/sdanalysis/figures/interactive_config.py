@@ -190,7 +190,7 @@ class TrimerFigure(object):
 
         self._temperature_button.options = self._temperatures
         self._temperature_button.value = self._temperatures[0]
-        self.update_current_trajectory()
+        self.update_current_trajectory(None, None, None)
 
     def update_crystal_button(self, attr, old, new):
         if isinstance(self.variable_selection[self.pressure][self.temperature], dict):
