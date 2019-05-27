@@ -188,8 +188,8 @@ class TrimerFigure(object):
     def update_temperature_button(self, attr, old, new):
         self._temperatures = sorted(list(self.variable_selection[self.pressure].keys()))
 
-        self._temperature_button.labels = self._temperatures
-        self._temperature_button.active = 0
+        self._temperature_button.options = self._temperatures
+        self._temperature_button.value = self._temperatures[0]
         self.update_current_trajectory()
 
     def update_crystal_button(self, attr, old, new):
