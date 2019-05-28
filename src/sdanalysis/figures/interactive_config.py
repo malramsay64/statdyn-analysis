@@ -52,7 +52,7 @@ from tornado import gen
 from ..frame import HoomdFrame
 from ..molecules import Trimer
 from ..order import compute_ml_order, compute_voronoi_neighs, orientational_order
-from ..util import get_filename_vars, variables
+from ..util import Variables, get_filename_vars
 from .configuration import DARK_COLOURS, frame2data, plot_circles, plot_frame
 
 logger = logging.getLogger(__name__)
@@ -66,6 +66,8 @@ def parse_directory(directory: Path, glob: str = "dump*.gsd") -> Dict[str, Dict]
     logger.debug("Found files: %s", files)
     for fname in files:
         temperature, pressure, crystal = get_filename_vars(fname)
+        assert temperature
+        assert pressure
         all_values.setdefault(pressure, {})
         if crystal is not None:
             all_values[pressure].setdefault(temperature, {})
