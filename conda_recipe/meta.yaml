@@ -27,7 +27,7 @@ requirements:
     - {{ pin_compatible('python', max_pin='x.x') }}
     - numpy >=1.14
     - scipy >=1.0
-    - scikit-learn ==0.20.*
+    - scikit-learn >=0.20.0
     - pandas >=0.21
     - pytables >=3.4
     - bokeh ==1.*
