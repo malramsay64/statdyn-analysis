@@ -24,13 +24,13 @@ logger = logging.getLogger(__name__)
 PathLike = Union[str, Path]
 
 
-class variables(NamedTuple):
+class Variables(NamedTuple):
     temperature: Optional[str]
     pressure: Optional[str]
     crystal: Optional[str]
 
 
-def get_filename_vars(fname: PathLike):
+def get_filename_vars(fname: PathLike) -> Variables:
     fname = Path(fname)
     flist = fname.stem.split("-")
     logger.debug("Split Filename: %s", str(flist))
@@ -40,7 +40,7 @@ def get_filename_vars(fname: PathLike):
 
     # The remaining three quantities being molecule, temperature and pressure
     if len(flist) < 3:
-        return variables(None, None, None)
+        return Variables(None, None, None)
 
     pressure: Optional[str] = None
     temperature: Optional[str] = None
@@ -57,7 +57,7 @@ def get_filename_vars(fname: PathLike):
     else:
         crys = None
 
-    return variables(temperature, pressure, crys)
+    return Variables(temperature, pressure, crys)
 
 
 def set_filename_vars(fname: PathLike, sim_params: SimulationParams) -> None:
