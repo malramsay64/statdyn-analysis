@@ -43,7 +43,10 @@ DARK_COLOURS = _create_colours(light_colours=False)
 
 
 def plot_circles(
-    mol_plot: figure, source: ColumnDataSource, categorical_colour: bool = False
+    mol_plot: figure,
+    source: ColumnDataSource,
+    categorical_colour: bool = False,
+    colormap=palettes.Category10_10,
 ) -> figure:
     """Add the points to a bokeh figure to render the trimer molecule.
 
@@ -58,7 +61,7 @@ def plot_circles(
         colour_categorical = factor_cmap(
             field_name="colour",
             factors=np.unique(source.data["colour"]).astype(str),
-            palette=palettes.Category10_10,
+            palette=colormap,
         )
         glyph_args["fill_color"] = colour_categorical
 
@@ -138,6 +141,7 @@ def plot_frame(
     source: ColumnDataSource = None,
     molecule: Molecule = Trimer(),
     categorical_colour: bool = False,
+    colormap=palettes.Category10_10,
 ):
     """Plot snapshot using bokeh."""
     data = frame2data(
@@ -160,4 +164,4 @@ def plot_frame(
     else:
         source = ColumnDataSource(data=data)
 
-    return plot_circles(plot, source, categorical_colour)
+    return plot_circles(plot, source, categorical_colour, colormap)
