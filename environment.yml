@@ -18,6 +18,7 @@ dependencies:
     - rowan
     - hsluv
     - tqdm
+    - joblib
     # Development requirements
     - pre_commit
     - pytest

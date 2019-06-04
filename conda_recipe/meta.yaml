@@ -39,6 +39,7 @@ requirements:
     - freud ==1.0.*
     - rowan
     - tqdm
+    - joblib
 
 build:
   noarch: python

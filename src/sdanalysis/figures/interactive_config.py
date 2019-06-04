@@ -107,7 +107,7 @@ class TrimerFigure(object):
                 raise ValueError("The argument models has to have type list or tuple")
 
             logger.debug("Found additional models: %s", models)
-            from sklearn.externals import joblib
+            import joblib
 
             for model in models:
                 model = Path(model)
