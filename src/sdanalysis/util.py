@@ -30,35 +30,72 @@ class Variables(NamedTuple):
     crystal: Optional[str]
     iteration_id: Optional[str]
 
+    @classmethod
+    def from_filename(cls, fname: PathLike) -> "Variables":
+        """Create a Variables instance taking information from a path.
+
+        This extracts the information about the value of variables used within a simulation
+        trajectory from the filename. This is expecting the information in a specific
+        format, where values are separated by the dash character `-`.
+
+        Args:
+            fname: The full path of the filename from which to extract the information.
+
+        .. warn::
+
+            This is expecting the full name of the file, including the extension. Should
+            there not be an extension on the filename, values could be stripped giving
+            undefined behaviour.
+
+        """
+        fname = Path(fname)
+        flist = fname.stem.split("-")
+        logger.debug("Split Filename: %s", str(flist))
+
+        if flist[0] in ["dump", "trajectory", "thermo"]:
+            del flist[0]
+
+        # The remaining three quantities being molecule, temperature and pressure
+        if len(flist) < 3:
+            return Variables(None, None, None, None)
+
+        pressure: Optional[str] = None
+        temperature: Optional[str] = None
+        iteration_id: Optional[str] = None
+        crystal: Optional[str] = None
+
+        for item in flist:
+            if item[0] == "P":
+                pressure = item[1:]
+            elif item[0] == "T":
+                temperature = item[1:]
+            elif item[:2] == "ID":
+                iteration_id = item[2:]
+            else:
+                crystal = item
+
+        return cls(temperature, pressure, crystal, iteration_id)
+
 
 def get_filename_vars(fname: PathLike) -> Variables:
-    fname = Path(fname)
-    flist = fname.stem.split("-")
-    logger.debug("Split Filename: %s", str(flist))
+    """Extract variables information from a filename.
 
-    if flist[0] in ["dump", "trajectory", "thermo"]:
-        del flist[0]
+    This extracts the information about the value of variables used within a simulation
+    trajectory from the filename. This is expecting the information in a specific
+    format, where values are separated by the dash character `-`.
 
-    # The remaining three quantities being molecule, temperature and pressure
-    if len(flist) < 3:
-        return Variables(None, None, None, None)
+    Args:
+        fname: The full path of the filename from which to extract the information.
 
-    pressure: Optional[str] = None
-    temperature: Optional[str] = None
-    iteration_id: Optional[str] = None
-    crystal: Optional[str] = None
+    .. warn::
 
-    for item in flist:
-        if item[0] == "P":
-            pressure = item[1:]
-        elif item[0] == "T":
-            temperature = item[1:]
-        elif item[:2] == "ID":
-            iteration_id = item[2:]
-        else:
-            crystal = item
+        This is expecting the full name of the file, including the extension. Should
+        there not be an extension on the filename, values could be stripped giving
+        undefined behaviour.
 
-    return Variables(temperature, pressure, crystal, iteration_id)
+    """
+
+    return Variables.from_filename(fname)
 
 
 def set_filename_vars(fname: PathLike, sim_params: SimulationParams) -> None:
