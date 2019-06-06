@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/pre-commit/pre-commit-hooks
-  rev: v2.1.0
+  rev: v2.2.3
   hooks:
     - id: trailing-whitespace
 
@@ -9,10 +9,8 @@ repos:
   hooks:
     - id: black
 
-- repo: local
-  hooks:
-  - id: system
-    name: pylint
-    entry: python -m pylint.__main__
-    language: system
-    files: \.py$
+-   repo: https://github.com/pre-commit/mirrors-pylint
+    rev: v2.3.1
+    hooks:
+    -   id: pylint
+
