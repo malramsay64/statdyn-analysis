@@ -106,9 +106,19 @@ class Trimer(Molecule):
                 factor.
 
         """
-        assert isinstance(radius, (float, int))
-        assert isinstance(distance, (float, int))
-        assert isinstance(angle, (float, int))
+        if not isinstance(radius, (float, int)):
+            raise ValueError(
+                f"The parameter 'radius' needs to be specified as a float, got, {type(radius)}"
+            )
+        if not isinstance(distance, (float, int)):
+            raise ValueError(
+                f"The parameter 'distance' needs to be specified as a float, got, {type(distance)}"
+            )
+        if not isinstance(angle, (float, int)):
+            raise ValueError(
+                f"The parameter 'angle' needs to be specified as a float, got, {type(angle)}"
+            )
+
         super().__init__()
         self.radius = radius
         self.distance = distance
