@@ -21,6 +21,7 @@ from numpy.testing import assert_allclose
 
 from sdanalysis.params import SimulationParams
 from sdanalysis.util import (
+    Variables,
     get_filename_vars,
     orientation2positions,
     quaternion2z,
@@ -107,6 +108,23 @@ def test_get_filename_vars(prefix, mol, press, temp, crys, swapped):
     assert var.pressure == press
     assert isinstance(var.crystal, type(crys))
     assert var.crystal == crys
+
+
+@pytest.mark.parametrize(
+    "filename, expected",
+    [
+        ("dump-Trimer-P1.00-T0.40-ID1.gsd", Variables("0.40", "1.00", None, "1")),
+        ("Trimer-P1.00-T0.40-ID2.gsd", Variables("0.40", "1.00", None, "2")),
+        ("dump-Trimer-P1.00-T0.40-pg-ID3.gsd", Variables("0.40", "1.00", "pg", "3")),
+        (
+            "output/Trimer-P1.00-T0.40-ID1-p2gg.gsd",
+            Variables("0.40", "1.00", "p2gg", "1"),
+        ),
+    ],
+)
+def test_filename_vars_id(filename, expected):
+    variables = get_filename_vars(filename)
+    assert variables == expected
 
 
 @pytest.mark.parametrize("press", ["0.00", "0.50", "1.00", "13.50"])

@@ -28,6 +28,7 @@ class Variables(NamedTuple):
     temperature: Optional[str]
     pressure: Optional[str]
     crystal: Optional[str]
+    iteration_id: Optional[str]
 
 
 def get_filename_vars(fname: PathLike) -> Variables:
@@ -40,24 +41,24 @@ def get_filename_vars(fname: PathLike) -> Variables:
 
     # The remaining three quantities being molecule, temperature and pressure
     if len(flist) < 3:
-        return Variables(None, None, None)
+        return Variables(None, None, None, None)
 
     pressure: Optional[str] = None
     temperature: Optional[str] = None
+    iteration_id: Optional[str] = None
+    crystal: Optional[str] = None
 
     for item in flist:
         if item[0] == "P":
             pressure = item[1:]
         elif item[0] == "T":
             temperature = item[1:]
+        elif item[:2] == "ID":
+            iteration_id = item[2:]
+        else:
+            crystal = item
 
-    # The 4th item has to be the crystal structure
-    if len(flist) >= 4:
-        crys: Optional[str] = flist[3]
-    else:
-        crys = None
-
-    return Variables(temperature, pressure, crys)
+    return Variables(temperature, pressure, crystal, iteration_id)
 
 
 def set_filename_vars(fname: PathLike, sim_params: SimulationParams) -> None:
