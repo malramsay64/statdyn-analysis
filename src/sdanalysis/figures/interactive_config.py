@@ -65,15 +65,16 @@ def parse_directory(directory: Path, glob: str = "dump*.gsd") -> Dict[str, Dict]
     files = list(directory.glob(glob))
     logger.debug("Found files: %s", files)
     for fname in files:
-        temperature, pressure, crystal = get_filename_vars(fname)
+        temperature, pressure, crystal, repr_index = get_filename_vars(fname)
         assert temperature
         assert pressure
+        crystal = str(crystal)
+        repr_index = str(repr_index)
         all_values.setdefault(pressure, {})
-        if crystal is not None:
-            all_values[pressure].setdefault(temperature, {})
-            all_values[pressure][temperature][crystal] = fname
-        else:
-            all_values[pressure][temperature] = fname
+        all_values[pressure].setdefault(temperature, {})
+        all_values[pressure][temperature].setdefault(crystal, {})
+        all_values[pressure][temperature][crystal].setdefault(repr_index, {})
+        all_values[pressure][temperature][crystal][repr_index] = fname
     return all_values
 
 
@@ -149,24 +150,28 @@ class TrimerFigure(object):
             value=self._temperatures[0],
             width=self.controls_width,
         )
-        temperature = self._temperature_button.value
+        self._temperature_button.on_change("value", self.update_crystal_button)
 
-        if isinstance(self.variable_selection[pressure][temperature], dict):
-            self._crystals: Optional[List[str]] = sorted(
-                list(self.variable_selection[pressure][temperature].keys())
-            )
-            self._crystal_button = RadioButtonGroup(
-                name="Crystal",
-                labels=self._crystals,
-                active=0,
-                width=self.controls_width,
-            )
-            self._temperature_button.on_change("value", self.update_crystal_button)
-            self._crystal_button.on_change("active", self.update_current_trajectory)
-        else:
-            self._crystals = None
-            self._crystal_button = None
-            self._temperature_button.on_change("active", self.update_current_trajectory)
+        temperature = self._temperature_button.value
+        self._crystals = sorted(
+            list(self.variable_selection[pressure][temperature].keys())
+        )
+        self._crystal_button = RadioButtonGroup(
+            name="Crystal", labels=self._crystals, active=0, width=self.controls_width
+        )
+        self._crystal_button.on_change("active", self.update_index_button)
+
+        crystal = self._crystals[self._crystal_button.active]
+        self._iter_index = sorted(
+            list(self.variable_selection[pressure][temperature][crystal].keys())
+        )
+        self._iter_index_button = Select(
+            name="Iteration Index",
+            options=self._iter_index,
+            value=self._iter_index[0],
+            width=self.controls_width,
+        )
+        self._iter_index_button.on_change("value", self.update_current_trajectory)
 
     @property
     def pressure(self) -> str:
@@ -178,33 +183,44 @@ class TrimerFigure(object):
 
     @property
     def crystal(self) -> Optional[str]:
-        if self._crystals is not None:
-            logger.debug(
-                "Current crystal %d from %s",
-                self._crystal_button.active,
-                self._crystals,
-            )
-            return self._crystals[self._crystal_button.active]
-        return None
+        logger.debug(
+            "Current crystal %s from %s", self._crystal_button.active, self._crystals
+        )
+        return self._crystals[self._crystal_button.active]
+
+    @property
+    def iter_index(self) -> Optional[str]:
+        logger.debug(
+            "Current index %s from %s", self._iter_index_button.value, self._iter_index
+        )
+        return self._iter_index_button.value
 
     def update_temperature_button(self, attr, old, new):
         self._temperatures = sorted(list(self.variable_selection[self.pressure].keys()))
 
         self._temperature_button.options = self._temperatures
         self._temperature_button.value = self._temperatures[0]
-        self.update_current_trajectory(None, None, None)
+        self.update_crystal_button(None, None, None)
 
     def update_crystal_button(self, attr, old, new):
-        if isinstance(self.variable_selection[self.pressure][self.temperature], dict):
-            self._crystals = sorted(
-                list(self.variable_selection[self.pressure][self.temperature].keys())
-            )
+        self._crystals = sorted(
+            list(self.variable_selection[self.pressure][self.temperature].keys())
+        )
 
-            self._crystal_button.labels = self._crystals
-            self._crystal_button.active = 0
-        else:
-            self._crystals = None
-            self._crystal_button = None
+        self._crystal_button.labels = self._crystals
+        self._crystal_button.active = 0
+        self.update_index_button(None, None, None)
+
+    def update_index_button(self, attr, old, new):
+        self._iter_index = sorted(
+            list(
+                self.variable_selection[self.pressure][self.temperature][
+                    self.crystal
+                ].keys()
+            )
+        )
+        self._iter_index_button.options = self._iter_index
+        self._iter_index_button.value = self._iter_index[0]
         self.update_current_trajectory(None, None, None)
 
     def create_files_interface(self) -> None:
@@ -216,16 +232,6 @@ class TrimerFigure(object):
         current_file = self.get_selected_file()
         if current_file is not None:
             self._filename_div.text = f"<b>Current File:</b><br/>{current_file.name}"
-        if self._crystal_button is None:
-            file_selection = column(
-                directory_name,
-                self._filename_div,
-                Div(text="<b>Pressure:</b>"),
-                self._pressure_button,
-                Div(text="<b>Temperature:</b>"),
-                self._temperature_button,
-            )
-        else:
             file_selection = column(
                 directory_name,
                 self._filename_div,
@@ -235,13 +241,15 @@ class TrimerFigure(object):
                 self._temperature_button,
                 Div(text="<b>Crystal Structure:</b>"),
                 self._crystal_button,
+                Div(text="<b>Iteration Index:</b>"),
+                self._iter_index_button,
             )
         return file_selection
 
     def get_selected_file(self) -> Optional[Path]:
-        if self._crystals is None:
-            return self.variable_selection[self.pressure][self.temperature]
-        return self.variable_selection[self.pressure][self.temperature][self.crystal]
+        return self.variable_selection[self.pressure][self.temperature][self.crystal][
+            self.iter_index
+        ]
 
     def update_frame(self, attr, old, new) -> None:
         self._frame = HoomdFrame(self._trajectory[self.index])
