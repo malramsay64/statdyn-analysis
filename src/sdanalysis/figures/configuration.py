@@ -8,7 +8,7 @@
 """Plot configuration."""
 
 import logging
-from typing import Any, Callable, Dict
+from typing import Any, Callable, Dict, List, Optional
 
 import numpy as np
 from bokeh import palettes
@@ -46,6 +46,7 @@ def plot_circles(
     mol_plot: figure,
     source: ColumnDataSource,
     categorical_colour: bool = False,
+    factors: Optional[List[Any]] = None,
     colormap=palettes.Category10_10,
 ) -> figure:
     """Add the points to a bokeh figure to render the trimer molecule.
@@ -58,10 +59,10 @@ def plot_circles(
         x="x", y="y", fill_alpha=1, line_alpha=0, radius="radius", fill_color="colour"
     )
     if categorical_colour:
+        if factors is None:
+            factors = np.unique(source.data["colour"]).astype(str)
         colour_categorical = factor_cmap(
-            field_name="colour",
-            factors=np.unique(source.data["colour"]).astype(str),
-            palette=colormap,
+            field_name="colour", factors=factors, palette=colormap
         )
         glyph_args["fill_color"] = colour_categorical
 
