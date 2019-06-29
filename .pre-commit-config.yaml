@@ -8,9 +8,3 @@ repos:
   rev: 19.3b0
   hooks:
     - id: black
-
--   repo: https://github.com/pre-commit/mirrors-pylint
-    rev: v2.3.1
-    hooks:
-    -   id: pylint
-
