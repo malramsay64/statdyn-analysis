@@ -142,6 +142,7 @@ def plot_frame(
     source: ColumnDataSource = None,
     molecule: Molecule = Trimer(),
     categorical_colour: bool = False,
+    factors: Optional[List[Any]] = None,
     colormap=palettes.Category10_10,
 ):
     """Plot snapshot using bokeh."""
@@ -165,4 +166,6 @@ def plot_frame(
     else:
         source = ColumnDataSource(data=data)
 
-    return plot_circles(plot, source, categorical_colour, colormap)
+    return plot_circles(
+        plot, source, categorical_colour, colormap=colormap, factors=factors
+    )
