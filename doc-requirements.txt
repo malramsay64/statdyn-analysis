@@ -43,7 +43,7 @@ pytest-cov==2.6.1
 pytest-lazy-fixture==0.5.2
 pytest-mypy==0.3.2
 pytest-pylint==0.14.0
-pytest==4.4.1
+pytest==5.0.0
 python-dateutil==2.8.0
 pytz==2019.1
 pyyaml==5.1
