@@ -39,7 +39,7 @@ py==1.8.0
 pygments==2.3.1
 pylint==2.3.1
 pyparsing==2.4.0
-pytest-cov==2.6.1
+pytest-cov==2.7.1
 pytest-lazy-fixture==0.5.2
 pytest-mypy==0.3.2
 pytest-pylint==0.14.0
