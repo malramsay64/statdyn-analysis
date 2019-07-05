@@ -41,7 +41,7 @@ pylint==2.3.1
 pyparsing==2.4.0
 pytest-cov==2.6.1
 pytest-lazy-fixture==0.5.2
-pytest-mypy==0.3.2
+pytest-mypy==0.3.3
 pytest-pylint==0.14.0
 pytest==4.4.1
 python-dateutil==2.8.0
