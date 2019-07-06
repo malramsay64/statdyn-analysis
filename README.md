@@ -6,7 +6,7 @@ Statdyn Analysis
 [![codecov](https://codecov.io/gh/malramsay64/statdyn-analysis/branch/master/graph/badge.svg)](https://codecov.io/gh/malramsay64/statdyn-analysis)
 [![Anaconda-Server Badge](https://anaconda.org/malramsay/sdanalysis/badges/installer/conda.svg)](https://conda.anaconda.org/malramsay)
 [![Anaconda-Server Badge](https://anaconda.org/malramsay/sdanalysis/badges/version.svg)](https://anaconda.org/malramsay/sdanalysis)
-
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/python/black)
 
 This is a set of scripts that use
 [Hoomd](https://bitbucket.org/glotzer/hoomd-blue) to perform the Molecular
