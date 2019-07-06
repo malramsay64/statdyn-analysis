@@ -2,6 +2,7 @@ Statdyn Analysis
 ================
 
 [![Build Status](https://travis-ci.org/malramsay64/statdyn-analysis.svg?branch=master)](https://travis-ci.org/malramsay64/statdyn-analysis)
+[![Documentation Status](https://readthedocs.org/projects/statdyn-analysis/badge/?version=latest)](https://statdyn-analysis.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/malramsay64/statdyn-analysis/branch/master/graph/badge.svg)](https://codecov.io/gh/malramsay64/statdyn-analysis)
 [![Anaconda-Server Badge](https://anaconda.org/malramsay/sdanalysis/badges/installer/conda.svg)](https://conda.anaconda.org/malramsay)
 [![Anaconda-Server Badge](https://anaconda.org/malramsay/sdanalysis/badges/version.svg)](https://anaconda.org/malramsay/sdanalysis)
