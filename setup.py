@@ -30,7 +30,7 @@ install_requires = [
     "hsluv",
     "attrs",
     "click~=7.0.0",
-    "freud-analysis~=1.0.0",
+    "freud-analysis>=1.0,<1.3",
     "rowan",
     "tqdm",
     "joblib~=0.13.2",
