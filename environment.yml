@@ -21,14 +21,14 @@ dependencies:
     - joblib
     # Development requirements
     - pre_commit
-    - pytest
-    - coverage
-    - pytest-cov
-    - hypothesis
-    - mypy
-    - pylint
+    - pytest~=5.0
+    - coverage~=4.5.3
+    - pytest-cov~=2.7.1
+    - hypothesis~=4.27
+    - mypy~=0.710
+    - pylint~=2.3.1
     - black==18.9b0
-    - isort
+    - isort~=4.3.21
     # Documentation
     - sphinx
     - sphinx_rtd_theme
