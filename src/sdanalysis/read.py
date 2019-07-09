@@ -79,7 +79,13 @@ def _gsd_linear_trajectory(
 ):
     index_list: List[int] = []
     with gsd.hoomd.open(str(infile), "rb") as src:
-        for frame in tqdm(src, infile.stem, position=thread_index, **tqdm_options):
+        for index in tqdm(
+            range(len(src)), infile.stem, position=thread_index, **tqdm_options
+        ):
+            try:
+                frame = src.read_frame(index)
+            except RuntimeError:
+                continue
             try:
                 timestep = int(frame.configuration.step)
             except IndexError as e:
@@ -114,7 +120,14 @@ def _gsd_exponential_trajectory(
             gen_steps=keyframe_interval,
             max_gen=keyframes_max,
         )
-        for frame in tqdm(src, desc=infile.stem, position=thread_index, **tqdm_options):
+        for index in tqdm(
+            range(len(src)), desc=infile.stem, position=thread_index, **tqdm_options
+        ):
+            try:
+                frame = src.read_frame(index)
+            except RuntimeError:
+                continue
+
             # Increment Step
             try:
                 curr_step = int(next(step_iter))
@@ -122,6 +135,7 @@ def _gsd_exponential_trajectory(
                 return
 
             logger.debug("Step %d with index %s", curr_step, step_iter.get_index())
+
             # This handles when the generators don't match up
             if not isinstance(curr_step, int):
                 raise RuntimeError(
