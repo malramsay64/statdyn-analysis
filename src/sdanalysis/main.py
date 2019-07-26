@@ -10,17 +10,14 @@
 import logging
 from functools import partial
 from pathlib import Path
-from pprint import pformat
-from typing import Tuple, cast
+from typing import Tuple
 
 import click
 import yaml
 
 from .molecules import Dimer, Disc, Sphere, Trimer
-from .params import SimulationParams
 from .read import process_file
 from .relaxation import compute_relaxations
-from .threading import parallel_process_files
 from .version import __version__
 
 logger = logging.getLogger(__name__)
@@ -70,14 +67,22 @@ def _file_logger(_, __, value) -> None:
 @click.option(
     "--keyframe-interval",
     "--gen-steps",
-    "gen_steps",  # save to the variable gen_steps
+    "keyframe_interval",  # save to the variable keyframe_interval
     type=int,
-    help="Steps between keyframes in simulation",
+    default=1_000_000,
+    help="Steps between key frames in simulation",
 )
 @click.option(
     "--linear-steps", type=int, help="Number of steps between exponential increase."
 )
-@click.option("--max-gen", type=int, help="Maximum number of keyframes")
+@click.option(
+    "--keyframe_max",
+    "--max-gen",
+    "keyframe_max",
+    type=int,
+    default=500,
+    help="Maximum number of keyframes",
+)
 @click.option(
     "--molecule",
     type=click.Choice(MOLECULE_OPTIONS),
@@ -99,67 +104,7 @@ def _file_logger(_, __, value) -> None:
 def sdanalysis(ctx, **kwargs) -> None:
     """Run main function."""
     logging.debug("Running main function")
-    logging.debug("Creating SimulationParams with values:\n%s", pformat(kwargs))
-    ctx.obj = SimulationParams(
-        **{key: val for key, val in kwargs.items() if val is not None}
-    )
-    if ctx.obj.output is not None:
-        ctx.obj.output.mkdir(exist_ok=True)
-
-
-@sdanalysis.command()
-@click.pass_obj
-@click.option(
-    "-o",
-    "--output",
-    type=click.Path(file_okay=False, dir_okay=True),
-    help="Location to save all output files; required to be a directory.",
-)
-@click.option(
-    "--mol-relaxations",
-    type=click.Path(exists=True, dir_okay=False),
-    help="Path to a file defining all the molecular relaxations to compute.",
-)
-@click.option(
-    "--linear-dynamics",
-    type=bool,
-    default=False,
-    is_flag=True,
-    help="Flag to specify the configurations in a trajectory have linear steps between them.",
-)
-@click.option(
-    "--ncpus", type=int, help="The number of files to process at the same time."
-)
-@click.argument(
-    "infile", nargs=-1, type=click.Path(exists=True, file_okay=True, dir_okay=False)
-)
-def comp_dynamics_parallel(
-    sim_params, output, mol_relaxations, linear_dynamics, infile, ncpus
-) -> None:
-    """Compute dynamic properties for a number of input files."""
-    assert isinstance(infile, tuple)
-    for i in infile:
-        assert i is not None
-        assert isinstance(i, str)
-    if sim_params is None:
-        sim_params = SimulationParams()
-    if output is not None:
-        sim_params.output = output
-    sim_params.outfile = sim_params.output / "dynamics.h5"
-    if linear_dynamics:
-        sim_params.linear_steps = None
-    if mol_relaxations is not None:
-        relaxations = yaml.parse(mol_relaxations)
-    else:
-        relaxations = None
-
-    # Create output directory where it doesn't already exists
-    sim_params.output.mkdir(parents=True, exist_ok=True)
-
-    logger.debug("Processing: %s", infile)
-
-    infile = cast(Tuple[str], infile)
-    parallel_process_files(infile, sim_params, relaxations, ncpus)
+    ctx.obj = {key: val for key, val in kwargs.items() if val is not None}
 
 
 @sdanalysis.command()
@@ -182,35 +127,23 @@ def comp_dynamics(
     sim_params, mol_relaxations, linear_dynamics, infile, outfile
 ) -> None:
     """Compute dynamic properties for a single input file."""
-    if sim_params is None:
-        sim_params = SimulationParams()
+    outfile = Path(outfile)
+    infile = Path(infile)
 
-    sim_params.outfile = Path(outfile)
-    sim_params.infile = Path(infile)
+    # Create output directory where it doesn't already exists
+    outfile.parent.mkdir(parents=True, exist_ok=True)
 
-    sim_params.output = sim_params.outfile.parent
     if linear_dynamics:
-        sim_params.linear_steps = None
+        sim_params["linear_steps"] = None
     if mol_relaxations is not None:
         relaxations = yaml.parse(mol_relaxations)
     else:
         relaxations = None
 
-    # Create output directory where it doesn't already exists
-    sim_params.output.mkdir(parents=True, exist_ok=True)
-
     logger.debug("Processing: %s", infile)
 
-    infile = cast(Tuple[str], infile)
     process_file(
-        infile=sim_params.infile,
-        outfile=sim_params.outfile,
-        wave_number=sim_params.wave_number,
-        steps_max=sim_params.steps_max,
-        linear_steps=sim_params.linear_steps,
-        keyframe_interval=sim_params.gen_steps,
-        keyframes_max=sim_params.max_gen,
-        mol_relaxations=relaxations,
+        infile=infile, outfile=outfile, mol_relaxations=relaxations, **sim_params
     )
 
 

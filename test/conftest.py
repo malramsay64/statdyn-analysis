@@ -15,8 +15,7 @@ from tempfile import TemporaryDirectory
 import pytest
 from click.testing import CliRunner
 
-from sdanalysis import SimulationParams, molecules
-from sdanalysis.threading import parallel_process_files
+from sdanalysis import molecules, read
 
 MOLECULE_LIST = [
     molecules.Molecule,
@@ -39,19 +38,27 @@ def runner():
         yield r
 
 
-@pytest.fixture()
-def dynamics_file():
-    infile = Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
-    with TemporaryDirectory() as output:
-        outfile = Path(output) / "dynamics.h5"
-        sim_params = SimulationParams(outfile=outfile, output=output, wave_number=2.90)
-        parallel_process_files([infile], sim_params)
+@pytest.fixture
+def obj():
+    return {"keyframe_interval": 1_000_000, "keyframe_max": 500, "wave_number": 2.90}
 
+
+@pytest.fixture()
+def infile_gsd():
+    return Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
+
+
+@pytest.fixture()
+def outfile():
+    """The Path object of a temporary output file."""
+    with TemporaryDirectory() as output:
+        yield Path(output) / "test"
+
+
+@pytest.fixture()
+def dynamics_file(infile_gsd, obj):
+    """A temporary file for which the dynamics quantities have been calculated."""
+    with TemporaryDirectory() as tmp:
+        outfile = Path(tmp) / "test.h5"
+        read.process_file(infile_gsd, outfile=outfile, **obj)
         yield outfile
-
-
-@pytest.fixture()
-def sim_params():
-    with TemporaryDirectory() as output:
-        params = SimulationParams(output=output, wave_number=2.90)
-        yield params
