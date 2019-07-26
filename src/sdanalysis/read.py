@@ -73,7 +73,7 @@ def _gsd_linear_trajectory(
     infile: Path,
     steps_max: Optional[int] = None,
     keyframe_interval: int = 20000,
-    keyframes_max: int = 500,
+    keyframe_max: int = 500,
     thread_index: int = 0,
 ):
     # Ensure correct type of infile
@@ -92,7 +92,7 @@ def _gsd_linear_trajectory(
             except IndexError as e:
                 logger.error(e)
                 raise e
-            if timestep % keyframe_interval == 0 and len(index_list) <= keyframes_max:
+            if timestep % keyframe_interval == 0 and len(index_list) <= keyframe_max:
                 index_list.append(len(index_list))
             if steps_max is not None and timestep > steps_max:
                 return
@@ -104,7 +104,7 @@ def _gsd_exponential_trajectory(
     infile: Path,
     steps_max: Optional[int] = None,
     keyframe_interval: int = 20000,
-    keyframes_max: int = 500,
+    keyframe_max: int = 500,
     linear_steps: int = 100,
     thread_index: int = 0,
 ):
@@ -119,7 +119,7 @@ def _gsd_exponential_trajectory(
             steps_max,
             num_linear=linear_steps,
             gen_steps=keyframe_interval,
-            max_gen=keyframes_max,
+            max_gen=keyframe_max,
         )
         for index in tqdm(
             range(len(src)), desc=infile.stem, position=thread_index, **tqdm_options
@@ -185,7 +185,7 @@ def process_gsd(
     steps_max: Optional[int] = None,
     linear_steps: Optional[int] = 100,
     keyframe_interval: int = 1_000_000,
-    keyframes_max: int = 500,
+    keyframe_max: int = 500,
     thread_index: int = 0,
 ) -> FileIterator:
     """Perform analysis of a GSD file."""
@@ -193,14 +193,14 @@ def process_gsd(
 
     if linear_steps is None:
         yield from _gsd_linear_trajectory(
-            infile, steps_max, keyframe_interval, keyframes_max, thread_index
+            infile, steps_max, keyframe_interval, keyframe_max, thread_index
         )
     else:
         yield from _gsd_exponential_trajectory(
             infile,
             steps_max,
             keyframe_interval,
-            keyframes_max,
+            keyframe_max,
             linear_steps,
             thread_index,
         )
@@ -346,7 +346,7 @@ def process_file(
     steps_max: Optional[int] = None,
     linear_steps: Optional[int] = None,
     keyframe_interval: int = 1_000_000,
-    keyframes_max: int = 500,
+    keyframe_max: int = 500,
     mol_relaxations: List[Dict[str, Any]] = None,
     outfile: Optional[Path] = None,
     queue: Optional[multiprocessing.Queue] = None,
@@ -385,7 +385,7 @@ def process_file(
             steps_max=steps_max,
             linear_steps=linear_steps,
             keyframe_interval=keyframe_interval,
-            keyframes_max=keyframes_max,
+            keyframe_max=keyframe_max,
             thread_index=thread_index,
         )
     elif infile.suffix == ".lammpstrj":

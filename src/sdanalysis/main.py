@@ -76,7 +76,7 @@ def _file_logger(_, __, value) -> None:
     "--linear-steps", type=int, help="Number of steps between exponential increase."
 )
 @click.option(
-    "--keyframe_max",
+    "--keyframe-max",
     "--max-gen",
     "keyframe_max",
     type=int,
