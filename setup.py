@@ -23,7 +23,7 @@ install_requires = [
     "scipy>=1.0",
     "scikit-learn>=0.20.0",
     "pandas",
-    "tables",
+    "tables>=3.5.1",
     "bokeh>=1.0",
     "gsd>=1.3.0",
     "pyyaml>=5.1",
