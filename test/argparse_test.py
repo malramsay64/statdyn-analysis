@@ -116,7 +116,7 @@ def test_sdanalysis_options(runner, params):
     assert f"{option}={params['value']}" in result.output
 
 
-@pytest.mark.parametrize("output", ["output", "output"])
+@pytest.mark.parametrize("output", ["output", "subdir/output"])
 def test_sdanalysis_output(runner, output):
     result = runner.invoke(sdanalysis, ["--output", output, "dummy_subcommand"])
     assert result.exit_code == 0, result.output

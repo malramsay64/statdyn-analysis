@@ -44,7 +44,7 @@ def dynamics_file():
     infile = Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
     with TemporaryDirectory() as output:
         outfile = Path(output) / "dynamics.h5"
-        sim_params = SimulationParams(outfile=outfile, output=output)
+        sim_params = SimulationParams(outfile=outfile, output=output, wave_number=2.90)
         parallel_process_files([infile], sim_params)
 
         yield outfile
@@ -53,5 +53,5 @@ def dynamics_file():
 @pytest.fixture()
 def sim_params():
     with TemporaryDirectory() as output:
-        params = SimulationParams(output=output)
+        params = SimulationParams(output=output, wave_number=2.90)
         yield params

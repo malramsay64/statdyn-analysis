@@ -10,7 +10,7 @@
 
 import logging
 from pathlib import Path
-from typing import NamedTuple, Optional, Union
+from typing import Dict, NamedTuple, Optional, Union
 
 import numpy as np
 import rowan
@@ -108,6 +108,25 @@ def set_filename_vars(fname: PathLike, sim_params: SimulationParams) -> None:
 
     if var.crystal is not None:
         sim_params.space_group = var.crystal
+
+
+def parse_directory(directory: Path, glob: str) -> Dict[str, Dict]:
+    directory = Path(directory)
+    all_values: Dict[str, Dict] = {}
+    files = list(directory.glob(glob))
+    logger.debug("Found files: %s", files)
+    for fname in files:
+        temperature, pressure, crystal, repr_index = get_filename_vars(fname)
+        assert temperature
+        assert pressure
+        crystal = str(crystal)
+        repr_index = str(repr_index)
+        all_values.setdefault(pressure, {})
+        all_values[pressure].setdefault(temperature, {})
+        all_values[pressure][temperature].setdefault(crystal, {})
+        all_values[pressure][temperature][crystal].setdefault(repr_index, {})
+        all_values[pressure][temperature][crystal][repr_index] = fname
+    return all_values
 
 
 def quaternion_rotation(initial, final):

@@ -22,9 +22,8 @@ from tqdm import tqdm
 from .dynamics import Dynamics, Relaxations
 from .frame import Frame, HoomdFrame, LammpsFrame
 from .molecules import Trimer
-from .params import SimulationParams
 from .StepSize import GenerateStepSeries
-from .util import set_filename_vars
+from .util import get_filename_vars
 
 tqdm_options = {"miniters": 100, "dynamic_ncols": True}
 
@@ -77,6 +76,8 @@ def _gsd_linear_trajectory(
     keyframes_max: int = 500,
     thread_index: int = 0,
 ):
+    # Ensure correct type of infile
+    infile = Path(infile)
     index_list: List[int] = []
     with gsd.hoomd.open(str(infile), "rb") as src:
         for index in tqdm(
@@ -179,47 +180,41 @@ def _gsd_exponential_trajectory(
                     continue
 
 
-def process_gsd(sim_params: SimulationParams, thread_index: int = 0) -> FileIterator:
-    """Perform analysis of a GSD file.
+def process_gsd(
+    infile: Path,
+    steps_max: Optional[int] = None,
+    linear_steps: Optional[int] = 100,
+    keyframe_interval: int = 1_000_000,
+    keyframes_max: int = 500,
+    thread_index: int = 0,
+) -> FileIterator:
+    """Perform analysis of a GSD file."""
+    infile = Path(infile)
 
-    This is a specialisation of the process_file, called when the extension of a file is
-    `.gsd`; as such it shouldn't typically be called by the user. For the user facing
-    function see :func:`process_file`.
-
-    """
-    assert sim_params.infile is not None
-    assert sim_params.gen_steps is not None
-    assert sim_params.max_gen is not None
-
-    if sim_params.linear_steps is None:
+    if linear_steps is None:
         yield from _gsd_linear_trajectory(
-            sim_params.infile,
-            sim_params.num_steps,
-            sim_params.gen_steps,
-            sim_params.max_gen,
-            thread_index,
+            infile, steps_max, keyframe_interval, keyframes_max, thread_index
         )
     else:
         yield from _gsd_exponential_trajectory(
-            sim_params.infile,
-            sim_params.num_steps,
-            sim_params.gen_steps,
-            sim_params.max_gen,
-            sim_params.linear_steps,
+            infile,
+            steps_max,
+            keyframe_interval,
+            keyframes_max,
+            linear_steps,
             thread_index,
         )
 
 
 def process_lammpstrj(
-    sim_params: SimulationParams, thread_index: int = 0
+    infile: Path, steps_max: Optional[int] = None, thread_index: int = 0
 ) -> Iterator[Tuple[List[int], LammpsFrame]]:
+
+    infile = Path(infile)
     indexes = [0]
-    assert sim_params.infile is not None
-    parser = parse_lammpstrj(sim_params.infile)
-    for frame in tqdm(
-        parser, desc=sim_params.infile.stem, position=thread_index, **tqdm_options
-    ):
-        if sim_params.num_steps is not None and frame.timestep > sim_params.num_steps:
+    parser = parse_lammpstrj(infile)
+    for frame in tqdm(parser, desc=infile.stem, position=thread_index, **tqdm_options):
+        if steps_max is not None and frame.timestep > steps_max:
             return
 
         yield indexes, frame
@@ -346,8 +341,14 @@ class WriteCache:
 
 
 def process_file(
-    sim_params: SimulationParams,
+    infile: Path,
+    wave_number: float,
+    steps_max: Optional[int] = None,
+    linear_steps: Optional[int] = None,
+    keyframe_interval: int = 1_000_000,
+    keyframes_max: int = 500,
     mol_relaxations: List[Dict[str, Any]] = None,
+    outfile: Optional[Path] = None,
     queue: Optional[multiprocessing.Queue] = None,
     thread_index: int = 0,
 ) -> Optional[pandas.DataFrame]:
@@ -363,74 +364,82 @@ def process_file(
         (py:class:`pandas.DataFrame`): DataFrame with the dynamics quantities.
 
     """
-    assert sim_params.infile is not None
-    logger.info("Processing %s", sim_params.infile)
+    assert infile is not None
+    infile = Path(infile)
+
+    logger.info("Processing %s", infile)
     start_time = datetime.datetime.now()
 
-    set_filename_vars(sim_params.infile, sim_params)
-    if sim_params.outfile is not None and queue is None:
-        dataframes = WriteCache(filename=sim_params.outfile)
+    sim_variables = get_filename_vars(infile)
+    if outfile is not None and queue is None:
+        dataframes = WriteCache(filename=outfile)
     elif queue:
         dataframes = WriteCache(queue=queue)
     else:
         dataframes = WriteCache()
 
     keyframes: Dict[int, Tuple[Dynamics, Relaxations]] = {}
-    if sim_params.infile.suffix == ".gsd":
-        file_iterator: FileIterator = process_gsd(sim_params, thread_index=thread_index)
-    elif sim_params.infile.suffix == ".lammpstrj":
-        file_iterator = process_lammpstrj(sim_params, thread_index=thread_index)
+    if infile.suffix == ".gsd":
+        file_iterator: FileIterator = process_gsd(
+            infile=infile,
+            steps_max=steps_max,
+            linear_steps=linear_steps,
+            keyframe_interval=keyframe_interval,
+            keyframes_max=keyframes_max,
+            thread_index=thread_index,
+        )
+    elif infile.suffix == ".lammpstrj":
+        file_iterator = process_lammpstrj(
+            infile, steps_max=steps_max, thread_index=thread_index
+        )
     for indexes, frame in file_iterator:
         if frame.position.shape[0] == 0:
-            logger.warning(
-                "Found malformed frame in %s... continuing", sim_params.infile.name
-            )
+            logger.warning("Found malformed frame in %s... continuing", infile.name)
             continue
 
         for index in indexes:
-            mydyn, myrelax = keyframes.setdefault(
+            dyn, relax = keyframes.setdefault(
                 index,
                 (
-                    Dynamics.from_frame(frame, Trimer(), sim_params.wave_number),
-                    Relaxations.from_frame(frame, Trimer(), sim_params.wave_number),
+                    Dynamics.from_frame(frame, Trimer(), wave_number),
+                    Relaxations.from_frame(frame, Trimer(), wave_number),
                 ),
             )
             # Set custom relaxation functions
             if mol_relaxations is not None:
-                myrelax.set_mol_relax(mol_relaxations)
+                relax.set_mol_relax(mol_relaxations)
 
             try:
-                dynamics_series = mydyn.compute_all(
+                dynamics_series = dyn.compute_all(
                     frame.timestep, frame.position, frame.orientation, frame.image
                 )
-                myrelax.add(frame.timestep, frame.position, frame.orientation)
+                relax.add(frame.timestep, frame.position, frame.orientation)
             except (ValueError, RuntimeError) as e:
                 logger.warning(e)
                 continue
 
             logger.debug("Series: %s", index)
             dynamics_series["start_index"] = index
-            dynamics_series["temperature"] = sim_params.temperature
-            dynamics_series["pressure"] = sim_params.pressure
+            dynamics_series["temperature"] = sim_variables.temperature
+            dynamics_series["pressure"] = sim_variables.pressure
             dataframes.append(dynamics_series)
 
     end_time = datetime.datetime.now()
     processing_time = end_time - start_time
 
-    logger.info("Finished processing %s, took %s", sim_params.infile, processing_time)
+    logger.info("Finished processing %s, took %s", infile, processing_time)
 
-    if sim_params.outfile is not None:
+    if outfile is not None:
         dataframes.flush()
         mol_relax = pandas.concat(
-            (relax.summary() for _, relax in keyframes.values()),
-            keys=list(keyframes.keys()),
+            (r.summary() for _, r in keyframes.values()), keys=list(keyframes.keys())
         )
-        mol_relax["temperature"] = sim_params.temperature
-        mol_relax["pressure"] = sim_params.pressure
+        mol_relax["temperature"] = sim_variables.temperature
+        mol_relax["pressure"] = sim_variables.pressure
         if queue:
             queue.put(("molecular_relaxations", mol_relax))
         else:
-            mol_relax.to_hdf(sim_params.outfile, "molecular_relaxations")
+            mol_relax.to_hdf(outfile, "molecular_relaxations")
         return None
 
     return dataframes.to_dataframe()

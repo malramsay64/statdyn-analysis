@@ -12,6 +12,7 @@ This is segregated to make it simpler to remove, test and work on without affect
 the rest of the implementation.
 
 """
+import functools
 import logging
 import os
 from copy import deepcopy
@@ -77,6 +78,18 @@ def parallel_process_files(
     if num_cpus < 2:
         num_cpus = 2
 
+    par_process = functools.partial(
+        process_file,
+        wave_number=sim_params.wave_number,
+        steps_max=sim_params.num_steps,
+        linear_steps=sim_params.linear_steps,
+        gen_steps=sim_params.gen_steps,
+        max_gen=sim_params.max_gen,
+        mol_relaxations=relaxations,
+        outfile=None,
+        queue=queue,
+    )
+
     with Pool(num_cpus) as pool:
 
         # Put file writing process to work first
@@ -85,10 +98,10 @@ def parallel_process_files(
         # Fire off worker processes
         # starmap allows for passing multiple args to process_file
         pool.starmap(
-            process_file,
+            par_process,
             (
-                (_set_input_file(sim_params, i), relaxations, queue, index)
-                for index, i in enumerate(input_files)
+                {"infile": infile, "thread_index": index}
+                for index, infile in enumerate(input_files)
             ),
         )
 

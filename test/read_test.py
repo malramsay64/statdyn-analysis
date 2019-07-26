@@ -6,7 +6,7 @@
 #
 # Distributed under terms of the MIT license.
 #
-# pylint: disable=redefined-outer-name, protected-access, len-as-condition
+# pylint: disable=protected-access, len-as-condition
 #
 
 """Test the statdyn.analysis.read module."""
@@ -19,22 +19,8 @@ import pandas
 import pytest
 
 import sdanalysis
-from sdanalysis import read
-from sdanalysis.params import SimulationParams
+from sdanalysis import HoomdFrame, LammpsFrame, read
 from sdanalysis.StepSize import GenerateStepSeries
-from sdanalysis.threading import parallel_process_files
-
-
-@pytest.fixture
-def sim_params():
-    with tempfile.TemporaryDirectory() as output:
-        output = Path(output)
-        yield SimulationParams(
-            infile="test/data/trajectory-Trimer-P13.50-T3.00.gsd",
-            output=output,
-            outfile=output / "dynamics.h5",
-            wave_number=4.0,
-        )
 
 
 @pytest.mark.parametrize("num_steps", [0, 10, 20, 100])
@@ -45,33 +31,32 @@ def sim_params():
         "test/data/short-time-variance.lammpstrj",
     ],
 )
-def test_stopiter_handling(sim_params, num_steps, infile):
-    with sim_params.temp_context(num_steps=num_steps):
-        parallel_process_files(input_files=[infile], sim_params=sim_params)
-    df = pandas.read_hdf(sim_params.outfile, "dynamics")
+def test_stopiter_handling(num_steps, infile):
+    df = read.process_file(infile, wave_number=2.9, steps_max=num_steps)
     assert np.all(df.time == list(GenerateStepSeries(num_steps)))
 
 
 @pytest.mark.parametrize("num_steps", [0, 10, 20, 100])
-def test_linear_steps_stopiter(sim_params, num_steps):
-    with sim_params.temp_context(num_steps=num_steps, linear_steps=None):
-        parallel_process_files(input_files=[sim_params.infile], sim_params=sim_params)
-    df = pandas.read_hdf(sim_params.outfile, "dynamics")
+@pytest.mark.parametrize("infile", ["test/data/trajectory-Trimer-P13.50-T3.00.gsd"])
+def test_linear_steps_stopiter(infile, num_steps):
+    df = read.process_file(infile=infile, wave_number=2.9, steps_max=num_steps)
     assert df.time.max() == num_steps
 
 
-def test_linear_sequence(sim_params):
-    with sim_params.temp_context(linear_steps=None):
-        for index, _ in read.process_gsd(sim_params):
-            assert index == [0]
+@pytest.mark.parametrize("infile", ["test/data/trajectory-Trimer-P13.50-T3.00.gsd"])
+def test_linear_sequence(infile):
+    for index, _ in read._gsd_linear_trajectory(infile):
+        assert index == [0]
 
 
-def test_linear_sequence_keyframes(sim_params):
-    with sim_params.temp_context(linear_steps=None, gen_steps=10):
-        for index, frame in read.process_gsd(sim_params):
-            index_len = int(np.floor(frame.timestep / 10) + 1)
-            assert len(index) == index_len
-            assert index == list(range(index_len))
+@pytest.mark.parametrize("infile", ["test/data/trajectory-Trimer-P13.50-T3.00.gsd"])
+def test_linear_sequence_keyframes(infile):
+    for index, frame in read.process_gsd(
+        infile=infile, linear_steps=None, keyframe_interval=10
+    ):
+        index_len = int(np.floor(frame.timestep / 10) + 1)
+        assert len(index) == index_len
+        assert index == list(range(index_len))
 
 
 def test_writeCache():
@@ -123,14 +108,24 @@ def test_writeCache_file():
         assert outfile.is_file()
 
 
-def test_process_gsd(sim_params):
-    indexes, frame = next(read.process_gsd(sim_params))
+@pytest.mark.parametrize("infile", ["test/data/trajectory-Trimer-P13.50-T3.00.gsd"])
+def test_process_gsd(infile):
+    indexes, frame = next(read.process_gsd(infile))
     assert isinstance(indexes, list)
-    assert isinstance(frame, read.HoomdFrame)
+    assert isinstance(frame, HoomdFrame)
 
 
-def test_parse_lammpstrj():
-    infile = "test/data/short-time-variance.lammpstrj"
+@pytest.mark.parametrize("infile", ["test/data/short-time-variance.lammpstrj"])
+def test_process_lammpstrj(infile):
+
+    index, frame = next(read.process_lammpstrj(infile))
+    assert len(index) == 1
+    assert index == [0]
+    assert isinstance(frame, LammpsFrame)
+
+
+@pytest.mark.parametrize("infile", ["test/data/short-time-variance.lammpstrj"])
+def test_parse_lammpstrj(infile):
     num_atoms = None
     for frame in read.parse_lammpstrj(infile):
         assert frame.timestep >= 0
@@ -144,10 +139,21 @@ def test_parse_lammpstrj():
 @pytest.mark.parametrize(
     "infile", ["short-time-variance.lammpstrj", "trajectory-Trimer-P13.50-T3.00.gsd"]
 )
-def test_process_file(sim_params, infile):
+def test_process_file(infile):
     data_dir = Path("test/data")
-    with sim_params.temp_context(infile=data_dir / infile):
-        df = read.process_file(sim_params)
+    df = read.process_file(data_dir / infile, wave_number=2.90)
+    assert df is not None
+    assert isinstance(df, pandas.DataFrame)
+
+
+@pytest.mark.parametrize(
+    "infile", ["short-time-variance.lammpstrj", "trajectory-Trimer-P13.50-T3.00.gsd"]
+)
+def test_process_file_outfile(infile):
+    data_dir = Path("test/data")
+    with tempfile.TemporaryDirectory() as tmp:
+        output = Path(tmp) / "test.h5"
+        df = read.process_file(data_dir / infile, wave_number=2.90, outfile=output)
     assert df is None
 
 

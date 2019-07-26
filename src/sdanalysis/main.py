@@ -202,7 +202,16 @@ def comp_dynamics(
     logger.debug("Processing: %s", infile)
 
     infile = cast(Tuple[str], infile)
-    process_file(sim_params, relaxations)
+    process_file(
+        infile=sim_params.infile,
+        outfile=sim_params.outfile,
+        wave_number=sim_params.wave_number,
+        steps_max=sim_params.steps_max,
+        linear_steps=sim_params.linear_steps,
+        keyframe_interval=sim_params.gen_steps,
+        keyframes_max=sim_params.max_gen,
+        mol_relaxations=relaxations,
+    )
 
 
 @sdanalysis.command()
