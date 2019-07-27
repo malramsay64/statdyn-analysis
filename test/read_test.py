@@ -17,6 +17,7 @@ import pytest
 
 import sdanalysis
 from sdanalysis import HoomdFrame, LammpsFrame, read
+from sdanalysis.read import _gsd, _lammps, _read
 from sdanalysis.StepSize import GenerateStepSeries
 
 
@@ -35,12 +36,12 @@ def test_linear_steps_stopiter(infile, num_steps):
 
 
 def test_linear_sequence(infile_gsd):
-    for index, _ in read._gsd_linear_trajectory(infile_gsd):
+    for index, _ in _gsd._gsd_linear_trajectory(infile_gsd):
         assert index == [0]
 
 
 def test_linear_sequence_keyframes(infile_gsd):
-    for index, frame in read.read_gsd_trajectory(
+    for index, frame in _gsd.read_gsd_trajectory(
         infile=infile_gsd, linear_steps=None, keyframe_interval=10
     ):
         index_len = int(np.floor(frame.timestep / 10) + 1)
@@ -49,7 +50,7 @@ def test_linear_sequence_keyframes(infile_gsd):
 
 
 def test_writeCache(outfile):
-    my_list = read.WriteCache(outfile)
+    my_list = _read.WriteCache(outfile)
     assert len(my_list._cache) == 0
     for i in range(100):
         my_list.append({"value": i})
@@ -59,7 +60,7 @@ def test_writeCache(outfile):
 
 
 def test_writeCache_caching(outfile):
-    my_list = read.WriteCache(outfile)
+    my_list = _read.WriteCache(outfile)
     assert len(my_list._cache) == 0
     for i in range(9000):
         my_list.append({"value": i})
@@ -69,7 +70,7 @@ def test_writeCache_caching(outfile):
 
 
 def test_writeCache_len(outfile):
-    my_list = read.WriteCache(outfile)
+    my_list = _read.WriteCache(outfile)
     assert len(my_list._cache) == 0
     for i in range(100):
         my_list.append({"value": i})
@@ -84,7 +85,7 @@ def test_writeCache_len(outfile):
 
 
 def test_writeCache_file(outfile):
-    my_list = read.WriteCache(outfile)
+    my_list = _read.WriteCache(outfile)
     for i in range(100):
         my_list.append({"value": i})
     assert not outfile.is_file()
@@ -93,13 +94,13 @@ def test_writeCache_file(outfile):
 
 
 def test_process_gsd(infile_gsd):
-    indexes, frame = next(read.read_gsd_trajectory(infile_gsd))
+    indexes, frame = next(_gsd.read_gsd_trajectory(infile_gsd))
     assert isinstance(indexes, list)
     assert isinstance(frame, HoomdFrame)
 
 
 def test_process_lammpstrj(infile_lammps):
-    index, frame = next(read.read_lammps_trajectory(infile_lammps))
+    index, frame = next(_lammps.read_lammps_trajectory(infile_lammps))
     assert len(index) == 1
     assert index == [0]
     assert isinstance(frame, LammpsFrame)
@@ -107,7 +108,7 @@ def test_process_lammpstrj(infile_lammps):
 
 def test_parse_lammpstrj(infile_lammps):
     num_atoms = None
-    for frame in read.parse_lammpstrj(infile_lammps):
+    for frame in _lammps.parse_lammpstrj(infile_lammps):
         assert frame.timestep >= 0
         if num_atoms is None:
             num_atoms = len(frame)

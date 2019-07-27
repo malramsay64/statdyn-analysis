@@ -486,6 +486,9 @@ def compute_molecular_relaxations(df: pandas.DataFrame) -> pandas.DataFrame:
     if "pressure" not in df.columns:
         raise ValueError("The column 'pressure' is required")
 
+    if "keyframe" not in df.columns:
+        raise ValueError("The column 'keyframe' is required")
+
     logger.debug("Initial molecular shape: %s", df.shape)
     df.replace(2 ** 32 - 1, np.nan, inplace=True)
     # Initial frames with any NaN value are excluded from analysis. It is assumed they
