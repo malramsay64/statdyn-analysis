@@ -30,9 +30,9 @@ install:
 	pip install -e . --no-deps
 
 docs:
-	$(MAKE) -C sphinx html
+	$(MAKE) -C docs html
 
 
-.PHONY: help test clean deploy
+.PHONY: help test clean deploy docs
 
 # vim:ft=make
