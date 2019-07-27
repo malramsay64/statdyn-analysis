@@ -333,7 +333,28 @@ def translate_relaxation(quantity: str) -> str:
 def compute_relaxation_value(
     timesteps: np.ndarray, values: np.ndarray, relax_type: str
 ) -> Result:
-    """Compute a single representative value for each dynamic quantity."""
+    """Compute a single representative value for each dynamic quantity.
+
+    Args:
+        timesteps: The timestep for each value of the relaxation.
+        values: The values of the relaxation quantity for each time interval.
+        relax_type: A string describing the relaxation.
+
+    Returns:
+        The representative relaxation time for a quantity.
+
+
+    There are some special values of the relaxation which are treated in a special way.
+    The main one of these is the "msd", for which the relaxation is fitted to a straight
+    line. The "struct_msd" relaxation, is a threshold_relaxation, with the time required
+    to pass the threshold of 0.16. The other relaxations which are treated separately
+    are the "alpha" and "gamma" relaxations, where the relaxation time is the maximum of
+    these functions.
+
+    All other relaxations are assumed to have the behaviour of exponential decay, with
+    the representative time being how long it takes to decay to the value 1/e.
+
+    """
     if timesteps.shape != values.shape:
         raise RuntimeError(
             "Timesteps and values have different shapes. "
@@ -350,6 +371,26 @@ def compute_relaxation_value(
 
 
 def series_relaxation_value(series: pandas.Series) -> float:
+    """This is a utility function for calculating the relaxation of a pandas Series.
+
+    When a `pandas.Series` object, which has an index being the timesteps, and the name
+    of the series being the dynamic quantity, this function provides a simple method of
+    calculating the relaxation aggregation. In particular this function is useful to use
+    with the aggregate function.
+
+    Args:
+        series: The series containing the relaxation quantities
+
+    Returns:
+        The calculated value of the relaxation.
+
+
+    .. note:
+
+        This function will discard the error in the relaxation calculation for
+        simplicity in working with the resulting DataFrame.
+
+    """
     if series.index.values.shape != series.values.shape:
         raise RuntimeError(
             "Index and values have different shapes."

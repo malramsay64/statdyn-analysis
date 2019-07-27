@@ -80,12 +80,12 @@ def _file_logger(_, __, value) -> None:
     "keyframe_max",
     type=int,
     default=500,
-    help="Maximum number of keyframes",
+    help="Maximum number of key frames",
 )
 @click.option(
     "--molecule",
     type=click.Choice(MOLECULE_OPTIONS),
-    help="Molecule to use for simnulation",
+    help="Molecule to use for simulation",
 )
 @click.option(
     "--wave-number",
