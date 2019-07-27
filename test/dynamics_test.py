@@ -20,7 +20,7 @@ from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
 from numpy.testing import assert_allclose
 
-from sdanalysis import HoomdFrame, dynamics
+from sdanalysis import HoomdFrame, dynamics, read
 
 MAX_BOX = 20.0
 DTYPE = np.float32
@@ -204,7 +204,7 @@ class TestDynamicsClass:
     def test_alpha_methods(self, dynamics_class, trajectory, step, method):
         snap = trajectory[step]
         quantity = getattr(dynamics_class, method)(snap.particles.position)
-        assert isinstance(quantity, float)
+        assert isinstance(float(quantity), float)
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     @pytest.mark.parametrize("method", ["compute_rotation"])
@@ -325,4 +325,27 @@ def test_LastMolecularRelaxation():
 @example(np.full(10, np.nan))
 def test_structural_relaxation(array):
     value = dynamics.structural_relax(array)
-    assert isinstance(value, float)
+    assert isinstance(float(value), float)
+
+
+@pytest.mark.parametrize("wave_number", [None, 2.90])
+@pytest.mark.parametrize("orientation", [True, False])
+def test_compute_all(infile_gsd, wave_number, orientation):
+    trj = read.read_gsd_trajectory(infile_gsd)
+    _, snap = next(trj)
+    dyn = dynamics.Dynamics(
+        snap.timestep,
+        snap.box,
+        snap.position,
+        snap.orientation,
+        image=snap.image,
+        wave_number=wave_number,
+    )
+
+    _, snap = next(trj)
+    if orientation:
+        result = dyn.compute_all(snap.timestep, snap.position, snap.orientation)
+    else:
+        result = dyn.compute_all(snap.timestep, snap.position)
+
+    assert sorted(result.keys()) == sorted(dyn._all_quantities)
