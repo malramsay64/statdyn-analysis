@@ -387,8 +387,14 @@ def process_file(
 
             logger.debug("Series: %s", index)
             dynamics_series["start_index"] = index
-            dynamics_series["temperature"] = sim_variables.temperature
-            dynamics_series["pressure"] = sim_variables.pressure
+            if sim_variables.temperature is None:
+                dynamics_series["temperature"] = np.nan
+            else:
+                dynamics_series["temperature"] = float(sim_variables.temperature)
+            if sim_variables.pressure is None:
+                dynamics_series["pressure"] = np.nan
+            else:
+                dynamics_series["pressure"] = float(sim_variables.pressure)
             dataframes.append(dynamics_series)
 
     end_time = datetime.datetime.now()
