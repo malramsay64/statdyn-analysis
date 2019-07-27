@@ -12,7 +12,7 @@ dependencies:
     - pandas
     - pytables=3.5.1
     - mock>=2.0
-    - bokeh
+    - bokeh=1.*
     - gsd
     - pyyaml
     - freud~=1.0.0
@@ -33,6 +33,5 @@ dependencies:
     # Documentation
     - sphinx
     - sphinx_rtd_theme
+    - sphinx_autodoc_typehints=1.6.0
     - pip
-    - pip:
-      - sphinx_autodoc_typehints
