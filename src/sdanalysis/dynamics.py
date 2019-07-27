@@ -37,9 +37,15 @@ def _static_structure_factor(
 
 
 def _calculate_wave_number(box: Box, positions: np.ndarray):
-    rmax = min(box.Lx / 2, box.Ly / 2)
+    """Calculate the wave number for a configuration.
+
+    It is not recommended to automatically compute the wave number, since this will
+    lead to potentially unusual results.
+
+    """
+    rmax = min(box.Lx / 2.2, box.Ly / 2.2)
     if not box.is2D:
-        rmax = min(rmax, box.Lz / 2)
+        rmax = min(rmax, box.Lz / 2.2)
 
     dr = rmax / 200
     rdf = freud.density.RDF(dr=dr, rmax=rmax)
@@ -63,7 +69,7 @@ class Dynamics:
         position: The positions of the molecules
             with shape ``(nmols, 3)``. Even if the simulation is only 2D,
             all 3 dimensions of the position need to be passed.
-        orientation: The orientaions of all the
+        orientation: The orientations of all the
             molecules as a quaternion in the form ``(w, x, y, z)``. If no
             orientation is supplied then no rotational quantities are
             calculated.
@@ -221,11 +227,19 @@ class Dynamics:
             "msd": mean_squared_displacement(delta_displacement),
             "mfd": mean_fourth_displacement(delta_displacement),
             "alpha": alpha_non_gaussian(delta_displacement),
-            "com_struct": structural_relax(delta_displacement, dist=self.distance),
-            "scattering_function": intermediate_scattering_function(
-                self.box, self.position, position, wave_number=self.wave_number
-            ),
         }
+        if self.wave_number is not None:
+            dynamic_quantities.update(
+                {
+                    "scattering_function": intermediate_scattering_function(
+                        self.box, self.position, position, wave_number=self.wave_number
+                    )
+                }
+            )
+        if self.distance is not None:
+            dynamic_quantities.update(
+                {"com_struct": structural_relax(delta_displacement, dist=self.distance)}
+            )
         if self.orientation is not None:
             delta_rotation = rotational_displacement(self.orientation, orientation)
             dynamic_quantities.update(
@@ -237,21 +251,27 @@ class Dynamics:
                     "overlap": mobile_overlap(delta_displacement, delta_rotation),
                 }
             )
-            if self.mol_vector is not None:
-                dynamic_quantities.update(
-                    {
-                        "struct": self.compute_struct_relax(
-                            position, orientation, threshold=self.distance
-                        )
-                    }
-                )
+        if (
+            self.distance is not None
+            and self.mol_vector is not None
+            and self.orientation is not None
+        ):
+            dynamic_quantities.update(
+                {
+                    "struct": self.compute_struct_relax(
+                        position, orientation, threshold=self.distance
+                    )
+                }
+            )
         return dynamic_quantities
 
     def __len__(self) -> int:
         return self.num_particles
 
     @property
-    def distance(self) -> float:
+    def distance(self) -> Optional[float]:
+        if self.wave_number is None:
+            return None
         return np.pi / (2 * self.wave_number)
 
     def get_molid(self):

@@ -21,7 +21,6 @@ from hypothesis.strategies import floats
 from numpy.testing import assert_allclose
 
 from sdanalysis import HoomdFrame, dynamics
-from sdanalysis.read import process_gsd
 
 MAX_BOX = 20.0
 DTYPE = np.float32
@@ -243,10 +242,6 @@ class TestDynamicsClass:
         final.flags.writeable = False
         result = dynamics.translational_displacement(box, init, final)
         assert np.all(result < 1)
-
-
-def test_process_file():
-    process_gsd("test/data/trajectory-Trimer-P13.50-T3.00.gsd")
 
 
 def test_MolecularRelaxation():
