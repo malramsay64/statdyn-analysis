@@ -10,10 +10,9 @@ help:
 	@echo "    make help       show this message"
 	@echo "    make setup      install dependencies and create environment"
 	@echo "    make test       run the test suite"
-	@echo "    make deploy     deploy application"
 
 setup:
-	conda create --name sdanalysis-dev --file environment-lock.txt
+	conda env create
 	pre-commit install-hooks
 
 test:
