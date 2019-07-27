@@ -6,15 +6,12 @@
 #
 # Distributed under terms of the MIT license.
 #
-# pylint: disable=redefined-outer-name
-#
 
 """Testing that everything works together."""
 
 from pathlib import Path
 
 import pandas
-import pytest
 
 from sdanalysis.main import comp_dynamics, comp_relaxations
 

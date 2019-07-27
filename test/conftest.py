@@ -38,10 +38,29 @@ def runner():
         yield r
 
 
-@pytest.fixture
-def obj():
+@pytest.fixture(params=[2.90, None])
+def obj(request):
     """Default values for the statdyn analysis command line."""
-    return {"keyframe_interval": 1_000_000, "keyframe_max": 500, "wave_number": 2.90}
+    return {
+        "keyframe_interval": 1_000_000,
+        "keyframe_max": 500,
+        "wave_number": request.param,
+    }
+
+
+@pytest.fixture(
+    params=[
+        "data/trajectory-Trimer-P13.50-T3.00.gsd",
+        "data/short-time-variance.lammpstrj",
+    ]
+)
+def infile(request):
+    """A path to an input file which can processed.
+
+    This includes all the types of files which are supported.
+
+    """
+    return Path(__file__).parent / request.param
 
 
 @pytest.fixture()
@@ -51,6 +70,15 @@ def infile_gsd():
     This is to test all the analysis which uses the gsd files as input.
     """
     return Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
+
+
+@pytest.fixture()
+def infile_lammps():
+    """The path to a lammps file which can be used for input.
+
+    This is to test all the analysis which uses the lammps files as input.
+    """
+    return Path(__file__).parent / "data/short-time-variance.lammpstrj"
 
 
 @pytest.fixture()
