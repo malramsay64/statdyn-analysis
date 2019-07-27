@@ -10,7 +10,7 @@
 import logging
 from enum import Enum, auto
 from functools import lru_cache
-from typing import Any, Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union
 
 import freud.density
 import numpy as np
