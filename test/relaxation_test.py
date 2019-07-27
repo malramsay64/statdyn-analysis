@@ -20,7 +20,7 @@ import pytest
 from hypothesis import example, given
 from hypothesis.extra.numpy import arrays
 
-from sdanalysis import relaxation
+from sdanalysis import dynamics, relaxation
 
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.DEBUG)
@@ -167,7 +167,7 @@ def test_compute_relaxations(dynamics_file):
 def test_compute_relaxations_values(dynamics_file):
     relaxation.compute_relaxations(dynamics_file)
     df = pandas.read_hdf(dynamics_file, "relaxations")
-    columns = ["diffusion_constant"]
+    columns = dynamics.Dynamics._all_quantities  # pylint: disable=protected-access
     for col in columns:
         assert df[col].dtype == float
 
