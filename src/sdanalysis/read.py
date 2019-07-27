@@ -173,7 +173,7 @@ def _gsd_exponential_trajectory(
                     continue
 
 
-def process_gsd(
+def read_gsd_trajectory(
     infile: Path,
     steps_max: Optional[int] = None,
     linear_steps: Optional[int] = 100,
@@ -193,8 +193,8 @@ def process_gsd(
         )
 
 
-def process_lammpstrj(
-    infile: Path, steps_max: Optional[int] = None, thread_index: int = 0
+def read_lammps_trajectory(
+    infile: Path, steps_max: Optional[int] = None
 ) -> Iterator[Tuple[List[int], LammpsFrame]]:
 
     infile = Path(infile)
@@ -350,7 +350,7 @@ def process_file(
 
     keyframes: Dict[int, Tuple[Dynamics, Relaxations]] = {}
     if infile.suffix == ".gsd":
-        file_iterator: FileIterator = process_gsd(
+        file_iterator: FileIterator = read_gsd_trajectory(
             infile=infile,
             steps_max=steps_max,
             linear_steps=linear_steps,
@@ -358,9 +358,7 @@ def process_file(
             keyframe_max=keyframe_max,
         )
     elif infile.suffix == ".lammpstrj":
-        file_iterator = process_lammpstrj(
-            infile, steps_max=steps_max, thread_index=thread_index
-        )
+        file_iterator = read_lammps_trajectory(infile, steps_max=steps_max)
     for indexes, frame in file_iterator:
         if frame.position.shape[0] == 0:
             logger.warning("Found malformed frame in %s... continuing", infile.name)
