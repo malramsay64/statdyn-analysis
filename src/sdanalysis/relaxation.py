@@ -437,34 +437,25 @@ def compute_relaxations(infile) -> None:
                 " try rerunning `sdanalysis comp_dynamics`."
             )
 
-    key = "dynamics"
     with pandas.HDFStore(infile) as src:
-        df_dyn = src.get(key)
-        logger.debug(df_dyn.columns)
-        # Remove columns with no relaxation value to calculate
-        extra_columns = [
-            "mean_displacement",
-            "mean_rotation",
-            "mfd",
-            "overlap",
-            "start_index",
-        ]
-        for col in extra_columns:
-            if col in df_dyn.columns:
-                df_dyn.drop(columns=col, inplace=True)
+        df_dyn = src.get("dynamics")
 
-        # Average over all initial times
-        df_dyn = df_dyn.groupby(["time", "temperature", "pressure"]).mean()
+    logger.debug(df_dyn.columns)
+    # Remove columns with no relaxation value to calculate
+    extra_columns = ["mean_displacement", "mean_rotation", "mfd", "overlap"]
+    for col in extra_columns:
+        if col in df_dyn.columns:
+            df_dyn.drop(columns=col, inplace=True)
 
-        relaxations = df_dyn.groupby(["temperature", "pressure"]).agg(
-            series_relaxation_value
-        )
-        relaxations.columns = [
-            translate_relaxation(quantity) for quantity in relaxations.columns
-        ]
+    relaxations = df_dyn.groupby(["keyframe", "temperature", "pressure"]).agg(
+        series_relaxation_value
+    )
+
     logger.info("Shape of df_dyn relaxations is %s", df_dyn.shape)
 
-    df_mol_input = pandas.read_hdf(infile, "molecular_relaxations")
+    with pandas.HDFStore(infile) as src:
+        df_mol_input = src.get("molecular_relaxations")
+
     logger.info("Shape of df_mol_input relaxations is %s", df_mol_input.shape)
 
     df_mol = compute_molecular_relaxations(
@@ -473,7 +464,7 @@ def compute_relaxations(infile) -> None:
     logger.info("Shape of df_mol relaxations is %s", df_mol.shape)
 
     df_all = df_mol.join(
-        relaxations, on=["temperature", "pressure"], lsuffix="mol"
+        relaxations, on=["keyframe", "temperature", "pressure"], lsuffix="mol"
     ).reset_index()
     logger.info("Shape of all relaxations is %s", df_all.shape)
 
@@ -495,23 +486,17 @@ def compute_molecular_relaxations(df: pandas.DataFrame) -> pandas.DataFrame:
     if "pressure" not in df.columns:
         raise ValueError("The column 'pressure' is required")
 
-    if len(df.index.names) != 2:
-        raise ValueError(
-            "The shape of the index is not compatible,"
-            "require 2 columns for the index, 'init_frame' and 'molecule'"
-        )
-
     logger.debug("Initial molecular shape: %s", df.shape)
     df.replace(2 ** 32 - 1, np.nan, inplace=True)
-    df.index.names = ["init_frame", "molecule"]
     # Initial frames with any NaN value are excluded from analysis. It is assumed they
     # didn't run for a long enough time.
-    df = df.groupby(["init_frame", "temperature", "pressure"]).filter(
+    df = df.groupby(["keyframe", "temperature", "pressure"]).filter(
         lambda x: x.isna().sum().sum() == 0
     )
     logger.debug("Filtered molecular shape: %s", df.shape)
 
-    df = df.groupby(["temperature", "pressure"]).agg(["mean", hmean])
+    # Calculate statistics for each initial_frame
+    df = df.groupby(["keyframe", "temperature", "pressure"]).agg(["mean", hmean])
 
     logger.debug("Aggregated molecular shape: %s", df.shape)
     df.columns = ["_".join(f) for f in df.columns.tolist()]
