@@ -10,7 +10,6 @@
 import logging
 from functools import partial
 from pathlib import Path
-from typing import Tuple
 
 import click
 import yaml
