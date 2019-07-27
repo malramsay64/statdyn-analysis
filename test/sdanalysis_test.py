@@ -36,7 +36,7 @@ class TestSdanalysis:
 
 class TestCompDynamics:
 
-    datafile = Path("test/data/trajectory-Trimer-P13.50-T3.00.gsd").resolve()
+    datafile = Path(__file__).parent / "data/trajectory-Trimer-P13.50-T3.00.gsd"
 
     def test_datafile(self, runner):
         print(self.datafile)
@@ -47,8 +47,8 @@ class TestCompDynamics:
         assert result.exit_code != 0, result.output
         assert isinstance(result.exception, SystemExit)
 
-    def test_real_data(self, runner):
-        result = runner.invoke(comp_dynamics, [str(self.datafile), "output"])
+    def test_real_data(self, runner, obj):
+        result = runner.invoke(comp_dynamics, [str(self.datafile), "output"], obj=obj)
         assert result.exit_code == 0, result.output
 
 
