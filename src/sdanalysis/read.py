@@ -9,7 +9,6 @@
 
 import datetime
 import logging
-import multiprocessing
 from pathlib import Path
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Union
 
@@ -74,15 +73,12 @@ def _gsd_linear_trajectory(
     steps_max: Optional[int] = None,
     keyframe_interval: int = 20000,
     keyframe_max: int = 500,
-    thread_index: int = 0,
 ):
     # Ensure correct type of infile
     infile = Path(infile)
     index_list: List[int] = []
     with gsd.hoomd.open(str(infile), "rb") as src:
-        for index in tqdm(
-            range(len(src)), infile.stem, position=thread_index, **tqdm_options
-        ):
+        for index in tqdm(range(len(src)), infile.stem, **tqdm_options):
             try:
                 frame = src.read_frame(index)
             except RuntimeError:
@@ -106,7 +102,6 @@ def _gsd_exponential_trajectory(
     keyframe_interval: int = 20000,
     keyframe_max: int = 500,
     linear_steps: int = 100,
-    thread_index: int = 0,
 ):
     with gsd.hoomd.open(str(infile), "rb") as src:
         # Compute steps in gsd file
@@ -121,9 +116,7 @@ def _gsd_exponential_trajectory(
             gen_steps=keyframe_interval,
             max_gen=keyframe_max,
         )
-        for index in tqdm(
-            range(len(src)), desc=infile.stem, position=thread_index, **tqdm_options
-        ):
+        for index in tqdm(range(len(src)), desc=infile.stem, **tqdm_options):
             try:
                 frame = src.read_frame(index)
             except RuntimeError:
@@ -186,23 +179,17 @@ def process_gsd(
     linear_steps: Optional[int] = 100,
     keyframe_interval: int = 1_000_000,
     keyframe_max: int = 500,
-    thread_index: int = 0,
 ) -> FileIterator:
     """Perform analysis of a GSD file."""
     infile = Path(infile)
 
     if linear_steps is None:
         yield from _gsd_linear_trajectory(
-            infile, steps_max, keyframe_interval, keyframe_max, thread_index
+            infile, steps_max, keyframe_interval, keyframe_max
         )
     else:
         yield from _gsd_exponential_trajectory(
-            infile,
-            steps_max,
-            keyframe_interval,
-            keyframe_max,
-            linear_steps,
-            thread_index,
+            infile, steps_max, keyframe_interval, keyframe_max, linear_steps
         )
 
 
@@ -213,7 +200,7 @@ def process_lammpstrj(
     infile = Path(infile)
     indexes = [0]
     parser = parse_lammpstrj(infile)
-    for frame in tqdm(parser, desc=infile.stem, position=thread_index, **tqdm_options):
+    for frame in tqdm(parser, desc=infile.stem, **tqdm_options):
         if steps_max is not None and frame.timestep > steps_max:
             return
 
@@ -282,17 +269,12 @@ class WriteCache:
     group: str = "dynamics"
     cache_multiplier: int = 1
     to_append: bool = False
-    queue: Optional[multiprocessing.Queue] = None
 
     _cache: List[Any] = attr.ib(default=attr.Factory(list), init=False)
     _cache_default: int = attr.ib(default=8192, init=False)
     _emptied_count: int = attr.ib(default=0, init=False)
 
     def __attr_post_init__(self):
-        if self.filename and self.queue:
-            raise ValueError(
-                "Can only output to a single source, either filename or queue"
-            )
         if self.group is None:
             raise ValueError("Group can not be None.")
 
@@ -307,11 +289,6 @@ class WriteCache:
             self._emptied_count += 1
         self._cache.append(item)
 
-    def _flush_queue(self, df) -> None:
-        assert self.queue is not None
-        assert df is not None
-        self.queue.put((self.group, df))
-
     def _flush_file(self, df) -> None:
         assert self.filename is not None
         assert self.group is not None
@@ -320,10 +297,7 @@ class WriteCache:
 
     def flush(self) -> None:
         df = self.to_dataframe()
-        if self.queue:
-            self._flush_queue(df)
-        else:
-            self._flush_file(df)
+        self._flush_file(df)
         self._cache.clear()
 
     @property
@@ -349,8 +323,6 @@ def process_file(
     keyframe_max: int = 500,
     mol_relaxations: List[Dict[str, Any]] = None,
     outfile: Optional[Path] = None,
-    queue: Optional[multiprocessing.Queue] = None,
-    thread_index: int = 0,
 ) -> Optional[pandas.DataFrame]:
     """Read a file and compute the dynamics quantities.
 
@@ -371,10 +343,8 @@ def process_file(
     start_time = datetime.datetime.now()
 
     sim_variables = get_filename_vars(infile)
-    if outfile is not None and queue is None:
+    if outfile is not None:
         dataframes = WriteCache(filename=outfile)
-    elif queue:
-        dataframes = WriteCache(queue=queue)
     else:
         dataframes = WriteCache()
 
@@ -386,7 +356,6 @@ def process_file(
             linear_steps=linear_steps,
             keyframe_interval=keyframe_interval,
             keyframe_max=keyframe_max,
-            thread_index=thread_index,
         )
     elif infile.suffix == ".lammpstrj":
         file_iterator = process_lammpstrj(
@@ -436,10 +405,7 @@ def process_file(
         )
         mol_relax["temperature"] = sim_variables.temperature
         mol_relax["pressure"] = sim_variables.pressure
-        if queue:
-            queue.put(("molecular_relaxations", mol_relax))
-        else:
-            mol_relax.to_hdf(outfile, "molecular_relaxations")
+        mol_relax.to_hdf(outfile, "molecular_relaxations")
         return None
 
     return dataframes.to_dataframe()
