@@ -46,9 +46,9 @@ from bokeh.models import (
 from bokeh.plotting import figure
 from hsluv import hpluv_to_hex
 
-from ..frame import Frame, HoomdFrame
+from ..frame import HoomdFrame
 from ..molecules import Trimer
-from ..order import compute_voronoi_neighs, create_ml_ordering, orientational_order
+from ..order import create_ml_ordering, create_neigh_ordering, create_orient_ordering
 from ..util import parse_directory
 from .configuration import DARK_COLOURS, frame2data, plot_circles
 
@@ -57,21 +57,11 @@ gsdlogger = logging.getLogger("gsd")
 gsdlogger.setLevel("WARN")
 
 
-def compute_neigh_ordering(snap: Frame) -> np.ndarray:
-    return compute_voronoi_neighs(snap.box, snap.position) == 6
-
-
-def compute_orient_ordering(snap: Frame) -> np.ndarray:
-    return orientational_order(
-        snap.box, snap.position, snap.orientation, order_threshold=0.75
-    )
-
-
 class TrimerFigure:
     order_functions: Dict[str, Any] = {
         "None": None,
-        "Orient": compute_orient_ordering,
-        "Num Neighs": compute_neigh_ordering,
+        "Orient": create_orient_ordering(threshold=0.75),
+        "Num Neighs": create_neigh_ordering(neighbours=6),
     }
     controls_width = 400
 

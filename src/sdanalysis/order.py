@@ -93,6 +93,23 @@ def create_ml_ordering(model: Path) -> Callable[[Frame], np.ndarray]:
     return compute_ml_order
 
 
+def create_orient_ordering(threshold: float) -> Callable[[Frame], np.ndarray]:
+    def compute_orient_ordering(snap: Frame) -> np.ndarray:
+        return orientational_order(
+            snap.box, snap.position, snap.orientation, order_threshold=threshold
+        )
+
+    return compute_orient_ordering
+
+
+def create_neigh_ordering(neighbours: int) -> Callable[[Frame], np.ndarray]:
+    def compute_neigh_ordering(snap: Frame) -> np.ndarray:
+        """Compute the neighbours ordering for a configuration."""
+        return compute_voronoi_neighs(snap.box, snap.position) == neighbours
+
+    return compute_neigh_ordering
+
+
 def setup_neighbours(
     box: np.ndarray,
     position: np.ndarray,
