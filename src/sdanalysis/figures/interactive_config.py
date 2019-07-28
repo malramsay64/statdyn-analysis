@@ -6,7 +6,7 @@
 #
 # Distributed under terms of the MIT license.
 #
-# pylint: skip-file
+# pylint: disable=unused-argument, too-many-public-methods, too-many-instance-attributes
 """Create an interactive view of a configuration.
 
 This is a visualisation of a trajectory, allowing interaction with both the current
@@ -24,15 +24,13 @@ circles, while rendering of arbitrary shapes is not supported.
 
 """
 
-import functools
 import logging
-from functools import partial
 from pathlib import Path
-from typing import Callable, Dict, List, Optional
+from typing import Any, Callable, Dict, List, Optional
 
 import gsd.hoomd
 import numpy as np
-from bokeh.layouts import column, row, widgetbox
+from bokeh.layouts import column, row
 from bokeh.models import (
     Button,
     ColorBar,
@@ -45,56 +43,49 @@ from bokeh.models import (
     Slider,
     Toggle,
 )
-from bokeh.plotting import curdoc, figure
+from bokeh.plotting import figure
 from hsluv import hpluv_to_hex
-from tornado import gen
 
-from ..frame import HoomdFrame
+from ..frame import Frame, HoomdFrame
 from ..molecules import Trimer
-from ..order import compute_ml_order, compute_voronoi_neighs, orientational_order
-from ..util import Variables, get_filename_vars
-from .configuration import DARK_COLOURS, frame2data, plot_circles, plot_frame
+from ..order import compute_voronoi_neighs, create_ml_ordering, orientational_order
+from ..util import parse_directory
+from .configuration import DARK_COLOURS, frame2data, plot_circles
 
 logger = logging.getLogger(__name__)
 gsdlogger = logging.getLogger("gsd")
 gsdlogger.setLevel("WARN")
 
 
-def parse_directory(directory: Path, glob: str = "dump*.gsd") -> Dict[str, Dict]:
-    all_values: Dict[str, Dict] = {}
-    files = list(directory.glob(glob))
-    logger.debug("Found files: %s", files)
-    for fname in files:
-        temperature, pressure, crystal, repr_index = get_filename_vars(fname)
-        assert temperature
-        assert pressure
-        crystal = str(crystal)
-        repr_index = str(repr_index)
-        all_values.setdefault(pressure, {})
-        all_values[pressure].setdefault(temperature, {})
-        all_values[pressure][temperature].setdefault(crystal, {})
-        all_values[pressure][temperature][crystal].setdefault(repr_index, {})
-        all_values[pressure][temperature][crystal][repr_index] = fname
-    return all_values
+def compute_neigh_ordering(snap: Frame) -> np.ndarray:
+    return compute_voronoi_neighs(snap.box, snap.position) == 6
 
 
-def compute_neigh_ordering(box, positions, orientations):
-    return compute_voronoi_neighs(box, positions) == 6
+def compute_orient_ordering(snap: Frame) -> np.ndarray:
+    return orientational_order(
+        snap.box, snap.position, snap.orientation, order_threshold=0.75
+    )
 
 
-class TrimerFigure(object):
-    order_functions = {
+class TrimerFigure:
+    order_functions: Dict[str, Any] = {
         "None": None,
-        "Orient": functools.partial(orientational_order, order_threshold=0.75),
+        "Orient": compute_orient_ordering,
         "Num Neighs": compute_neigh_ordering,
     }
     controls_width = 400
 
     _frame = None
+    plot = None
+    _temperatures = None
+    _pressures = None
+    _crystals = None
+    _iter_index = None
+
+    _callback = None
 
     def __init__(self, doc, directory: Path = None, models=None) -> None:
         self._doc = doc
-        self.plot = None
         self._trajectory = [None]
 
         if directory is None:
@@ -108,13 +99,9 @@ class TrimerFigure(object):
                 raise ValueError("The argument models has to have type list or tuple")
 
             logger.debug("Found additional models: %s", models)
-            import joblib
-
             for model in models:
                 model = Path(model)
-                self.order_functions[model.stem] = functools.partial(
-                    compute_ml_order, joblib.load(model)
-                )
+                self.order_functions[model.stem] = create_ml_ordering(model)
 
         self.directory = directory
         self.initialise_directory()
@@ -174,11 +161,15 @@ class TrimerFigure(object):
         self._iter_index_button.on_change("value", self.update_current_trajectory)
 
     @property
-    def pressure(self) -> str:
+    def pressure(self) -> Optional[str]:
+        if self._pressures is None:
+            return None
         return self._pressures[self._pressure_button.active]
 
     @property
-    def temperature(self) -> str:
+    def temperature(self) -> Optional[str]:
+        if self._temperatures is None:
+            return None
         return self._temperature_button.value
 
     @property
@@ -186,6 +177,8 @@ class TrimerFigure(object):
         logger.debug(
             "Current crystal %s from %s", self._crystal_button.active, self._crystals
         )
+        if self._crystals is None:
+            return None
         return self._crystals[self._crystal_button.active]
 
     @property
@@ -247,6 +240,10 @@ class TrimerFigure(object):
         return file_selection
 
     def get_selected_file(self) -> Optional[Path]:
+        if self.pressure is None:
+            return None
+        if self.temperature is None:
+            return None
         return self.variable_selection[self.pressure][self.temperature][self.crystal][
             self.iter_index
         ]
@@ -389,7 +386,8 @@ class TrimerFigure(object):
             self._callback = self._doc.add_periodic_callback(self._incr_index, 100)
             self._playing = True
 
-    def create_legend(self):
+    @staticmethod
+    def create_legend():
         cm_orient = LinearColorMapper(palette=DARK_COLOURS, low=-np.pi, high=np.pi)
         cm_class = LinearColorMapper(
             palette=[hpluv_to_hex((0, 0, 60)), hpluv_to_hex((0, 0, 80))], low=0, high=2
@@ -461,6 +459,8 @@ class TrimerFigure(object):
         self._doc.title = "Configurations"
 
 
-def make_document(doc, directory: Path = None, models=[]):
+def make_document(doc, directory: Path = None, models: Optional[List[Path]] = None):
+    if models is None:
+        models = []
     fig = TrimerFigure(doc, directory=directory, models=models)
     fig.create_doc()
