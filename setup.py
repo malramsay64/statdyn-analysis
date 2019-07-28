@@ -8,6 +8,8 @@
 
 """Command line tool to run simulations."""
 
+import os
+
 from setuptools import find_packages, setup
 
 
