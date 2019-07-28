@@ -91,7 +91,7 @@ def colour_orientation(orientations: np.ndarray, light_colours=False) -> np.ndar
 
 def frame2data(
     frame: Frame,
-    order_function: Callable = None,
+    order_function: Callable[[Frame], np.ndarray] = None,
     order_list: np.ndarray = None,
     molecule: Molecule = Trimer(),
     categorical_colour: bool = False,
@@ -115,7 +115,7 @@ def frame2data(
                 order_list
             ]
         elif order_function is not None:
-            order = order_function(frame.box, frame.position, frame.orientation)
+            order = order_function(frame)
             if order.dtype in [int, bool, float]:
                 order = np.logical_not(order.astype(bool))
             else:
@@ -137,9 +137,9 @@ def frame2data(
 
 def plot_frame(
     frame: Frame,
-    order_function: Callable = None,
-    order_list: np.ndarray = None,
-    source: ColumnDataSource = None,
+    order_function: Optional[Callable[[Frame], np.ndarray]] = None,
+    order_list: Optional[np.ndarray] = None,
+    source: Optional[ColumnDataSource] = None,
     molecule: Molecule = Trimer(),
     categorical_colour: bool = False,
     factors: Optional[List[Any]] = None,
