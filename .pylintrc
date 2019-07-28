@@ -65,6 +65,7 @@ disable=bad-continuation,
         not-an-iterable,
         no-value-for-parameter,
         ungrouped-imports,
+        assignment-from-no-return,
 
 [REPORTS]
 
