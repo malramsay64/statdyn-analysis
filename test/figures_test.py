@@ -22,7 +22,7 @@ from hypothesis.strategies import floats
 
 from sdanalysis.figures.configuration import colour_orientation, plot_frame
 from sdanalysis.frame import HoomdFrame
-from sdanalysis.order import compute_voronoi_neighs
+from sdanalysis.order import create_neigh_ordering
 
 
 @given(floats(min_value=-math.pi, max_value=math.pi))
@@ -48,10 +48,7 @@ def test_plot_frame_orderlist(snapshot, mol):
 
 
 def test_plot_frame_orderfunc(snapshot, mol):
-    def compute_neigh_ordering(box, positions, _):
-        return compute_voronoi_neighs(box, positions) == 6
-
-    plot_frame(snapshot, molecule=mol, order_function=compute_neigh_ordering)
+    plot_frame(snapshot, molecule=mol, order_function=create_neigh_ordering(6))
 
 
 @pytest.mark.parametrize("dtype", [int, str, float])
@@ -61,5 +58,6 @@ def test_plot_frame_categorical(snapshot, mol, dtype):
 
 
 def test_order(snapshot):
-    order_list = compute_voronoi_neighs(snapshot.box, snapshot.position)
+    order_func = create_neigh_ordering(6)
+    order_list = order_func(snapshot)
     plot_frame(snapshot, order_list=order_list)
