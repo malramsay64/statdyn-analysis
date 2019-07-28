@@ -69,8 +69,8 @@ def translational_displacement_reference(
 
 
 @given(
-    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 4, MAX_BOX / 4)),
-    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 4, MAX_BOX / 4)),
+    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 4, MAX_BOX / 4, width=32)),
+    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 4, MAX_BOX / 4, width=32)),
 )
 def test_translational_displacement_noperiod(init, final):
     """Test calculation of the translational displacement.
@@ -89,8 +89,10 @@ def test_translational_displacement_noperiod(init, final):
 
 
 @given(
-    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, -MAX_BOX / 4 - 1e-5)),
-    arrays(HYP_DTYPE, (10, 3), elements=floats(MAX_BOX / 4, MAX_BOX / 2)),
+    arrays(
+        HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, -MAX_BOX / 4 - 1e-5, width=32)
+    ),
+    arrays(HYP_DTYPE, (10, 3), elements=floats(MAX_BOX / 4, MAX_BOX / 2, width=32)),
 )
 def test_translational_displacement_periodicity(init, final):
     """Ensure the periodicity is calculated appropriately.
@@ -106,8 +108,8 @@ def test_translational_displacement_periodicity(init, final):
 
 
 @given(
-    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, MAX_BOX / 2)),
-    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, MAX_BOX / 2)),
+    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, MAX_BOX / 2, width=32)),
+    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, MAX_BOX / 2, width=32)),
 )
 def test_translational_displacement(init, final):
     """Ensure the periodicity is calculated appropriately.
@@ -120,7 +122,7 @@ def test_translational_displacement(init, final):
     assert np.allclose(result, ref_res, atol=EPS)
 
 
-@given(arrays(HYP_DTYPE, (100), elements=floats(0, 10)))
+@given(arrays(HYP_DTYPE, (100), elements=floats(0, 10, width=32)))
 def test_alpha(displacement):
     """Test the computation of the non-gaussian parameter."""
     alpha = dynamics.alpha_non_gaussian(displacement)
@@ -129,8 +131,8 @@ def test_alpha(displacement):
 
 
 @given(
-    arrays(HYP_DTYPE, (100), elements=floats(0, 10)),
-    arrays(HYP_DTYPE, (100), elements=floats(0, 2 * np.pi)),
+    arrays(HYP_DTYPE, (100), elements=floats(0, 10, width=32)),
+    arrays(HYP_DTYPE, (100), elements=floats(0, 2 * np.pi, width=32)),
 )
 def test_overlap(displacement, rotation):
     """Test the computation of the overlap of the largest values."""
@@ -321,7 +323,7 @@ def test_LastMolecularRelaxation():
     )
 
 
-@given(arrays(HYP_DTYPE, (10), elements=floats(0, 1)))
+@given(arrays(HYP_DTYPE, (10), elements=floats(0, 1, width=32)))
 @example(np.full(10, np.nan))
 def test_structural_relaxation(array):
     value = dynamics.structural_relax(array)

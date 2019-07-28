@@ -157,6 +157,7 @@ def angle(num_elements=1):
             min_value=np.finfo(np.float32).min,
             allow_nan=False,
             allow_infinity=False,
+            width=32,
         ),
     )
     return theta
