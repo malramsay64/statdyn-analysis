@@ -17,7 +17,12 @@ def get_version():
     return g["__version__"]
 
 
-setup_requires = []
+def read(path, encoding="utf-8"):
+    path = os.path.join(os.path.dirname(__file__), path)
+    with io.open(path, encoding=encoding) as fp:
+        return fp.read()
+
+
 install_requires = [
     "numpy~=1.16",
     "scipy>=1.0",
@@ -54,7 +59,6 @@ setup(
     name="sdanalysis",
     version=get_version(),
     python_requires=">=3.6",
-    setup_requires=setup_requires,
     install_requires=install_requires,
     packages=find_packages("src"),
     package_dir={"": "src"},
@@ -68,6 +72,8 @@ setup(
     author="Malcolm Ramsay",
     author_email="malramsay64@gmail.com",
     description="Statistical dynamics analysis of molecular dynamics trajectories.",
+    long_description=read("README.md"),
+    long_description_content_type="text/markdown",
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Environment :: Console",
