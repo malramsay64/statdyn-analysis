@@ -351,3 +351,4 @@ def test_compute_all(infile_gsd, wave_number, orientation):
         result = dyn.compute_all(snap.timestep, snap.position)
 
     assert sorted(result.keys()) == sorted(dyn._all_quantities)
+    assert np.isnan(result.get("scattering_function"))

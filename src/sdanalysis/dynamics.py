@@ -244,6 +244,7 @@ class Dynamics:
 
         # Set default result
         dynamic_quantities = {key: np.nan for key in self._all_quantities}
+        # The scattering function takes too long to compute so is ignored.
 
         # Calculate displacement of all molecules
         # This is performed once for all displacement-like quantities
@@ -252,43 +253,27 @@ class Dynamics:
         )
 
         # Calculate all the simple dynamic quantities
-        dynamic_quantities.update(
-            {
-                "time": self.compute_time_delta(timestep),
-                "mean_displacement": mean_displacement(delta_displacement),
-                "msd": mean_squared_displacement(delta_displacement),
-                "mfd": mean_fourth_displacement(delta_displacement),
-                "alpha": alpha_non_gaussian(delta_displacement),
-            }
-        )
-
-        # The scattering function requires the wave number to be set
-        if self.wave_number is not None:
-            dynamic_quantities.update(
-                {
-                    "scattering_function": intermediate_scattering_function(
-                        self.box, self.position, position, wave_number=self.wave_number
-                    )
-                }
-            )
+        dynamic_quantities["time"] = self.compute_time_delta(timestep)
+        dynamic_quantities["mean_displacement"] = mean_displacement(delta_displacement)
+        dynamic_quantities["msd"] = mean_squared_displacement(delta_displacement)
+        dynamic_quantities["mfd"] = mean_fourth_displacement(delta_displacement)
+        dynamic_quantities["alpha"] = alpha_non_gaussian(delta_displacement)
 
         # The structural relaxation requires the distance value to be set
         if self.distance is not None:
-            dynamic_quantities.update(
-                {"com_struct": structural_relax(delta_displacement, dist=self.distance)}
+            dynamic_quantities["com_struct"] = structural_relax(
+                delta_displacement, dist=self.distance
             )
 
         # There are number of quantities which rely on the orientation
         if self.orientation is not None and orientation is not None:
             delta_rotation = rotational_displacement(self.orientation, orientation)
-            dynamic_quantities.update(
-                {
-                    "mean_rotation": mean_rotation(delta_rotation),
-                    "rot1": rotational_relax1(delta_rotation),
-                    "rot2": rotational_relax2(delta_rotation),
-                    "gamma": gamma(delta_displacement, delta_rotation),
-                    "overlap": mobile_overlap(delta_displacement, delta_rotation),
-                }
+            dynamic_quantities["mean_rotation"] = mean_rotation(delta_rotation)
+            dynamic_quantities["rot1"] = rotational_relax1(delta_rotation)
+            dynamic_quantities["rot2"] = rotational_relax2(delta_rotation)
+            dynamic_quantities["gamma"] = gamma(delta_displacement, delta_rotation)
+            dynamic_quantities["overlap"] = mobile_overlap(
+                delta_displacement, delta_rotation
             )
 
         # The structural relaxation of all atoms is the most complex.
@@ -297,12 +282,8 @@ class Dynamics:
             and self.mol_vector is not None
             and self.orientation is not None
         ):
-            dynamic_quantities.update(
-                {
-                    "struct": self.compute_struct_relax(
-                        position, orientation, threshold=self.distance
-                    )
-                }
+            dynamic_quantities["struct"] = self.compute_struct_relax(
+                position, orientation, threshold=self.distance
             )
         return dynamic_quantities
 
