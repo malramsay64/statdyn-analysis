@@ -7,7 +7,7 @@ package:
 about:
   home: https://github.com/malramsay64/statdyn-analysis
   license: MIT
-  license_file: ../LICENSE
+  license_file: LICENSE
   summary:  Collection of tools for the statistical dynamics analysis of Molecular Dynamics trajectories.
 
 
