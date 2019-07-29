@@ -96,14 +96,38 @@ def frame2data(
     molecule: Molecule = Trimer(),
     categorical_colour: bool = False,
 ) -> Dict[str, Any]:
+    """Convert a Frame to data for plotting in Bokeh.
+
+    This takes a frame and performs all the necessary calculations for plotting, in
+    particular the colouring of the orientation and crystal classification.
+
+    Args:
+        frame: The configuration which is to be plotted.
+        order_function: A function which takes a frame as it's input which can be used
+            to classify the crystal.
+        order_list: A pre-classified collection of values. This is an alternate
+            approach to using the order_function
+        molecule: The molecule which is being plotted.
+        categorical_colour: Whether to classify as categories, or liquid/crystalline.
+
+    Returns:
+        Dictionary containing x, y, colour, orientation and radius values for each
+            molecule.
+
+    """
     assert Molecule is not None
+    if order_function is not None and order_list is not None:
+        raise ValueError("Only one of order_function and order_list can be specified")
+
     angle = quaternion2z(frame.orientation)
+
     if categorical_colour:
-        if order_list is None:
-            raise ValueError(
-                "The colour_classes option can only be used with a custom order_list."
-            )
-        colour = order_list.astype(str)
+        if order_function is not None:
+            colour = order_function(frame).astype(str)
+        elif order_list is not None:
+            colour = order_list.astype(str)
+        else:
+            raise ValueError("No way found to calculate categories.")
 
     else:
         # Colour all particles with the darker shade
