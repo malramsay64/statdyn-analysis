@@ -26,35 +26,39 @@ def read(path, encoding="utf-8"):
 
 
 install_requires = [
-    "numpy~=1.16",
-    "scipy>=1.0",
-    "scikit-learn>=0.20.0",
-    "pandas",
+    "numpy~=1.16.1",
+    "scipy~=1.0",
+    "scikit-learn>=0.20.0,<1.0",
+    "pandas>=0.23,<0.26",
     "tables>=3.5.1",
-    "bokeh>=1.0",
-    "gsd>=1.3.0",
+    "bokeh~=1.0",
+    "gsd~=1.3",
     "pyyaml>=5.1",
-    "hsluv",
-    "attrs",
+    "hsluv==0.0.2",
+    "attrs>=18.1.0",
     "click~=7.0.0",
     "freud-analysis>=1.0,<1.3",
-    "rowan",
-    "tqdm",
+    "rowan>=1.0,<1.3",
+    "tqdm~=4.0",
     "joblib~=0.13.2",
 ]
 test_requires = [
-    "pytest",
-    "pylint",
-    "hypothesis",
-    "coverage",
+    "pytest~=5.0.1",
+    "pylint~=2.3.1",
+    "hypothesis~=4.32.1",
+    "coverage~=4.5.4",
     "black==19.3b0",
-    "mypy",
-    "pytest-mypy",
-    "pytest-pylint",
-    "pytest-cov",
+    "mypy==0.710",
+    "pytest-mypy~=0.3.3",
+    "pytest-pylint~=0.14.1",
+    "pytest-cov~=2.7.1",
     "pytest-lazy-fixture",
 ]
-docs_requires = ["sphinx", "sphinx_rtd_theme", "sphinx_autodoc_typehints"]
+docs_requires = [
+    "sphinx~=2.1.2",
+    "sphinx_rtd_theme~=0.4.3",
+    "sphinx_autodoc_typehints~=1.7.0",
+]
 dev_requires = docs_requires + test_requires
 
 setup(
