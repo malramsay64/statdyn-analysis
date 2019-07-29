@@ -82,6 +82,11 @@ def infile_lammps():
 
 
 @pytest.fixture()
+def frame(infile):
+    return next(read.open_trajectory(infile))
+
+
+@pytest.fixture()
 def outfile():
     """The Path object of a temporary output file."""
     with TemporaryDirectory() as output:

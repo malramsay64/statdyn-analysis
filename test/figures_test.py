@@ -6,7 +6,6 @@
 #
 # Distributed under terms of the MIT license.
 #
-# pylint: disable=redefined-outer-name
 #
 
 """Test function from the generation of figures."""
@@ -14,14 +13,12 @@
 import math
 
 import bokeh.colors
-import gsd.hoomd
 import numpy as np
 import pytest
 from hypothesis import given
 from hypothesis.strategies import floats
 
 from sdanalysis.figures.configuration import colour_orientation, plot_frame
-from sdanalysis.frame import HoomdFrame
 from sdanalysis.order import create_neigh_ordering
 
 
@@ -32,32 +29,35 @@ def test_colour_orientation(orientation):
     assert isinstance(c, bokeh.colors.Color)
 
 
-@pytest.fixture()
-def snapshot():
-    with gsd.hoomd.open("test/data/trajectory-Trimer-P13.50-T3.00.gsd") as trj:
-        yield HoomdFrame(trj[0])
+def test_plot_frame(frame, mol):
+    plot_frame(frame, molecule=mol)
 
 
-def test_plot_frame(snapshot, mol):
-    plot_frame(snapshot, molecule=mol)
+@pytest.mark.parametrize("categories", [True, False])
+def test_plot_frame_orderlist(frame, mol, categories):
+    order_list = np.random.choice([0, 1, 2], len(frame))
+    plot_frame(
+        frame, molecule=mol, order_list=order_list, categorical_colour=categories
+    )
 
 
-def test_plot_frame_orderlist(snapshot, mol):
-    order_list = np.random.choice([0, 1, 2], len(snapshot))
-    plot_frame(snapshot, molecule=mol, order_list=order_list)
-
-
-def test_plot_frame_orderfunc(snapshot, mol):
-    plot_frame(snapshot, molecule=mol, order_function=create_neigh_ordering(6))
+@pytest.mark.parametrize("categories", [True, False])
+def test_plot_frame_orderfunc(frame, mol, categories):
+    plot_frame(
+        frame,
+        molecule=mol,
+        order_function=create_neigh_ordering(6),
+        categorical_colour=categories,
+    )
 
 
 @pytest.mark.parametrize("dtype", [int, str, float])
-def test_plot_frame_categorical(snapshot, mol, dtype):
-    categories = np.random.choice([0, 1, 2], len(snapshot)).astype(dtype)
-    plot_frame(snapshot, molecule=mol, order_list=categories, categorical_colour=True)
+def test_plot_frame_categorical(frame, mol, dtype):
+    categories = np.random.choice([0, 1, 2], len(frame)).astype(dtype)
+    plot_frame(frame, molecule=mol, order_list=categories, categorical_colour=True)
 
 
-def test_order(snapshot):
+def test_order(frame):
     order_func = create_neigh_ordering(6)
-    order_list = order_func(snapshot)
-    plot_frame(snapshot, order_list=order_list)
+    order_list = order_func(frame)
+    plot_frame(frame, order_list=order_list)

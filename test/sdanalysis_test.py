@@ -6,25 +6,16 @@
 #
 # Distributed under terms of the MIT license.
 #
-# pylint: disable=redefined-outer-name, no-self-use, unused-argument
+# pylint: disable=no-self-use, unused-argument
 #
 
 """Test the sdrun command line tools."""
 
 from pathlib import Path
 
-import pytest
-from click.testing import CliRunner
 from tables import open_file
 
 from sdanalysis.main import comp_dynamics, comp_relaxations, sdanalysis
-
-
-@pytest.fixture(scope="function")
-def runner():
-    runner = CliRunner()
-    with runner.isolated_filesystem():
-        yield runner
 
 
 class TestSdanalysis:
