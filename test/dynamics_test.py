@@ -41,7 +41,7 @@ def test_calculate_max_wavenumber(wavenumber=10):
 
     box = Box(Lx=100, Ly=100, is2D=True)
 
-    calc_wavenumber = dynamics._calculate_wave_number(box, positions)
+    calc_wavenumber = dynamics.calculate_wave_number(box, positions)
 
     assert calc_wavenumber >= 0
 

@@ -36,7 +36,7 @@ def _static_structure_factor(
     return 1 + 4 * np.pi * density / wave_number * integral
 
 
-def _calculate_wave_number(box: Box, positions: np.ndarray):
+def calculate_wave_number(box: Box, positions: np.ndarray):
     """Calculate the wave number for a configuration.
 
     It is not recommended to automatically compute the wave number, since this will
@@ -129,10 +129,6 @@ class Dynamics:
         if molecule is not None:
             self.mol_vector = molecule.positions
         self.image = image
-
-        if wave_number is None:
-            logger.info("No wave number passed, calculating from current frame.")
-            wave_number = _calculate_wave_number(self.box, self.position)
 
         self.wave_number = wave_number
 
@@ -504,7 +500,7 @@ class Relaxations:
         self.init_orientation = orientation
 
         if wave_number is None:
-            wave_number = _calculate_wave_number(self.box, self.init_position)
+            wave_number = calculate_wave_number(self.box, self.init_position)
 
         self.wave_number = wave_number
 
