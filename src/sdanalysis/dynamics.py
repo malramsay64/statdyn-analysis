@@ -227,6 +227,7 @@ class Dynamics:
         position: np.ndarray,
         orientation: np.ndarray = None,
         image: Optional[np.ndarray] = None,
+        scattering_function: bool = False,
     ) -> Dict[str, Union[int, float]]:
         """Compute all possible dynamics quantities.
 
@@ -244,7 +245,6 @@ class Dynamics:
 
         # Set default result
         dynamic_quantities = {key: np.nan for key in self._all_quantities}
-        # The scattering function takes too long to compute so is ignored.
 
         # Calculate displacement of all molecules
         # This is performed once for all displacement-like quantities
@@ -258,6 +258,14 @@ class Dynamics:
         dynamic_quantities["msd"] = mean_squared_displacement(delta_displacement)
         dynamic_quantities["mfd"] = mean_fourth_displacement(delta_displacement)
         dynamic_quantities["alpha"] = alpha_non_gaussian(delta_displacement)
+
+        # The scattering function takes too long to compute so is normally ignored.
+        if scattering_function and self.wave_number is not None:
+            dynamic_quantities[
+                "scattering_function"
+            ] = intermediate_scattering_function(
+                self.box, self.position, position, self.wave_number
+            )
 
         # The structural relaxation requires the distance value to be set
         if self.distance is not None:
