@@ -66,6 +66,7 @@ disable=bad-continuation,
         no-value-for-parameter,
         ungrouped-imports,
         assignment-from-no-return,
+        consider-using-enumerate,
 
 [REPORTS]
 
