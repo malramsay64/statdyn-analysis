@@ -128,7 +128,8 @@ def process_file(
             logger.warning("Found malformed frame in %s... continuing", infile.name)
             continue
 
-        for index in indexes:
+        logger.info("Indexes for step %s: %s", frame.timestep, indexes)
+        for index in indexes[0:1]:
             dyn, relax = keyframes.setdefault(
                 index,
                 (
@@ -185,8 +186,12 @@ def open_trajectory(filename: Path) -> Iterator[Frame]:
     filename = Path(filename)
     if filename.suffix == ".gsd":
         with gsd.hoomd.open(str(filename)) as trj:
-            for frame in trj:
-                yield HoomdFrame(frame)
+            for index in range(len(trj)):
+                try:
+                    yield HoomdFrame(trj[index])
+                except RuntimeError:
+                    logger.info("Found corrupt frame at index %s continuing", index)
+                    continue
     elif filename.suffix == ".lammpstrj":
         trj = parse_lammpstrj(filename)
         for frame in trj:

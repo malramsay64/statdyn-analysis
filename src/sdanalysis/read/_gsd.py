@@ -112,6 +112,7 @@ def _gsd_exponential_trajectory(
             try:
                 frame = src.read_frame(index)
             except RuntimeError:
+                logger.info("Found corrupt frame at index %s. Continuing", index)
                 continue
 
             # Increment Step
