@@ -61,7 +61,12 @@ def _file_logger(_, __, value) -> None:
     help="Set output file for logging information.",
 )
 @click.option(
-    "-s", "--num-steps", type=int, help="Maximum number of steps for analysis"
+    "-s",
+    "--num-steps",
+    "--steps-max",
+    "steps_max",
+    type=int,
+    help="Maximum number of steps for analysis",
 )
 @click.option(
     "--keyframe-interval",

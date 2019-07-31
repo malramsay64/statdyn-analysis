@@ -79,7 +79,7 @@ def test_comp_dynamics_mol_relax(runner, obj):
 
 def create_params():
     for option in [
-        "--num-steps",
+        "--steps-max",
         "--keyframe-interval",
         "--linear-steps",
         "--keyframe-max",
