@@ -5,7 +5,13 @@ python:
   - 3.6
   - 3.7
 
+env:
+  - NUMPY_VERSION=1.15
+  - NUMPY_VERSION=1.16
+  - NUMPY_VERSION=1.17
+
 install:
+  - pip install -q numpy==$NUMPY_VERSION
   - pip install -e .[dev]
   - pip install codecov
 
