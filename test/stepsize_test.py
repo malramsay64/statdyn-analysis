@@ -173,3 +173,16 @@ def test_next():
             break
 
     assert list_iter == next_iter
+
+
+def test_num_indexes():
+    keyframe_interval = 1000
+    keyframe_max = 10
+    step_iter = GenerateStepSeries(
+        1_000_000, num_linear=10, gen_steps=keyframe_interval, max_gen=keyframe_max
+    )
+    for step in step_iter:
+        if step % keyframe_interval == 0:
+            assert len(step_iter.get_index()) >= 1
+        else:
+            assert len(step_iter.get_index()) == 1

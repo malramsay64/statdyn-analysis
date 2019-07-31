@@ -21,20 +21,20 @@ def generate_steps(
     """Generate a sequence of steps with a power law.
 
     This is a function for generating a sequence of steps such that they create
-    a continous curve when plotted on a log scale. The idea is that at long
+    a continuous curve when plotted on a log scale. The idea is that at long
     timescales, data only needs to be collected very infrequently compared to
     short timescales.  By changing the rate at which we collect the data as the
     timescale increases it drastically reduces the amount of data required for
     capture, storage, processing, and visualisation.
 
     Args:
-        total_steps (int): The total number of steps required for the
+        total_steps: The total number of steps required for the
             simulation, i.e. the value you want to stop on.
-        num_linear (int): The numer of linear steps before increasing the size
+        num_linear: The number of linear steps before increasing the size
             of the steps by a power of 10. There is always an extra step in the
             first sequence, this is to make the patterns nicer.
             The default value of 99 gives dense data across the plot.
-        start (int): The starting value (default is 0) if the data capture is
+        start: The starting value (default is 0) if the data capture is
             commenced at a timestep after (or before) 0.
 
     Example:
@@ -58,24 +58,24 @@ def exp_sequence(
     This function generates integers in a sequence consisting of two components,
     a linear sequence, which is interspersed with an exponential increase in
     the size of each linear step. This sequence is designed to be useful for
-    selecting points to plot on a logrithmic scale.
+    selecting points to plot on a logarithmic scale.
 
     The default values represent a good mix between fewer points and having good
-    coverage of the scale on a logrithmic plot.
+    coverage of the scale on a logarithmic plot.
 
     Note that the first value returned by this function will always be the
     `start` argument.
 
     Args:
         start (int): The starting value of the sequence. This only shifts the
-            seuqence, the difference between points is the same regarless of the
+            sequence, the difference between points is the same regardless of the
             start value. (default = 0)
         num_linear (int): The number of linear steps before increasing the size
             of each linear step. (default = 100)
         initial_step_size (int): The size of the first set of linear steps.
             (default = 1)
         base (int): The base of the exponent of which the initial_step_size is
-            incresed. (default = 10)
+            increased. (default = 10)
     """
     step_size = initial_step_size
     curr_step = start
