@@ -13,6 +13,7 @@ from pathlib import Path
 from typing import Iterator, List, Optional, Tuple
 
 import gsd.hoomd
+from gsd.hoomd import HOOMDTrajectory
 from tqdm import tqdm
 
 from ..frame import Frame, HoomdFrame
@@ -27,7 +28,31 @@ tqdm_options = {"dynamic_ncols": True}
 FileIterator = Iterator[Tuple[List[int], Frame]]
 
 
-def _get_num_steps(trajectory):
+def iter_trajectory(trajectory: HOOMDTrajectory) -> Iterator[HoomdFrame]:
+    """Create an iterator over a HOOMDTrajectory object.
+
+    This iterates over the snapshots in a HOOMDTrajectory from reading a gsd file. This
+    is an alternative to the inbuilt iterator of the HOOMDTrajectory object which
+    performs error handling, which is primarily discarding corrupted frames.
+
+    Args:
+        trajectory: The output of py:func:`gsd.hoomd.open` which is to be iterated over.
+
+    Returns:
+        An iterator over the trajectory returning HoomdFrame objects.
+
+    This is primarily intended as an internal helper function, performing the error
+    handling in a single location which makes it easier to deal with.
+
+    """
+    for index in range(len(trajectory)):
+        try:
+            yield HoomdFrame(trajectory[index])
+        except RuntimeError:
+            logger.info("Found corrupt frame at index %s. Continuing", index)
+
+
+def _get_num_steps(trajectory: gsd.hoomd.HOOMDTrajectory) -> int:
     """Find the number of steps in a Hoomd trajectory handling errors.
 
     There are cases where it makes sense to run an analysis on the trajectory
@@ -51,6 +76,9 @@ def _get_num_steps(trajectory):
         # The final configuration is malformed, so try and read the previous frame
         except RuntimeError:
             frame_index -= 1
+        except IndexError as e:
+            logger.error(e)
+            raise e
 
     logger.exception(
         "Read failed. Trajectory length: %s, frame_index: %d",
@@ -70,21 +98,19 @@ def _gsd_linear_trajectory(
     infile = Path(infile)
     index_list: List[int] = []
     with gsd.hoomd.open(str(infile), "rb") as src:
-        for index in tqdm(range(len(src)), infile.stem, **tqdm_options):
-            try:
-                frame = src.read_frame(index)
-            except RuntimeError:
-                continue
-            try:
-                timestep = int(frame.configuration.step)
-            except IndexError as e:
-                logger.error(e)
-                raise e
-            if timestep % keyframe_interval == 0 and len(index_list) <= keyframe_max:
+        for frame in tqdm(iter_trajectory(src), infile.stem, **tqdm_options):
+            # Update keyframe index
+            if (
+                frame.timestep % keyframe_interval == 0
+                and len(index_list) <= keyframe_max
+            ):
                 index_list.append(len(index_list))
-            if steps_max is not None and timestep > steps_max:
+
+            # Stopping condition
+            if steps_max is not None and frame.timestep > steps_max:
                 return
-            yield index_list, HoomdFrame(frame)
+
+            yield index_list, frame
     return
 
 
@@ -95,6 +121,8 @@ def _gsd_exponential_trajectory(
     keyframe_max: int = 500,
     linear_steps: int = 100,
 ):
+    # Start by logging errors to warning
+    log_level = logger.warning
     with gsd.hoomd.open(str(infile), "rb") as src:
         # Compute steps in gsd file
         if steps_max is None:
@@ -108,62 +136,55 @@ def _gsd_exponential_trajectory(
             gen_steps=keyframe_interval,
             max_gen=keyframe_max,
         )
-        for index in tqdm(range(len(src)), desc=infile.stem, **tqdm_options):
-            try:
-                frame = src.read_frame(index)
-            except RuntimeError:
-                logger.info("Found corrupt frame at index %s. Continuing", index)
-                continue
-
+        traj_iter = iter_trajectory(src)
+        for frame in tqdm(traj_iter, desc=infile.stem, **tqdm_options):
             # Increment Step
             try:
                 curr_step = int(next(step_iter))
+                assert isinstance(curr_step, int)
             except StopIteration:
                 return
 
             logger.debug("Step %d with index %s", curr_step, step_iter.get_index())
 
-            # This handles when the generators don't match up
-            if not isinstance(curr_step, int):
-                raise RuntimeError(
-                    f"Expected integer value for current step, got {type(curr_step)}"
-                )
-            try:
-                timestep = int(frame.configuration.step)
-            except IndexError as e:
-                logger.error(e)
-                raise e
-
-            if curr_step > timestep:
-                logger.warning(
-                    "Step missing in iterator: current %d, frame %d",
+            # There are steps in the trajectory which don't appear in the iterator
+            # Catch up the trajectory to align with the iterator.
+            if curr_step > frame.timestep:
+                log_level(
+                    "Step missing in iterator: iterator %d, trajectory %d",
                     curr_step,
-                    timestep,
+                    frame.timestep,
                 )
-                continue
+                # Subsequent errors will be logged to debug
+                log_level = logger.debug
+                while frame.timestep < curr_step:
+                    try:
+                        frame = next(traj_iter)
+                    except StopIteration:
+                        return
 
-            elif curr_step < timestep:
-                logger.warning(
-                    "Step missing in gsd trajectory: current %d, frame %d",
+            # There are steps in the iterator which don't appear in the trajectory
+            # Catch up the iterator to align with the trajectory.
+            elif curr_step < frame.timestep:
+                log_level(
+                    "Step missing in gsd trajectory: iterator %d, trajectory %d",
                     curr_step,
-                    timestep,
+                    frame.timestep,
                 )
-                while curr_step < timestep:
+                # Subsequent errors will be logged to debug
+                log_level = logger.debug
+                while curr_step < frame.timestep:
                     try:
                         curr_step = next(step_iter)
                     except StopIteration:
                         return
 
+            # Stopping condition -> When we have gone beyond the number of steps we want
             if steps_max is not None and curr_step > steps_max:
                 return
 
-            if curr_step == timestep:
-                try:
-                    yield step_iter.get_index(), HoomdFrame(frame)
-                # Handle error creating a HoomdFrame class
-                except ValueError as e:
-                    logger.warning(e)
-                    continue
+            if curr_step == frame.timestep:
+                yield step_iter.get_index(), frame
 
 
 def read_gsd_trajectory(

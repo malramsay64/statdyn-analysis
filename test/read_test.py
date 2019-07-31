@@ -11,6 +11,7 @@
 
 """Test the statdyn.analysis.read module."""
 
+import gsd.hoomd
 import numpy as np
 import pandas
 import pytest
@@ -134,3 +135,9 @@ def test_open_trajectory(infile):
         assert isinstance(frame, sdanalysis.frame.Frame)
         # Can I read the frame
         assert frame.timestep >= 0
+
+
+def test_iter_trajectory(infile_gsd):
+    with gsd.hoomd.open(str(infile_gsd)) as trj:
+        for frame in _gsd.iter_trajectory(trj):
+            assert isinstance(frame, HoomdFrame)
