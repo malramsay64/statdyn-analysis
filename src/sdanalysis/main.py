@@ -130,9 +130,7 @@ def sdanalysis(ctx, **kwargs) -> None:
 )
 @click.argument("infile", type=click.Path(exists=True, file_okay=True, dir_okay=False))
 @click.argument("outfile", type=click.Path(file_okay=True, dir_okay=False))
-def comp_dynamics(
-    sim_params, mol_relaxations, linear_dynamics, infile, outfile
-) -> None:
+def comp_dynamics(obj, mol_relaxations, linear_dynamics, infile, outfile) -> None:
     """Compute dynamic properties for a single input file."""
     outfile = Path(outfile)
     infile = Path(infile)
@@ -141,7 +139,7 @@ def comp_dynamics(
     outfile.parent.mkdir(parents=True, exist_ok=True)
 
     if linear_dynamics:
-        sim_params["linear_steps"] = None
+        obj["linear_steps"] = None
     if mol_relaxations is not None:
         relaxations = yaml.parse(mol_relaxations)
     else:
@@ -149,9 +147,7 @@ def comp_dynamics(
 
     logger.debug("Processing: %s", infile)
 
-    process_file(
-        infile=infile, outfile=outfile, mol_relaxations=relaxations, **sim_params
-    )
+    process_file(infile=infile, mol_relaxations=relaxations, outfile=outfile, **obj)
 
 
 @sdanalysis.command()
