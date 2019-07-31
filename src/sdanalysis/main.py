@@ -77,7 +77,10 @@ def _file_logger(_, __, value) -> None:
     help="Steps between key frames in simulation",
 )
 @click.option(
-    "--linear-steps", type=int, help="Number of steps between exponential increase."
+    "--linear-steps",
+    type=int,
+    default=100,
+    help="Number of steps between exponential increase.",
 )
 @click.option(
     "--keyframe-max",
