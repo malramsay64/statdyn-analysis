@@ -26,13 +26,13 @@ def read(path, encoding="utf-8"):
 
 
 install_requires = [
-    "numpy~=1.16.1",
+    "numpy>=1.15,<1.18",
     "scipy~=1.0",
     "scikit-learn>=0.20.0,<1.0",
     "pandas>=0.23,<0.26",
     "tables>=3.5.1",
-    "bokeh~=1.0",
-    "gsd~=1.3",
+    "bokeh>=1.0",
+    "gsd>=1.3",
     "pyyaml>=5.1",
     "hsluv==0.0.2",
     "attrs>=18.1.0",
