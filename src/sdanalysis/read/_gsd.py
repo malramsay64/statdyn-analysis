@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 gsd_logger = logging.getLogger("gsd")
 gsd_logger.setLevel("WARNING")
 
-tqdm_options = {"miniters": 100, "dynamic_ncols": True}
+tqdm_options = {"dynamic_ncols": True}
 FileIterator = Iterator[Tuple[List[int], Frame]]
 
 
