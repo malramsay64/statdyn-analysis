@@ -172,8 +172,14 @@ def process_file(
         mol_relax = pandas.concat(
             (r.summary() for _, r in keyframes.values()), keys=list(keyframes.keys())
         )
-        mol_relax["temperature"] = sim_variables.temperature
-        mol_relax["pressure"] = sim_variables.pressure
+        if sim_variables.temperature is None:
+            mol_relax["temperature"] = np.nan
+        else:
+            mol_relax["temperature"] = float(sim_variables.temperature)
+        if sim_variables.pressure is None:
+            mol_relax["pressure"] = np.nan
+        else:
+            mol_relax["pressure"] = float(sim_variables.pressure)
         mol_relax.index.names = ["keyframe", "molecule"]
         mol_relax = mol_relax.reset_index()
         mol_relax.to_hdf(outfile, "molecular_relaxations")

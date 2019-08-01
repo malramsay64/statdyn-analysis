@@ -128,6 +128,12 @@ def test_process_file_outfile(infile, outfile):
     df = read.process_file(infile, wave_number=2.90, outfile=outfile)
     assert df is None
 
+    with pandas.HDFStore(outfile) as src:
+        for key in ["molecular_relaxations", "dynamics"]:
+            df = src.get(key)
+            assert df["temperature"].dtype == np.dtype("float64")
+            assert df["pressure"].dtype == np.dtype("float64")
+
 
 def test_open_trajectory(infile):
     for frame in read.open_trajectory(infile):
