@@ -23,9 +23,19 @@ from numpy.testing import assert_allclose
 from sdanalysis import HoomdFrame, dynamics, read
 
 MAX_BOX = 20.0
-DTYPE = np.float32
-EPS = 2 * np.sqrt(np.finfo(DTYPE).eps)
-HYP_DTYPE = DTYPE
+EPS = 2 * np.sqrt(np.finfo(np.float32).eps)
+
+
+def pos_array(min_val, max_val):
+    min_val = np.float32(min_val)
+    max_val = np.float32(max_val)
+    return arrays(np.float32, (10, 3), elements=floats(min_val, max_val, width=32))
+
+
+def val_array(min_val, max_val):
+    min_val = np.float32(min_val)
+    max_val = np.float32(max_val)
+    return arrays(np.float32, (100), elements=floats(min_val, max_val, width=32))
 
 
 def test_calculate_max_wavenumber(wavenumber=10):
@@ -68,10 +78,7 @@ def translational_displacement_reference(
     return result
 
 
-@given(
-    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 4, MAX_BOX / 4, width=32)),
-    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 4, MAX_BOX / 4, width=32)),
-)
+@given(pos_array(-MAX_BOX / 4, MAX_BOX / 4), pos_array(-MAX_BOX / 4, MAX_BOX / 4))
 def test_translational_displacement_noperiod(init, final):
     """Test calculation of the translational displacement.
 
@@ -89,15 +96,14 @@ def test_translational_displacement_noperiod(init, final):
 
 
 @given(
-    arrays(
-        HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, -MAX_BOX / 4 - 1e-5, width=32)
-    ),
-    arrays(HYP_DTYPE, (10, 3), elements=floats(MAX_BOX / 4, MAX_BOX / 2, width=32)),
+    pos_array(-MAX_BOX / 2, -MAX_BOX / 4 - 1e-5), pos_array(MAX_BOX / 4, MAX_BOX / 2)
 )
 def test_translational_displacement_periodicity(init, final):
     """Ensure the periodicity is calculated appropriately.
 
-    This is testing that periodic boundaries are identified appropriately.
+    This is testing that periodic boundaries are identified appropriately, with all the
+    initial and final positions being further than half the box from each other.
+
     """
     box = Box(MAX_BOX, MAX_BOX, MAX_BOX)
     np_res = np.square(np.linalg.norm(init - final, axis=1))
@@ -107,10 +113,7 @@ def test_translational_displacement_periodicity(init, final):
     assert_allclose(result, ref_res, atol=EPS)
 
 
-@given(
-    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, MAX_BOX / 2, width=32)),
-    arrays(HYP_DTYPE, (10, 3), elements=floats(-MAX_BOX / 2, MAX_BOX / 2, width=32)),
-)
+@given(pos_array(-MAX_BOX / 2, MAX_BOX / 2), pos_array(-MAX_BOX / 4, MAX_BOX / 2))
 def test_translational_displacement(init, final):
     """Ensure the periodicity is calculated appropriately.
 
@@ -122,7 +125,7 @@ def test_translational_displacement(init, final):
     assert np.allclose(result, ref_res, atol=EPS)
 
 
-@given(arrays(HYP_DTYPE, (100), elements=floats(0, 10, width=32)))
+@given(val_array(0, 10))
 def test_alpha(displacement):
     """Test the computation of the non-gaussian parameter."""
     alpha = dynamics.alpha_non_gaussian(displacement)
@@ -130,10 +133,7 @@ def test_alpha(displacement):
     assert alpha >= -1
 
 
-@given(
-    arrays(HYP_DTYPE, (100), elements=floats(0, 10, width=32)),
-    arrays(HYP_DTYPE, (100), elements=floats(0, 2 * np.pi, width=32)),
-)
+@given(val_array(0, 10), val_array(0, 2 * np.pi))
 def test_overlap(displacement, rotation):
     """Test the computation of the overlap of the largest values."""
     overlap_same = dynamics.mobile_overlap(rotation, rotation)
@@ -323,7 +323,7 @@ def test_LastMolecularRelaxation():
     )
 
 
-@given(arrays(HYP_DTYPE, (10), elements=floats(0, 1, width=32)))
+@given(val_array(0, 10))
 @example(np.full(10, np.nan))
 def test_structural_relaxation(array):
     value = dynamics.structural_relax(array)
