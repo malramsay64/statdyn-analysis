@@ -5,6 +5,8 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+#
+# pylint: disable=unused-import
 
 """Test interactive bokeh configurations run."""
 
@@ -12,11 +14,11 @@ import subprocess
 
 
 def test_interactive_null():
-    import sdanalysis.figures.interactive_config  # pylint: disable=unused-import
+    import sdanalysis.figures.interactive_config  # noqa: F401
 
 
 def test_thermodynamics_null():
-    import sdanalysis.figures.thermodynamics  # pylint: disable=unused-import
+    import sdanalysis.figures.thermodynamics  # noqa: F401
 
 
 def test_interactive():
