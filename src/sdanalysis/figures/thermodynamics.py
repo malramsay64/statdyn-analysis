@@ -31,6 +31,7 @@ def read_file(source):
 
 
 def update_file_list(attr, old, new):
+    """Update list of all files as a callback."""
     old_file = fname.value
     fname.options = [filename.name for filename in Path(new).glob("thermo*")]
     try:
@@ -43,6 +44,7 @@ def update_file_list(attr, old, new):
 
 
 def update_file(attr, old, new):
+    """Update current file as a callback."""
     global dataframe
     src_fname = Path(directory.value) / new
     logger.debug("Read file %s", src_fname)
@@ -52,11 +54,13 @@ def update_file(attr, old, new):
 
 
 def update_factors(attr, old, new):
+    """Update factors as a callback."""
     factors.options = list(dataframe.columns)
     factors.value = factors.options[2]
 
 
 def update_datacolumns(attr, old, new):
+    """Update data as a callback."""
     default_columns.data = {
         "x": dataframe.timestep.values,
         "temperature": dataframe.temperature.values,
@@ -83,10 +87,12 @@ update_file_list(None, None, directory.value)
 logger.debug("Defualt colums %s", default_columns.data)
 logger.debug("Defualt colummns columns %s", list(default_columns.data.keys()))
 cols = list(default_columns.data.keys())
+
 try:
     cols.remove("x")
 except ValueError:
     pass
+
 x_range = None
 fig_args = {
     "plot_height": 150,
@@ -94,13 +100,17 @@ fig_args = {
     "tools": "pan, box_zoom, xwheel_zoom",
     "active_scroll": "xwheel_zoom",
 }
+
 default_plots = [figure(**fig_args, y_axis_label=col) for col in cols]
+
 for fig, col in zip(default_plots, cols):
     fig.line(source=default_columns, x="x", y=col)
     if x_range is not None:
         fig.x_range = x_range
     x_range = fig.x_range
+
 logger.debug("Laying out defualt tab")
+
 controls_default = widgetbox([directory, fname], width=300)
 grid = gridplot(default_plots, ncols=1)
 default_layout = row(controls_default, grid)
@@ -113,5 +123,6 @@ controls_inv = widgetbox([factors], width=300)
 inv_layout = column(controls_inv, plot)
 investigate_tab = Panel(child=inv_layout, title="Investigate")
 tabs = Tabs(tabs=[default_tab, investigate_tab])
+
 curdoc().add_root(tabs)
 curdoc().title = "Thermodynamics"
