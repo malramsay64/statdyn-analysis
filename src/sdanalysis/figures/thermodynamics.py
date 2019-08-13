@@ -12,18 +12,9 @@
 import logging
 from pathlib import Path
 
-import numpy as np
 import pandas
 from bokeh.layouts import column, gridplot, row, widgetbox
-from bokeh.models import (
-    CheckboxButtonGroup,
-    ColumnDataSource,
-    MultiSelect,
-    Panel,
-    Select,
-    Tabs,
-    TextInput,
-)
+from bokeh.models import ColumnDataSource, Panel, Select, Tabs, TextInput
 from bokeh.plotting import curdoc, figure
 
 logger = logging.getLogger(__name__)
