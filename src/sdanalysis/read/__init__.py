@@ -12,3 +12,10 @@
 from ._gsd import read_gsd_trajectory
 from ._lammps import read_lammps_trajectory
 from ._read import open_trajectory, process_file
+
+__all__ = [
+    "read_gsd_trajectory",
+    "read_lammps_trajectory",
+    "open_trajectory",
+    "process_file",
+]

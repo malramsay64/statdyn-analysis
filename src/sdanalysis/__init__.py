@@ -8,7 +8,26 @@
 
 from .frame import Frame, HoomdFrame, LammpsFrame
 from .molecules import Dimer, Disc, Molecule, Trimer
-from .order import compute_neighbours, relative_distances, relative_orientations
-from .params import SimulationParams
+from .order import (
+    compute_neighbours,
+    create_ml_ordering,
+    relative_distances,
+    relative_orientations,
+)
 from .read import open_trajectory
-from .version import __version__
+from .version import __version__  # noqa: F401
+
+__all__ = [
+    "Frame",
+    "HoomdFrame",
+    "LammpsFrame",
+    "Dimer",
+    "Disc",
+    "Molecule",
+    "Trimer",
+    "compute_neighbours",
+    "relative_distances",
+    "relative_orientations",
+    "create_ml_ordering",
+    "open_trajectory",
+]

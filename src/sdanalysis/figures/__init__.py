@@ -9,3 +9,5 @@
 from bokeh.io import output_file, output_notebook, show
 
 from .configuration import plot_frame
+
+__all__ = ["output_file", "output_notebook", "show", "plot_frame"]
