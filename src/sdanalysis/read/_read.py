@@ -16,6 +16,7 @@ import attr
 import gsd.hoomd
 import numpy as np
 import pandas
+import tqdm
 
 from ..dynamics import Dynamics, Relaxations
 from ..frame import Frame, HoomdFrame
@@ -188,11 +189,39 @@ def process_file(
     return dataframes.to_dataframe()
 
 
-def open_trajectory(filename: Path) -> Iterator[Frame]:
+def open_trajectory(filename: Path, progressbar=None) -> Iterator[Frame]:
+    """Open a simulation trajectory for processing.
+
+    This reads each configuration in turn from the trajectory, handling most of the
+    common errors with reading a file.
+
+    This handles trajectories in both the gsd file format and simple lammpstrj files.
+
+    Args:
+        filename: The path to the file which is to be opened.
+        progressbar: Whether to display a progress bar when reading the file.
+
+    Returns:
+        Generator which returns class:`Frame` objects.
+
+    """
     filename = Path(filename)
     if filename.suffix == ".gsd":
         with gsd.hoomd.open(str(filename)) as trj:
-            for index in range(len(trj)):
+
+            # Work out which iterator to use
+            if progressbar is None:
+                iterator = range(len(trj))
+            elif progressbar is True:
+                iterator = tqdm.trange(len(trj))
+            elif progressbar == "notebook":
+                iterator = tqdm.tqdm_notebook(range(len(trj)))
+            else:
+                raise ValueError(
+                    "Invalid value for progressbar. Takes either True or 'notebook'"
+                )
+
+            for index in iterator:
                 try:
                     yield HoomdFrame(trj[index])
                 except RuntimeError:
