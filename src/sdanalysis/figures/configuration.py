@@ -167,9 +167,27 @@ def plot_frame(
     molecule: Molecule = Trimer(),
     categorical_colour: bool = False,
     factors: Optional[List[Any]] = None,
-    colormap=palettes.Category10_10,
+    colormap: Optional[Any] = None,
 ):
-    """Plot snapshot using bokeh."""
+    """Plot a snapshot using bokeh.
+
+    Args:
+        frame: The frame determining the positions to plot
+        order_function: A function which takes a frame and determines ordering
+        order_list: A pre-computed list of ordering.
+        source: An existing bokeh ColumnDataSource to use for plotting.
+        molecule: The molecule which is being plotted, used to calculate additional positions.
+        categorical_colour: Toggle which colours liquid/crystal, or each crystal
+        factors: The factors used for plotting. This is for continuity across a range of figures.
+        colourmap: The collection of colours to use when plotting.
+
+    Returns:
+        Bokeh plot
+
+    """
+    if colormap is None:
+        colormap = palettes.Category10_10
+
     data = frame2data(
         frame,
         order_function=order_function,
