@@ -36,7 +36,7 @@ class Result(NamedTuple):
 
 
 def _msd_function(x: np.ndarray, m: float, b: float) -> np.ndarray:
-    """Function to fit the mean squared displacement.
+    """Fit for the mean squared displacement.
 
     The relaxation value of the mean squared displacement (MSD) is found by fitting the line
 
@@ -50,7 +50,7 @@ def _msd_function(x: np.ndarray, m: float, b: float) -> np.ndarray:
 
 
 def _exponential_decay(x: np.ndarray, a: float, b: float, c: float = 0) -> np.ndarray:
-    """Function used to fit an exponential decay.
+    """Fit for exponential decay.
 
     This is is the functional form used to fit a function which exhibits exponential
     decay. The important parameter here is :math:`b`, which is the rate of the decay.
@@ -63,7 +63,7 @@ def _exponential_decay(x: np.ndarray, a: float, b: float, c: float = 0) -> np.nd
 def _ddx_exponential_decay(
     x: np.ndarray, a: float, b: float, c: float = 0
 ) -> np.ndarray:
-    """The first derivative of the exponential decay function.
+    """First derivative of the exponential decay function.
 
     This is the analytical first derivative of the function used for the fit of the
     exponential decay. This is used to speed up the root finding step.
@@ -80,7 +80,7 @@ def _ddx_exponential_decay(
 def _d2dx2_exponential_decay(
     x: np.ndarray, a: float, b: float, c: float = 0
 ) -> np.ndarray:
-    """The first derivative of the exponential decay function.
+    """Second derivative of the exponential decay function.
 
     This is the analytical first derivative of the function used for the fit of the
     exponential decay. This is used to speed up the root finding step.
@@ -101,13 +101,12 @@ def diffusion_constant(time: np.ndarray, msd: np.ndarray) -> Result:
     """Compute the diffusion_constant from the mean squared displacement.
 
     Args:
-        time (class:`np.ndarray`): The timesteps corresponding to each msd value.
-        msd (class:`np.ndarray`): Values of the mean squared displacement
+        time: The timesteps corresponding to each msd value.
+        msd: Values of the mean squared displacement
 
     Returns:
         diffusion_constant (float): The diffusion constant
         error (float): The error in the fit of the diffusion constant
-        (float, float): The diffusion constant
 
     """
     try:
@@ -137,8 +136,8 @@ def threshold_relaxation(
     """Compute the relaxation through the reaching of a specific value.
 
     Args:
-        time (class:`np.ndarray`): The timesteps corresponding to each msd value.
-        value (class:`np.ndarray`): Values of the relaxation paramter
+        time: The timesteps corresponding to each msd value.
+        value: Values of the relaxation parameter
 
     Returns:
         relaxation time (float): The relaxation time for the given quantity.
@@ -163,7 +162,16 @@ def exponential_relaxation(
 ) -> Result:
     """Fit a region of the exponential relaxation with an exponential.
 
-    This fits an exponential to the small region around the value 1/e.
+    This fits an exponential to the small region around the value 1/e. A small region is
+    chosen as the interest here is the time for the decay to reach a value, rather than
+    a fit to the overall curve, so this provides a method of getting an accurate time,
+    while including a collection of points.
+
+    Args:
+        time: The timesteps corresponding to each value
+        value: The value at each point in time
+        sigma: The uncertainty associated with each point
+        value_width: The width of values over which the fit takes place
 
     Returns:
         relaxation_time (float): The relaxation time for the given quantity
@@ -242,7 +250,7 @@ def exponential_relaxation(
         return Result(np.nan, np.nan)
 
     except RuntimeError as err:
-        logger.warning("Failed to converge on value, returning NaN")
+        logger.warning("Failed to converge on value with\n%s\nReturning NaN", err)
         return Result(np.nan, np.nan)
 
 
@@ -250,12 +258,12 @@ def max_time_relaxation(time: np.ndarray, value: np.ndarray) -> Result:
     """Time at which the maximum value is recorded.
 
     Args:
-        time (np.ndarray): The time index
-        value (np.ndarray): The value at each of the time indices
+        time: The time index
+        value: The value at each of the time indices
 
     Returns:
         float: The time at which the maximum value occurs.
-        float: Value of the maximum.
+        float: Estimate of the error of the time
 
     """
     if time.shape != value.shape:
@@ -288,8 +296,8 @@ def max_value_relaxation(time: np.ndarray, value: np.ndarray) -> Result:
         value: The value at each of the time indices
 
     Returns:
-        float: The time at which the maximum value occurs.
-        float: Value of the maximum.
+        float: The value at which the maximum value occurs.
+        float: Estimate of the error in the maximum value.
 
     """
     if time.shape != value.shape:
@@ -318,6 +326,15 @@ def max_value_relaxation(time: np.ndarray, value: np.ndarray) -> Result:
 
 
 def translate_relaxation(quantity: str) -> str:
+    """Convert names of dynamic quantities to their relaxations.
+
+    Args:
+        quantity: The name of the quantity to convert the name of.
+
+    Returns:
+        The translated name.
+
+    """
     translation = {
         "alpha": "max_alpha_time",
         "gamma": "max_gamma_time",
@@ -371,7 +388,7 @@ def compute_relaxation_value(
 
 
 def series_relaxation_value(series: pandas.Series) -> float:
-    """This is a utility function for calculating the relaxation of a pandas Series.
+    """Calculate the relaxation of a pandas Series.
 
     When a `pandas.Series` object, which has an index being the timesteps, and the name
     of the series being the dynamic quantity, this function provides a simple method of
@@ -405,7 +422,7 @@ def series_relaxation_value(series: pandas.Series) -> float:
 
 
 def compute_relaxations(infile) -> None:
-    """Compute the summary time value for the dynamic quantities.
+    """Summary time value for the dynamic quantities.
 
     This computes the characteristic timescale of the dynamic quantities which have been
     calculated and are present in INFILE. The INFILE is a path to the pre-computed
@@ -415,7 +432,6 @@ def compute_relaxations(infile) -> None:
     The output is written to the table 'relaxations' in INFILE.
 
     """
-
     infile = Path(infile)
     # Check is actually an HDF5 file
     try:
