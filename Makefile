@@ -20,8 +20,6 @@ test:
 	python3 -m isort --check-only --recursive test/
 	python3 -m black --check src/
 	python3 -m black --check test/
-	python3 -m flake8 src/
-	python3 -m flake8 test/
 	python3 -m pylint src/
 	python3 -m pylint test/
 	python3 -m mypy src/
