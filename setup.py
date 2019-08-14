@@ -52,7 +52,7 @@ test_requires = [
     "pytest-mypy~=0.3.3",
     "pytest-pylint~=0.14.1",
     "pytest-cov~=2.7.1",
-    "flake8~=3.6.8",
+    "flake8~=3.7.8",
     "flake8-docstrings~=1.3.1",
 ]
 docs_requires = [
