@@ -52,7 +52,6 @@ test_requires = [
     "pytest-mypy~=0.3.3",
     "pytest-pylint~=0.14.1",
     "pytest-cov~=2.7.1",
-    "pytest-lazy-fixture",
 ]
 docs_requires = [
     "sphinx~=2.1.2",
