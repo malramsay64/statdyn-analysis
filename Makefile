@@ -25,8 +25,10 @@ test:
 	python3 -m pylint src/
 	python3 -m pylint test/
 	python3 -m mypy src/
-	$(MAKE) -C docs html SPHINXOPTS="-W"
 	python3 -m pytest
+
+test-docs:
+	$(MAKE) -C docs html SPHINXOPTS="-W"
 
 install:
 	pip install -e . --no-deps
