@@ -3,7 +3,8 @@ dist: xenial
 
 matrix:
   include:
-    - name: "Numpy Oldest"
+    - stage: "Test"
+      name: "Numpy Oldest"
       python: 3.6
       env: NUMPY_VERSION=1.14
 
@@ -15,23 +16,29 @@ matrix:
       python: 3.7
       env: NUMPY_VERSION=1.17
 
+    - name: "Documentation"
+      python: 3.7
+      env: NUMPY_VERSION=1.17
+      script: make test-docs
+
+    - stage: "Deploy"
+      script: skip
+      after_success: skip
+      deploy:
+        provider: pypi
+        user: malramsay64
+        on:
+          tags: true
+          python: "3.7"
+        password:
+          secure: IXdsTArkzbBQXbcvqU9jEZncPi8wF4s1ezYOXeOSgqbyJ4Xt5Tt65Gz9FXHXZXCBuGeYfRxfrDq/NuRxdsa0g5XuKVFnN13TLNmnBgtPtm5G54BciwGXenL+7QUbxd85dgERJQeqoEj1CIR3kLmpmiUPYovEDHyt73On2PU7v9/w8Qqg3xUr52V4dr4dRU0a7YqxmFHUqVRupkpnkyRyW7xsBK0ZKLi5lLyEBy+2f7Me1Ks6gnr8f18Iepl2Xwcm10PGcfYu7TnObDZ3YxW2WGioVDOpyaVWf7esntUqT/lvzopevH3+kQldCjgC+JrTDbyQWFBr6yzRVWShnhCH5XLzNT/96LLMPIciScOJAMSh5uTw6O8vqSa2eKBWMGVY1fPzqFJqELRn0SJYLTXSSGKPyBBq4Qm+GhZjn8k7Zrs0TCZEJdOwjrKDNReZLY4rN5+BY34fmfdm/JIF0k+crttizUQlYNaOY4sYJuQYtWhCJnLKeFBxl7aywBTlFCjAesiFvLqTu8RIvcTnCJJhv5KHL2MwcJWEDri1HjgTyCGoeYN9WBX12tecD+EUxGvszxiqJ5v4QBKmDAJk+uxY0gjzkVMmIpxD0FyGB9HTlosPwWpRUBg3dChEv2I7+SUaLZ0cF8atQUPMj9QYhpvUEciTEq7gXWEIM8rL9JiXc/g=
+
 install:
   - pip install -q numpy==$NUMPY_VERSION
   - pip install -e .[dev]
   - pip install codecov
 
-script:
-  - make test
-  - make docs
+script: make test
 
 after_success:
   - codecov
-
-deploy:
-  provider: pypi
-  user: malramsay64
-  on:
-    tags: true
-    python: "3.7"
-  password:
-    secure: IXdsTArkzbBQXbcvqU9jEZncPi8wF4s1ezYOXeOSgqbyJ4Xt5Tt65Gz9FXHXZXCBuGeYfRxfrDq/NuRxdsa0g5XuKVFnN13TLNmnBgtPtm5G54BciwGXenL+7QUbxd85dgERJQeqoEj1CIR3kLmpmiUPYovEDHyt73On2PU7v9/w8Qqg3xUr52V4dr4dRU0a7YqxmFHUqVRupkpnkyRyW7xsBK0ZKLi5lLyEBy+2f7Me1Ks6gnr8f18Iepl2Xwcm10PGcfYu7TnObDZ3YxW2WGioVDOpyaVWf7esntUqT/lvzopevH3+kQldCjgC+JrTDbyQWFBr6yzRVWShnhCH5XLzNT/96LLMPIciScOJAMSh5uTw6O8vqSa2eKBWMGVY1fPzqFJqELRn0SJYLTXSSGKPyBBq4Qm+GhZjn8k7Zrs0TCZEJdOwjrKDNReZLY4rN5+BY34fmfdm/JIF0k+crttizUQlYNaOY4sYJuQYtWhCJnLKeFBxl7aywBTlFCjAesiFvLqTu8RIvcTnCJJhv5KHL2MwcJWEDri1HjgTyCGoeYN9WBX12tecD+EUxGvszxiqJ5v4QBKmDAJk+uxY0gjzkVMmIpxD0FyGB9HTlosPwWpRUBg3dChEv2I7+SUaLZ0cF8atQUPMj9QYhpvUEciTEq7gXWEIM8rL9JiXc/g=
