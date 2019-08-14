@@ -41,7 +41,7 @@ class Variables(NamedTuple):
         Args:
             fname: The full path of the filename from which to extract the information.
 
-        .. warn::
+        .. warning::
 
             This is expecting the full name of the file, including the extension. Should
             there not be an extension on the filename, values could be stripped giving
@@ -87,7 +87,7 @@ def get_filename_vars(fname: PathLike) -> Variables:
     Args:
         fname: The full path of the filename from which to extract the information.
 
-    .. warn::
+    .. warning::
 
         This is expecting the full name of the file, including the extension. Should
         there not be an extension on the filename, values could be stripped giving
