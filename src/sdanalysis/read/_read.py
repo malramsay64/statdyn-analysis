@@ -130,7 +130,7 @@ def process_file(
             continue
 
         logger.info("Indexes for step %s: %s", frame.timestep, indexes)
-        for index in indexes[0:1]:
+        for index in indexes:
             dyn, relax = keyframes.setdefault(
                 index,
                 (
