@@ -3,18 +3,26 @@ dist: xenial
 
 matrix:
   include:
+    - name: "Linting"
+      python: 3.7
+      env: NUMPY_VERSION=1.17
+      script: make lint
+
     - stage: "Test"
       name: "Numpy Oldest"
       python: 3.6
       env: NUMPY_VERSION=1.14
+      script: make test
 
     - name: "Python 3.6"
       python: 3.6
       env: NUMPY_VERSION=1.17
+      script: make test
 
     - name: "Python 3.7"
       python: 3.7
       env: NUMPY_VERSION=1.17
+      script: make test
 
     - name: "Documentation"
       python: 3.7
@@ -37,8 +45,6 @@ install:
   - pip install -q numpy==$NUMPY_VERSION
   - pip install -e .[dev]
   - pip install codecov
-
-script: make test
 
 after_success:
   - codecov

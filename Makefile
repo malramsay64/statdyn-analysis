@@ -15,7 +15,7 @@ setup:
 	conda env create
 	pre-commit install-hooks
 
-test:
+lint:
 	python3 -m isort --check-only --recursive src/
 	python3 -m isort --check-only --recursive test/
 	python3 -m black --check src/
@@ -25,6 +25,8 @@ test:
 	python3 -m pylint src/
 	python3 -m pylint test/
 	python3 -m mypy src/
+
+test:
 	python3 -m pytest
 
 test-docs:
