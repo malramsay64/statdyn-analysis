@@ -5,10 +5,9 @@
 # Copyright © 2019 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
+#
+# pylint: disable=redefined-outer-name
 
-"""
-
-"""
 
 from pathlib import Path
 from tempfile import TemporaryDirectory
