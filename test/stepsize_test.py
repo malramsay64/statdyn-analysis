@@ -8,6 +8,8 @@
 
 """Testing for the stepsize module."""
 
+import math
+
 import numpy as np
 import pytest
 from hypothesis import given, settings
@@ -36,6 +38,12 @@ from sdanalysis.StepSize import GenerateStepSeries, generate_steps
             ],
         },
         {
+            "max": 110,
+            "lin": 100,
+            "start": 0,
+            "def": list(range(100)) + [100, 110]
+        },
+        {
             "max": 87,
             "lin": 10,
             "start": 0,
@@ -51,8 +59,6 @@ def steps(request):
         )
     )
     return request.param
-
-
 # fmt: on
 
 
@@ -186,3 +192,31 @@ def test_num_indexes():
             assert len(step_iter.get_index()) >= 1
         else:
             assert len(step_iter.get_index()) == 1
+
+
+def test_sequence_keyframe():
+    keyframe_interval = 1000
+    keyframe_max = 2
+    num_linear = 100
+    step_list = list(
+        GenerateStepSeries(2000, num_linear, keyframe_interval, keyframe_max)
+    )
+    split_index = step_list.index(1000)
+    step_list = np.array(step_list)
+    np.array_equiv(step_list[:split_index], step_list[split_index:] - 1000)
+
+
+def test_index_values():
+    keyframe_interval = 10000
+    keyframe_max = 2
+    num_linear = 10
+    step_iter = GenerateStepSeries(20000, num_linear, keyframe_interval, keyframe_max)
+
+    for i in step_iter:
+        index = step_iter.get_index()
+        if 1 in index:
+            power = math.log10(i)
+            assert pytest.approx(power, int(power))
+        if 2 in index:
+            power = math.log10(i - keyframe_interval)
+            assert pytest.approx(power, int(power))
