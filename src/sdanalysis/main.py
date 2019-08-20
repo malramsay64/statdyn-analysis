@@ -128,9 +128,18 @@ def sdanalysis(ctx, **kwargs) -> None:
     is_flag=True,
     help="Flag to specify the configurations in a trajectory have linear steps between them.",
 )
+@click.option(
+    "--scattering-function",
+    type=bool,
+    default=False,
+    is_flag=True,
+    help="Calculate the values for the intermediate scattering function.",
+)
 @click.argument("infile", type=click.Path(exists=True, file_okay=True, dir_okay=False))
 @click.argument("outfile", type=click.Path(file_okay=True, dir_okay=False))
-def comp_dynamics(obj, mol_relaxations, linear_dynamics, infile, outfile) -> None:
+def comp_dynamics(
+    obj, mol_relaxations, linear_dynamics, scattering_function, infile, outfile
+) -> None:
     """Compute dynamic properties for a single input file."""
     outfile = Path(outfile)
     infile = Path(infile)
@@ -147,7 +156,13 @@ def comp_dynamics(obj, mol_relaxations, linear_dynamics, infile, outfile) -> Non
 
     logger.debug("Processing: %s", infile)
 
-    process_file(infile=infile, mol_relaxations=relaxations, outfile=outfile, **obj)
+    process_file(
+        infile=infile,
+        mol_relaxations=relaxations,
+        outfile=outfile,
+        scattering_function=scattering_function,
+        **obj,
+    )
 
 
 @sdanalysis.command()

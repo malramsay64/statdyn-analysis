@@ -88,6 +88,7 @@ def process_file(
     keyframe_max: int = 500,
     mol_relaxations: List[Dict[str, Any]] = None,
     outfile: Optional[Path] = None,
+    scattering_function: bool = False,
 ) -> Optional[pandas.DataFrame]:
     """Read a file and compute the dynamics quantities.
 
@@ -144,7 +145,11 @@ def process_file(
 
             try:
                 dynamics_series = dyn.compute_all(
-                    frame.timestep, frame.position, frame.orientation, frame.image
+                    timestep=frame.timestep,
+                    position=frame.position,
+                    orientation=frame.orientation,
+                    image=frame.image,
+                    scattering_function=scattering_function,
                 )
                 relax.add(frame.timestep, frame.position, frame.orientation)
             except (ValueError, RuntimeError) as e:
