@@ -50,11 +50,4 @@ build:
 test:
   import:
     - sdanalysis
-  requires:
-    - pytest
-    - hypothesis
-    - pytest-lazy-fixture
-  source_files:
-    - test/
-  commands:
-    - python -m pytest
+    - sdanalysis.figures.interactive_config
