@@ -98,7 +98,9 @@ def _gsd_linear_trajectory(
     infile = Path(infile)
     index_list: List[int] = []
     with gsd.hoomd.open(str(infile), "rb") as src:
-        for frame in tqdm(iter_trajectory(src), infile.stem, **tqdm_options):
+        for frame in tqdm(
+            iter_trajectory(src), infile.stem, total=len(src), **tqdm_options
+        ):
             # Update keyframe index
             if (
                 frame.timestep % keyframe_interval == 0
@@ -137,7 +139,7 @@ def _gsd_exponential_trajectory(
             max_gen=keyframe_max,
         )
         traj_iter = iter_trajectory(src)
-        for frame in tqdm(traj_iter, desc=infile.stem, **tqdm_options):
+        for frame in tqdm(traj_iter, desc=infile.stem, total=len(src), **tqdm_options):
             # Increment Step
             try:
                 curr_step = int(next(step_iter))
