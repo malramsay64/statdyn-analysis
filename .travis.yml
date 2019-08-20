@@ -9,7 +9,7 @@ matrix:
       script: make lint
 
     - stage: "Test"
-      name: "Numpy Oldest"
+      name: "Numpy 1.14"
       python: 3.6
       env: NUMPY_VERSION=1.14
       script: make test
