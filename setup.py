@@ -49,7 +49,7 @@ test_requires = [
     "coverage~=4.5.4",
     "black==19.3b0",
     "mypy==0.720",
-    "pytest-mypy~=0.3.3",
+    "pytest-mypy>=0.3.3,<0.5.0",
     "pytest-pylint~=0.14.1",
     "pytest-cov~=2.7.1",
     "flake8~=3.7.8",
