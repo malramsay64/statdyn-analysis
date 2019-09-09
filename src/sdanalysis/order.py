@@ -5,7 +5,7 @@
 # Copyright © 2017 Malcolm Ramsay <malramsay64@gmail.com>
 #
 # Distributed under terms of the MIT license.
-"""Module for the computation of ordering
+"""Module for the computation of ordering.
 
 These are tools and utilities for calculating the ordering of local structures.
 
@@ -95,17 +95,50 @@ def create_ml_ordering(model: Path) -> Callable[[Frame], np.ndarray]:
 
 def create_orient_ordering(threshold: float) -> Callable[[Frame], np.ndarray]:
     def compute_orient_ordering(snap: Frame) -> np.ndarray:
-        return orientational_order(
-            snap.box, snap.position, snap.orientation, order_threshold=threshold
+        return (
+            orientational_order(snap.box, snap.position, snap.orientation) > threshold
         )
+
+    # Set the docstrings based on the construction
+    compute_orient_ordering.__doc__ = f"""
+        Evaluate ordering of local environments using orientational ordering.
+
+        This evaluates whether each local environment is ordered, with environments containing
+        an orientational order parameter greater than {threshold} being considered ordered,
+        while values lower are considered disordered.
+
+        Args:
+            snap: A frame containing the configuration to be evaluated.
+
+        Returns:
+            The evaluation of each local environment. True corresponds to ordered, while False
+            is disordered.
+
+        """
 
     return compute_orient_ordering
 
 
 def create_neigh_ordering(neighbours: int) -> Callable[[Frame], np.ndarray]:
     def compute_neigh_ordering(snap: Frame) -> np.ndarray:
-        """Compute the neighbours ordering for a configuration."""
         return compute_voronoi_neighs(snap.box, snap.position) == neighbours
+
+    # Set the docstrings based on the construction
+    compute_neigh_ordering.__doc__ = f"""
+        Evaluate ordering of local environments using number of neighbours
+
+        This evaluates whether each local environment is ordered, with environments containing
+        {neighbours} neighbours being crystalline, while local environments with more or fewer
+        are considered disordered.
+
+        Args:
+            snap: A frame containing the configuration to be evaluated.
+
+        Returns:
+            The evaluation of each local environment. True corresponds to ordered, while False
+            is disordered.
+
+    """
 
     return compute_neigh_ordering
 
@@ -153,6 +186,19 @@ def relative_orientations(
     max_radius: float = 3.5,
     max_neighbours: int = 8,
 ) -> np.ndarray:
+    """Find the relative orientations of each neighbouring particle.
+
+    This finds each of the nearest neighbours for each particle and computes the
+    orientation of those neighbours relative to the orientation of the central particle.
+
+    Args:
+        box: The lengths of the simulation cell in each direction
+        position: The position of each particle
+        orientation: The orientation of each particle represented as a quaternion
+        max_radius: The maximum distance to look to nearest neighbours
+        max_neighbours: The maximum number of neighbours considered nearest.
+
+    """
     neighbours = compute_neighbours(box, position, max_radius, max_neighbours)
     return _neighbour_relative_angle(neighbours, orientation)
 
@@ -194,7 +240,17 @@ def orientational_order(
 def num_neighbours(
     box: np.ndarray, position: np.ndarray, max_radius: float = 3.5
 ) -> np.ndarray:
-    """Calculate the number of neighbours of each molecule."""
+    """Calculate the number of neighbours of each molecule.
+
+    This function is optimised to quickly calculate the number of nearest neighbours
+    each particle has.
+
+    Args:
+        box: The lengths of the simulation cell in each direction
+        position: The position of each particle
+        max_radius: The maximum radius at which a particle is considered a neighbour.
+
+    """
     max_neighbours = 9
     neighs = setup_neighbours(box, position, max_radius, max_neighbours)
     return neighs.nlist.neighbor_counts
@@ -206,7 +262,19 @@ def relative_distances(
     max_radius: float = 3.5,
     max_neighbours: int = 8,
 ) -> np.ndarray:
-    """Compute the distance to each neighbour."""
+    """Compute the distance to each neighbour.
+
+    Args:
+        box: The lengths of the simulation cell in each direction
+        position: The position of each particle
+        max_radius: The maximum radius at which a particle is considered a neighbour.
+        max_neighbours: The maximum number of neighbours to search for
+
+    Returns:
+        The distance to each neighbour in a numpy array. Values which correspond
+        to missing neighbours are represented by the value -1.
+
+    """
     neighbours = setup_neighbours(box, position, max_radius, max_neighbours)
     distances = np.empty((len(position), max_neighbours))
     distances[:] = neighbours.r_sq_list
