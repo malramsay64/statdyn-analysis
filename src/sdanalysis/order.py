@@ -163,13 +163,32 @@ def orientational_order(
     orientation: np.ndarray,
     max_radius: float = 3.5,
     max_neighbours: int = 8,
-    order_threshold: float = None,
+    angle_factor: int = 1,
 ) -> np.ndarray:
-    neighbours = compute_neighbours(box, position, max_radius, max_neighbours)
-    if order_threshold is not None:
-        return _orientational_order(neighbours, orientation) > order_threshold
+    r"""Compute the orientational order parameter for a given input.
 
-    return _orientational_order(neighbours, orientation)
+    The orientational order parameter compares the orientation of a particle with that
+    of all it's neighbours, using the relation
+
+    ..math:
+
+        \Theta = \sum_{i=1}^N \cos(l(\theta_i - \theta))
+
+    taking the orientation of each of the neighbouring particles compared to the current
+    particle.
+
+    Args:
+        box: The lengths of the simulation cell in each direction
+        position: The position of each particle
+        orientation: The orientation of each particle, given as quaternions.
+        max_radius: The maximum radius to search for neighbours
+        max_neighbours: The maximum number of neighbours to search for
+        angle_factor: The factor l in front of each angle. This allows the definition of ordered
+            to include alternative orientations. An angle factor of 2 allows for orientations
+            at 0 or 180 degrees to be equivalent.
+    """
+    neighbours = compute_neighbours(box, position, max_radius, max_neighbours)
+    return _orientational_order(neighbours, orientation, angle_factor)
 
 
 def num_neighbours(
