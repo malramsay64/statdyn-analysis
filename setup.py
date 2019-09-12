@@ -57,7 +57,7 @@ test_requires = [
 docs_requires = [
     "sphinx>=2.1.2,<2.3.0",
     "sphinx_rtd_theme~=0.4.3",
-    "sphinx_autodoc_typehints~=1.7.0",
+    "sphinx_autodoc_typehints>=1.7,<1.9",
 ]
 dev_requires = docs_requires + test_requires
 
