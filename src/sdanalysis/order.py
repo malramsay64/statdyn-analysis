@@ -55,7 +55,7 @@ def _orientational_order(
 
     """
     angles = _neighbour_relative_angle(neighbourlist, orientation)
-    return np.cos(angles.mean() * angle_factor)
+    return np.square(np.cos(angles.mean() * angle_factor))
 
 
 def create_ml_ordering(model: Path) -> Callable[[Frame], np.ndarray]:
