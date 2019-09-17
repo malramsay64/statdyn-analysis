@@ -39,7 +39,9 @@ def _neighbour_relative_angle(
         orientation: The orientation of each particle
 
     Returns:
-        A 2d numpy array with the same shape as the neighbour list containing the relative orientation of each molecule where each neighbour was.
+        A 2d numpy array with the same shape as the neighbour list containing the
+        relative orientation of each molecule where each neighbour was.
+
 
     """
     if len(neighbourlist) != len(orientation):
@@ -64,7 +66,7 @@ def _neighbour_relative_angle(
 
 
 def _orientational_order(
-    neighbourlist: np.ndarray, orientation: np.ndarray, angle_factor: float = 1.0
+    neighbourlist: np.ndarray, orientation: np.ndarray
 ) -> np.ndarray:
     """Compute the orientational order parameter.
 
@@ -75,15 +77,13 @@ def _orientational_order(
     Args:
         neighbourlist: The neighbours of each molecule in the simulation
         orientation: The orientation of each molecule as a quaternion
-        angle_factor: Multiplicative factor for the angle. This allows
-            for this function to apply to angles other than 180 deg.
 
     Returns:
         An array with the orientational order of each molecule.
 
     """
     angles = _neighbour_relative_angle(neighbourlist, orientation)
-    return np.mean(np.square(np.cos(angles * angle_factor)), axis=1)
+    return np.mean(np.square(np.cos(angles)), axis=1)
 
 
 def create_ml_ordering(model: Path) -> Callable[[Frame], np.ndarray]:
@@ -237,7 +237,6 @@ def orientational_order(
     orientation: np.ndarray,
     max_radius: float = 3.5,
     max_neighbours: int = 8,
-    angle_factor: int = 1,
 ) -> np.ndarray:
     r"""Compute the orientational order parameter for a given input.
 
@@ -246,10 +245,11 @@ def orientational_order(
 
     ..math:
 
-        \Theta = \sum_{i=1}^N \cos(l(\theta_i - \theta))
+        \Theta = \sum_{i=1}^N \cos^2((\theta_i - \theta))
 
     taking the orientation of each of the neighbouring particles compared to the current
-    particle.
+    particle. The square ensures that the angles which are both parallel and
+    antiparallel contribute to the ordering.
 
     Args:
         box: The lengths of the simulation cell in each direction
@@ -257,12 +257,9 @@ def orientational_order(
         orientation: The orientation of each particle, given as quaternions.
         max_radius: The maximum radius to search for neighbours
         max_neighbours: The maximum number of neighbours to search for
-        angle_factor: The factor l in front of each angle. This allows the definition of ordered
-            to include alternative orientations. An angle factor of 2 allows for orientations
-            at 0 or 180 degrees to be equivalent.
     """
     neighbours = compute_neighbours(box, position, max_radius, max_neighbours)
-    return _orientational_order(neighbours, orientation, angle_factor)
+    return _orientational_order(neighbours, orientation)
 
 
 def num_neighbours(
