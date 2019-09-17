@@ -11,6 +11,7 @@ These are tools and utilities for calculating the ordering of local structures.
 
 """
 
+import warnings
 from pathlib import Path
 from typing import Callable
 
@@ -27,10 +28,37 @@ from .util import create_freud_box
 def _neighbour_relative_angle(
     neighbourlist: np.ndarray, orientation: np.ndarray
 ) -> np.ndarray:
+    """Find the relative angles for each neighbour.
+
+    Take the neighbours for each molecule and return the relative orientation for each
+    of them. Note that the length of the neighbourlist and the orientation should be
+    the same.
+
+    Args:
+        neighbourlist: A 2d array containing the neighbours for each particle.
+        orientation: The orientation of each particle
+
+    Returns:
+        A 2d numpy array with the same shape as the neighbour list containing the relative orientation of each molecule where each neighbour was.
+
+    """
+    if len(neighbourlist) != len(orientation):
+        warnings.warn(
+            f"""Having different lengths for the neighbourlist and orientation
+            arguments can lead to unusual outcomes. Found {len(neighbourlist)} and
+            {len(orientation)}"""
+        )
+
     num_mols = len(orientation)
+
+    # Where there are missing neighbours we want an angle of 0, so this replaces the
+    # neighbour with the current molecule
     default_vals = np.arange(num_mols).reshape(-1, 1)
     neighbourlist = np.where(neighbourlist < num_mols, neighbourlist, default_vals)
-    return rowan.geometry.intrinsic_distance(
+
+    # `rowan.geometry.intrinsic_distance` returns a value in the range [0, \pi]. The
+    # multiplicative factor 2, scales the range to be from [0, 2\pi].
+    return 2 * rowan.geometry.intrinsic_distance(
         orientation[neighbourlist], orientation.reshape(-1, 1, 4)
     )
 
@@ -55,7 +83,7 @@ def _orientational_order(
 
     """
     angles = _neighbour_relative_angle(neighbourlist, orientation)
-    return np.square(np.cos(angles.mean() * angle_factor))
+    return np.mean(np.square(np.cos(angles * angle_factor)), axis=1)
 
 
 def create_ml_ordering(model: Path) -> Callable[[Frame], np.ndarray]:
