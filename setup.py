@@ -51,7 +51,7 @@ test_requires = [
     "mypy==0.720",
     "pytest-cov==2.7.1",
     "flake8==3.7.8",
-    "flake8-docstrings==1.4.0",
+    "flake8-docstrings==1.5.0",
     "pydocstyle<5.0.0,!=4.0.0",  # There is an issue with indented code blocks in 4.0.0
 ]
 docs_requires = [
