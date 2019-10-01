@@ -43,7 +43,7 @@ install_requires = [
     "joblib~=0.13.2",
 ]
 test_requires = [
-    "pytest>=5.0.1,<5.2.0",
+    "pytest>=5.0.1,<5.3.0",
     "pylint~=2.3.1",
     "hypothesis==4.35.0",
     "coverage~=4.5.4",
