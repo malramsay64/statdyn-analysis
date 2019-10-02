@@ -40,7 +40,7 @@ install_requires = [
     "freud-analysis>=1.0,<1.3",
     "rowan>=1.0,<1.3",
     "tqdm~=4.0",
-    "joblib~=0.13.2",
+    "joblib>=0.13.2,<0.15.0",
 ]
 test_requires = [
     "pytest>=5.0.1,<5.2.0",
