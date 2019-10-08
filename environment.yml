@@ -1,45 +1,9 @@
-name: sdanalysis-pip
+name: sdanalysis-dev
 channels:
-    - defaults
-    # - anaconda
-    # - conda-forge
+  - defaults
+  - conda-forge
 dependencies:
-    # Install Requirements
-    - pip
-    - pip:
-      - ".[dev]"
-
-    # - python~=3.6.4
-    # - numpy~=1.16.4
-    # - scipy=1.3.0
-    # - scikit-learn~=0.21.2
-    # - pandas~=0.25.0
-    # - hdf5~=1.10.5
-    # - pytables~=3.5.1
-    # - mock~=3.0.5
-    # - click~=7.0
-    # - bokeh~=1.2.0
-    # - gsd~=1.7.0
-    # - pyyaml~=5.1.1
-    # - freud~=1.2.0
-    # - rowan~=1.2.1
-    # - malramsay::hsluv=0.0.2
-    # - tqdm~=4.32.2
-    # - joblib=0.13.2
-    # # Development requirements
-    # - pre_commit=1.17.0
-    # - pytest=5.2.0
-    # - coverage==4.5.4
-    # - pytest-cov==2.8.1
-    # - hypothesis==4.38.0
-    # - mypy=0.730
-    # - pylint=2.4.0
-    # - black==19.3b0
-    # - isort==4.3.21
-    # - flake8==3.7.8
-    # - flake8-docstrings=1.5.0
-    # # Documentation
-    # - sphinx~=2.1.2
-    # - sphinx_rtd_theme==0.4.3
-    # - sphinx-autodoc-typehints=1.8.0
-    # - pip~=19.2.1
+  - pre-commit
+  - pip
+  - pip:
+    - ".[dev]"
