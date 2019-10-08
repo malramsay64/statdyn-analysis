@@ -35,29 +35,30 @@ install_requires = [
     "gsd>=1.3",
     "pyyaml>=5.1",
     "hsluv==0.0.2",
-    "attrs>=18.1.0",
+    "attrs>=18.1.0,<19.2",
     "click~=7.0.0",
     "freud-analysis>=1.0,<1.3",
-    "rowan>=1.0,<1.3",
-    "tqdm~=4.0",
-    "joblib~=0.13.2",
+    "rowan>=1.2,<1.3",
+    "tqdm>=4,<5",
+    "joblib>=0.13.2,<0.15",
 ]
 test_requires = [
-    "pytest>=5.0.1,<5.2.0",
-    "pylint~=2.3.1",
-    "hypothesis==4.35.0",
-    "coverage~=4.5.4",
+    "pytest>=5.0.1,<5.3.0",
+    "pylint==2.4.0",
+    "hypothesis==4.38.0",
+    "coverage==4.5.4",
+    "isort==4.3.21",
     "black==19.3b0",
     "mypy==0.720",
-    "pytest-cov==2.7.1",
+    "pytest-cov==2.8.1",
     "flake8==3.7.8",
-    "flake8-docstrings==1.4.0",
+    "flake8-docstrings==1.5.0",
     "pydocstyle<5.0.0,!=4.0.0",  # There is an issue with indented code blocks in 4.0.0
 ]
 docs_requires = [
     "sphinx>=2.1.2,<2.3.0",
-    "sphinx_rtd_theme~=0.4.3",
-    "sphinx_autodoc_typehints~=1.7.0",
+    "sphinx_rtd_theme==0.4.3",
+    "sphinx_autodoc_typehints==1.8.0",
 ]
 dev_requires = docs_requires + test_requires
 
