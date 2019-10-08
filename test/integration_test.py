@@ -11,8 +11,8 @@
 
 from pathlib import Path
 
+import click
 import pandas
-
 from sdanalysis.main import comp_dynamics, comp_relaxations
 
 
@@ -27,7 +27,6 @@ def test_dynamics_file(dynamics_file):
 
 def test_runner_file(runner):
     """Test to ensure the runner fixture is performing as expected."""
-    import click
 
     @click.command()
     @click.argument("fname")

@@ -15,7 +15,6 @@ from tempfile import TemporaryDirectory
 import gsd.hoomd
 import numpy as np
 import pytest
-
 from sdanalysis import HoomdFrame
 from sdanalysis.read._gsd import read_gsd_trajectory
 from sdanalysis.StepSize import GenerateStepSeries

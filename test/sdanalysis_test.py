@@ -13,9 +13,8 @@
 
 from pathlib import Path
 
-from tables import open_file
-
 from sdanalysis.main import comp_dynamics, comp_relaxations, sdanalysis
+from tables import open_file
 
 
 class TestSdanalysis:

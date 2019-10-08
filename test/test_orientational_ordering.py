@@ -17,7 +17,6 @@ import hypothesis.strategies as st
 import numpy as np
 import rowan
 from hypothesis import assume, given
-
 from sdanalysis.order import _orientational_order
 
 

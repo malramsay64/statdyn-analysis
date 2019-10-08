@@ -19,7 +19,6 @@ from hypothesis import assume, example, given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
 from numpy.testing import assert_allclose
-
 from sdanalysis import HoomdFrame, dynamics, read
 
 MAX_BOX = 20.0

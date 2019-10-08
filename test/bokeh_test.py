@@ -6,7 +6,7 @@
 #
 # Distributed under terms of the MIT license.
 #
-# pylint: disable=unused-import
+# pylint: disable=unused-import, import-outside-toplevel
 
 """Test interactive bokeh configurations run."""
 

@@ -6,7 +6,7 @@
 #
 # Distributed under terms of the MIT license.
 #
-# pylint: disable=protected-access, len-as-condition
+# pylint: disable=protected-access
 #
 
 """Test the statdyn.analysis.read module."""
@@ -15,7 +15,6 @@ import gsd.hoomd
 import numpy as np
 import pandas
 import pytest
-
 import sdanalysis
 from sdanalysis import HoomdFrame, LammpsFrame, read
 from sdanalysis.read import _gsd, _lammps, _read

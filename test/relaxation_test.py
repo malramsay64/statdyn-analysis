@@ -6,7 +6,7 @@
 #
 # Distributed under terms of the MIT license.
 #
-# pylint: disable=redefined-outer-name, unsupported-assignment-operation, no-self-use
+# pylint: disable=redefined-outer-name, no-self-use
 #
 
 """Test the relaxation module."""
@@ -19,7 +19,6 @@ import pandas
 import pytest
 from hypothesis import example, given
 from hypothesis.extra.numpy import arrays
-
 from sdanalysis import dynamics, relaxation
 
 logger = logging.getLogger(__name__)
@@ -71,7 +70,6 @@ class TestThresholdRelaxation:
     def test_decay_zeroth(self, linear_relax):
         time, values = linear_relax
         # This is to turn the linear growth into linear decay
-        values = values
         logger.debug("Values: %s", values)
         relax, _ = relaxation.threshold_relaxation(
             time, values, threshold=0.5, decay=True
