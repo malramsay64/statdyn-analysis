@@ -14,6 +14,7 @@ from tempfile import TemporaryDirectory
 
 import pytest
 from click.testing import CliRunner
+
 from sdanalysis import molecules, read
 
 MOLECULE_LIST = [

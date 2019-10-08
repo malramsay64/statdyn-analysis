@@ -19,6 +19,7 @@ import pandas
 import pytest
 from hypothesis import example, given
 from hypothesis.extra.numpy import arrays
+
 from sdanalysis import dynamics, relaxation
 
 logger = logging.getLogger(__name__)

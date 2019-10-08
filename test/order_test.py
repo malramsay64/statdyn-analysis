@@ -13,6 +13,7 @@
 
 import numpy as np
 import pytest
+
 from sdanalysis import order, read
 
 INFILES = [

@@ -15,6 +15,7 @@ import freud
 import gsd.hoomd
 import numpy as np
 import pytest
+
 from sdanalysis.frame import HoomdFrame, LammpsFrame
 
 

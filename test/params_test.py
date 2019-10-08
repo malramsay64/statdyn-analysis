@@ -16,6 +16,7 @@ from itertools import product
 from pathlib import Path
 
 import pytest
+
 from sdanalysis.molecules import Dimer, Disc, Molecule, Sphere, Trimer
 from sdanalysis.params import SimulationParams
 

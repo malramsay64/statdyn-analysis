@@ -17,6 +17,7 @@ import numpy as np
 import pytest
 from hypothesis import given
 from hypothesis.strategies import floats
+
 from sdanalysis.figures.configuration import colour_orientation, plot_frame
 from sdanalysis.order import create_neigh_ordering
 

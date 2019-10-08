@@ -18,6 +18,7 @@ from hypothesis import given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
 from numpy.testing import assert_allclose
+
 from sdanalysis.params import SimulationParams
 from sdanalysis.util import (
     Variables,

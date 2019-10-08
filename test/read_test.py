@@ -15,6 +15,7 @@ import gsd.hoomd
 import numpy as np
 import pandas
 import pytest
+
 import sdanalysis
 from sdanalysis import HoomdFrame, LammpsFrame, read
 from sdanalysis.read import _gsd, _lammps, _read
