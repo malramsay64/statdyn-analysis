@@ -57,6 +57,9 @@ class Molecule:
         """Radii of the particles."""
         return np.array([self._radii[p] for p in self.particles])
 
+    def __eq__(self, other) -> bool:
+        return type(self) == type(other)
+
 
 class Disc(Molecule):
     """Defines a 2D particle."""
