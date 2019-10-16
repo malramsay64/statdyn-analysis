@@ -35,7 +35,7 @@ install_requires = [
     "gsd>=1.3",
     "pyyaml>=5.1",
     "hsluv==0.0.2",
-    "attrs>=19.2,<19.3",
+    "attrs>=19.2,<19.4",
     "click~=7.0.0",
     "freud-analysis>=1.0,<1.3",
     "rowan>=1.2,<1.3",
