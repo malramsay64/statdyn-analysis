@@ -194,7 +194,9 @@ def process_file(
     return dataframes.to_dataframe()
 
 
-def open_trajectory(filename: Path, progressbar=None) -> Iterator[Frame]:
+def open_trajectory(
+    filename: Path, progressbar=None, frame_interval=1
+) -> Iterator[Frame]:
     """Open a simulation trajectory for processing.
 
     This reads each configuration in turn from the trajectory, handling most of the
@@ -216,11 +218,11 @@ def open_trajectory(filename: Path, progressbar=None) -> Iterator[Frame]:
 
             # Work out which iterator to use
             if progressbar is None:
-                iterator = range(len(trj))
+                iterator = range(0, len(trj), frame_interval)
             elif progressbar is True:
-                iterator = tqdm.trange(len(trj))
+                iterator = tqdm.trange(0, len(trj), frame_interval)
             elif progressbar == "notebook":
-                iterator = tqdm.tqdm_notebook(range(len(trj)))
+                iterator = tqdm.tqdm_notebook(range(0, len(trj), frame_interval))
             else:
                 raise ValueError(
                     "Invalid value for progressbar. Takes either True or 'notebook'"

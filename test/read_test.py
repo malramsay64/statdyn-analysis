@@ -143,6 +143,14 @@ def test_open_trajectory(infile):
         assert frame.timestep >= 0
 
 
+def test_frame_interval(infile):
+    for frame in read.open_trajectory(infile, frame_interval=2):
+        # Ensure frame is of the appropriate type
+        assert isinstance(frame, sdanalysis.frame.Frame)
+        # Can I read the frame
+        assert frame.timestep >= 0
+
+
 def test_iter_trajectory(infile_gsd):
     with gsd.hoomd.open(str(infile_gsd)) as trj:
         for frame in _gsd.iter_trajectory(trj):
