@@ -212,14 +212,14 @@ def _interactive_verbosity(_, __, value) -> None:
 )
 def figure(ip, directory, model) -> None:
     """Start bokeh server with the file passed."""
-    # pylint disable=import-outside-toplevel
+    # pylint: disable=import-outside-toplevel
     from bokeh.server.server import Server
     from bokeh.application import Application
     from bokeh.application.handlers.function import FunctionHandler
 
     from .figures.interactive_config import make_document
 
-    # pylint enable=import-outside-toplevel
+    # pylint: enable=import-outside-toplevel
 
     if isinstance(ip, str):
         ip = (ip,)
