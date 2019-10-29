@@ -48,7 +48,7 @@ test_requires = [
     "hypothesis==4.42.0",
     "coverage==4.5.4",
     "isort==4.3.21",
-    "black==19.3b0",
+    "black==19.10b0",
     "mypy==0.740",
     "pytest-cov==2.8.1",
     "flake8==3.7.9",
