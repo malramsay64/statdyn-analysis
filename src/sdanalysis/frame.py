@@ -140,7 +140,10 @@ class HoomdFrame(Frame):
             num_mols = max(snapshot.particles.body) + 1
         except (AttributeError, ValueError, TypeError):
             num_mols = num_particles
+
         if num_mols > num_particles:
+            num_mols = num_particles
+        elif num_mols == 0:
             num_mols = num_particles
 
         if num_mols > num_particles:
