@@ -11,6 +11,8 @@
 import numpy as np
 from numpy.testing import assert_allclose
 
+from sdanalysis.molecules import Disc, Sphere
+
 
 def test_scale_moment_inertia(mol):
     scale_factor = 10.0
@@ -20,7 +22,10 @@ def test_scale_moment_inertia(mol):
 
 def test_get_radii(mol):
     radii = mol.get_radii()
-    assert radii[0] == 1.0
+    if isinstance(mol, (Disc, Sphere)):
+        assert radii[0] == 0.5
+    else:
+        assert radii[0] == 1.0
 
 
 def test_get_types(mol):
