@@ -27,7 +27,9 @@ matrix:
     - name: "Python 3.8"
       python: 3.8
       env: NUMPY_VERSION=1.17
-      before_install: pip install tbb tbb-develop cython
+      before_install:
+        - sudo apt-get install libtbb-dev
+        - pip install cython
       script: make test
 
     - name: "Documentation"
