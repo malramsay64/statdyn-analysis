@@ -95,6 +95,7 @@ class Dynamics:
         "mean_rotation",
         "rot1",
         "rot2",
+        "alpha_rot",
         "gamma",
         "overlap",
         "struct",
@@ -279,6 +280,7 @@ class Dynamics:
             dynamic_quantities["mean_rotation"] = mean_rotation(delta_rotation)
             dynamic_quantities["rot1"] = rotational_relax1(delta_rotation)
             dynamic_quantities["rot2"] = rotational_relax2(delta_rotation)
+            dynamic_quantities["alpha_rot"] = alpha_non_gaussian(delta_rotation)
             dynamic_quantities["gamma"] = gamma(delta_displacement, delta_rotation)
             dynamic_quantities["overlap"] = mobile_overlap(
                 delta_displacement, delta_rotation
