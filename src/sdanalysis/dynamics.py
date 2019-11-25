@@ -60,6 +60,76 @@ def calculate_wave_number(box: Box, positions: np.ndarray):
     return x[np.argmax(ssf)]
 
 
+class TrackedMotion:
+    """Keep track of the motion of a particle allowing for multiple periods.
+
+    This keeps track of the position of a particle as each frame is added, which allows
+    for tracking the motion of a particle through multiple periods, as long as each
+    motion takes the shortest distance.
+
+    """
+
+    box: Box
+
+    # Keeping track of the total overall motion
+    delta_translation: np.ndarray
+    delta_rotation: np.ndarray
+
+    # Keeping track of the previous position
+    previous_position: np.ndarray
+    previous_orientation: Optional[np.ndarray]
+
+    def __init__(
+        self, box: Box, position: np.ndarray, orientation: Optional[np.ndarray]
+    ):
+        """
+
+        Args:
+            box: The dimensions of the simulation cell, allowing the calculation 
+                of periodic distance.
+            position: The position of each particle, given as an array with shape 
+                (N, 3) where N is the number of particles.
+            orientation: The orientation of each particle, which is represented
+                as a quaternion.
+
+        """
+        self.box = box
+        self.previous_position = position
+        self.delta_translation = np.zeros_like(position)
+        self.delta_rotation = np.zeros_like(position)
+        if orientation is not None:
+            if orientation.shape[0] == 0:
+                raise RuntimeError("Orientation must contain values, has length of 0.")
+            self.previous_orientation = orientation
+        else:
+            self.previous_orientation = None
+
+    def add(self, position: np.ndarray, orientation: Optional[np.ndarray]):
+        """Update the state of the dynamics calculations by adding the next values.
+
+        This updates the motion of the particles, comparing the positions and
+        orientations of the current frame with the previous frame, adding the difference
+        to the total displacement. This approach allows for tracking particles over
+        periodic boundaries, or through larger rotations assuming that there are
+        sufficient frames to capture the information. Each single displacement obeys the
+        minimum image convention, so for large time intervals it is still possible to
+        have missing information.
+
+        Args:
+            position: The current positions of the particles
+            orientation: The current orientations of the particles represented as a quaternion
+
+        """
+        self.delta_translation += self.box.wrap(position - self.previous_position)
+        if self.previous_orientation is not None and orientation is not None:
+            self.delta_rotation += rowan.to_euler(
+                rowan.divide(orientation, self.previous_orientation)
+            )
+
+        self.previous_position = position
+        self.previous_orientation = orientation
+
+
 class Dynamics:
     """Compute dynamic properties of a simulation.
 
