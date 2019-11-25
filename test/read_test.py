@@ -17,15 +17,32 @@ import pandas
 import pytest
 
 import sdanalysis
-from sdanalysis import HoomdFrame, LammpsFrame, read
+from sdanalysis import HoomdFrame, LammpsFrame, Trimer, dynamics, read
 from sdanalysis.read import _gsd, _lammps, _read
 from sdanalysis.StepSize import GenerateStepSeries
+
+
+def test_compute_all(infile):
+    dyn = None
+    for frame in read.open_trajectory(infile):
+        if dyn is None:
+            dyn = dynamics.Dynamics.from_frame(frame, Trimer(), 2.90)
+        else:
+            dynamics_series = dyn.compute_all(
+                timestep=frame.timestep,
+                position=frame.position,
+                orientation=frame.orientation,
+                image=frame.image,
+                scattering_function=True,
+            )
+            assert dynamics_series is not None
+            break
 
 
 @pytest.mark.parametrize("num_steps", [0, 10, 20, 100])
 def test_stopiter_handling(num_steps, infile):
     df = read.process_file(infile, wave_number=2.9, steps_max=num_steps)
-    assert np.all(df.time == list(GenerateStepSeries(num_steps)))
+    assert np.all(df["time"] == list(GenerateStepSeries(num_steps)))
 
 
 @pytest.mark.parametrize("num_steps", [0, 10, 20, 100])
@@ -33,7 +50,7 @@ def test_linear_steps_stopiter(infile, num_steps):
     df = read.process_file(
         infile=infile, wave_number=2.9, linear_steps=None, steps_max=num_steps
     )
-    assert df.time.max() == num_steps
+    assert df["time"].max() == num_steps
 
 
 def test_linear_sequence(infile_gsd):

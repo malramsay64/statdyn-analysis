@@ -15,6 +15,7 @@ from typing import Dict, List, Optional, Union
 import freud.density
 import numpy as np
 import pandas
+import rowan
 from freud.box import Box
 
 from .frame import Frame
@@ -82,8 +83,6 @@ class Dynamics:
 
     """
 
-    mol_vector = None
-    orientation = None
     _all_quantities = [
         "time",
         "mean_displacement",
@@ -110,28 +109,42 @@ class Dynamics:
         molecule: Optional[Molecule] = None,
         image: Optional[np.ndarray] = None,
         wave_number: Optional[float] = None,
+        angular_resolution=360,
     ) -> None:
         if position.shape[0] == 0:
             raise RuntimeError("Position must contain values, has length of 0.")
         if molecule is None:
             is2D = True
+            self.mol_vector = None
         else:
             is2D = molecule.dimensions == 2
+            self.mol_vector = molecule.positions
 
         self.box = create_freud_box(box, is_2D=is2D)
 
         self.timestep = timestep
-        self.position = position
         self.num_particles = position.shape[0]
+
+        self.previous_position = position
+        self.delta_translation = np.zeros_like(position)
+        self.delta_rotation = np.zeros_like(position)
         if orientation is not None:
             if orientation.shape[0] == 0:
                 raise RuntimeError("Orientation must contain values, has length of 0.")
-            self.orientation = orientation
-        if molecule is not None:
-            self.mol_vector = molecule.positions
+            self.previous_orientation = orientation
+        else:
+            self.previous_orientation = None
+
         self.image = image
 
         self.wave_number = wave_number
+        if self.wave_number is not None:
+            angles = np.linspace(
+                0, 2 * np.pi, num=angular_resolution, endpoint=False
+            ).reshape((-1, 1))
+            self.wave_vector = (
+                np.concatenate([np.cos(angles), np.sin(angles)], axis=1) * wave_number
+            )
 
     @classmethod
     def from_frame(
@@ -156,71 +169,185 @@ class Dynamics:
             wave_number=wave_number,
         )
 
-    def compute_msd(
-        self, position: np.ndarray, image: Optional[np.ndarray] = None
-    ) -> float:
+    def add(self, position: np.ndarray, orientation: Optional[np.ndarray]):
+        """Update the state of the dynamics calculations by adding a Frame.
+
+        This updates the motion of the particles, comparing the positions and
+        orientations of the current frame with the previous frame, adding the difference
+        to the total displacement. This approach allows for tracking particles over
+        periodic boundaries, or through larger rotations assuming that there are
+        sufficient frames to capture the information. Each single displacement obeys the
+        minimum image convention, so for large time intervals it is still possible to
+        have missing information.
+
+        Args:
+            frame: The configuration containing the current particle information.
+
+        """
+        self.delta_translation += self.box.wrap(position - self.previous_position)
+        if self.previous_orientation is not None and orientation is not None:
+            self.delta_rotation += rowan.to_euler(
+                rowan.divide(orientation, self.previous_orientation)
+            )
+
+        self.previous_position = position
+        self.previous_orientation = orientation
+
+    def add_frame(self, frame: Frame):
+        """Update the state of the dynamics calculations by adding a Frame.
+
+        This updates the motion of the particles, comparing the positions and
+        orientations of the current frame with the previous frame, adding the difference
+        to the total displacement. This approach allows for tracking particles over
+        periodic boundaries, or through larger rotations assuming that there are
+        sufficient frames to capture the information. Each single displacement obeys the
+        minimum image convention, so for large time intervals it is still possible to
+        have missing information.
+
+        Args:
+            frame: The configuration containing the current particle information.
+
+        """
+        self.delta_translation += self.box.wrap(frame.position - self.previous_position)
+        if self.previous_orientation is not None:
+            self.delta_rotation += rowan.to_euler(
+                rowan.divide(frame.orientation, self.previous_orientation)
+            )
+
+        self.previous_position = frame.position
+        self.previous_orientation = frame.orientation
+
+    def compute_msd(self) -> float:
         """Compute the mean squared displacement."""
-        result = translational_displacement(
-            self.box, self.position, position, self.image, image
-        )
-        return mean_squared_displacement(result)
+        return np.square(self.delta_translation).sum(axis=1).mean()
 
-    def compute_mfd(
-        self, position: np.ndarray, image: Optional[np.ndarray] = None
-    ) -> float:
+    def compute_mfd(self) -> float:
         """Compute the fourth power of displacement."""
-        result = translational_displacement(
-            self.box, self.position, position, self.image, image
-        )
-        return mean_fourth_displacement(result)
+        return np.power(self.delta_translation, 4).sum(axis=1).mean()
 
-    def compute_alpha(
-        self, position: np.ndarray, image: Optional[np.ndarray] = None
-    ) -> float:
-        r"""Compute the non-gaussian parameter alpha.
+    def compute_alpha(self) -> float:
+        r"""Compute the non-Gaussian parameter alpha for translational motion.
 
         .. math::
             \alpha = \frac{\langle \Delta r^4\rangle}
                       {2\langle \Delta r^2  \rangle^2} -1
 
         """
-        result = translational_displacement(
-            self.box, self.position, position, self.image, image
-        )
-        return alpha_non_gaussian(result)
+        disp2 = np.square(self.delta_translation).sum(axis=1)
+        try:
+            return np.square(disp2).mean() / (2 * np.square((disp2).mean())) - 1
+
+        except FloatingPointError:
+            with np.errstate(invalid="ignore"):
+                res = np.square(disp2).mean() / (2 * np.square((disp2).mean())) - 1
+                np.nan_to_num(res, copy=False)
+                return res
 
     def compute_time_delta(self, timestep: int) -> int:
         """Time difference between keyframe and timestep."""
         return timestep - self.timestep
 
-    def compute_rotation(self, orientation: np.ndarray) -> float:
+    def compute_rotation(self) -> float:
         """Compute the rotation from the initial frame."""
-        result = rotational_displacement(self.orientation, orientation)
-        return mean_rotation(result)
+        return np.linalg.norm(self.delta_rotation).mean()
 
-    def get_rotations(self, orientation: np.ndarray) -> np.ndarray:
-        """Get all the rotations."""
-        result = rotational_displacement(self.orientation, orientation)
-        return result
+    def compute_isf(self) -> float:
+        """Compute the intermediate scattering function"""
+        return np.cos(np.dot(self.wave_vector, self.delta_translation[:, :2].T)).mean()
 
-    def get_displacements(
-        self, position: np.ndarray, image: Optional[np.ndarray] = None
-    ) -> np.ndarray:
-        """Get all the displacements."""
-        result = translational_displacement(
-            self.box, self.position, position, self.image, image
+    def get_rotations(self) -> np.ndarray:
+        """Compute the rotational displacement for each molecule."""
+        return np.linalg.norm(self.delta_rotation, axis=1)
+
+    def compute_rotational_relax1(self) -> float:
+        r"""Compute the first-order rotational relaxation function.
+
+        .. math::
+            C_1(t) = \langle \hat{\mathbf{e}}(0) \cdot \hat{\mathbf{e}}(t) \rangle
+
+        Return:
+            float: The rotational relaxation
+        """
+        return np.cos(self.get_rotations()).mean()
+
+    def compute_rotational_relax2(self) -> float:
+        r"""Compute the second rotational relaxation function.
+
+        .. math::
+            C_1(t) = \langle 2(\hat{\mathbf{e}}(0) \cdot \hat{\mathbf{e}}(t))^2 - 1 \rangle
+
+        Return:
+            float: The rotational relaxation
+        """
+        return np.mean(2 * np.square(np.cos(self.get_rotations())) - 1)
+
+    def compute_alpha_rot(self) -> float:
+        r"""Compute the non-Gaussian parameter alpha for rotational motion.
+
+        .. math::
+            \alpha = \frac{\langle \Delta \theta^4\rangle}
+                      {2\langle \Delta \theta^2  \rangle^2} -1
+
+        """
+        disp2 = np.square(self.delta_translation).sum(axis=1)
+        try:
+            return np.square(disp2).mean() / (2 * np.square((disp2).mean())) - 1
+
+        except FloatingPointError:
+            with np.errstate(invalid="ignore"):
+                res = np.square(disp2).mean() / (2 * np.square((disp2).mean())) - 1
+                np.nan_to_num(res, copy=False)
+                return res
+
+    def compute_gamma(self) -> float:
+        r"""Calculate the second order coupling of translations and rotations.
+
+        .. math::
+            \gamma = \frac{\langle(\Delta r \Delta\theta)^2 \rangle -
+                \langle\Delta r^2\rangle\langle\Delta \theta^2\rangle
+                }{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}
+
+        Return:
+            float: The squared coupling of translations and rotations
+            :math:`\gamma`
+
+        """
+        rot2 = np.square(self.delta_rotation)
+        disp2 = np.square(self.delta_translation)
+        disp2m_rot2m = disp2.mean() * rot2.mean()
+        try:
+            return ((disp2 * rot2).mean() - disp2m_rot2m) / disp2m_rot2m
+
+        except FloatingPointError:
+            with np.errstate(invalid="ignore"):
+                res = ((disp2 * rot2).mean() - disp2m_rot2m) / disp2m_rot2m
+                np.nan_to_num(res, copy=False)
+                return res
+
+    def get_displacements(self) -> np.ndarray:
+        """Compute the translational displacement for each molecule."""
+        return np.linalg.norm(self.delta_translation, axis=1)
+
+    def compute_struct_relax(self) -> float:
+        if self.distance is None:
+            raise ValueError(
+                "The wave number is required for the structural relaxation."
+            )
+        return structural_relax(
+            np.linalg.norm(
+                molecule2particles(
+                    self.delta_translation,
+                    rowan.from_euler(
+                        self.delta_rotation[:, 0],
+                        self.delta_rotation[:, 1],
+                        self.delta_rotation[:, 2],
+                    ),
+                    self.mol_vector,
+                ),
+                axis=1,
+            ),
+            self.distance,
         )
-        return result
-
-    def compute_struct_relax(
-        self, position: np.ndarray, orientation: np.ndarray, threshold: float = 0.3
-    ) -> float:
-        particle_displacement = translational_displacement(
-            self.box,
-            molecule2particles(self.position, self.orientation, self.mol_vector),
-            molecule2particles(position, orientation, self.mol_vector),
-        )
-        return structural_relax(particle_displacement, threshold)
 
     def compute_all(
         self,
@@ -244,57 +371,49 @@ class Dynamics:
         Where a quantity can't be calculated, an array of nan values will be supplied
         instead, allowing for continued compatibility. """
 
+        self.add(position, orientation)
+
         # Set default result
         dynamic_quantities = {key: np.nan for key in self._all_quantities}
 
-        # Calculate displacement of all molecules
-        # This is performed once for all displacement-like quantities
-        delta_displacement = translational_displacement(
-            self.box, self.position, position, self.image, image
-        )
-
         # Calculate all the simple dynamic quantities
         dynamic_quantities["time"] = self.compute_time_delta(timestep)
-        dynamic_quantities["mean_displacement"] = mean_displacement(delta_displacement)
-        dynamic_quantities["msd"] = mean_squared_displacement(delta_displacement)
-        dynamic_quantities["mfd"] = mean_fourth_displacement(delta_displacement)
-        dynamic_quantities["alpha"] = alpha_non_gaussian(delta_displacement)
+        dynamic_quantities["mean_displacement"] = np.linalg.norm(
+            self.delta_translation, axis=1
+        ).mean()
+        dynamic_quantities["msd"] = self.compute_msd()
+        dynamic_quantities["mfd"] = self.compute_mfd()
+        dynamic_quantities["alpha"] = self.compute_alpha()
 
         # The scattering function takes too long to compute so is normally ignored.
         if scattering_function and self.wave_number is not None:
-            dynamic_quantities[
-                "scattering_function"
-            ] = intermediate_scattering_function(
-                self.box, self.position, position, self.wave_number
-            )
+            dynamic_quantities["scattering_function"] = self.compute_isf()
 
         # The structural relaxation requires the distance value to be set
         if self.distance is not None:
             dynamic_quantities["com_struct"] = structural_relax(
-                delta_displacement, dist=self.distance
+                self.delta_translation, dist=self.distance
             )
 
-        # There are number of quantities which rely on the orientation
-        if self.orientation is not None and orientation is not None:
-            delta_rotation = rotational_displacement(self.orientation, orientation)
-            dynamic_quantities["mean_rotation"] = mean_rotation(delta_rotation)
-            dynamic_quantities["rot1"] = rotational_relax1(delta_rotation)
-            dynamic_quantities["rot2"] = rotational_relax2(delta_rotation)
-            dynamic_quantities["alpha_rot"] = alpha_non_gaussian(delta_rotation)
-            dynamic_quantities["gamma"] = gamma(delta_displacement, delta_rotation)
-            dynamic_quantities["overlap"] = mobile_overlap(
-                delta_displacement, delta_rotation
-            )
+        dynamic_quantities["mean_rotation"] = self.compute_rotation()
+        dynamic_quantities["rot1"] = self.compute_rotational_relax1()
+        dynamic_quantities["rot2"] = self.compute_rotational_relax2()
+        dynamic_quantities["alpha_rot"] = self.compute_alpha_rot()
+        dynamic_quantities["gamma"] = self.compute_gamma()
+        dynamic_quantities["overlap"] = mobile_overlap(
+            self.delta_translation, self.delta_rotation
+        )
 
         # The structural relaxation of all atoms is the most complex.
         if (
             self.distance is not None
             and self.mol_vector is not None
-            and self.orientation is not None
+            and self.previous_orientation is not None
         ):
-            dynamic_quantities["struct"] = self.compute_struct_relax(
-                position, orientation, threshold=self.distance
-            )
+            dynamic_quantities["struct"] = self.compute_struct_relax()
+
+        assert dynamic_quantities["time"] is not None
+
         return dynamic_quantities
 
     def __len__(self) -> int:
@@ -831,10 +950,10 @@ def rotational_displacement(initial: np.ndarray, final: np.ndarray) -> np.ndarra
     :math:`\phi_3` is multiplied by 2, which is shown by Huynh to be equal
     to :math:`phi_6`.
 
-    This imlementation was chosen for speed and accuracy, being tested against
+    This implementation was chosen for speed and accuracy, being tested against
     a number of other possibilities. Another notable formulation was by [Jim
     Belk] on Stack Exchange, however this equation was both slower to compute
-    in addition to being more prone to unusual bnehaviour.
+    in addition to being more prone to unusual behaviour.
 
     .. [@Hunyh2009]: 1. Huynh, D. Q. Metrics for 3D rotations: Comparison and
         analysis.  J. Math. Imaging Vis. 35, 155–164 (2009).

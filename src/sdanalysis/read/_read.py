@@ -191,6 +191,8 @@ def process_file(
         mol_relax.to_hdf(outfile, "molecular_relaxations")
         return None
 
+    df = dataframes.to_dataframe()
+    assert len(df) > 0
     return dataframes.to_dataframe()
 
 

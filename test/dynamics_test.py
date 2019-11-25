@@ -14,6 +14,7 @@
 import gsd.hoomd
 import numpy as np
 import pytest
+import rowan
 from freud.box import Box
 from hypothesis import assume, example, given
 from hypothesis.extra.numpy import arrays
@@ -165,7 +166,8 @@ class TestDynamicsClass:
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     def test_displacements(self, dynamics_class, trajectory, step):
         snap = HoomdFrame(trajectory[step])
-        displacement = dynamics_class.get_displacements(snap.position)
+        dynamics_class.add_frame(snap)
+        displacement = dynamics_class.get_displacements()
         assert displacement.shape == (dynamics_class.num_particles,)
         if step == 0:
             assert np.all(displacement == 0.0)
@@ -175,10 +177,11 @@ class TestDynamicsClass:
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     def test_displacements_image(self, dynamics_class, trajectory, step):
         snap = HoomdFrame(trajectory[step])
-        displacement = dynamics_class.get_displacements(snap.position, snap.image)
+        dynamics_class.add_frame(snap)
+        displacement = dynamics_class.get_displacements()
         assert displacement.shape == (dynamics_class.num_particles,)
         if step == 0:
-            assert np.all(displacement == 0.0)
+            assert np.allclose(displacement, 0.0, atol=2e-5)
         else:
             assert np.all(displacement >= 0.0)
             assert np.max(displacement) <= 0.3
@@ -186,15 +189,17 @@ class TestDynamicsClass:
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     def test_image(self, dynamics_class, trajectory, step):
         snap = HoomdFrame(trajectory[step])
-        displacement = dynamics_class.get_displacements(snap.position, snap.image)
+        dynamics_class.add_frame(snap)
+        displacement = dynamics_class.get_displacements()
         assert displacement.shape == (dynamics_class.num_particles,)
         assert np.max(np.abs(dynamics_class.image - snap.image)) <= 1
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     @pytest.mark.parametrize("method", ["compute_msd", "compute_mfd"])
     def test_trans_methods(self, dynamics_class, trajectory, step, method):
-        snap = trajectory[step]
-        quantity = getattr(dynamics_class, method)(snap.particles.position)
+        snap = HoomdFrame(trajectory[step])
+        dynamics_class.add_frame(snap)
+        quantity = getattr(dynamics_class, method)()
 
         if step == 0:
             assert np.isclose(quantity, 0, atol=1e-7)
@@ -204,25 +209,28 @@ class TestDynamicsClass:
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     @pytest.mark.parametrize("method", ["compute_alpha"])
     def test_alpha_methods(self, dynamics_class, trajectory, step, method):
-        snap = trajectory[step]
-        quantity = getattr(dynamics_class, method)(snap.particles.position)
+        snap = HoomdFrame(trajectory[step])
+        dynamics_class.add_frame(snap)
+        quantity = getattr(dynamics_class, method)()
         assert isinstance(float(quantity), float)
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     @pytest.mark.parametrize("method", ["compute_rotation"])
     def test_rot_methods(self, dynamics_class, trajectory, step, method):
-        snap = trajectory[step]
-        quantity = getattr(dynamics_class, method)(snap.particles.orientation)
+        snap = HoomdFrame(trajectory[step])
+        dynamics_class.add_frame(snap)
+        quantity = getattr(dynamics_class, method)()
 
         if step == 0:
-            assert np.isclose(quantity, 0, atol=1e-7)
+            assert np.allclose(quantity, 0, atol=2e-5)
         else:
             assert quantity >= 0
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     def test_rotations(self, dynamics_class, trajectory, step):
-        snap = trajectory[step]
-        rotations = dynamics_class.get_rotations(snap.particles.orientation)
+        snap = HoomdFrame(trajectory[step])
+        dynamics_class.add_frame(snap)
+        rotations = dynamics_class.get_rotations()
         assert rotations.shape == (dynamics_class.num_particles,)
         if step == 0:
             assert np.allclose(rotations, 0.0, atol=EPS)
@@ -352,3 +360,14 @@ def test_compute_all(infile_gsd, wave_number, orientation):
 
     assert sorted(result.keys()) == sorted(dyn._all_quantities)
     assert np.isnan(result.get("scattering_function"))
+
+
+def test_large_rotation():
+    orientation = rowan.from_euler(np.zeros(10), np.zeros(10), np.zeros(10))
+    dyn = dynamics.Dynamics(0, np.ones(3), np.zeros((10, 3)), orientation)
+    for i in range(10):
+        dyn.add(
+            np.zeros((10, 3)),
+            rowan.from_euler(np.ones(10) * np.pi / 4 * i, np.zeros(10), np.zeros(10)),
+        )
+    assert np.allclose(np.linalg.norm(dyn.delta_rotation, axis=1), np.pi / 4 * 9)
