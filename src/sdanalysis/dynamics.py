@@ -190,22 +190,11 @@ class Dynamics:
             is2D = molecule.dimensions == 2
             self.mol_vector = molecule.positions
 
-        self.box = create_freud_box(box, is_2D=is2D)
-
+        self.motion = TrackedMotion(
+            create_freud_box(box, is_2D=is2D), position, orientation
+        )
         self.timestep = timestep
         self.num_particles = position.shape[0]
-
-        self.previous_position = position
-        self.delta_translation = np.zeros_like(position)
-        self.delta_rotation = np.zeros_like(position)
-        if orientation is not None:
-            if orientation.shape[0] == 0:
-                raise RuntimeError("Orientation must contain values, has length of 0.")
-            self.previous_orientation = orientation
-        else:
-            self.previous_orientation = None
-
-        self.image = image
 
         self.wave_number = wave_number
         if self.wave_number is not None:
@@ -239,6 +228,14 @@ class Dynamics:
             wave_number=wave_number,
         )
 
+    @property
+    def delta_translation(self):
+        return self.motion.delta_translation
+
+    @property
+    def delta_rotation(self):
+        return self.motion.delta_rotation
+
     def add(self, position: np.ndarray, orientation: Optional[np.ndarray]):
         """Update the state of the dynamics calculations by adding a Frame.
 
@@ -254,14 +251,7 @@ class Dynamics:
             frame: The configuration containing the current particle information.
 
         """
-        self.delta_translation += self.box.wrap(position - self.previous_position)
-        if self.previous_orientation is not None and orientation is not None:
-            self.delta_rotation += rowan.to_euler(
-                rowan.divide(orientation, self.previous_orientation)
-            )
-
-        self.previous_position = position
-        self.previous_orientation = orientation
+        self.motion.add(position, orientation)
 
     def add_frame(self, frame: Frame):
         """Update the state of the dynamics calculations by adding a Frame.
@@ -278,14 +268,7 @@ class Dynamics:
             frame: The configuration containing the current particle information.
 
         """
-        self.delta_translation += self.box.wrap(frame.position - self.previous_position)
-        if self.previous_orientation is not None:
-            self.delta_rotation += rowan.to_euler(
-                rowan.divide(frame.orientation, self.previous_orientation)
-            )
-
-        self.previous_position = frame.position
-        self.previous_orientation = frame.orientation
+        self.motion.add(frame.position, frame.orientation)
 
     def compute_msd(self) -> float:
         """Compute the mean squared displacement."""
@@ -478,7 +461,7 @@ class Dynamics:
         if (
             self.distance is not None
             and self.mol_vector is not None
-            and self.previous_orientation is not None
+            and self.motion.previous_orientation is not None
         ):
             dynamic_quantities["struct"] = self.compute_struct_relax()
 
@@ -673,14 +656,12 @@ class Relaxations:
         else:
             is2D = molecule.dimensions == 2
 
-        self.box = create_freud_box(box, is_2D=is2D)
-
+        box = create_freud_box(box, is_2D=is2D)
+        self.motion = TrackedMotion(box, position, orientation)
         self._num_elements = position.shape[0]
-        self.init_position = position
-        self.init_orientation = orientation
 
         if wave_number is None:
-            wave_number = calculate_wave_number(self.box, self.init_position)
+            wave_number = calculate_wave_number(box, position)
 
         self.wave_number = wave_number
 
@@ -754,10 +735,10 @@ class Relaxations:
         return timestep - self.init_time
 
     def add(self, timestep: int, position: np.ndarray, orientation: np.ndarray) -> None:
-        displacement = translational_displacement(
-            self.box, self.init_position, position
-        )
-        rotation = rotational_displacement(self.init_orientation, orientation)
+        self.motion.add(position, orientation)
+        displacement = np.linalg.norm(self.motion.delta_translation, axis=1)
+        rotation = np.linalg.norm(self.motion.delta_rotation, axis=1)
+
         for _, func in self.mol_relax.items():
             if func.relaxation_type is RelaxationType.rotation:
                 func.add(self.get_timediff(timestep), rotation)
@@ -783,7 +764,7 @@ def molecule2particles(
 
 
 # This decorator is what enables the caching of this function,
-# making this function 100 times faster for subsequent exectutions
+# making this function 100 times faster for subsequent executions
 @lru_cache()
 def create_wave_vector(wave_number: float, angular_resolution: int):
     r"""Convert a wave number into a radially symmetric wave vector
