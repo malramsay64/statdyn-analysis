@@ -19,7 +19,6 @@ from freud.box import Box
 from hypothesis import assume, example, given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
-from numpy.testing import assert_allclose
 
 from sdanalysis import HoomdFrame, dynamics, read
 
@@ -117,7 +116,7 @@ class TestDynamicsClass:
     def test_displacements(self, dynamics_class, trajectory, step):
         snap = HoomdFrame(trajectory[step])
         dynamics_class.add_frame(snap)
-        displacement = dynamics_class.get_displacements()
+        displacement = dynamics_class.compute_displacement()
         assert displacement.shape == (dynamics_class.num_particles,)
         if step == 0:
             assert np.all(displacement == 0.0)
@@ -154,13 +153,13 @@ class TestDynamicsClass:
         if step == 0:
             assert np.allclose(quantity, 0, atol=2e-5)
         else:
-            assert quantity >= 0
+            assert np.all(quantity >= 0)
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     def test_rotations(self, dynamics_class, trajectory, step):
         snap = HoomdFrame(trajectory[step])
         dynamics_class.add_frame(snap)
-        rotations = dynamics_class.get_rotations()
+        rotations = dynamics_class.compute_rotation()
         assert rotations.shape == (dynamics_class.num_particles,)
         if step == 0:
             assert np.allclose(rotations, 0.0, atol=EPS)
@@ -173,7 +172,7 @@ class TestDynamicsClass:
         final = np.random.random((100, 3)).astype(np.float32)
         dyn = dynamics.Dynamics(0, box, init)
         dyn.add(final)
-        result = dyn.get_displacements()
+        result = dyn.compute_displacement()
         assert np.all(result < 1)
 
     def test_read_only_arrays(self):
@@ -185,7 +184,7 @@ class TestDynamicsClass:
         final.flags.writeable = False
         dyn = dynamics.Dynamics(0, box, init)
         dyn.add(final)
-        result = dyn.get_displacements()
+        result = dyn.compute_displacement()
         assert np.all(result < 1)
 
 
