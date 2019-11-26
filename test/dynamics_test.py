@@ -153,12 +153,7 @@ def trajectory():
 def dynamics_class(trajectory):
     snap = HoomdFrame(trajectory[0])
     return dynamics.Dynamics(
-        snap.timestep,
-        snap.box,
-        snap.position,
-        snap.orientation,
-        image=snap.image,
-        wave_number=4.0,
+        snap.timestep, snap.box, snap.position, snap.orientation, wave_number=4.0,
     )
 
 
@@ -173,26 +168,6 @@ class TestDynamicsClass:
             assert np.all(displacement == 0.0)
         else:
             assert np.all(displacement >= 0.0)
-
-    @pytest.mark.parametrize("step", [0, 1, 10, 20])
-    def test_displacements_image(self, dynamics_class, trajectory, step):
-        snap = HoomdFrame(trajectory[step])
-        dynamics_class.add_frame(snap)
-        displacement = dynamics_class.get_displacements()
-        assert displacement.shape == (dynamics_class.num_particles,)
-        if step == 0:
-            assert np.allclose(displacement, 0.0, atol=2e-5)
-        else:
-            assert np.all(displacement >= 0.0)
-            assert np.max(displacement) <= 0.3
-
-    @pytest.mark.parametrize("step", [0, 1, 10, 20])
-    def test_image(self, dynamics_class, trajectory, step):
-        snap = HoomdFrame(trajectory[step])
-        dynamics_class.add_frame(snap)
-        displacement = dynamics_class.get_displacements()
-        assert displacement.shape == (dynamics_class.num_particles,)
-        assert np.max(np.abs(dynamics_class.image - snap.image)) <= 1
 
     @pytest.mark.parametrize("step", [0, 1, 10, 20])
     @pytest.mark.parametrize("method", ["compute_msd", "compute_mfd"])
@@ -348,7 +323,6 @@ def test_compute_all(infile_gsd, wave_number, orientation):
         snap.box,
         snap.position,
         snap.orientation,
-        image=snap.image,
         wave_number=wave_number,
     )
 
