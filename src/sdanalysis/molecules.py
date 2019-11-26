@@ -73,7 +73,7 @@ class Disc(Molecule):
 class Sphere(Molecule):
     """Define a 3D sphere."""
 
-    def __init__(self) -> None:  # pylint: disable=useless-super-delegation
+    def __init__(self) -> None:
         """Initialise Spherical particle."""
         super().__init__()
         self._radii = {"A": 0.5}

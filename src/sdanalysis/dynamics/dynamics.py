@@ -81,7 +81,7 @@ class Dynamics:
             position: The initial position of each particle.
             orientation: The initial orientation of each particle.
             molecule:  The molecule which is represented by each position and orientation.
-            wave_number: The wave number corresponding to the maximum in the 
+            wave_number: The wave number corresponding to the maximum in the
                 static structure factor.
             angular_resolution: The angular resolution of the intermediate scattering function.
 
