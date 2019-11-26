@@ -174,13 +174,21 @@ class Dynamics:
         """
         self.motion.add(frame.position, frame.orientation)
 
+    def compute_displacement(self) -> np.ndarray:
+        """Compute the translational displacement for each particle."""
+        return np.linalg.norm(self.delta_translation, axis=1)
+
+    def compute_displacement2(self) -> np.ndarray:
+        """Compute the squared displacement for each particle."""
+        return np.square(self.delta_translation).sum(axis=1)
+
     def compute_msd(self) -> float:
         """Compute the mean squared displacement."""
-        return np.square(self.delta_translation).sum(axis=1).mean()
+        return self.compute_displacement2().mean()
 
     def compute_mfd(self) -> float:
         """Compute the fourth power of displacement."""
-        return np.power(self.delta_translation, 4).sum(axis=1).mean()
+        return np.square(self.compute_displacement2()).mean()
 
     def compute_alpha(self) -> float:
         r"""Compute the non-Gaussian parameter alpha for translational motion.
@@ -190,7 +198,7 @@ class Dynamics:
                       {2\langle \Delta r^2  \rangle^2} -1
 
         """
-        disp2 = np.square(self.delta_translation).sum(axis=1)
+        disp2 = self.compute_displacement2()
         try:
             return np.square(disp2).mean() / (2 * np.square((disp2).mean())) - 1
 
@@ -201,20 +209,24 @@ class Dynamics:
                 return res
 
     def compute_time_delta(self, timestep: int) -> int:
-        """Time difference between keyframe and timestep."""
+        """Time difference between initial frame and timestep."""
         return timestep - self.timestep
 
-    def compute_rotation(self) -> float:
+    def compute_rotation(self) -> np.ndarray:
+        """Compute the rotational motion for each particle."""
+        return np.linalg.norm(self.delta_rotation, axis=1)
+
+    def compute_rotation2(self) -> np.ndarray:
         """Compute the rotation from the initial frame."""
-        return np.linalg.norm(self.delta_rotation).mean()
+        return np.square(self.delta_rotation).mean(axis=1)
+
+    def compute_mean_rotation(self) -> float:
+        """Compute the rotation from the initial frame."""
+        return self.compute_rotation().mean()
 
     def compute_isf(self) -> float:
         """Compute the intermediate scattering function."""
         return np.cos(np.dot(self.wave_vector, self.delta_translation[:, :2].T)).mean()
-
-    def get_rotations(self) -> np.ndarray:
-        """Compute the rotational displacement for each molecule."""
-        return np.linalg.norm(self.delta_rotation, axis=1)
 
     def compute_rotational_relax1(self) -> float:
         r"""Compute the first-order rotational relaxation function.
@@ -226,7 +238,7 @@ class Dynamics:
             float: The rotational relaxation
 
         """
-        return np.cos(self.get_rotations()).mean()
+        return np.cos(self.compute_rotation()).mean()
 
     def compute_rotational_relax2(self) -> float:
         r"""Compute the second rotational relaxation function.
@@ -238,7 +250,7 @@ class Dynamics:
             float: The rotational relaxation
 
         """
-        return np.mean(2 * np.square(np.cos(self.get_rotations())) - 1)
+        return np.mean(2 * np.square(np.cos(self.compute_rotation())) - 1)
 
     def compute_alpha_rot(self) -> float:
         r"""Compute the non-Gaussian parameter alpha for rotational motion.
@@ -248,13 +260,13 @@ class Dynamics:
                       {2\langle \Delta \theta^2  \rangle^2} -1
 
         """
-        disp2 = np.square(self.delta_translation).sum(axis=1)
+        theta2 = self.compute_rotation2()
         try:
-            return np.square(disp2).mean() / (2 * np.square((disp2).mean())) - 1
+            return np.square(theta2).mean() / (2 * np.square((theta2).mean())) - 1
 
         except FloatingPointError:
             with np.errstate(invalid="ignore"):
-                res = np.square(disp2).mean() / (2 * np.square((disp2).mean())) - 1
+                res = np.square(theta2).mean() / (2 * np.square((theta2).mean())) - 1
                 np.nan_to_num(res, copy=False)
                 return res
 
@@ -262,30 +274,24 @@ class Dynamics:
         r"""Calculate the second order coupling of translations and rotations.
 
         .. math::
-            \gamma = \frac{\langle(\Delta r \Delta\theta)^2 \rangle -
-                \langle\Delta r^2\rangle\langle\Delta \theta^2\rangle
-                }{\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle}
+            \gamma = \frac{\langle(\Delta r \Delta\theta)^2 \rangle}
+                {\langle\Delta r^2\rangle\langle\Delta\theta^2\rangle} - 1
 
         Return:
             float: The squared coupling of translations and rotations
             :math:`\gamma`
 
         """
-        rot2 = np.square(self.delta_rotation)
-        disp2 = np.square(self.delta_translation)
-        disp2m_rot2m = disp2.mean() * rot2.mean()
+        theta2 = self.compute_rotation2()
+        disp2 = self.compute_displacement2()
         try:
-            return ((disp2 * rot2).mean() - disp2m_rot2m) / disp2m_rot2m
+            return ((disp2 * theta2).mean()) / (disp2.mean() * theta2.mean()) - 1
 
         except FloatingPointError:
             with np.errstate(invalid="ignore"):
-                res = ((disp2 * rot2).mean() - disp2m_rot2m) / disp2m_rot2m
+                res = ((disp2 * theta2).mean()) / (disp2.mean() * theta2.mean()) - 1
                 np.nan_to_num(res, copy=False)
                 return res
-
-    def get_displacements(self) -> np.ndarray:
-        """Compute the translational displacement for each molecule."""
-        return np.linalg.norm(self.delta_translation, axis=1)
 
     def compute_struct_relax(self) -> float:
         if self.distance is None:
@@ -354,7 +360,7 @@ class Dynamics:
                 self.delta_translation, dist=self.distance
             )
 
-        dynamic_quantities["mean_rotation"] = self.compute_rotation()
+        dynamic_quantities["mean_rotation"] = self.compute_mean_rotation()
         dynamic_quantities["rot1"] = self.compute_rotational_relax1()
         dynamic_quantities["rot2"] = self.compute_rotational_relax2()
         dynamic_quantities["alpha_rot"] = self.compute_alpha_rot()
