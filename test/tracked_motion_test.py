@@ -49,7 +49,7 @@ def test_simple_translation():
     assert np.isclose(np.linalg.norm(motion.delta_translation), np.sqrt(3) * 100)
 
 
-@given(arrays(np.float64, (10, 3), floats(-5, 5)))
+@given(arrays(np.float64, (10, 3), floats(-4, 4)))
 def test_translation(translations):
     box = freud.box.Box(10, 10, 10)
     motion = TrackedMotion(box, np.zeros((1, 3)), rowan.from_euler([0], [0], [0]))
@@ -57,6 +57,6 @@ def test_translation(translations):
     for position in positions:
         motion.add(position, rowan.from_euler([0], [0], [0]))
 
-    assert np.allclose(
-        motion.delta_translation, np.sum(translations, axis=0), atol=1e-7
-    )
+    print(positions)
+    print(motion.delta_translation)
+    assert np.allclose(motion.delta_translation, positions[-1], atol=1e-7)
