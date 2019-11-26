@@ -148,7 +148,6 @@ def process_file(
                     timestep=frame.timestep,
                     position=frame.position,
                     orientation=frame.orientation,
-                    image=frame.image,
                     scattering_function=scattering_function,
                 )
                 relax.add(frame.timestep, frame.position, frame.orientation)

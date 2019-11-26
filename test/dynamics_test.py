@@ -24,7 +24,7 @@ from numpy.testing import assert_allclose
 from sdanalysis import HoomdFrame, dynamics, read
 
 MAX_BOX = 20.0
-EPS = 2 * np.sqrt(np.finfo(np.float32).eps)
+EPS = 4 * np.sqrt(np.finfo(np.float32).eps)
 
 
 def pos_array(min_val, max_val):
@@ -52,13 +52,13 @@ def test_calculate_max_wavenumber(wavenumber=10):
 
     box = Box(Lx=100, Ly=100, is2D=True)
 
-    calc_wavenumber = dynamics.calculate_wave_number(box, positions)
+    calc_wavenumber = dynamics._util.calculate_wave_number(box, positions)
 
     assert calc_wavenumber >= 0
 
 
 def translational_displacement_reference(
-    box: Box, initial: np.ndarray, final: np.ndarray
+    box: np.ndarray, initial: np.ndarray, final: np.ndarray
 ) -> np.ndarray:
     """Simplified reference implementation for computing the displacement.
 
@@ -67,7 +67,6 @@ def translational_displacement_reference(
 
     """
     result = np.empty(final.shape[0], dtype=final.dtype)
-    box = np.array([box.Lx, box.Ly, box.Lz])
     for index, _ in enumerate(result):
         temp = initial[index] - final[index]
         for i in range(3):
@@ -79,67 +78,23 @@ def translational_displacement_reference(
     return result
 
 
-@given(pos_array(-MAX_BOX / 4, MAX_BOX / 4), pos_array(-MAX_BOX / 4, MAX_BOX / 4))
-def test_translational_displacement_noperiod(init, final):
-    """Test calculation of the translational displacement.
-
-    This test ensures that the result is close to the func::`numpy.linalg.norm`
-    function in the case where there is no periodic boundaries to worry
-    about.
-    """
-    box = Box(MAX_BOX, MAX_BOX, MAX_BOX)
-    np_res = np.linalg.norm(init - final, axis=1)
-    result = dynamics.translational_displacement(box, init, final)
-    ref_res = translational_displacement_reference(box, init, final)
-    print(result)
-    assert_allclose(result, np_res, atol=EPS)
-    assert_allclose(result, ref_res, atol=EPS)
-
-
-@given(
-    pos_array(-MAX_BOX / 2, -MAX_BOX / 4 - 1e-5), pos_array(MAX_BOX / 4, MAX_BOX / 2)
-)
-def test_translational_displacement_periodicity(init, final):
-    """Ensure the periodicity is calculated appropriately.
-
-    This is testing that periodic boundaries are identified appropriately, with all the
-    initial and final positions being further than half the box from each other.
-
-    """
-    box = Box(MAX_BOX, MAX_BOX, MAX_BOX)
-    np_res = np.square(np.linalg.norm(init - final, axis=1))
-    result = dynamics.translational_displacement(box, init, final)
-    ref_res = translational_displacement_reference(box, init, final)
-    assert np.all(np.logical_not(np.isclose(result, np_res)))
-    assert_allclose(result, ref_res, atol=EPS)
-
-
-@given(pos_array(-MAX_BOX / 2, MAX_BOX / 2), pos_array(-MAX_BOX / 4, MAX_BOX / 2))
-def test_translational_displacement(init, final):
-    """Ensure the periodicity is calculated appropriately.
-
-    This is testing that periodic boundaries are identified appropriately.
-    """
-    box = Box(MAX_BOX, MAX_BOX, MAX_BOX)
-    result = dynamics.translational_displacement(box, init, final)
-    ref_res = translational_displacement_reference(box, init, final)
-    assert np.allclose(result, ref_res, atol=EPS)
-
-
-@given(val_array(0, 10))
-def test_alpha(displacement):
-    """Test the computation of the non-gaussian parameter."""
-    alpha = dynamics.alpha_non_gaussian(displacement)
-    assume(not np.isnan(alpha))
-    assert alpha >= -1
+@given(pos_array(0, MAX_BOX / 2))
+def test_alpha(positions):
+    """Test the computation of the non-Gaussian parameter."""
+    box = [MAX_BOX, MAX_BOX, MAX_BOX]
+    dyn = dynamics.Dynamics(0, box, np.zeros_like(positions))
+    dyn.add(positions)
+    result = dyn.compute_alpha()
+    assume(not np.isnan(result))
+    assert result >= -1
 
 
 @given(val_array(0, 10), val_array(0, 2 * np.pi))
 def test_overlap(displacement, rotation):
     """Test the computation of the overlap of the largest values."""
-    overlap_same = dynamics.mobile_overlap(rotation, rotation)
+    overlap_same = dynamics.dynamics.mobile_overlap(rotation, rotation)
     assert np.isclose(overlap_same, 1)
-    overlap = dynamics.mobile_overlap(displacement, rotation)
+    overlap = dynamics.dynamics.mobile_overlap(displacement, rotation)
     assert 0.0 <= overlap <= 1.0
 
 
@@ -213,19 +168,24 @@ class TestDynamicsClass:
             assert np.all(rotations >= 0.0)
 
     def test_float64_box(self):
-        box = Box.cube(1)
+        box = [1, 1, 1]
         init = np.random.random((100, 3)).astype(np.float32)
         final = np.random.random((100, 3)).astype(np.float32)
-        result = dynamics.translational_displacement(box, init, final)
+        dyn = dynamics.Dynamics(0, box, init)
+        dyn.add(final)
+        result = dyn.get_displacements()
         assert np.all(result < 1)
 
     def test_read_only_arrays(self):
-        box = Box.cube(1)
+        box = [1, 1, 1]
+        init = np.random.random((100, 3)).astype(np.float32)
         init = np.random.random((100, 3)).astype(np.float32)
         init.flags.writeable = False
         final = np.random.random((100, 3)).astype(np.float32)
         final.flags.writeable = False
-        result = dynamics.translational_displacement(box, init, final)
+        dyn = dynamics.Dynamics(0, box, init)
+        dyn.add(final)
+        result = dyn.get_displacements()
         assert np.all(result < 1)
 
 
@@ -309,7 +269,7 @@ def test_LastMolecularRelaxation():
 @given(val_array(0, 10))
 @example(np.full(10, np.nan))
 def test_structural_relaxation(array):
-    value = dynamics.structural_relax(array)
+    value = dynamics.dynamics.structural_relax(array)
     assert isinstance(float(value), float)
 
 

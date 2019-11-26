@@ -57,6 +57,6 @@ def test_translation(translations):
     for position in positions:
         motion.add(position, rowan.from_euler([0], [0], [0]))
 
-    print(positions)
+    print(positions[-1])
     print(motion.delta_translation)
-    assert np.allclose(motion.delta_translation, positions[-1], atol=1e-7)
+    assert np.allclose(motion.delta_translation, positions[-1], atol=1e-5)

@@ -32,7 +32,6 @@ def test_compute_all(infile):
                 timestep=frame.timestep,
                 position=frame.position,
                 orientation=frame.orientation,
-                image=frame.image,
                 scattering_function=True,
             )
             assert dynamics_series is not None
