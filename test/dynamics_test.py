@@ -19,7 +19,7 @@ from freud.box import Box
 from hypothesis import assume, example, given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
-from sdanalysis import HoomdFrame, Trimer, dynamics, read
+from sdanalysis import HoomdFrame, Trimer, dynamics, read, util
 
 MAX_BOX = 20.0
 EPS = 4 * np.sqrt(np.finfo(np.float32).eps)
@@ -295,7 +295,7 @@ def test_compute_all(infile_gsd, wave_number, orientation):
 
 
 def test_large_rotation():
-    orientation = rowan.from_euler(np.zeros(10), np.zeros(10), np.zeros(10))
+    orientation = util.zero_quaternion(10)
     dyn = dynamics.Dynamics(0, np.ones(3), np.zeros((10, 3)), orientation)
     for i in range(10):
         dyn.add(

@@ -24,6 +24,12 @@ logger = logging.getLogger(__name__)
 PathLike = Union[str, Path]
 
 
+def zero_quaternion(num: int):
+    vec = np.zeros((num, 4))
+    vec[:, 0] = 1
+    return vec
+
+
 class Variables(NamedTuple):
     temperature: Optional[str]
     pressure: Optional[str]
