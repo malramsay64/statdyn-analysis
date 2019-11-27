@@ -19,6 +19,7 @@ from freud.box import Box
 from hypothesis import assume, example, given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
+
 from sdanalysis import HoomdFrame, Trimer, dynamics, read, util
 
 MAX_BOX = 20.0
