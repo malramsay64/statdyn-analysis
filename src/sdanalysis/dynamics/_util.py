@@ -42,11 +42,16 @@ def create_wave_vector(wave_number: float, angular_resolution: int):
 def molecule2particles(
     position: np.ndarray, orientation: np.ndarray, mol_vector: np.ndarray
 ) -> np.ndarray:
+    if isinstance(orientation, tuple):
+        raise ValueError("Expecting numpy array found tuple", orientation)
     if np.allclose(orientation, 0.0):
         orientation[:, 0] = 1.0
-    return np.concatenate(
+    rotated = np.concatenate(
         [rotate_vectors(orientation, pos) for pos in mol_vector.astype(np.float32)]
-    ) + np.repeat(position, mol_vector.shape[0], axis=0)
+    )
+    translated = np.repeat(position, mol_vector.shape[0], axis=0)
+
+    return rotated + translated
 
 
 def _static_structure_factor(

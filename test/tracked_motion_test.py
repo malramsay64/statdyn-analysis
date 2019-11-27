@@ -14,7 +14,6 @@ import rowan
 from hypothesis import given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats, lists
-
 from sdanalysis.dynamics import TrackedMotion
 
 

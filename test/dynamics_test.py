@@ -19,8 +19,7 @@ from freud.box import Box
 from hypothesis import assume, example, given
 from hypothesis.extra.numpy import arrays
 from hypothesis.strategies import floats
-
-from sdanalysis import HoomdFrame, dynamics, read
+from sdanalysis import HoomdFrame, Trimer, dynamics, read
 
 MAX_BOX = 20.0
 EPS = 4 * np.sqrt(np.finfo(np.float32).eps)
@@ -304,3 +303,30 @@ def test_large_rotation():
             rowan.from_euler(np.ones(10) * np.pi / 4 * i, np.zeros(10), np.zeros(10)),
         )
     assert np.allclose(np.linalg.norm(dyn.delta_rotation, axis=1), np.pi / 4 * 9)
+
+
+@given(
+    arrays(np.float64, (10, 2), floats(-4, 4)),
+    arrays(np.float64, (10, 3), floats(-np.pi / 3, np.pi / 3)),
+)
+def test_struct(translation, rotation):
+    translation = np.append(translation, np.zeros((10, 1)), axis=1)
+    init_pos = np.zeros((10, 3))
+    init_orient = rowan.from_euler(np.zeros(10), np.zeros(10), np.zeros(10))
+    dyn = dynamics.Dynamics(
+        0, np.ones(3) * 10, init_pos, init_orient, wave_number=2.9, molecule=Trimer()
+    )
+
+    orientation = rowan.from_euler(rotation[:, 0], rotation[:, 1], rotation[:, 2])
+    dyn.add(translation, orientation)
+
+    motion = np.linalg.norm(
+        dynamics._util.molecule2particles(translation, orientation, Trimer().positions),
+        axis=1,
+    )
+    print(dyn.delta_translation)
+    assert np.allclose(dyn.delta_rotation, rotation)
+    assert np.allclose(dyn.delta_translation[:, :2], translation[:, :2], atol=1e-7)
+    assert np.allclose(
+        dyn.compute_struct_relax(), (motion < dyn.distance).mean(), atol=2e-7
+    )

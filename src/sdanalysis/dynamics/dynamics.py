@@ -298,21 +298,15 @@ class Dynamics:
             raise ValueError(
                 "The wave number is required for the structural relaxation."
             )
-        return structural_relax(
-            np.linalg.norm(
-                molecule2particles(
-                    self.delta_translation,
-                    rowan.from_euler(
-                        self.delta_rotation[:, 0],
-                        self.delta_rotation[:, 1],
-                        self.delta_rotation[:, 2],
-                    ),
-                    self.mol_vector,
-                ),
-                axis=1,
-            ),
-            self.distance,
+        quat_rot = rowan.from_euler(
+            self.delta_rotation[:, 0],
+            self.delta_rotation[:, 1],
+            self.delta_rotation[:, 2],
         )
+        atomic_motion = molecule2particles(
+            self.delta_translation, quat_rot, self.mol_vector
+        )
+        return structural_relax(np.linalg.norm(atomic_motion, axis=1), self.distance)
 
     def compute_all(
         self,
@@ -357,7 +351,7 @@ class Dynamics:
         # The structural relaxation requires the distance value to be set
         if self.distance is not None:
             dynamic_quantities["com_struct"] = structural_relax(
-                self.delta_translation, dist=self.distance
+                self.compute_displacement(), dist=self.distance
             )
 
         dynamic_quantities["mean_rotation"] = self.compute_mean_rotation()
@@ -366,7 +360,7 @@ class Dynamics:
         dynamic_quantities["alpha_rot"] = self.compute_alpha_rot()
         dynamic_quantities["gamma"] = self.compute_gamma()
         dynamic_quantities["overlap"] = mobile_overlap(
-            self.delta_translation, self.delta_rotation
+            self.compute_displacement(), self.compute_rotation()
         )
 
         # The structural relaxation of all atoms is the most complex.
