@@ -15,7 +15,7 @@ import rowan
 
 from ..frame import Frame
 from ..molecules import Molecule
-from ..util import create_freud_box
+from ..util import create_freud_box, zero_quaternion
 from ._util import TrackedMotion, molecule2particles
 
 np.seterr(divide="raise", invalid="raise", over="raise")
@@ -299,14 +299,22 @@ class Dynamics:
                 "The wave number is required for the structural relaxation."
             )
         quat_rot = rowan.from_euler(
-            self.delta_rotation[:, 0],
-            self.delta_rotation[:, 1],
             self.delta_rotation[:, 2],
+            self.delta_rotation[:, 1],
+            self.delta_rotation[:, 0],
         )
-        atomic_motion = molecule2particles(
+        final_pos = molecule2particles(
             self.delta_translation, quat_rot, self.mol_vector
         )
-        return structural_relax(np.linalg.norm(atomic_motion, axis=1), self.distance)
+        init_pos = molecule2particles(
+            np.zeros_like(self.delta_translation),
+            zero_quaternion(self.num_particles),
+            self.mol_vector,
+        )
+        try:
+            return np.mean(np.linalg.norm(final_pos - init_pos, axis=1) < self.distance)
+        except FloatingPointError:
+            return np.nan
 
     def compute_all(
         self,

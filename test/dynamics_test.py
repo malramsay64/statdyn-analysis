@@ -305,14 +305,78 @@ def test_large_rotation():
     assert np.allclose(np.linalg.norm(dyn.delta_rotation, axis=1), np.pi / 4 * 9)
 
 
+def rotation_z(num: int, angle):
+    return rowan.from_euler(np.ones(num) * angle, np.zeros(num), np.zeros(num))
+
+
+def test_mol2particles_zero():
+    position = np.zeros((1, 3))
+    orientation = util.zero_quaternion(1)
+    mol_vector = np.ones((1, 3))
+
+    result = dynamics._util.molecule2particles(position, orientation, mol_vector)
+    assert np.allclose(result, np.ones((1, 3)))
+
+
+def test_mol2particles_simple():
+    position = np.zeros((1, 3))
+    orientation = rotation_z(1, np.pi)
+    mol_vector = np.ones((2, 3)) * 0.1
+
+    result = dynamics._util.molecule2particles(position, orientation, mol_vector)
+    assert np.allclose(result, np.array([[-0.1, -0.1, 0.1], [-0.1, -0.1, 0.1]]))
+
+
+def test_struct_translation():
+    init_pos = np.array([[0.0, 0.0, 0]])
+    init_orient = util.zero_quaternion(1)
+    dyn = dynamics.Dynamics(
+        0, np.ones(3) * 10, init_pos, init_orient, wave_number=3.14, molecule=Trimer()
+    )
+
+    assert np.allclose(dyn.delta_rotation, np.zeros((1, 3)))
+
+    pos1 = np.array([[0.1, 0.1, 0]])
+    dyn.add(pos1)
+    assert dyn.compute_struct_relax() == 1
+
+    pos2 = np.array([[0.4, 0.0, 0]])
+    dyn.add(pos2)
+    assert dyn.compute_struct_relax() == 1
+
+    pos2 = np.array([[0.6, 0.0, 0]])
+    dyn.add(pos2)
+    assert dyn.compute_struct_relax() == 0
+
+
+def test_struct_rotation():
+    init_pos = np.array([[0.0, 0, 0]])
+    init_orient = util.zero_quaternion(1)
+    dyn = dynamics.Dynamics(
+        0, np.ones(3) * 10, init_pos, init_orient, wave_number=3.14, molecule=Trimer()
+    )
+
+    pos1 = np.array([[0.1, 0.1, 0]])
+    dyn.add(pos1)
+    assert dyn.compute_struct_relax() == 1
+
+    pos2 = np.array([[0.4, 0.0, 0]])
+    dyn.add(pos2)
+    assert dyn.compute_struct_relax() == 1
+
+    pos2 = np.array([[0.6, 0.0, 0]])
+    dyn.add(pos2)
+    assert dyn.compute_struct_relax() == 0
+
+
 @given(
-    arrays(np.float64, (10, 2), floats(-4, 4)),
-    arrays(np.float64, (10, 3), floats(-np.pi / 3, np.pi / 3)),
+    arrays(np.float64, (1, 2), floats(-4, 4)),
+    arrays(np.float64, (1, 3), floats(-np.pi / 3, np.pi / 3)),
 )
 def test_struct(translation, rotation):
-    translation = np.append(translation, np.zeros((10, 1)), axis=1)
-    init_pos = np.zeros((10, 3))
-    init_orient = rowan.from_euler(np.zeros(10), np.zeros(10), np.zeros(10))
+    translation = np.append(translation, np.zeros((1, 1)), axis=1)
+    init_pos = np.zeros((1, 3))
+    init_orient = util.zero_quaternion(1)
     dyn = dynamics.Dynamics(
         0, np.ones(3) * 10, init_pos, init_orient, wave_number=2.9, molecule=Trimer()
     )
@@ -320,13 +384,5 @@ def test_struct(translation, rotation):
     orientation = rowan.from_euler(rotation[:, 0], rotation[:, 1], rotation[:, 2])
     dyn.add(translation, orientation)
 
-    motion = np.linalg.norm(
-        dynamics._util.molecule2particles(translation, orientation, Trimer().positions),
-        axis=1,
-    )
-    print(dyn.delta_translation)
-    assert np.allclose(dyn.delta_rotation, rotation)
-    assert np.allclose(dyn.delta_translation[:, :2], translation[:, :2], atol=1e-7)
-    assert np.allclose(
-        dyn.compute_struct_relax(), (motion < dyn.distance).mean(), atol=2e-7
-    )
+    assert np.allclose(dyn.delta_rotation, rotation, atol=2e-7)
+    assert np.allclose(dyn.delta_translation, translation, atol=4e-7)
