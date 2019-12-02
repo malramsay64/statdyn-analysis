@@ -218,7 +218,7 @@ class Dynamics:
 
     def compute_rotation2(self) -> np.ndarray:
         """Compute the rotation from the initial frame."""
-        return np.square(self.delta_rotation).mean(axis=1)
+        return np.square(self.delta_rotation).sum(axis=1)
 
     def compute_mean_rotation(self) -> float:
         """Compute the rotation from the initial frame."""
