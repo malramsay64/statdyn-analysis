@@ -381,7 +381,9 @@ def compute_relaxation_value(
         )
 
     if relax_type in ["msd"]:
-        return diffusion_constant(timesteps, values)
+        return diffusion_constant(timesteps, values, dimensions=2)
+    if relax_type in ["msr"]:
+        return diffusion_constant(timesteps, values, dimensions=1)
     if relax_type in ["struct_msd"]:
         return threshold_relaxation(timesteps, values, threshold=0.16, decay=False)
     if relax_type in ["alpha", "gamma"]:
