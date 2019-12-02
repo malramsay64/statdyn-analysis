@@ -97,7 +97,9 @@ def _d2dx2_exponential_decay(
 # pylint: enable=unused-argument
 
 
-def diffusion_constant(time: np.ndarray, msd: np.ndarray) -> Result:
+def diffusion_constant(
+    time: np.ndarray, msd: np.ndarray, dimensions: int = 2
+) -> Result:
     """Compute the diffusion_constant from the mean squared displacement.
 
     Args:
@@ -124,7 +126,7 @@ def diffusion_constant(time: np.ndarray, msd: np.ndarray) -> Result:
         return Result(np.nan, np.nan)
 
     perr = 2 * np.sqrt(np.diag(pcov))
-    return Result(popt[0], perr[0])
+    return Result(popt[0] / (2 * dimensions), perr[0] / (2 * dimensions))
 
 
 def threshold_relaxation(
