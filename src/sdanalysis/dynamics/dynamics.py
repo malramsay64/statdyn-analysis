@@ -224,6 +224,10 @@ class Dynamics:
         """Compute the rotation from the initial frame."""
         return self.compute_rotation().mean()
 
+    def compute_msr(self) -> float:
+        """Compute the mean squared rotation from the initial frame."""
+        return self.compute_rotation2().mean()
+
     def compute_isf(self) -> float:
         """Compute the intermediate scattering function."""
         return np.cos(np.dot(self.wave_vector, self.delta_translation[:, :2].T)).mean()
@@ -363,6 +367,7 @@ class Dynamics:
             )
 
         dynamic_quantities["mean_rotation"] = self.compute_mean_rotation()
+        dynamic_quantities["msr"] = self.compute_msr()
         dynamic_quantities["rot1"] = self.compute_rotational_relax1()
         dynamic_quantities["rot2"] = self.compute_rotational_relax2()
         dynamic_quantities["alpha_rot"] = self.compute_alpha_rot()
