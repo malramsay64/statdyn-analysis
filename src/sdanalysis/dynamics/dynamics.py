@@ -55,6 +55,7 @@ class Dynamics:
         "scattering_function",
         "com_struct",
         "mean_rotation",
+        "msr",
         "rot1",
         "rot2",
         "alpha_rot",
