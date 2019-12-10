@@ -19,7 +19,6 @@ import pandas
 import pytest
 from hypothesis import example, given
 from hypothesis.extra.numpy import arrays
-
 from sdanalysis import dynamics, relaxation
 
 logger = logging.getLogger(__name__)
@@ -34,7 +33,7 @@ def test_diffusion_constant():
     known_diffusion = 1e-3
     offset = 1e-4
     time = np.arange(10000)
-    msd = time * known_diffusion + offset
+    msd = 4 * time * known_diffusion + offset
     diff, diff_err = relaxation.diffusion_constant(time, msd)
     assert np.isclose(diff, known_diffusion)
     assert np.isclose(diff_err, 0)
