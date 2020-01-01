@@ -53,7 +53,7 @@ test_requires = [
     "pytest-cov==2.8.1",
     "flake8==3.7.9",
     "flake8-docstrings==1.5.0",
-    "pydocstyle<5.0.0,!=4.0.0",  # There is an issue with indented code blocks in 4.0.0
+    "pydocstyle!=4.0.0,<6.0.0",  # There is an issue with indented code blocks in 4.0.0
 ]
 docs_requires = [
     "sphinx>=2.1.2,<2.3.0",
