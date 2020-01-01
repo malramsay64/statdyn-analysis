@@ -26,7 +26,7 @@ def read(path, encoding="utf-8"):
 
 
 install_requires = [
-    "numpy>=1.14,<1.18",
+    "numpy>=1.14,<1.19",
     "scipy~=1.0",
     "scikit-learn>=0.20.0,<1.0",
     "pandas>=0.23,<0.26",
