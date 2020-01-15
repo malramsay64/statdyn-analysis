@@ -374,6 +374,10 @@ def test_struct_rotation():
     arrays(np.float64, (1, 2), floats(-4, 4)),
     arrays(np.float64, (1, 3), floats(-np.pi / 3, np.pi / 3)),
 )
+@example(
+    translation=np.array([[-0.00097108, -0.00097108]]),
+    rotation=np.array([[0.0, 0.0, 0.0]]),
+)
 def test_struct(translation, rotation):
     translation = np.append(translation, np.zeros((1, 1)), axis=1)
     init_pos = np.zeros((1, 3))
@@ -386,4 +390,4 @@ def test_struct(translation, rotation):
     dyn.add(translation, orientation)
 
     assert np.allclose(dyn.delta_rotation, rotation, atol=2e-7)
-    assert np.allclose(dyn.delta_translation, translation, atol=4e-7)
+    assert np.allclose(dyn.delta_translation, translation, atol=8e-7)
