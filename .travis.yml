@@ -5,7 +5,7 @@ matrix:
   include:
     - name: "Linting"
       python: 3.7
-      env: NUMPY_VERSION=1.17
+      env: NUMPY_VERSION=1.18
       script: make lint
 
     - stage: "Test"
@@ -16,17 +16,17 @@ matrix:
 
     - name: "Python 3.6"
       python: 3.6
-      env: NUMPY_VERSION=1.17
+      env: NUMPY_VERSION=1.18
       script: make test
 
     - name: "Python 3.7"
       python: 3.7
-      env: NUMPY_VERSION=1.17
+      env: NUMPY_VERSION=1.18
       script: make test
 
     - name: "Python 3.8"
       python: 3.8
-      env: NUMPY_VERSION=1.17
+      env: NUMPY_VERSION=1.18
       before_install:
         - sudo apt-get install libtbb-dev
         - pip install cython
@@ -34,13 +34,13 @@ matrix:
 
     - name: "Documentation"
       python: 3.7
-      env: NUMPY_VERSION=1.17
+      env: NUMPY_VERSION=1.18
       script: make test-docs
 
     - stage: "Deploy"
       if: tag IS present
       python: 3.7
-      env: NUMPY_VERSION=1.17
+      env: NUMPY_VERSION=1.18
       script: skip
       after_success: skip
       deploy:
