@@ -6,7 +6,12 @@
 #
 # Distributed under terms of the MIT license.
 
-"""
+"""Calculate molecular relaxation quantities for all molecules in a simulation.
+
+The molecular relaxation quantities compute the relaxation time for each molecule independently,
+rather than the traditional approach which is averaged over all particles. 
+Giving each particle a relaxation time provides additional tools for understanding motion,
+including the ability to get spatial maps of relaxation.
 
 """
 import logging
@@ -128,6 +133,22 @@ class Relaxations:
         return timestep - self.init_time
 
     def add(self, timestep: int, position: np.ndarray, orientation: np.ndarray) -> None:
+        """Update the state of the relaxation calculations by adding a Frame.
+
+        This updates the motion of the particles, comparing the positions and
+        orientations of the current frame with the previous frame, adding the difference
+        to the total displacement. This approach allows for tracking particles over
+        periodic boundaries, or through larger rotations assuming that there are
+        sufficient frames to capture the information. Each single displacement obeys the
+        minimum image convention, so for large time intervals it is still possible to
+        have missing information.
+
+        Args:
+            timestep: The timestep of the frame being added
+            position: The new position of each particle in the simulation
+            orientation: The updated orientation of each particle, represented as a quaternion.
+
+        """
         self.motion.add(position, orientation)
         displacement = np.linalg.norm(self.motion.delta_translation, axis=1)
         rotation = np.linalg.norm(self.motion.delta_rotation, axis=1)

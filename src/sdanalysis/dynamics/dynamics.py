@@ -153,7 +153,8 @@ class Dynamics:
         have missing information.
 
         Args:
-            frame: The configuration containing the current particle information.
+            position: The updated position of each particle
+            orientation: The updated orientation of each particle, represented as a quaternion
 
         """
         self.motion.add(position, orientation)
