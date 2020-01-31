@@ -140,6 +140,23 @@ class Relaxations:
             else:
                 raise RuntimeError("Invalid relaxation type")
 
+    def add_frame(self, frame: Frame):
+        """Update the state of the relaxation calculations by adding a Frame.
+
+        This updates the motion of the particles, comparing the positions and
+        orientations of the current frame with the previous frame, adding the difference
+        to the total displacement. This approach allows for tracking particles over
+        periodic boundaries, or through larger rotations assuming that there are
+        sufficient frames to capture the information. Each single displacement obeys the
+        minimum image convention, so for large time intervals it is still possible to
+        have missing information.
+
+        Args:
+            frame: The configuration containing the current particle information.
+
+        """
+        self.add(frame.timestep, frame.position, frame.orientation)
+
     def summary(self) -> pandas.DataFrame:
         return pandas.DataFrame(
             {key: func.get_status() for key, func in self.mol_relax.items()}
