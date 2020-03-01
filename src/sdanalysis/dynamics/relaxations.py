@@ -9,7 +9,7 @@
 """Calculate molecular relaxation quantities for all molecules in a simulation.
 
 The molecular relaxation quantities compute the relaxation time for each molecule independently,
-rather than the traditional approach which is averaged over all particles. 
+rather than the traditional approach which is averaged over all particles.
 Giving each particle a relaxation time provides additional tools for understanding motion,
 including the ability to get spatial maps of relaxation.
 
