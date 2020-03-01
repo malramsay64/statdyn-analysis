@@ -56,7 +56,7 @@ test_requires = [
     "pydocstyle!=4.0.0,<6.0.0",  # There is an issue with indented code blocks in 4.0.0
 ]
 docs_requires = [
-    "sphinx>=2.1.2,<2.4.0",
+    "sphinx>=2.1.2,<2.5.0",
     "sphinx_rtd_theme==0.4.3",
     "sphinx_autodoc_typehints==1.10.3",
 ]
