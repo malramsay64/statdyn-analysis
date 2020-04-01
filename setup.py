@@ -36,7 +36,7 @@ install_requires = [
     "pyyaml>=5.1",
     "hsluv==0.0.2",
     "attrs>=19.2,<19.4",
-    "click~=7.0.0",
+    "click>=7.0,<7.2",
     "freud-analysis>=1.0,<1.3",
     "rowan>=1.2,<1.3",
     "tqdm>=4,<5",
