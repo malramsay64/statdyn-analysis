@@ -34,7 +34,7 @@ install_requires = [
     "bokeh>=1.0",
     "gsd>=1.3",
     "pyyaml>=5.1",
-    "hsluv==0.0.2",
+    "hsluv==5.0.0",
     "attrs>=19.2,<19.4",
     "click~=7.0.0",
     "freud-analysis>=1.0,<1.3",
