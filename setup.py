@@ -44,7 +44,7 @@ install_requires = [
 ]
 test_requires = [
     "pytest>=5.0.1,<5.5.0",
-    "pylint>=2.4.3,<2.5",
+    "pylint>=2.4.3,<2.6",
     "hypothesis>=4.43.1,<6.0",
     "coverage==5.0.1",
     "isort==4.3.21",
