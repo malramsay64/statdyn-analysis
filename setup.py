@@ -51,7 +51,7 @@ test_requires = [
     "black==19.10b0",
     "mypy==0.770",
     "pytest-cov==2.8.1",
-    "flake8==3.7.9",
+    "flake8==3.8.2",
     "flake8-docstrings==1.5.0",
     "pydocstyle!=4.0.0,<6.0.0",  # There is an issue with indented code blocks in 4.0.0
 ]
