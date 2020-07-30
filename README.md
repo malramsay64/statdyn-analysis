@@ -1,6 +1,7 @@
 Statdyn Analysis
 ================
 
+[![DOI](https://zenodo.org/badge/113285947.svg)](https://zenodo.org/badge/latestdoi/113285947)
 [![Build Status](https://travis-ci.org/malramsay64/statdyn-analysis.svg?branch=master)](https://travis-ci.org/malramsay64/statdyn-analysis)
 [![Documentation Status](https://readthedocs.org/projects/statdyn-analysis/badge/?version=latest)](https://statdyn-analysis.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/malramsay64/statdyn-analysis/branch/master/graph/badge.svg)](https://codecov.io/gh/malramsay64/statdyn-analysis)
