@@ -193,7 +193,7 @@ class Dynamics:
         return np.square(self.compute_displacement2()).mean()
 
     def compute_alpha(self) -> float:
-        r"""Compute the non-Gaussian parameter alpha for translational motion.
+        r"""Compute the non-Gaussian parameter alpha for translational motion in 2D.
 
         .. math::
             \alpha = \frac{\langle \Delta r^4\rangle}
@@ -259,20 +259,23 @@ class Dynamics:
         return np.mean(2 * np.square(np.cos(self.compute_rotation())) - 1)
 
     def compute_alpha_rot(self) -> float:
-        r"""Compute the non-Gaussian parameter alpha for rotational motion.
+        r"""Compute the non-Gaussian parameter alpha for rotational motion in 2D.
+
+        Rotational motion in 2D, is a single dimension of rotational motion, hence the
+        use of a different divisor than translational motion.
 
         .. math::
             \alpha = \frac{\langle \Delta \theta^4\rangle}
-                      {2\langle \Delta \theta^2  \rangle^2} -1
+                      {3\langle \Delta \theta^2  \rangle^2} -1
 
         """
         theta2 = self.compute_rotation2()
         try:
-            return np.square(theta2).mean() / (2 * np.square((theta2).mean())) - 1
+            return np.square(theta2).mean() / (3 * np.square((theta2).mean())) - 1
 
         except FloatingPointError:
             with np.errstate(invalid="ignore"):
-                res = np.square(theta2).mean() / (2 * np.square((theta2).mean())) - 1
+                res = np.square(theta2).mean() / (3 * np.square((theta2).mean())) - 1
                 np.nan_to_num(res, copy=False)
                 return res
 
