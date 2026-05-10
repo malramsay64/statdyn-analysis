@@ -1,0 +1,131 @@
+name: CI
+
+'on':
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  linting:
+    name: Linting
+    runs-on: ubuntu-22.04
+    env:
+      NUMPY_VERSION: '1.18'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.7'
+      - run: pip install -q numpy~=$NUMPY_VERSION
+      - run: pip install -e .[dev]
+      - run: pip install codecov
+      - run: make lint
+      - run: codecov
+
+  test_numpy_1_14:
+    name: Numpy 1.14
+    runs-on: ubuntu-22.04
+    env:
+      NUMPY_VERSION: '1.14'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.6'
+      - run: pip install -q numpy~=$NUMPY_VERSION
+      - run: pip install -e .[dev]
+      - run: pip install codecov
+      - run: make test
+      - run: codecov
+
+  python_3_6:
+    name: Python 3.6
+    runs-on: ubuntu-22.04
+    env:
+      NUMPY_VERSION: '1.18'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.6'
+      - run: pip install -q numpy~=$NUMPY_VERSION
+      - run: pip install -e .[dev]
+      - run: pip install codecov
+      - run: make test
+      - run: codecov
+
+  python_3_7:
+    name: Python 3.7
+    runs-on: ubuntu-22.04
+    env:
+      NUMPY_VERSION: '1.18'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.7'
+      - run: pip install -q numpy~=$NUMPY_VERSION
+      - run: pip install -e .[dev]
+      - run: pip install codecov
+      - run: make test
+      - run: codecov
+
+  python_3_8:
+    name: Python 3.8
+    runs-on: ubuntu-22.04
+    env:
+      NUMPY_VERSION: '1.18'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.8'
+      - run: sudo apt-get install libtbb-dev
+      - run: pip install cython
+      - run: pip install -q numpy~=$NUMPY_VERSION
+      - run: pip install -e .[dev]
+      - run: pip install codecov
+      - run: make test
+      - run: codecov
+
+  documentation:
+    name: Documentation
+    runs-on: ubuntu-22.04
+    env:
+      NUMPY_VERSION: '1.18'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.7'
+      - run: pip install -q numpy~=$NUMPY_VERSION
+      - run: pip install -e .[dev]
+      - run: pip install codecov
+      - run: make test-docs
+      - run: codecov
+
+  deploy:
+    name: Deploy
+    runs-on: ubuntu-22.04
+    needs:
+      - linting
+      - test_numpy_1_14
+      - python_3_6
+      - python_3_7
+      - python_3_8
+      - documentation
+    if: startsWith(github.ref, 'refs/tags/')
+    env:
+      NUMPY_VERSION: '1.18'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.7'
+      - run: pip install -q numpy~=$NUMPY_VERSION
+      - run: pip install -e .[dev]
+      - run: pip install codecov
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          user: malramsay64
+          password: 'IXdsTArkzbBQXbcvqU9jEZncPi8wF4s1ezYOXeOSgqbyJ4Xt5Tt65Gz9FXHXZXCBuGeYfRxfrDq/NuRxdsa0g5XuKVFnN13TLNmnBgtPtm5G54BciwGXenL+7QUbxd85dgERJQeqoEj1CIR3kLmpmiUPYovEDHyt73On2PU7v9/w8Qqg3xUr52V4dr4dRU0a7YqxmFHUqVRupkpnkyRyW7xsBK0ZKLi5lLyEBy+2f7Me1Ks6gnr8f18Iepl2Xwcm10PGcfYu7TnObDZ3YxW2WGioVDOpyaVWf7esntUqT/lvzopevH3+kQldCjgC+JrTDbyQWFBr6yzRVWShnhCH5XLzNT/96LLMPIciScOJAMSh5uTw6O8vqSa2eKBWMGVY1fPzqFJqELRn0SJYLTXSSGKPyBBq4Qm+GhZjn8k7Zrs0TCZEJdOwjrKDNReZLY4rN5+BY34fmfdm/JIF0k+crttizUQlYNaOY4sYJuQYtWhCJnLKeFBxl7aywBTlFCjAesiFvLqTu8RIvcTnCJJhv5KHL2MwcJWEDri1HjgTyCGoeYN9WBX12tecD+EUxGvszxiqJ5v4QBKmDAJk+uxY0gjzkVMmIpxD0FyGB9HTlosPwWpRUBg3dChEv2I7+SUaLZ0cF8atQUPMj9QYhpvUEciTEq7gXWEIM8rL9JiXc/g='
